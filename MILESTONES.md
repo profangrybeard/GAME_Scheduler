@@ -136,7 +136,13 @@ Scores: affinity_first=145, time_pref_first=15, balanced=75.
 - A non-technical user can follow README from clone to first schedule
 - `python main.py --quarter fall` works end-to-end from clean clone
 
-**Status:** PENDING
+**Actual result:** README.md written for non-technical chair audience. Module docstrings
+added to ingest/__init__.py, solver/__init__.py, export/__init__.py. Function docstrings
+added to all 8 public functions in ingest/validate.py and main(). Final validation pass:
+0 errors, 1 warning (expected -- 14 internship/stub courses with no preferred professors).
+End-to-end pipeline confirmed: 3x OPTIMAL, output/schedule_fall_2026.xlsx written cleanly.
+
+**Status:** COMPLETE
 
 ---
 

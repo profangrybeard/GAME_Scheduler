@@ -69,6 +69,7 @@ def _print_summary(results: dict) -> None:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
+    """Parse arguments and run the full scheduling pipeline."""
     parser = argparse.ArgumentParser(
         description="SCAD Game Dept Course Scheduler"
     )

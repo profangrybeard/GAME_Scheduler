@@ -62,11 +62,13 @@ _warnings: list[str] = []
 
 
 def error(msg: str) -> None:
+    """Record a fatal error and print it."""
     _errors.append(msg)
     print(f"  [ERROR] {msg}")
 
 
 def warn(msg: str) -> None:
+    """Record a non-fatal warning and print it."""
     _warnings.append(msg)
     print(f"  [WARN]  {msg}")
 
@@ -110,6 +112,7 @@ def _validate_item(item: dict, schema: dict, label: str) -> bool:
 
 
 def validate_professors(professors: list[dict]) -> None:
+    """Validate each professor record against the professor JSON schema."""
     print("\nValidating professors ...")
     schema = _load_schema(SCHEMAS["professors"])
     if schema is None:
@@ -120,6 +123,7 @@ def validate_professors(professors: list[dict]) -> None:
 
 
 def validate_course_catalog(catalog: list[dict]) -> None:
+    """Validate each course against its schema plus room type and tag controlled vocabularies."""
     print("\nValidating course catalog ...")
     schema = _load_schema(SCHEMAS["course_catalog"])
     if schema is None:
@@ -142,6 +146,7 @@ def validate_course_catalog(catalog: list[dict]) -> None:
 
 
 def validate_rooms(rooms: list[dict]) -> None:
+    """Validate each room record against the room JSON schema."""
     print("\nValidating rooms ...")
     schema = _load_schema(SCHEMAS["rooms"])
     if schema is None:
@@ -152,6 +157,7 @@ def validate_rooms(rooms: list[dict]) -> None:
 
 
 def validate_quarterly_offerings(offerings_doc: dict) -> None:
+    """Validate the quarterly offerings document against its JSON schema."""
     print("\nValidating quarterly offerings ...")
     schema = _load_schema(SCHEMAS["quarterly_offerings"])
     if schema is None:
@@ -170,6 +176,11 @@ def cross_reference(
     catalog: list[dict],
     offerings_doc: dict,
 ) -> None:
+    """Check referential integrity across all data files.
+
+    Verifies that professor IDs, catalog IDs, and room/tag values referenced
+    anywhere are actually defined in their respective source files.
+    """
     print("\nRunning cross-reference checks ...")
 
     prof_ids = {p["id"] for p in professors}
@@ -223,6 +234,7 @@ def cross_reference(
 # ---------------------------------------------------------------------------
 
 def run() -> int:
+    """Run the full validation suite. Returns 0 if clean, 1 if errors found."""
     print("=" * 60)
     print("  SCAD Course Scheduler - Data Validation")
     print("=" * 60)
