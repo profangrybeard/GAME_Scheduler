@@ -1,0 +1,110 @@
+"""Global constants for the Course Scheduling Tool.
+
+All constants, enums, weight vectors, and mappings live here.
+Import from this module everywhere — never hardcode inline.
+"""
+
+# === Schedule structure ===
+STANDARD_MAX = 4
+OVERLOAD_MAX = 5
+CHAIR_MAX = 2
+TIME_SLOTS = ["8:00AM", "11:00AM", "2:00PM", "5:00PM"]
+DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday"]
+DAY_GROUPS = {1: ["Monday", "Wednesday"], 2: ["Tuesday", "Thursday"]}
+CLASS_DURATION_HRS = 2.5
+VALID_QUARTERS = ["fall", "winter", "spring", "summer"]
+VALID_DEPARTMENTS = ["game", "motion_media", "ai"]
+
+# === Penalty values ===
+AFFINITY_PENALTIES = {0: 0, 1: 1, 2: 3, "other": 10}
+TIME_PREF_PENALTIES = {"preferred": 0, "acceptable": 2, "not_preferred": 5}
+OVERLOAD_PENALTY = 8
+SHOULD_HAVE_DROP_PENALTY = 15
+COULD_HAVE_DROP_PENALTY = 5
+
+# === Optimization mode weight vectors ===
+MODE_WEIGHTS = {
+    "affinity_first":    {"affinity": 10, "time_pref": 1, "overload": 2},
+    "time_pref_first":   {"affinity": 1,  "time_pref": 10, "overload": 2},
+    "balanced":          {"affinity": 5,  "time_pref": 5,  "overload": 3},
+}
+
+# === Time preference full mapping ===
+TIME_PREF_MAP = {
+    ("morning",           "8:00AM"):  "preferred",
+    ("morning",           "11:00AM"): "preferred",
+    ("morning",           "2:00PM"):  "acceptable",
+    ("morning",           "5:00PM"):  "not_preferred",
+    ("afternoon",         "8:00AM"):  "not_preferred",
+    ("afternoon",         "11:00AM"): "acceptable",
+    ("afternoon",         "2:00PM"):  "preferred",
+    ("afternoon",         "5:00PM"):  "preferred",
+    ("afternoon_evening", "8:00AM"):  "not_preferred",
+    ("afternoon_evening", "11:00AM"): "acceptable",
+    ("afternoon_evening", "2:00PM"):  "preferred",
+    ("afternoon_evening", "5:00PM"):  "preferred",
+}
+
+# === Room compatibility matrix ===
+ROOM_COMPATIBILITY = {
+    "itgm_suite": lambda r: r["has_itgm_suite"] is True and r["station_count"] >= 10,
+    "pc_lab":     lambda r: r["station_type"] == "pc" and r["station_count"] >= 10,
+    "mac_lab":    lambda r: r["station_type"] == "mac" and r["station_count"] >= 10,
+    "any_lab":    lambda r: r["station_count"] >= 10,
+    "standard":   lambda r: True,
+}
+
+# === Catalog inference ===
+PREFIX_TO_DEPT = {
+    "GAME": "game",
+    "ITGM": "game",
+    "MOME": "motion_media",
+    "AI":   "ai",
+}
+
+DEPT_DEFAULT_ROOM = {
+    "game": "itgm_suite",
+    "motion_media": "mac_lab",
+    "ai": "pc_lab",
+}
+
+# === Valid specialization tags (controlled vocabulary) ===
+VALID_SPECIALIZATIONS = [
+    # Art & 3D
+    "3d_modeling", "texturing", "uv_mapping", "materials", "lighting",
+    "rendering", "real_time_rendering", "pbr_workflows", "photogrammetry",
+    "arch_viz", "character_art", "character_animation", "character_rigging",
+    "environment_art", "concept_art", "concept_design", "art_direction",
+    "graphic_design", "illustration",
+    # Animation & Motion
+    "animation", "computer_animation", "motion_graphics", "motion_design",
+    "2d_motion_graphics", "3d_motion_graphics", "visual_effects", "vfx",
+    "compositing", "stop_motion", "storyboarding",
+    # Tools
+    "maya", "zbrush", "unreal_engine", "blueprint", "cinema_4d",
+    "after_effects", "adobe_creative_suite", "shader_creation",
+    # Design
+    "game_design", "game_mechanics", "game_systems", "game_design_documentation",
+    "level_design", "quest_design", "narrative", "world_building",
+    "interactive_storytelling", "prototyping", "tabletop_game_design",
+    "environmental_design", "interaction_design", "ui_design",
+    "interface_design", "information_design", "interactive_design",
+    "interactive_multimedia", "digital_typography", "typography",
+    "screen_design", "branding", "multimedia",
+    # Engineering
+    "programming", "cpp", "csharp", "scripting", "gameplay_engineering",
+    "game_tech", "database_design", "electronics_prototyping",
+    # Production
+    "production", "scrum", "agile", "game_development", "gameplay",
+    "creative_direction", "creative_writing",
+    # Motion Media Specific
+    "broadcast_design", "live_cinema", "video_installation",
+    "projection_mapping", "live_performance", "vjing", "audio_visual",
+    "media_art", "digital_scenography", "art_history", "media_theory",
+    "computer_art", "film", "sound_design",
+    # AI
+    "ai_application", "ai_pipeline", "ai_design", "ai_ideation",
+    # Other
+    "mmorpg", "multiplayer", "virtual_reality", "modeling",
+    "graduate_studies",
+]

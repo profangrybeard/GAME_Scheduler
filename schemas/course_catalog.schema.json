@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Course Catalog Entry",
+  "type": "object",
+  "required": [
+    "id", "name", "department", "is_graduate", "credits",
+    "required_room_type", "specialization_tags", "preferred_professors",
+    "enrollment_cap", "teaching_order", "source"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "department": {
+      "type": "string",
+      "enum": ["game", "motion_media", "ai"]
+    },
+    "is_graduate": { "type": "boolean" },
+    "credits": { "type": "integer" },
+    "required_room_type": {
+      "type": "string",
+      "enum": ["itgm_suite", "pc_lab", "mac_lab", "any_lab", "standard"]
+    },
+    "specialization_tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "preferred_professors": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "enrollment_cap": { "type": "integer", "minimum": 1 },
+    "teaching_order": { "type": "integer" },
+    "prerequisites": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "description": { "type": "string" },
+    "notes": { "type": "string" },
+    "source": {
+      "type": "string",
+      "enum": ["scraped", "manual"]
+    },
+    "last_scraped": {
+      "type": ["string", "null"]
+    }
+  },
+  "additionalProperties": false
+}

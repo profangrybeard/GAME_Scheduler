@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Room",
+  "type": "object",
+  "required": [
+    "id", "name", "station_count", "station_type",
+    "has_itgm_suite", "has_design_suite", "capacity"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^room_[a-z0-9_]+$"
+    },
+    "name": { "type": "string" },
+    "station_count": { "type": "integer", "minimum": 0 },
+    "station_type": {
+      "type": ["string", "null"],
+      "enum": ["pc", "mac", null]
+    },
+    "has_itgm_suite": { "type": "boolean" },
+    "has_design_suite": { "type": "boolean" },
+    "capacity": { "type": "integer", "minimum": 1 },
+    "notes": { "type": "string" }
+  },
+  "additionalProperties": false
+}

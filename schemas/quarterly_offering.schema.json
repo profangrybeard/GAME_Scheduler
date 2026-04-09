@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Quarterly Offerings",
+  "type": "object",
+  "required": ["quarter", "year", "offerings"],
+  "properties": {
+    "quarter": {
+      "type": "string",
+      "enum": ["fall", "winter", "spring", "summer"]
+    },
+    "year": { "type": "integer" },
+    "offerings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["catalog_id", "priority", "sections"],
+        "properties": {
+          "catalog_id": { "type": "string" },
+          "priority": {
+            "type": "string",
+            "enum": ["must_have", "should_have", "could_have"]
+          },
+          "sections": { "type": "integer", "minimum": 1 },
+          "override_enrollment_cap": {
+            "type": ["integer", "null"]
+          },
+          "override_room_type": {
+            "type": ["string", "null"],
+            "enum": ["itgm_suite", "pc_lab", "mac_lab", "any_lab", "standard", null]
+          },
+          "override_preferred_professors": {
+            "type": ["array", "null"],
+            "items": { "type": "string" }
+          },
+          "notes": {
+            "type": ["string", "null"]
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,56 @@
+[
+  {
+    "id": "room_101",
+    "name": "ITGM Lab 101",
+    "station_count": 20,
+    "station_type": "pc",
+    "has_itgm_suite": true,
+    "has_design_suite": false,
+    "capacity": 24
+  },
+  {
+    "id": "room_102",
+    "name": "ITGM Lab 102",
+    "station_count": 10,
+    "station_type": "pc",
+    "has_itgm_suite": true,
+    "has_design_suite": false,
+    "capacity": 16
+  },
+  {
+    "id": "room_201",
+    "name": "ITGM Lab 201",
+    "station_count": 20,
+    "station_type": "pc",
+    "has_itgm_suite": true,
+    "has_design_suite": true,
+    "capacity": 24
+  },
+  {
+    "id": "room_mac_a",
+    "name": "Mac Lab A",
+    "station_count": 20,
+    "station_type": "mac",
+    "has_itgm_suite": false,
+    "has_design_suite": true,
+    "capacity": 24
+  },
+  {
+    "id": "room_lecture_a",
+    "name": "Seminar A",
+    "station_count": 0,
+    "station_type": null,
+    "has_itgm_suite": false,
+    "has_design_suite": false,
+    "capacity": 30
+  },
+  {
+    "id": "room_lecture_b",
+    "name": "Seminar B",
+    "station_count": 0,
+    "station_type": null,
+    "has_itgm_suite": false,
+    "has_design_suite": false,
+    "capacity": 20
+  }
+]

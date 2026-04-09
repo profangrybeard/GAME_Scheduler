@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Professor",
+  "type": "object",
+  "required": [
+    "id", "name", "home_department", "teaching_departments", "chairs",
+    "is_chair", "max_classes", "can_overload", "has_masters", "masters_type",
+    "masters_in_progress", "time_preference", "specializations",
+    "available_quarters"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^prof_[a-z_]+$"
+    },
+    "name": { "type": "string" },
+    "email": { "type": "string" },
+    "home_department": {
+      "type": "string",
+      "enum": ["game", "motion_media", "ai"]
+    },
+    "teaching_departments": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["game", "motion_media", "ai"]
+      }
+    },
+    "chairs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["game", "motion_media", "ai"]
+      }
+    },
+    "is_chair": { "type": "boolean" },
+    "max_classes": { "type": "integer", "minimum": 1, "maximum": 5 },
+    "can_overload": { "type": "boolean" },
+    "has_masters": { "type": "boolean" },
+    "masters_type": {
+      "type": ["string", "null"],
+      "enum": ["MFA", "MA", "PhD", null]
+    },
+    "masters_in_progress": { "type": "boolean" },
+    "time_preference": {
+      "type": "string",
+      "enum": ["morning", "afternoon", "afternoon_evening"]
+    },
+    "specializations": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "notes": { "type": "string" },
+    "available_quarters": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["fall", "winter", "spring", "summer"]
+      }
+    }
+  },
+  "additionalProperties": false
+}
