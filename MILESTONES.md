@@ -92,7 +92,10 @@ print('Variables created:', len(data['assignments']))
 "
 ```
 
-**Status:** PENDING
+**Actual result:** 1528 BoolVars across 19 sections (16 offerings, 3 expanded to 2 sections).
+Hard constraints OK, objective OK. All 3 import paths verified clean.
+
+**Status:** COMPLETE
 
 ---
 
