@@ -1,0 +1,2761 @@
+[
+  {
+    "id": "GAME_120",
+    "name": "Introduction to Interactive Design and Game Development",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "audio_visual",
+      "game_design",
+      "game_development",
+      "interactive_design",
+      "motion_design"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_dodson",
+      "prof_spencer"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 1,
+    "prerequisites": [
+      "DRAW_101",
+      "FOUN_220",
+      "DIGI_130",
+      "CMPA_110"
+    ],
+    "description": "This course begins to investigate visual and audio communication involving user actions, strategic design, and the illusion of motion. Through individual approach and expression in traditional media, students are encouraged to experiment with the juxtaposition and sequence of design elements and imagery and to develop a sense of artist-audience construct and consequence.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_121",
+    "name": "Introduction to Game Development",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_development"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay",
+      "prof_dodson"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 2,
+    "prerequisites": [
+      "DIGI_130",
+      "CMPA_110"
+    ],
+    "description": "Through hands-on experience, students are introduced to critical aspects of the game industry from non-digital games to indie games to the latest video games. Roles and responsibilities within the game development team are discussed and practiced through in-class exercises, and genres are critically introduced, discussed, and explored. Key individuals, companies, and associations are also explored, and controversies are examined. The course culminates in a group project.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_130",
+    "name": "Digital Design Aesthetics",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "interactive_design"
+    ],
+    "preferred_professors": [
+      "prof_spencer"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 3,
+    "prerequisites": [
+      "DIGI_130",
+      "CMPA_110"
+    ],
+    "description": "This course provides the foundation for visualizing and understanding the essential vocabularies, principles, and concepts of design, color, and visual literacy as applied to interactive digital work.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_220",
+    "name": "Core Principles: Programming",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "programming",
+      "scripting"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_dodson"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 4,
+    "prerequisites": [],
+    "description": "Students develop the core principles of programming interactivity through object-oriented programming techniques using visual scripting tools and hand-coded scripting languages. Experiential learning enables students to develop applications and projects that include complex interactive websites, experimental interactive work, and online games.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_236",
+    "name": "Core Principles: Game Art",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "concept_art",
+      "materials"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_avenali"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 5,
+    "prerequisites": [
+      "ARVR_110",
+      "GAME_130",
+      "ITGM_130",
+      "VSFX_130",
+      "VFX_230",
+      "ANIM_190",
+      "BREN_200",
+      "SEQA_224"
+    ],
+    "description": "Students explore and develop digital content creation techniques and aesthetic skills required to model, texture and generate accurate materials for 3D game assets. Through the use of standard 3D software, students learn methods and procedures to create industry-standard digital content efficiently and accurately. Students create game-ready content in 3-D, utilizing real-world observations and the use of original and existing concept art.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_256",
+    "name": "Core Principles: Game Design",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design",
+      "game_mechanics"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_dodson",
+      "prof_spencer"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 6,
+    "prerequisites": [
+      "GAME_120",
+      "ITGM_120",
+      "GAME_121",
+      "ITGM_121",
+      "GAME_130",
+      "ITGM_130",
+      "BREN_200"
+    ],
+    "description": "Students explore, apply, and discuss the core principles of game design, including the game space, game mechanics, the game player, and the design decisions that create the game state. Through in-class game play and game design exercises, students examine the design process needed to build today\u2019s games.  Through the exploration of player agency, immersion, structures of goals, challenges, pacing, encounters, quests, puzzles, conflicts, and rewards, students learn the rules of play and apply those principles to in-class game design projects.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_258",
+    "name": "Modeling for Game Development",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "3d_modeling",
+      "game_development",
+      "modeling"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_allen",
+      "prof_dodson"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 7,
+    "prerequisites": [
+      "GAME_236",
+      "ITGM_236"
+    ],
+    "description": "Students develop an understanding of 3D, the principles of modeling and video game aesthetics while exploring the creation of 3D models specifically designed for integration into a game engine. Aesthetics, construction, communication, sculptural skills, and quality of work are emphasized.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_266",
+    "name": "Core Principles: Game Tech",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_tech",
+      "level_design",
+      "real_time_rendering",
+      "rendering"
+    ],
+    "preferred_professors": [
+      "prof_avenali",
+      "prof_lindsay",
+      "prof_allen"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 8,
+    "prerequisites": [
+      "VSFX_210",
+      "VFX_210",
+      "GAME_236",
+      "ITGM_236",
+      "ANIM_249",
+      "GAME_220",
+      "ITGM_220"
+    ],
+    "description": "Real-time rendering technology allows game artist and level designers to create immersive game environments that respond to the player\u2019s action within the game space. Students in this course are prepared for high-level careers in the video game industry by creating event-driven environments and learning to work with the multiple toolsets existing in contemporary game engines required to produce functional game level.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_267",
+    "name": "Core Principles: Interactive Design",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "interactive_design"
+    ],
+    "preferred_professors": [
+      "prof_spencer"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 9,
+    "prerequisites": [
+      "ADBR_150",
+      "GRDS_205",
+      "GAME_220",
+      "ITGM_220"
+    ],
+    "description": "This course focuses on understanding and applying the core principles of designing and developing interactive games and applications. Students are introduced to industry-standard authoring techniques and technologies for delivery on the Web and as stand-alone applications. Designing and implementing interactivity is the focus of the course.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_277",
+    "name": "Core Principles: User-centered Design",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "information_design",
+      "interactive_design",
+      "screen_design"
+    ],
+    "preferred_professors": [
+      "prof_spencer",
+      "prof_maloney"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 10,
+    "prerequisites": [
+      "GAME_120",
+      "ITGM_120",
+      "ITGM_122",
+      "GAME_130",
+      "ITGM_130"
+    ],
+    "description": "Students examine the core principles and methodologies used throughout the interactive design industry for creating screen-based dynamic media\u2014websites, information installations, mobile applications, etc. Specifically, students address the interactive design process used to create dynamic media based on how a user may want or need to use products or systems.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_310",
+    "name": "Animation for Games",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "animation",
+      "character_animation"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay",
+      "prof_dodson"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 11,
+    "prerequisites": [
+      "VSFX_210",
+      "VFX_210",
+      "ANIM_249",
+      "GAME_258",
+      "ITGM_258"
+    ],
+    "description": "Animation provides a sense of immersion while giving players feedback about the state of the game. Students learn to create animation assets for both 2D and 3D games. Topics covered range from basic key frame animation and creating player character cycles to importing each student\u2019s animation into an existing game engine.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_326",
+    "name": "Applied Principles: Programming",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_development",
+      "interactive_design",
+      "programming"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_allen",
+      "prof_dodson"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 12,
+    "prerequisites": [
+      "GAME_220",
+      "ITGM_220"
+    ],
+    "description": "In this course, students learn programming techniques and skills utilizing programming languages in common use by game developers and interactive designers. Students gain basic understanding of computer science concepts, awareness of different types of computer languages, and use of a program-development environment, as well as an understanding of control structures, data structures, program logic, and\u00a0problem-solving and object-oriented programming methodologies.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_333",
+    "name": "Digital Sculpting: Creatures and Characters",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "animation",
+      "concept_art",
+      "visual_effects"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay",
+      "prof_avenali"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 13,
+    "prerequisites": [
+      "VSFX_210",
+      "VFX_210",
+      "ILLU_225",
+      "GAME_236",
+      "ITGM_236",
+      "ANIM_249"
+    ],
+    "description": "3D concept artists create complex organic models to populate the imagined worlds of video games, 3D animations, and visual effects. In this course, students cultivate digital sculpting skills as they produce realistic character and creature sculpts with aesthetic appeal, mood, and texture using 2D and 3D editing, painting, and sculpting technologies.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_336",
+    "name": "Applied Principles: Game Art",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "art_direction",
+      "game_design"
+    ],
+    "preferred_professors": [
+      "prof_dodson",
+      "prof_lindsay",
+      "prof_spencer"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 14,
+    "prerequisites": [
+      "VSFX_210",
+      "VFX_210",
+      "GAME_236",
+      "ITGM_236",
+      "ANIM_249"
+    ],
+    "description": "As the visual quality and expectations of digital games increase, so does the need for higher quality art content as well as cohesive and consistent art direction. By focusing on issues such as next generation digital content creation, art direction methodologies, visual complexity, and modularity, students design and create visually effective and highly detailed runtime environments utilizing next generation workflows and pipelines.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_337",
+    "name": "Applied Principles: Information Architecture",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "information_design",
+      "interactive_design"
+    ],
+    "preferred_professors": [
+      "prof_spencer"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 15,
+    "prerequisites": [
+      "GAME_220",
+      "ITGM_220",
+      "GAME_256",
+      "ITGM_256"
+    ],
+    "description": "This course focuses on the categorization of information into a coherent structure, the interactive design process, and the delivery and designing of visual interfaces. Students are expected to develop a conceptual framework for real-world applications that can easily be understood and quickly accessed, exploring issues from the industry, art, and society.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_342",
+    "name": "Narrative Content Design for Games",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design",
+      "game_development",
+      "interactive_design",
+      "multiplayer",
+      "narrative"
+    ],
+    "preferred_professors": [
+      "prof_dodson",
+      "prof_lindsay",
+      "prof_spencer"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 16,
+    "prerequisites": [
+      "GAME_120",
+      "ITGM_120",
+      "GAME_121",
+      "ITGM_121"
+    ],
+    "description": "From linear narratives to massive multiplayer online games, game designers translate story visions into fully-realized and interactive entertainment experiences. In this course, students explore narrative structures as well as player expectations and responses through collaborative development of an interactive, industry-ready game design.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_346",
+    "name": "Digital Sculpting: Real-time Creature Pipelines",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "character_art",
+      "production",
+      "real_time_rendering",
+      "rendering",
+      "texturing"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_avenali",
+      "prof_dodson"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 17,
+    "prerequisites": [
+      "GAME_333",
+      "ITGM_333"
+    ],
+    "description": "From amorphous creatures to warrior princesses, character artists drive the visual and emotional quality of games. In this course, students produce 3D character and creature models for integration into production applications and complex workflows for optimization. Students learn to incorporate 2D texturing and rendering, re-topology, UV and high-resolution digital sculpting applications to create organic models.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_347",
+    "name": "Applied Principles: Physical Computing",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 18,
+    "prerequisites": [
+      "GAME_220",
+      "ITGM_220"
+    ],
+    "description": "Students explore the ways in which nontraditional input devices create interactive user experiences. In addition to the technical, aesthetic, and conceptual concerns of this art form, students assess the work of a range of artists. Students develop concepts, experiments, and prototypes for self-contained interactive objects in immersive environments.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_351",
+    "name": "Game User Experience",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design",
+      "game_development",
+      "interactive_design"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_dodson",
+      "prof_spencer"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 19,
+    "prerequisites": [
+      "UXDG_101",
+      "UXDG_310",
+      "GAME_256",
+      "ITGM_256",
+      "GAME_267",
+      "ITGM_267"
+    ],
+    "description": "Students expand their knowledge of interactive design and game development as they step into the role of game UX researcher. Exploring the highly relevant field of game user experience, students combine research and design principles to build and optimize playable experiences. Through the development of functional prototypes and high-fidelity interfaces, students showcase their interactive and visual design skills.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_356",
+    "name": "Applied Principles: Game Design",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design",
+      "game_design_documentation",
+      "game_mechanics",
+      "game_systems"
+    ],
+    "preferred_professors": [
+      "prof_dodson",
+      "prof_lindsay",
+      "prof_spencer"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 20,
+    "prerequisites": [
+      "GAME_256",
+      "ITGM_256"
+    ],
+    "description": "This course builds on the core principles of game design and delves into the many systems and mechanics that make up the practice of applied game design.  Through in-class exercises and design projects, students develop many of the active systems and mechanics utilized in contemporary game design and use a variety of acknowledged industry methods of documentation to present and formalize their designs.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_357",
+    "name": "Applied Principles: Interactive Web Design",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "animation",
+      "interactive_design"
+    ],
+    "preferred_professors": [
+      "prof_spencer",
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 21,
+    "prerequisites": [
+      "ADBR_205",
+      "GRDS_205",
+      "GAME_220",
+      "ITGM_220"
+    ],
+    "description": "Key concepts of Web design are presented through a series of technical and design workshops. Students are introduced to the latest authoring and animation tools and learn how to apply their knowledge of the software to create dynamic and responsive Web designs.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_358",
+    "name": "Real-time Digital Materials and Surfaces",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design",
+      "materials"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_dodson",
+      "prof_avenali"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 22,
+    "prerequisites": [
+      "VSFX_210",
+      "VFX_210",
+      "GAME_236",
+      "ITGM_236",
+      "ANIM_249"
+    ],
+    "description": "From the depths of the ocean to the surface of the moon, game designers explore advanced concepts of material and texture to create believable worlds with visually faithful digital surface simulations. In this course, students learn to replicate the physical properties of surfaces and use cinematic techniques to portray complex material interactions and progression for inclusions in digital game environments.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_360",
+    "name": "Interactive Game Project",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design",
+      "game_development",
+      "interactive_design"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_dodson",
+      "prof_spencer"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 23,
+    "prerequisites": [
+      "GAME_220",
+      "ITGM_220"
+    ],
+    "description": "Students design and develop games, websites, and interactive media through a series of technical and design workshops. The course explores intermediate and advanced technical and conceptual aspects of design and development for group-based games and interactive projects.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_364",
+    "name": "Scripting for Games",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "scripting"
+    ],
+    "preferred_professors": [
+      "prof_dodson"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 24,
+    "prerequisites": [
+      "GAME_220",
+      "ITGM_220"
+    ],
+    "description": "In this course, students write scripts for a current game engine in order to alter its existing functionality as well as create new interactive elements. Ultimately, students learn to create what the industry calls an engine modification (MOD).",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_366",
+    "name": "Applied Principles: Game Tech",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_development",
+      "game_tech",
+      "materials",
+      "visual_effects"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay",
+      "prof_avenali"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 25,
+    "prerequisites": [
+      "GAME_266",
+      "ITGM_266"
+    ],
+    "description": "Real-time materials and environmental effects development constitute one of the largest growing areas in game development for artists. As graphics hardware and game engine technology improve, the demand rises for skilled artists who can take advantage of these tools to add cinematic and visual interest to the digital game experience. Using industry-standard methodologies, students employ professional techniques and practices to create complex materials, particle and environmental effects for games using a real-time game engine.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_370",
+    "name": "Digital Media Entrepreneurship",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 26,
+    "prerequisites": [
+      "GAME_121",
+      "ITGM_121",
+      "GRDS_229",
+      "ADBR_252"
+    ],
+    "description": "This course introduces students to entrepreneurship relating specifically to technology and digital game industries. Students learn by researching and conducting case studies about successful and failed start-up companies. The final project culminates in simulating the technology start-up process \u2013 conducting marketing and competitive research, creating financial projections, writing an executive summary, and creating and pitching investor and client presentations.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_380",
+    "name": "Game Development Portfolio",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design",
+      "game_development",
+      "interactive_design",
+      "interface_design"
+    ],
+    "preferred_professors": [
+      "prof_spencer",
+      "prof_lindsay",
+      "prof_dodson"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 27,
+    "prerequisites": [
+      "GAME_326",
+      "ITGM_326",
+      "GAME_356",
+      "ITGM_356",
+      "GAME_366",
+      "ITGM_366",
+      "GAME_336",
+      "ITGM_336"
+    ],
+    "description": "With a focus on integrating imagery, websites, video, and various elements into an interactive portfolio, this course addresses concepts, cross-platform developments, and issues concerning aesthetics, interface design, and use of media. Students collect relevant material and produce a digital portfolio, packaging for portfolio, r\u00e9sum\u00e9, cover letter, business card, and flatbook portfolio.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_405",
+    "name": "Game Development Studio I",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "environment_art",
+      "game_development",
+      "production"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_allen",
+      "prof_dodson"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 28,
+    "prerequisites": [
+      "GAME_326",
+      "ITGM_326",
+      "GAME_356",
+      "ITGM_356",
+      "GAME_366",
+      "ITGM_366",
+      "GAME_336",
+      "ITGM_336"
+    ],
+    "description": "Students apply their skills to creating a workable interactive project or video game in a simulated professional environment. Topics include content creation within a limited resource environment. The course emphasizes production-oriented goals in order to provide students with a professional skill set and a body of fine art.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_415",
+    "name": "Advanced Principles: Programming",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "programming"
+    ],
+    "preferred_professors": [
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 29,
+    "prerequisites": [
+      "GAME_326",
+      "ITGM_326"
+    ],
+    "description": "Students master advanced program design methodologies, object-oriented design, and programming techniques using C++. By developing reusable and modular code, students learn to build complex applications.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_433",
+    "name": "Advanced Digital Sculpting: Creating Environments and Props",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "3d_modeling",
+      "environment_art",
+      "modeling",
+      "production",
+      "real_time_rendering",
+      "rendering",
+      "texturing"
+    ],
+    "preferred_professors": [
+      "prof_avenali",
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 30,
+    "prerequisites": [
+      "GAME_333",
+      "ITGM_333"
+    ],
+    "description": "From dense woodlands and majestic cities to gnarly trees and ornate thrones, compelling 3D game environments and props create mood and atmosphere to shape the player experience in subtle but impactful ways. In this course, students acquire advanced modeling, sculpting, and texturing techniques as they produce highly detailed game environments and props. With a focus on real-time rendering, students integrate advanced techniques and assets in the production pipeline, advancing their professional prowess as 3D environment artists.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_446",
+    "name": "Advanced Digital Sculpting: Art Direction and Integration",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "animation",
+      "art_direction",
+      "character_animation",
+      "character_art",
+      "character_rigging",
+      "creative_direction",
+      "game_design",
+      "production"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_dodson",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 31,
+    "prerequisites": [
+      "GAME_346",
+      "ITGM_346"
+    ],
+    "description": "From the first pitch meeting to the execution of a playable game, art direction for character design involves integration of strong storytelling and advanced production planning. In this course, students learn advanced digital sculpting techniques to create 3-D sculpts consistent with the game\u2019s creative vision and appropriately prepare sculpts for animation and rigging in the next phase of the production pipeline.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_447",
+    "name": "Advanced Applied Principles: Physical Computing",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "interaction_design",
+      "interactive_design"
+    ],
+    "preferred_professors": [
+      "prof_dodson",
+      "prof_spencer"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 32,
+    "prerequisites": [
+      "GAME_347",
+      "ITGM_347"
+    ],
+    "description": "Students explore advanced methods and technologies to develop interactive designs and artwork utilizing physical input devices. Lectures, discussions, and hands-on projects expose students to the latest applications of interaction design, such as ubiquitous computing, augmented reality, and tangible computing. Students learn to work with a wide range of technologies, enabling them to create sophisticated interactive installations, alternative games, and touch-based interfaces.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_465",
+    "name": "Game Development Studio II",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design",
+      "game_development"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_dodson",
+      "prof_allen"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 33,
+    "prerequisites": [
+      "GAME_405",
+      "ITGM_405"
+    ],
+    "description": "Students work in a collaborative, simulated professional environment to address issues including content creation in a group dynamic, strategic planning, goal-oriented planning, and game theory and design. This course provides students with a significant amount of professional-quality material for portfolio inclusion.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_475",
+    "name": "Game Development Postproduction",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design",
+      "game_development",
+      "interactive_design",
+      "materials",
+      "production",
+      "programming",
+      "scripting"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_dodson",
+      "prof_allen"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 34,
+    "prerequisites": [
+      "GAME_465",
+      "ITGM_465"
+    ],
+    "description": "This final phase of the student\u2019s senior project focuses on the production and mastering of a senior interactive or game project, including final design, programming or scripting, focus testing, testing, and implementation. Students also create support materials, such as a product website, and work to integrate these into their portfolios.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_479",
+    "name": "Undergraduate Internship",
+    "department": "game",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 35,
+    "prerequisites": [],
+    "description": "Internships offer students valuable opportunities to work in a professional environment and gain firsthand experience to help them prepare for careers. In an approved internship setting, a student typically spends one quarter working with an on-site professional supervisor and a faculty internship supervisor to achieve specific goals and objectives related to the program of study.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_502",
+    "name": "Game Design Perspectives",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design",
+      "media_art"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_dodson",
+      "prof_spencer"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 36,
+    "prerequisites": [],
+    "description": "Game design is the art that brings together rules, players and game components in order to create an experience for the player. Through study and application, students learn the foundations of game design and the game design pipeline, sample the methods of great game designers, explore IP usage and design in emerging media, and apply this knowledge in a series of in-class exercises and individual designs, both proposed and executed.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_505",
+    "name": "Game Art Methods",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [],
+    "preferred_professors": [],
+    "enrollment_cap": 16,
+    "teaching_order": 37,
+    "prerequisites": [],
+    "description": "Students explore a variety of tools and methods used by artists in the game industry, focusing on process and critique. Through an emphasis on presentation and language, students further refine their core skills needed to be a successful digital game artist.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_706",
+    "name": "Game Design Documentation",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design",
+      "game_design_documentation",
+      "interactive_design"
+    ],
+    "preferred_professors": [
+      "prof_dodson",
+      "prof_spencer",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 38,
+    "prerequisites": [],
+    "description": "In this course, students gain a solid understanding of game design documentation processes that are crucial for writers and designers of interactive work. Issues involving the game design sequence, fundamental game design techniques, taxonomy of documentation terms and communication through documentation to other departments are investigated, analyzed and critiqued. Students also explore a wide variety of game industry documentation types and needs.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_710",
+    "name": "Game Art: Engine Pipeline and Practices",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design",
+      "interactive_design",
+      "production"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_dodson",
+      "prof_spencer"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 39,
+    "prerequisites": [],
+    "description": "Game engines are vital to the creation of video games and interactive experiences. Students gain experience working with a game engine and explore various art and design pipelines used by different disciplines within the game industry. Concentrating on the creation of virtual environments, key frames, and cinematic camera work, students learn to manage the step-by-step process of game engine production.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_712",
+    "name": "Game Tech: Gameplay Scripting",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_development",
+      "game_tech",
+      "gameplay",
+      "scripting"
+    ],
+    "preferred_professors": [
+      "prof_dodson",
+      "prof_lindsay",
+      "prof_allen"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 40,
+    "prerequisites": [],
+    "description": "Gameplay scripting is an essential part of development and allows artist and designers to create interactive assets, events, and interfaces. In this course, students build expertise with an industry standard scripting language as they script gameplay elements and create small playable games.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_714",
+    "name": "Game Design: Ludic Methodology",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "art_history",
+      "game_design",
+      "game_mechanics"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_dodson",
+      "prof_spencer"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 41,
+    "prerequisites": [],
+    "description": "Students experience an in-depth, hands-on examination and critique of the art of game design. Through a non-digital medium, students explore a variety of topics, ranging from history to design methodologies that strengthen their vocabulary in game analysis. Working through a range of game mechanics and design patterns, students explore different styles of games, culminating in a non-digital prototype.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_720",
+    "name": "Game Art: Virtual World Building",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design",
+      "world_building"
+    ],
+    "preferred_professors": [
+      "prof_dodson",
+      "prof_lindsay",
+      "prof_spencer"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 42,
+    "prerequisites": [
+      "GAME_710"
+    ],
+    "description": "The visual artistry found in modern game environments has risen to astounding heights. In this course, students employ industry workflows and methodologies to design and build real-time game environments. From creating block outs to developing modular asset kits, students produce professional, and well-crafted world in a game engine.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_722",
+    "name": "Game Tech: Real-time Materials and Shaders",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_tech",
+      "materials",
+      "real_time_rendering",
+      "rendering",
+      "texturing"
+    ],
+    "preferred_professors": [
+      "prof_avenali",
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 43,
+    "prerequisites": [
+      "GAME_710",
+      "GAME_712"
+    ],
+    "description": "Students explore advanced concepts in materials and texturing as applied to game engines and graphics processing unit (GPU) rendering. Utilizing 3D painting methods, students develop digital surfaces with realistic representations of physical properties and environmental influences. Students use photography, light, and texture as reference for the creation of real-time renderings and image manipulation.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_724",
+    "name": "Game Design: Immersive Level Design",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design",
+      "game_systems",
+      "gameplay",
+      "level_design"
+    ],
+    "preferred_professors": [
+      "prof_dodson",
+      "prof_lindsay",
+      "prof_avenali"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 44,
+    "prerequisites": [
+      "GAME_712",
+      "GAME_710"
+    ],
+    "description": "Level designers create immersive, dynamic, goal-driven gameplay experiences through the application of design techniques and practices, including pacing, rewards, and cinematics. Students script events and utilize existing gameplay kits and input systems to create playable levels. Students apply a variety of techniques to design engaging encounters for different game genres.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_730",
+    "name": "Game Art: Character Creation and Digital Sculpting",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "character_art",
+      "game_design",
+      "game_development",
+      "gameplay"
+    ],
+    "preferred_professors": [
+      "prof_dodson",
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 45,
+    "prerequisites": [
+      "GAME_710"
+    ],
+    "description": "Dynamic and memorable characters drive engagement and elevate gameplay experiences. In this course, students explore character creation for real-time entertainment through research and ideation that begins with 2D visualization and culminates in a finished 3D project. Utilizing discussions, critiques, and design exercises, students focus on advanced digital sculpting techniques required to become a successful character artist in the field of game development.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_734",
+    "name": "Game Design: Systems and Simulation",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design",
+      "game_systems",
+      "interactive_design"
+    ],
+    "preferred_professors": [
+      "prof_dodson",
+      "prof_spencer",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 46,
+    "prerequisites": [
+      "GAME_712",
+      "GAME_710"
+    ],
+    "description": "Digital games are a collection of individual systems working in unison to create an interactive experience. Students investigate the role of system designers in the game industry, and acquire techniques on how to develop, communicate, and implement these systems. Through in-class exercises, demonstrations, and lectures, students learn to design, prototype, and simulate systems for games.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_740",
+    "name": "Game Art: Art Direction and Look Development",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "art_direction",
+      "environment_art",
+      "game_development",
+      "media_art",
+      "production"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_dodson",
+      "prof_allen"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 47,
+    "prerequisites": [
+      "GAME_710"
+    ],
+    "description": "Through careful examination and analysis of influential works, across various forms of digital media, students learn to develop a visual language and define a cohesive artistic vision. With a focus on establishing an art pipeline and documentation, students define a visual style that can be communicated to a team and applied in a game production environment.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_742",
+    "name": "Game Tech: Real-Time Particles and Effects",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design",
+      "game_systems",
+      "game_tech",
+      "scripting",
+      "visual_effects"
+    ],
+    "preferred_professors": [
+      "prof_dodson",
+      "prof_lindsay",
+      "prof_allen"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 48,
+    "prerequisites": [
+      "GAME_712"
+    ],
+    "description": "Students in this course learn to master real-time visual effects workflows and paradigms. Enhancing scripting skills for the creation of programmable FX for games, students explore and manipulate different types of particle systems. Using various genres for reference, from nature to fantasy and realistic to stylized, students design professional quality game FX.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "GAME_754",
+    "name": "Game Design: Professional Production Pipeline",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design",
+      "production"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_dodson",
+      "prof_allen"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 49,
+    "prerequisites": [
+      "GAME_710",
+      "GAME_712",
+      "GAME_714"
+    ],
+    "description": "Immersed in a simulated game production environment, students collaborate to design and construct an original game. Students utilize professional production pipelines and techniques as they navigate the complexities of time-management, project planning, and workload distribution for effective team productions.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "ITGM_522",
+    "name": "Programming for Designers",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "interactive_design",
+      "programming"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_spencer"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 50,
+    "prerequisites": [],
+    "description": "Students learn basic programming concepts that can be applied to the development of interactive applications. The course begins with a procedural approach, which leads to object-oriented programming techniques. Students apply computation-thinking and problem-solving techniques to design well-structured and commented code. Students also explore open-source programming resources and communities.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "ITGM_705",
+    "name": "Interactive and Game Design: Research and Practice",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design",
+      "interactive_design"
+    ],
+    "preferred_professors": [
+      "prof_spencer",
+      "prof_lindsay",
+      "prof_dodson"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 51,
+    "prerequisites": [],
+    "description": "The investigation and application of appropriate research methodologies and theoretical frameworks is central to art and design. With a focus on the scientific method, students formulate research questions, deconstruct applied concepts, and validate hypothetical solutions to establish the foundation of a professional interactive and game design practice.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "ITGM_708",
+    "name": "Effective Design Communication",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_dodson",
+      "prof_spencer"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 52,
+    "prerequisites": [],
+    "description": "Every professional design and game studio expects exceptional communication skills from its talented designers. In this course, students learn how to effectively present their ideas and generate supportive content for pitch delivery. As part of future executive and leadership training, student designers learn to craft their delivery of formal presentations to achieve desired results. From gathering informational data to organizing visuals and infographics, students perfect the art and design of pitch delivery for a variety of formal and informal contexts, from client pitches to thesis presentations to professional conferences.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "ITGM_719",
+    "name": "Scripting for Interactivity",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "interactive_design",
+      "programming",
+      "scripting",
+      "sound_design"
+    ],
+    "preferred_professors": [
+      "prof_spencer",
+      "prof_lindsay",
+      "prof_dodson"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 53,
+    "prerequisites": [],
+    "description": "With an emphasis on scripting interactivity, students develop applications and projects that include games and interactive applications. This course explores implementation skills for digital applications centered on object-oriented programming techniques. Students use logic and problem solving to design sound coding structures that enhance interactive digital interfaces.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "ITGM_733",
+    "name": "Digital Sculpting for Video Games",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_development"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay",
+      "prof_dodson"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 54,
+    "prerequisites": [
+      "ANIM_709",
+      "ITGM_710",
+      "GAME_730"
+    ],
+    "description": "This course explores the creation of complex models and textures for use in video game development. Students are introduced to current theory, functional aesthetics and advanced techniques relevant to digital sculpture.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "ITGM_746",
+    "name": "Digital Sculpting Pipelines and Practices",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "animation",
+      "game_development",
+      "production",
+      "visual_effects"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay",
+      "prof_dodson"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 55,
+    "prerequisites": [
+      "ITGM_733"
+    ],
+    "description": "Digital sculpting has brought new depths to the world of game development, animation, visual effects, and action figure modelling. Utilizing the professional production pipeline for game creation, students focus on the step-by-step process of translating 2D concepts into 3D sculpts for the creation of realistic characters. Students enhance their technical and digital sculpting skills for the optimization of real-time animated productions.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "ITGM_748",
+    "name": "Interactive Design and Game Development M.A. Final Project",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design",
+      "game_development",
+      "interactive_design",
+      "level_design"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_dodson",
+      "prof_spencer"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 56,
+    "prerequisites": [
+      "IXDS_720",
+      "GAME_722",
+      "ITGM_723"
+    ],
+    "description": "As the culminating experience for interactive design and game development graduate students, the M.A. final project embodies the synthesis and skillful application of discipline knowledge and techniques covered throughout the program. Addressing individual professional goals, and reflecting technical mastery of chosen specialties, each student in this course completes an industry-level project from research to conceptualization to implementation.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "ITGM_749",
+    "name": "ITGM Portfolio and Business Practices",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "interactive_design",
+      "interface_design"
+    ],
+    "preferred_professors": [
+      "prof_spencer"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 57,
+    "prerequisites": [
+      "GAME_720",
+      "ITGM_721",
+      "IXDS_720",
+      "ITGM_723"
+    ],
+    "description": "Students focus on the integration of imagery, websites, video and various other elements into an interactive portfolio. Concepts, cross-platform developments and issues concerning aesthetics, interface design and use of media are addressed. Students collect relevant material and produce a CD/DVD/Web-based portfolio, packaging for portfolio, r\u00e9sum\u00e9, cover letter, business cards and flat book portfolio.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "ITGM_755",
+    "name": "Thesis Studio I: Research and Ideation",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [],
+    "preferred_professors": [],
+    "enrollment_cap": 16,
+    "teaching_order": 58,
+    "prerequisites": [
+      "ITGM_705"
+    ],
+    "description": "Every thesis starts with a well-constructed problem statement. In this course, students translate a well-defined personal vision and area of interest into a cohesive and focused thesis topic. Students investigate multiple approaches and methodologies for constructing their problem statement, and engage in critical review of relevant academic and professional perspectives to inform the direction of their thesis.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "ITGM_765",
+    "name": "Thesis Studio II: Production and Prototyping",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "production",
+      "prototyping"
+    ],
+    "preferred_professors": [
+      "prof_dodson",
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 59,
+    "prerequisites": [
+      "ITGM_755"
+    ],
+    "description": "With a strong emphasis on critique and process, students begin to develop and prototype the visual component of their graduate thesis. Grounded in a strong thesis direction and supported by a solid theoretical framework, students initiate and document their production process.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "ITGM_775",
+    "name": "Evidence-based Design Interactivity and Gaming",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [],
+    "preferred_professors": [],
+    "enrollment_cap": 16,
+    "teaching_order": 60,
+    "prerequisites": [
+      "GAME_720",
+      "ITGM_721",
+      "IXDS_720",
+      "ITGM_723",
+      "ITGM_765"
+    ],
+    "description": "Evidence-based design uses objective assessments to provide empirical justification that validates design questions and claims. Through iterative user testing and various validation methodologies, students provide supportive data for their thesis and other previously prototyped design projects. Conclusive visualized data are amalgamated to enhance understanding and strengthen professional documentation and presentations.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "ITGM_779F",
+    "name": "Graduate Field Internship",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [],
+    "preferred_professors": [],
+    "enrollment_cap": 16,
+    "teaching_order": 61,
+    "prerequisites": [],
+    "description": "Students in this course undertake a field assignment under the supervision of a faculty member.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "ITGM_779T",
+    "name": "Graduate Teaching Internship",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [],
+    "preferred_professors": [],
+    "enrollment_cap": 16,
+    "teaching_order": 62,
+    "prerequisites": [],
+    "description": "Students in this course undertake a teaching assignment under the supervision of a faculty member.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "ITGM_790",
+    "name": "Thesis Studio III: Validation and Documentation",
+    "department": "game",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "itgm_suite",
+    "specialization_tags": [
+      "game_design",
+      "game_design_documentation",
+      "interactive_design"
+    ],
+    "preferred_professors": [
+      "prof_dodson",
+      "prof_spencer",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 63,
+    "prerequisites": [
+      "ITGM_755",
+      "ITGM_765"
+    ],
+    "description": "As culmination of their graduate experience, students execute a thesis that demonstrates a mature, resolved body of work and advanced professional competence through mastery of the technical, creative, and aesthetic elements of the discipline. Students synthesize research from various sources with their own creative ideas, technical skills, aesthetic sensibility, and mastery of design principles to make an original contribution to the field of game art or interactive design.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_105",
+    "name": "Principles of Motion Media Design",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "animation",
+      "branding",
+      "compositing",
+      "film",
+      "motion_design",
+      "typography"
+    ],
+    "preferred_professors": [
+      "prof_maloney",
+      "prof_allen",
+      "prof_avenali"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 64,
+    "prerequisites": [
+      "DIGI_130",
+      "CMPA_110"
+    ],
+    "description": "From advertisements to film, motion media plays a vital role in the appearance of branding and imagery in media. In this course, students explore the key aspects of motion media, including the historical application of typography and design principles, basic compositing, animation principles, keyframing, and vector and raster asset integration.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_115",
+    "name": "Survey of Motion Media Design",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "film",
+      "media_art",
+      "motion_design",
+      "narrative"
+    ],
+    "preferred_professors": [
+      "prof_maloney",
+      "prof_imperato",
+      "prof_dodson"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 65,
+    "prerequisites": [],
+    "description": "Motion media design evolution began with non-narrative experimental films of the 1930s and continued through to the innovative movie titles of Saul Bass in the 1950s, MTV\u2019s birth in the 1980s, and the influence of new technologies and media artists in the 1990s and 2000s. This course surveys the history of motion media design and the individuals, companies and current trends that define the field today.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_120",
+    "name": "Concepts and Storyboards",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 66,
+    "prerequisites": [
+      "DRAW_100",
+      "FOUN_111",
+      "DIGI_130",
+      "CMPA_110"
+    ],
+    "description": "Creating concepts and explaining ideas, style and technique though storyboards are essential skills for the motion media designer. In this course students learn how to conceptualize and visualize motion graphic storyboards with digital techniques as required in the professional world.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_130",
+    "name": "Motion Media Design Techniques I",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "motion_design"
+    ],
+    "preferred_professors": [
+      "prof_maloney",
+      "prof_imperato"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 67,
+    "prerequisites": [
+      "MOME_105"
+    ],
+    "description": "This interdisciplinary course trains students in the essential vocabularies and concepts of motion media design, examining a range of diverse issues of central importance to the motion media designer such as previsualization, cinematography, media theories, digital culture, new media and critical studies.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_206",
+    "name": "Motion Media Design Techniques II",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "graphic_design",
+      "level_design",
+      "motion_design"
+    ],
+    "preferred_professors": [
+      "prof_avenali",
+      "prof_maloney",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 68,
+    "prerequisites": [
+      "MOME_130",
+      "GRDS_348"
+    ],
+    "description": "This course continues to build upon the knowledge of motion techniques and software. It teaches advanced motion techniques in industry-standard motion graphic software to give students the ability to realize their concepts and ideas in upper-level courses.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_221",
+    "name": "Virtual Reality for Motion Media",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "film",
+      "interactive_design",
+      "media_theory",
+      "motion_design",
+      "production",
+      "virtual_reality"
+    ],
+    "preferred_professors": [
+      "prof_dodson",
+      "prof_maloney",
+      "prof_imperato"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 69,
+    "prerequisites": [
+      "MOME_105",
+      "MOME_130"
+    ],
+    "description": "From commercials to immersive feature film trailers to branded entertainment experiences, virtual reality is transforming digital media and providing new opportunities for motion media designers. Students in this course examine the trends, aesthetics, theory and expanding impact of interactive and immersive technologies. Employing motion media techniques, students apply this knowledge to the design and execution of virtual reality content and 360-degree production.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_246",
+    "name": "Title Design",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "film",
+      "graphic_design",
+      "motion_design",
+      "sound_design",
+      "typography"
+    ],
+    "preferred_professors": [
+      "prof_maloney",
+      "prof_avenali",
+      "prof_spencer"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 70,
+    "prerequisites": [
+      "MOME_105",
+      "MOME_115"
+    ],
+    "description": "This course addresses basic historical and contemporary typographic design concepts utilized in creating simple film titles with graphic shapes, photographs and sound. Students construct graphic elements and typography for use in projects while addressing issues of motion and dynamic relationships.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_305",
+    "name": "Motion Media Projection",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "projection_mapping"
+    ],
+    "preferred_professors": [
+      "prof_imperato"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 71,
+    "prerequisites": [
+      "MOME_206"
+    ],
+    "description": "This course examines the use of projection systems to display motion media works at scales larger than the human body. Students are introduced to a range of practices in projection, from projection mapping on buildings to architectural and museum installations and projections in gallery contexts. Students are introduced to technical systems for developing and delivering large-scale projected media and apply these techniques in their own studio practice.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_309",
+    "name": "Concepts in Motion Media Design",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "film",
+      "graphic_design",
+      "motion_design",
+      "motion_graphics",
+      "screen_design"
+    ],
+    "preferred_professors": [
+      "prof_maloney",
+      "prof_imperato",
+      "prof_allen"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 72,
+    "prerequisites": [
+      "MOME_206"
+    ],
+    "description": "This course introduces fundamental concepts for motion graphics, including graphics and promos for television networks and film titles and logos for advertising. The focus is on design presentation and development, screen composition, graphic transitions and content.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_310",
+    "name": "Alternative Production Techniques",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "media_art",
+      "narrative",
+      "production"
+    ],
+    "preferred_professors": [
+      "prof_dodson",
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 73,
+    "prerequisites": [
+      "MOME_115",
+      "BCST_115"
+    ],
+    "description": "This course explores a variety of historical techniques employed by avant-garde/experimental media artists in the creation of their time-based work. Students explore ideas of narrative form, image genres and visual language issues related to context and audience. Students create their own experimental work and improve their critical and conceptual facilities.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_315",
+    "name": "Visualizing Music",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "motion_design",
+      "motion_graphics",
+      "sound_design"
+    ],
+    "preferred_professors": [
+      "prof_maloney",
+      "prof_imperato",
+      "prof_allen"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 74,
+    "prerequisites": [
+      "MOME_115"
+    ],
+    "description": "The fusion of motion graphics with sound design heightens visual perception and elevates emotional impact. In this course, students explore the dynamic and complex relationship between the visual and auditory senses, elevating their compositions\u2019 visual through strategic integration of sound and design. Students create a collection of synchronized works using both instrumental and vocal music.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_333",
+    "name": "Design for Motion",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "motion_design",
+      "production"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay",
+      "prof_dodson"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 75,
+    "prerequisites": [
+      "MOME_120"
+    ],
+    "description": "In this elective course, students gain an advanced understanding of the design process in motion media production, through a concentrated study of the preparation of production boards across a range of styles. Students broaden their creative and technical experience though detailed exercises, studio sessions, and critiques of their design work, with the aim of producing portfolio quality production boards.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_360",
+    "name": "Motion Media Cinematography",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "film",
+      "lighting",
+      "media_art"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay",
+      "prof_avenali"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 76,
+    "prerequisites": [
+      "MOME_120"
+    ],
+    "description": "This course addresses camera operation, lenses, film stocks, filters, lighting and light measuring, as well as the art and aesthetics of cinematography. Through hands-on practice and exercises, students are introduced to the science behind lighting ratios and exposures, film stocks and emulsion tests and telecine transfers.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_369",
+    "name": "Time-based Typography",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "film",
+      "graphic_design",
+      "motion_design",
+      "typography"
+    ],
+    "preferred_professors": [
+      "prof_maloney",
+      "prof_avenali",
+      "prof_imperato"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 77,
+    "prerequisites": [
+      "MOME_206"
+    ],
+    "description": "This course addresses historical and contemporary typographic design concepts using film and television. Students construct graphic elements and typography for use in projects while addressing issues of motion and dynamic relationships.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_390",
+    "name": "Motion Media Design Professional Development",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "motion_design",
+      "motion_graphics"
+    ],
+    "preferred_professors": [
+      "prof_maloney",
+      "prof_imperato",
+      "prof_allen"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 78,
+    "prerequisites": [
+      "MOME_115",
+      "MOME_206"
+    ],
+    "description": "Students are introduced to the multifaceted business of motion graphics in which they will be working. While developing a strategic framework for a portfolio, students also examine the industry structures and requirements. Issues of intellectual property, employment markets, contracts, marketing and overlap with other areas of study are considered.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_400",
+    "name": "Senior Motion Media Design Project I",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "motion_design",
+      "production"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay",
+      "prof_dodson"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 79,
+    "prerequisites": [
+      "MOME_309",
+      "BCST_309"
+    ],
+    "description": "Students develop ideas and storyboards for their senior project. They execute the preproduction phase of the project and start production that is finished in a second course.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_401",
+    "name": "3D Motion Media Design",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "3d_modeling",
+      "animation",
+      "environmental_design",
+      "lighting",
+      "modeling",
+      "motion_design",
+      "visual_effects"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay",
+      "prof_avenali"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 80,
+    "prerequisites": [
+      "BREN_200",
+      "MOME_206"
+    ],
+    "description": "This course explores the foundations of 3D environments. Modeling, textures, lighting and animating are covered with simple animations, logo and shape motion and environmental visual effects.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_408",
+    "name": "Multiplatform Media Brand Packaging",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "branding",
+      "broadcast_design"
+    ],
+    "preferred_professors": [
+      "prof_maloney",
+      "prof_spencer",
+      "prof_imperato"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 81,
+    "prerequisites": [
+      "MOME_309",
+      "BCST_309"
+    ],
+    "description": "This course discusses historical and contemporary broadcast packages as they relate to design, marketing strategies and branding. These concepts are useful in the creation of show openings, tags, bumpers and other elements that develop network identities and broadcast entities.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_440",
+    "name": "Advanced 3D Motion Media Design",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "film",
+      "motion_design"
+    ],
+    "preferred_professors": [
+      "prof_maloney",
+      "prof_imperato"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 82,
+    "prerequisites": [
+      "MOME_401"
+    ],
+    "description": "From films and music videos to games and apps, 3D motion media is everywhere. In this course, students acquire the advanced motion design skills necessary to generate high-quality, 3D content. Using industry-standard technology solutions, students model, texture, light, animate and track 3D motion media content for a range of entertainment applications.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_448",
+    "name": "Senior Motion Media Design Project II",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "motion_design",
+      "production"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay",
+      "prof_dodson"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 83,
+    "prerequisites": [
+      "MOME_369",
+      "MOME_400"
+    ],
+    "description": "Students execute the postproduction phase of a project, including analysis and critique, organization and scheduling. The goal is to create a final project that showcases the student\u2019s artistic vision through his or her acquired skills.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_479",
+    "name": "Undergraduate Internship",
+    "department": "motion_media",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 84,
+    "prerequisites": [],
+    "description": "Internships offer students valuable opportunities to work in a professional environment and gain firsthand experience to help them prepare for careers. In an approved internship setting, a student typically spends one quarter working with an on-site professional supervisor and a faculty internship supervisor to achieve specific goals and objectives related to the program of study.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_501",
+    "name": "Screen Design and Typography",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "motion_design",
+      "screen_design",
+      "typography"
+    ],
+    "preferred_professors": [
+      "prof_maloney",
+      "prof_imperato"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 85,
+    "prerequisites": [],
+    "description": "This course addresses the role of typography and design concepts applied in the field of motion media. Through a series of class projects, students develop the ability to effectively utilize the use of design principles and typographic values to address issues of motion and dynamic relationships.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_502",
+    "name": "Motion Analysis and Application",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "animation",
+      "motion_design"
+    ],
+    "preferred_professors": [
+      "prof_maloney",
+      "prof_imperato",
+      "prof_allen"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 86,
+    "prerequisites": [],
+    "description": "This course directs students towards the successful analysis and application of advanced animation techniques and methodologies. Students gain a thorough and deep understanding of motion media techniques, as evidenced in contemporary motion design work. Students explore the impact of these techniques on their personal aesthetic through individual practice, lectures, assigned readings, class discussions and critiques.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_503",
+    "name": "Motion Media Context and Application",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "animation",
+      "art_history",
+      "film",
+      "graphic_design",
+      "interactive_design",
+      "media_art",
+      "motion_design",
+      "motion_graphics",
+      "narrative"
+    ],
+    "preferred_professors": [
+      "prof_maloney",
+      "prof_imperato",
+      "prof_allen"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 87,
+    "prerequisites": [],
+    "description": "This course explores how motion graphics developed from innovations in a variety of fields including animation, graphic design, advertising and interactive media. The aesthetics that inform contemporary motion graphics began in non-narrative experimental films, continued in the innovative movie titles of the 1950s, video art and MTV, and in new technologies of the 1990s and contemporary media art. This course surveys the history of motion graphics, the individuals, companies and current trends that define the field today.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_705",
+    "name": "Visualization and Concept Storyboarding",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "concept_design",
+      "motion_design",
+      "narrative",
+      "production",
+      "storyboarding"
+    ],
+    "preferred_professors": [
+      "prof_dodson",
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 88,
+    "prerequisites": [],
+    "description": "In this course, students are expected to develop the ability to visualize various creative solutions to problems in motion media design. Students learn concept development, engage in the application of appropriate narrative and visual storytelling to those concepts, and produce storyboards that portray concepts accurately and vividly. In the creative phase of production, students are subject to traditional industry constraints, including typical production guides and guidelines.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_709",
+    "name": "Motion Media Cinematography and Editing",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "film",
+      "materials"
+    ],
+    "preferred_professors": [
+      "prof_avenali",
+      "prof_maloney"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 89,
+    "prerequisites": [],
+    "description": "This course introduces the foundations of filmmaking through the critical examination of historical materials. The theoretical and practical applications of the course culminate in the compilation of imagery that encompasses a variety of ideas and concepts and utilizes film and video cameras and editing techniques.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_711",
+    "name": "Advanced Motion Media Design Techniques",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "graphic_design",
+      "motion_design",
+      "production"
+    ],
+    "preferred_professors": [
+      "prof_maloney",
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 90,
+    "prerequisites": [],
+    "description": "This course gives students the skills and techniques necessary to execute their concepts into motion. Students learn how to interpret and read a storyboard for production and apply industry-standard software in their future motion graphic projects. Students receive training in all phases of motion graphic techniques and production.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_712",
+    "name": "Motion Media Projection for Public Environments",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [],
+    "preferred_professors": [],
+    "enrollment_cap": 16,
+    "teaching_order": 91,
+    "prerequisites": [
+      "MOME_705"
+    ],
+    "description": "Innovative projection techniques, when integrated with motion media prowess, artfully manipulate perceptions of space in physical environments. Using interactive controls, students create complex and responsive physical installations for objects, screens and architectural spaces.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_715",
+    "name": "Visual Design for Music Composition",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "motion_design",
+      "motion_graphics",
+      "production",
+      "sound_design",
+      "visual_effects"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_maloney",
+      "prof_imperato"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 92,
+    "prerequisites": [
+      "MOME_705"
+    ],
+    "description": "From animated sequences to visual effects, a synchronous relationship between kinetic and auditory design is paramount to the creation of compelling content. Through research and analysis of influential designers and compositions, students elevate their practice by applying advanced synchronization strategies that fuse sound with motion graphics and create innovative motion design productions.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_719",
+    "name": "Media Theory and Application",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "film",
+      "media_art",
+      "media_theory"
+    ],
+    "preferred_professors": [
+      "prof_imperato",
+      "prof_maloney"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 93,
+    "prerequisites": [],
+    "description": "This course integrates historical studies, contemporary art and visual theory and practice in the study of early and current thought in media theory. Students are expected to analyze and conceptualize the mass media through active discussion in the classroom, research projects and independent analyses in order to stimulate critical thinking that can be applied to film and digital media. Theoretical methods and models are utilized to inform and develop student practice.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_720",
+    "name": "Concept and Design Development for Motion Media",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "concept_design",
+      "motion_design",
+      "production"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_dodson",
+      "prof_allen"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 94,
+    "prerequisites": [
+      "MOME_705"
+    ],
+    "description": "Successful motion media designers create production boards in a range of styles to meet the parameters of creative briefs. In this course, students sharpen their creative and technical expertise through a focused study of industry practices and advanced design strategies to produce compelling storyboards and visual concepts.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_721",
+    "name": "Studio Business Practice",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [],
+    "preferred_professors": [],
+    "enrollment_cap": 16,
+    "teaching_order": 95,
+    "prerequisites": [],
+    "description": "Through articles, case studies, practical assignments and projects, students learn the business side of the media industry including the essentials for running a business or project. Students learn about accounting, budgets, insurance, copyright and intellectual property law, management, and human resources. The course culminates with a project in which students explain how they would run an assigned media job that requires use of all the areas of business covered during the course.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_729",
+    "name": "Dynamic Typography",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "typography"
+    ],
+    "preferred_professors": [
+      "prof_maloney"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 96,
+    "prerequisites": [],
+    "description": "This course reviews the theories and principles of typography and composition with a focus on understanding the dynamics of motion, legibility, content and message.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_735",
+    "name": "Motion Media Design Studio I: Thesis Preproduction",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "motion_design",
+      "production"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay",
+      "prof_dodson"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 97,
+    "prerequisites": [
+      "MOME_719",
+      "SDGM_719",
+      "SFDM_719"
+    ],
+    "description": "In this seminar studio course, students begin the research and exploration necessary to ensure successful completion of a thesis. Students define a personal direction, engage in theoretical exploration and begin to formulate plans for their thesis project in a self-directed and flexible format.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_746",
+    "name": "Main Title Design",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "film",
+      "motion_design",
+      "motion_graphics"
+    ],
+    "preferred_professors": [
+      "prof_maloney",
+      "prof_imperato",
+      "prof_allen"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 98,
+    "prerequisites": [
+      "MOME_705",
+      "BCST_705"
+    ],
+    "description": "This course is one of the most important and prestigious aspects of motion graphics. In the tradition of the masters of title design, students learn to conceptualize and express the content they are titling though innovative titling. Students create a body of work of feature film and television main titles.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_747",
+    "name": "Multiplatform Network Branding and Design",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "branding",
+      "broadcast_design"
+    ],
+    "preferred_professors": [
+      "prof_maloney",
+      "prof_spencer",
+      "prof_imperato"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 99,
+    "prerequisites": [
+      "MOME_719",
+      "SDGM_719",
+      "SFDM_719"
+    ],
+    "description": "This course is a comprehensive approach to design and branding for broadcast networks. Students create and pitch concepts, make storyboard presentations and as the final project, totally re-brand and re-design a network, including creation of a presentation book of their storyboard concepts and an animated montage of their redesign for the network.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_749",
+    "name": "Motion Media Design Portfolio",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "broadcast_design",
+      "motion_design"
+    ],
+    "preferred_professors": [
+      "prof_maloney",
+      "prof_imperato"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 100,
+    "prerequisites": [
+      "MOME_709"
+    ],
+    "description": "Students focus on the integration of imagery, websites, video and various other elements into a broadcast design portfolio. Students create effective tools for self-promotion, including a reel, CD compilation, website, cover letter and r\u00e9sum\u00e9. Proper and effective marketing techniques, interviewing skills, job search strategies and business practices are covered to provide an understanding of operations in the broadcast industry. M.A. students enroll in this course during their final quarter of the motion media program.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_758",
+    "name": "3D Design and Methodologies in Motion Media",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "2d_motion_graphics",
+      "3d_modeling",
+      "3d_motion_graphics",
+      "animation",
+      "compositing",
+      "lighting",
+      "media_art",
+      "modeling",
+      "motion_design",
+      "motion_graphics"
+    ],
+    "preferred_professors": [
+      "prof_maloney",
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 101,
+    "prerequisites": [],
+    "description": "This course focuses on the creation of 3D elements for compositing with live action and 2D art. Students are responsible for the modeling and animation of 3D elements, with an emphasis on lighting and camera placement as they apply to motion graphics environments.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_760",
+    "name": "Alternative Methods in Motion Media Design",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "motion_design",
+      "narrative"
+    ],
+    "preferred_professors": [
+      "prof_dodson",
+      "prof_maloney",
+      "prof_imperato"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 102,
+    "prerequisites": [
+      "MOME_719",
+      "SDGM_719",
+      "SFDM_719"
+    ],
+    "description": "This course explores a variety of nontraditional practices for time-based work. Students explore ideas of narrative form, image genres and visual language issues related to context and audience.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_775",
+    "name": "Motion Media Design Studio II: Thesis Development",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "motion_design",
+      "production"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay",
+      "prof_dodson"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 103,
+    "prerequisites": [
+      "MOME_735",
+      "BCST_735"
+    ],
+    "description": "This seminar studio continues the research and exploration of thesis ideas developed in Motion Media Design Studio I. In addition to continuing theoretical exploration, students engage in project organization and preproduction to prepare for the final thesis course.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_777",
+    "name": "Advanced 3D Design and Methodologies",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "motion_design",
+      "production"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay",
+      "prof_dodson"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 104,
+    "prerequisites": [
+      "MOME_758"
+    ],
+    "description": "The integration of 3D models and environments adds dynamism and realism to motion media content. Through in-depth research of advanced 3D motion design techniques, students effectively implement and build high production value, 3D motion media content within simulated professional pipelines using industry-standard technology solutions.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_779F",
+    "name": "Graduate Field Internship",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [],
+    "preferred_professors": [],
+    "enrollment_cap": 16,
+    "teaching_order": 105,
+    "prerequisites": [],
+    "description": "Students in this course undertake a field assignment under the supervision of a faculty member.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_779T",
+    "name": "Graduate Teaching Internship",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [],
+    "preferred_professors": [],
+    "enrollment_cap": 16,
+    "teaching_order": 106,
+    "prerequisites": [],
+    "description": "Students in this course undertake a teaching assignment under the supervision of a faculty member.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "MOME_790",
+    "name": "Motion Media Design M.F.A. Thesis",
+    "department": "motion_media",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "mac_lab",
+    "specialization_tags": [
+      "level_design",
+      "motion_design"
+    ],
+    "preferred_professors": [
+      "prof_lindsay",
+      "prof_dodson",
+      "prof_avenali"
+    ],
+    "enrollment_cap": 16,
+    "teaching_order": 107,
+    "prerequisites": [
+      "MOME_735",
+      "BCST_735"
+    ],
+    "description": "The motion media design M.F.A. degree program culminates with completion of a graduate-level thesis that presents a mature, resolved body of work, and demonstrates advanced professional competence through mastery of the technical, creative and aesthetic elements of the discipline. Upon successful completion of the M.F.A. in motion media design, students master the motion media tool set; create and document innovative, original motion media projects; and employ historical research and distinctive aesthetics to make a unique contribution to the discipline.",
+    "source": "scraped",
+    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+  },
+  {
+    "id": "AI_201",
+    "name": "Applied AI for Creative Industries",
+    "department": "ai",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "ai_application",
+      "ai_design",
+      "ai_ideation",
+      "ai_pipeline"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 108,
+    "prerequisites": [],
+    "description": "Students explore AI application, AI pipelines, and AI design for creative workflows including AI ideation, generative tools, and responsible AI use.",
+    "source": "manual",
+    "last_scraped": null
+  }
+]

@@ -47,7 +47,10 @@ python -c "import json; d=json.load(open('data/course_catalog.json')); print(len
 # Spot-check: GAME_256 should exist with game_design tags
 ```
 
-**Status:** PENDING
+**Actual result:** 108 courses (game: 63, motion_media: 44, ai: 1) — live Courseleaf scrape
+from catalog.scad.edu/courses/{game,itgm,mome}/. GAME_256 confirmed with game_design tags.
+
+**Status:** COMPLETE
 
 ---
 
