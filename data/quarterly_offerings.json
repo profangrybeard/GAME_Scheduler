@@ -1,0 +1,150 @@
+{
+  "quarter": "fall",
+  "year": 2026,
+  "offerings": [
+    {
+      "catalog_id": "GAME_220",
+      "priority": "must_have",
+      "sections": 2,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "Core Principles: Programming - high demand, 2 sections most quarters"
+    },
+    {
+      "catalog_id": "GAME_236",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_256",
+      "priority": "must_have",
+      "sections": 2,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": ["prof_dodson"],
+      "notes": "Core Principles: Game Design - Dodson preferred as primary instructor"
+    },
+    {
+      "catalog_id": "GAME_342",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_360",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_405",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "Game Development Studio I - capstone entry point"
+    },
+    {
+      "catalog_id": "GAME_465",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_706",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": 16,
+      "override_room_type": "standard",
+      "override_preferred_professors": ["prof_dodson"],
+      "notes": "Graduate: Game Design Documentation - seminar format, Dodson priority"
+    },
+    {
+      "catalog_id": "MOME_105",
+      "priority": "must_have",
+      "sections": 2,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "Intro course - 2 sections to cover demand"
+    },
+    {
+      "catalog_id": "MOME_130",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "MOME_400",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "Senior project - Maloney not available summer but fine for fall"
+    },
+    {
+      "catalog_id": "MOME_719",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": 16,
+      "override_room_type": null,
+      "override_preferred_professors": ["prof_imperato"],
+      "notes": "Graduate: Media Theory - Imperato priority per professor notes"
+    },
+    {
+      "catalog_id": "ITGM_705",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": 16,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "Graduate ITGM core"
+    },
+    {
+      "catalog_id": "ITGM_719",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "ITGM_748",
+      "priority": "could_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "M.A. final project - only if enrollment exists"
+    },
+    {
+      "catalog_id": "AI_201",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": 20,
+      "override_room_type": "pc_lab",
+      "override_preferred_professors": null,
+      "notes": "Applied AI - pc_lab required, enrollment capped at 20"
+    }
+  ]
+}

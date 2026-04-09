@@ -67,7 +67,11 @@ python -m ingest.validate
 # Intentionally break a field and re-run to confirm it catches errors
 ```
 
-**Status:** PENDING
+**Actual result:** 0 errors, 1 warning (14 internship/stub courses have no preferred
+professors - expected). Break test confirmed: bad catalog_id and bad specialization_tag
+both caught as ERRORs with exit code 1.
+
+**Status:** COMPLETE
 
 ---
 

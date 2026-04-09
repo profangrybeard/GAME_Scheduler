@@ -28,7 +28,7 @@
     ],
     "description": "This course begins to investigate visual and audio communication involving user actions, strategic design, and the illusion of motion. Through individual approach and expression in traditional media, students are encouraged to experiment with the juxtaposition and sequence of design elements and imagery and to develop a sense of artist-audience construct and consequence.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_121",
@@ -53,7 +53,7 @@
     ],
     "description": "Through hands-on experience, students are introduced to critical aspects of the game industry from non-digital games to indie games to the latest video games. Roles and responsibilities within the game development team are discussed and practiced through in-class exercises, and genres are critically introduced, discussed, and explored. Key individuals, companies, and associations are also explored, and controversies are examined. The course culminates in a group project.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_130",
@@ -76,7 +76,7 @@
     ],
     "description": "This course provides the foundation for visualizing and understanding the essential vocabularies, principles, and concepts of design, color, and visual literacy as applied to interactive digital work.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_220",
@@ -98,7 +98,7 @@
     "prerequisites": [],
     "description": "Students develop the core principles of programming interactivity through object-oriented programming techniques using visual scripting tools and hand-coded scripting languages. Experiential learning enables students to develop applications and projects that include complex interactive websites, experimental interactive work, and online games.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_236",
@@ -129,7 +129,7 @@
     ],
     "description": "Students explore and develop digital content creation techniques and aesthetic skills required to model, texture and generate accurate materials for 3D game assets. Through the use of standard 3D software, students learn methods and procedures to create industry-standard digital content efficiently and accurately. Students create game-ready content in 3-D, utilizing real-world observations and the use of original and existing concept art.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_256",
@@ -160,7 +160,7 @@
     ],
     "description": "Students explore, apply, and discuss the core principles of game design, including the game space, game mechanics, the game player, and the design decisions that create the game state. Through in-class game play and game design exercises, students examine the design process needed to build today\u2019s games.  Through the exploration of player agency, immersion, structures of goals, challenges, pacing, encounters, quests, puzzles, conflicts, and rewards, students learn the rules of play and apply those principles to in-class game design projects.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_258",
@@ -187,7 +187,7 @@
     ],
     "description": "Students develop an understanding of 3D, the principles of modeling and video game aesthetics while exploring the creation of 3D models specifically designed for integration into a game engine. Aesthetics, construction, communication, sculptural skills, and quality of work are emphasized.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_266",
@@ -220,7 +220,7 @@
     ],
     "description": "Real-time rendering technology allows game artist and level designers to create immersive game environments that respond to the player\u2019s action within the game space. Students in this course are prepared for high-level careers in the video game industry by creating event-driven environments and learning to work with the multiple toolsets existing in contemporary game engines required to produce functional game level.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_267",
@@ -245,7 +245,7 @@
     ],
     "description": "This course focuses on understanding and applying the core principles of designing and developing interactive games and applications. Students are introduced to industry-standard authoring techniques and technologies for delivery on the Web and as stand-alone applications. Designing and implementing interactivity is the focus of the course.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_277",
@@ -274,7 +274,7 @@
     ],
     "description": "Students examine the core principles and methodologies used throughout the interactive design industry for creating screen-based dynamic media\u2014websites, information installations, mobile applications, etc. Specifically, students address the interactive design process used to create dynamic media based on how a user may want or need to use products or systems.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_310",
@@ -303,7 +303,7 @@
     ],
     "description": "Animation provides a sense of immersion while giving players feedback about the state of the game. Students learn to create animation assets for both 2D and 3D games. Topics covered range from basic key frame animation and creating player character cycles to importing each student\u2019s animation into an existing game engine.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_326",
@@ -330,7 +330,7 @@
     ],
     "description": "In this course, students learn programming techniques and skills utilizing programming languages in common use by game developers and interactive designers. Students gain basic understanding of computer science concepts, awareness of different types of computer languages, and use of a program-development environment, as well as an understanding of control structures, data structures, program logic, and\u00a0problem-solving and object-oriented programming methodologies.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_333",
@@ -361,7 +361,7 @@
     ],
     "description": "3D concept artists create complex organic models to populate the imagined worlds of video games, 3D animations, and visual effects. In this course, students cultivate digital sculpting skills as they produce realistic character and creature sculpts with aesthetic appeal, mood, and texture using 2D and 3D editing, painting, and sculpting technologies.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_336",
@@ -390,7 +390,7 @@
     ],
     "description": "As the visual quality and expectations of digital games increase, so does the need for higher quality art content as well as cohesive and consistent art direction. By focusing on issues such as next generation digital content creation, art direction methodologies, visual complexity, and modularity, students design and create visually effective and highly detailed runtime environments utilizing next generation workflows and pipelines.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_337",
@@ -416,7 +416,7 @@
     ],
     "description": "This course focuses on the categorization of information into a coherent structure, the interactive design process, and the delivery and designing of visual interfaces. Students are expected to develop a conceptual framework for real-world applications that can easily be understood and quickly accessed, exploring issues from the industry, art, and society.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_342",
@@ -447,7 +447,7 @@
     ],
     "description": "From linear narratives to massive multiplayer online games, game designers translate story visions into fully-realized and interactive entertainment experiences. In this course, students explore narrative structures as well as player expectations and responses through collaborative development of an interactive, industry-ready game design.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_346",
@@ -476,7 +476,7 @@
     ],
     "description": "From amorphous creatures to warrior princesses, character artists drive the visual and emotional quality of games. In this course, students produce 3D character and creature models for integration into production applications and complex workflows for optimization. Students learn to incorporate 2D texturing and rendering, re-topology, UV and high-resolution digital sculpting applications to create organic models.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_347",
@@ -495,7 +495,7 @@
     ],
     "description": "Students explore the ways in which nontraditional input devices create interactive user experiences. In addition to the technical, aesthetic, and conceptual concerns of this art form, students assess the work of a range of artists. Students develop concepts, experiments, and prototypes for self-contained interactive objects in immersive environments.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_351",
@@ -526,7 +526,7 @@
     ],
     "description": "Students expand their knowledge of interactive design and game development as they step into the role of game UX researcher. Exploring the highly relevant field of game user experience, students combine research and design principles to build and optimize playable experiences. Through the development of functional prototypes and high-fidelity interfaces, students showcase their interactive and visual design skills.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_356",
@@ -554,7 +554,7 @@
     ],
     "description": "This course builds on the core principles of game design and delves into the many systems and mechanics that make up the practice of applied game design.  Through in-class exercises and design projects, students develop many of the active systems and mechanics utilized in contemporary game design and use a variety of acknowledged industry methods of documentation to present and formalize their designs.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_357",
@@ -582,7 +582,7 @@
     ],
     "description": "Key concepts of Web design are presented through a series of technical and design workshops. Students are introduced to the latest authoring and animation tools and learn how to apply their knowledge of the software to create dynamic and responsive Web designs.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_358",
@@ -611,7 +611,7 @@
     ],
     "description": "From the depths of the ocean to the surface of the moon, game designers explore advanced concepts of material and texture to create believable worlds with visually faithful digital surface simulations. In this course, students learn to replicate the physical properties of surfaces and use cinematic techniques to portray complex material interactions and progression for inclusions in digital game environments.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_360",
@@ -638,7 +638,7 @@
     ],
     "description": "Students design and develop games, websites, and interactive media through a series of technical and design workshops. The course explores intermediate and advanced technical and conceptual aspects of design and development for group-based games and interactive projects.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_364",
@@ -661,7 +661,7 @@
     ],
     "description": "In this course, students write scripts for a current game engine in order to alter its existing functionality as well as create new interactive elements. Ultimately, students learn to create what the industry calls an engine modification (MOD).",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_366",
@@ -689,7 +689,7 @@
     ],
     "description": "Real-time materials and environmental effects development constitute one of the largest growing areas in game development for artists. As graphics hardware and game engine technology improve, the demand rises for skilled artists who can take advantage of these tools to add cinematic and visual interest to the digital game experience. Using industry-standard methodologies, students employ professional techniques and practices to create complex materials, particle and environmental effects for games using a real-time game engine.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_370",
@@ -710,7 +710,7 @@
     ],
     "description": "This course introduces students to entrepreneurship relating specifically to technology and digital game industries. Students learn by researching and conducting case studies about successful and failed start-up companies. The final project culminates in simulating the technology start-up process \u2013 conducting marketing and competitive research, creating financial projections, writing an executive summary, and creating and pitching investor and client presentations.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_380",
@@ -744,7 +744,7 @@
     ],
     "description": "With a focus on integrating imagery, websites, video, and various elements into an interactive portfolio, this course addresses concepts, cross-platform developments, and issues concerning aesthetics, interface design, and use of media. Students collect relevant material and produce a digital portfolio, packaging for portfolio, r\u00e9sum\u00e9, cover letter, business card, and flatbook portfolio.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_405",
@@ -777,7 +777,7 @@
     ],
     "description": "Students apply their skills to creating a workable interactive project or video game in a simulated professional environment. Topics include content creation within a limited resource environment. The course emphasizes production-oriented goals in order to provide students with a professional skill set and a body of fine art.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_415",
@@ -800,7 +800,7 @@
     ],
     "description": "Students master advanced program design methodologies, object-oriented design, and programming techniques using C++. By developing reusable and modular code, students learn to build complex applications.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_433",
@@ -831,7 +831,7 @@
     ],
     "description": "From dense woodlands and majestic cities to gnarly trees and ornate thrones, compelling 3D game environments and props create mood and atmosphere to shape the player experience in subtle but impactful ways. In this course, students acquire advanced modeling, sculpting, and texturing techniques as they produce highly detailed game environments and props. With a focus on real-time rendering, students integrate advanced techniques and assets in the production pipeline, advancing their professional prowess as 3D environment artists.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_446",
@@ -863,7 +863,7 @@
     ],
     "description": "From the first pitch meeting to the execution of a playable game, art direction for character design involves integration of strong storytelling and advanced production planning. In this course, students learn advanced digital sculpting techniques to create 3-D sculpts consistent with the game\u2019s creative vision and appropriately prepare sculpts for animation and rigging in the next phase of the production pipeline.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_447",
@@ -888,7 +888,7 @@
     ],
     "description": "Students explore advanced methods and technologies to develop interactive designs and artwork utilizing physical input devices. Lectures, discussions, and hands-on projects expose students to the latest applications of interaction design, such as ubiquitous computing, augmented reality, and tangible computing. Students learn to work with a wide range of technologies, enabling them to create sophisticated interactive installations, alternative games, and touch-based interfaces.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_465",
@@ -914,7 +914,7 @@
     ],
     "description": "Students work in a collaborative, simulated professional environment to address issues including content creation in a group dynamic, strategic planning, goal-oriented planning, and game theory and design. This course provides students with a significant amount of professional-quality material for portfolio inclusion.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_475",
@@ -945,7 +945,7 @@
     ],
     "description": "This final phase of the student\u2019s senior project focuses on the production and mastering of a senior interactive or game project, including final design, programming or scripting, focus testing, testing, and implementation. Students also create support materials, such as a product website, and work to integrate these into their portfolios.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_479",
@@ -961,7 +961,7 @@
     "prerequisites": [],
     "description": "Internships offer students valuable opportunities to work in a professional environment and gain firsthand experience to help them prepare for careers. In an approved internship setting, a student typically spends one quarter working with an on-site professional supervisor and a faculty internship supervisor to achieve specific goals and objectives related to the program of study.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_502",
@@ -984,7 +984,7 @@
     "prerequisites": [],
     "description": "Game design is the art that brings together rules, players and game components in order to create an experience for the player. Through study and application, students learn the foundations of game design and the game design pipeline, sample the methods of great game designers, explore IP usage and design in emerging media, and apply this knowledge in a series of in-class exercises and individual designs, both proposed and executed.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_505",
@@ -1000,7 +1000,7 @@
     "prerequisites": [],
     "description": "Students explore a variety of tools and methods used by artists in the game industry, focusing on process and critique. Through an emphasis on presentation and language, students further refine their core skills needed to be a successful digital game artist.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_706",
@@ -1024,7 +1024,7 @@
     "prerequisites": [],
     "description": "In this course, students gain a solid understanding of game design documentation processes that are crucial for writers and designers of interactive work. Issues involving the game design sequence, fundamental game design techniques, taxonomy of documentation terms and communication through documentation to other departments are investigated, analyzed and critiqued. Students also explore a wide variety of game industry documentation types and needs.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_710",
@@ -1048,7 +1048,7 @@
     "prerequisites": [],
     "description": "Game engines are vital to the creation of video games and interactive experiences. Students gain experience working with a game engine and explore various art and design pipelines used by different disciplines within the game industry. Concentrating on the creation of virtual environments, key frames, and cinematic camera work, students learn to manage the step-by-step process of game engine production.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_712",
@@ -1073,7 +1073,7 @@
     "prerequisites": [],
     "description": "Gameplay scripting is an essential part of development and allows artist and designers to create interactive assets, events, and interfaces. In this course, students build expertise with an industry standard scripting language as they script gameplay elements and create small playable games.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_714",
@@ -1097,7 +1097,7 @@
     "prerequisites": [],
     "description": "Students experience an in-depth, hands-on examination and critique of the art of game design. Through a non-digital medium, students explore a variety of topics, ranging from history to design methodologies that strengthen their vocabulary in game analysis. Working through a range of game mechanics and design patterns, students explore different styles of games, culminating in a non-digital prototype.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_720",
@@ -1122,7 +1122,7 @@
     ],
     "description": "The visual artistry found in modern game environments has risen to astounding heights. In this course, students employ industry workflows and methodologies to design and build real-time game environments. From creating block outs to developing modular asset kits, students produce professional, and well-crafted world in a game engine.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_722",
@@ -1151,7 +1151,7 @@
     ],
     "description": "Students explore advanced concepts in materials and texturing as applied to game engines and graphics processing unit (GPU) rendering. Utilizing 3D painting methods, students develop digital surfaces with realistic representations of physical properties and environmental influences. Students use photography, light, and texture as reference for the creation of real-time renderings and image manipulation.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_724",
@@ -1179,7 +1179,7 @@
     ],
     "description": "Level designers create immersive, dynamic, goal-driven gameplay experiences through the application of design techniques and practices, including pacing, rewards, and cinematics. Students script events and utilize existing gameplay kits and input systems to create playable levels. Students apply a variety of techniques to design engaging encounters for different game genres.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_730",
@@ -1206,7 +1206,7 @@
     ],
     "description": "Dynamic and memorable characters drive engagement and elevate gameplay experiences. In this course, students explore character creation for real-time entertainment through research and ideation that begins with 2D visualization and culminates in a finished 3D project. Utilizing discussions, critiques, and design exercises, students focus on advanced digital sculpting techniques required to become a successful character artist in the field of game development.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_734",
@@ -1233,7 +1233,7 @@
     ],
     "description": "Digital games are a collection of individual systems working in unison to create an interactive experience. Students investigate the role of system designers in the game industry, and acquire techniques on how to develop, communicate, and implement these systems. Through in-class exercises, demonstrations, and lectures, students learn to design, prototype, and simulate systems for games.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_740",
@@ -1261,7 +1261,7 @@
     ],
     "description": "Through careful examination and analysis of influential works, across various forms of digital media, students learn to develop a visual language and define a cohesive artistic vision. With a focus on establishing an art pipeline and documentation, students define a visual style that can be communicated to a team and applied in a game production environment.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_742",
@@ -1289,7 +1289,7 @@
     ],
     "description": "Students in this course learn to master real-time visual effects workflows and paradigms. Enhancing scripting skills for the creation of programmable FX for games, students explore and manipulate different types of particle systems. Using various genres for reference, from nature to fantasy and realistic to stylized, students design professional quality game FX.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "GAME_754",
@@ -1316,7 +1316,7 @@
     ],
     "description": "Immersed in a simulated game production environment, students collaborate to design and construct an original game. Students utilize professional production pipelines and techniques as they navigate the complexities of time-management, project planning, and workload distribution for effective team productions.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "ITGM_522",
@@ -1338,7 +1338,7 @@
     "prerequisites": [],
     "description": "Students learn basic programming concepts that can be applied to the development of interactive applications. The course begins with a procedural approach, which leads to object-oriented programming techniques. Students apply computation-thinking and problem-solving techniques to design well-structured and commented code. Students also explore open-source programming resources and communities.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "ITGM_705",
@@ -1361,7 +1361,7 @@
     "prerequisites": [],
     "description": "The investigation and application of appropriate research methodologies and theoretical frameworks is central to art and design. With a focus on the scientific method, students formulate research questions, deconstruct applied concepts, and validate hypothetical solutions to establish the foundation of a professional interactive and game design practice.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "ITGM_708",
@@ -1383,7 +1383,7 @@
     "prerequisites": [],
     "description": "Every professional design and game studio expects exceptional communication skills from its talented designers. In this course, students learn how to effectively present their ideas and generate supportive content for pitch delivery. As part of future executive and leadership training, student designers learn to craft their delivery of formal presentations to achieve desired results. From gathering informational data to organizing visuals and infographics, students perfect the art and design of pitch delivery for a variety of formal and informal contexts, from client pitches to thesis presentations to professional conferences.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "ITGM_719",
@@ -1408,7 +1408,7 @@
     "prerequisites": [],
     "description": "With an emphasis on scripting interactivity, students develop applications and projects that include games and interactive applications. This course explores implementation skills for digital applications centered on object-oriented programming techniques. Students use logic and problem solving to design sound coding structures that enhance interactive digital interfaces.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "ITGM_733",
@@ -1434,7 +1434,7 @@
     ],
     "description": "This course explores the creation of complex models and textures for use in video game development. Students are introduced to current theory, functional aesthetics and advanced techniques relevant to digital sculpture.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "ITGM_746",
@@ -1461,7 +1461,7 @@
     ],
     "description": "Digital sculpting has brought new depths to the world of game development, animation, visual effects, and action figure modelling. Utilizing the professional production pipeline for game creation, students focus on the step-by-step process of translating 2D concepts into 3D sculpts for the creation of realistic characters. Students enhance their technical and digital sculpting skills for the optimization of real-time animated productions.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "ITGM_748",
@@ -1490,7 +1490,7 @@
     ],
     "description": "As the culminating experience for interactive design and game development graduate students, the M.A. final project embodies the synthesis and skillful application of discipline knowledge and techniques covered throughout the program. Addressing individual professional goals, and reflecting technical mastery of chosen specialties, each student in this course completes an industry-level project from research to conceptualization to implementation.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "ITGM_749",
@@ -1516,7 +1516,7 @@
     ],
     "description": "Students focus on the integration of imagery, websites, video and various other elements into an interactive portfolio. Concepts, cross-platform developments and issues concerning aesthetics, interface design and use of media are addressed. Students collect relevant material and produce a CD/DVD/Web-based portfolio, packaging for portfolio, r\u00e9sum\u00e9, cover letter, business cards and flat book portfolio.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "ITGM_755",
@@ -1534,7 +1534,7 @@
     ],
     "description": "Every thesis starts with a well-constructed problem statement. In this course, students translate a well-defined personal vision and area of interest into a cohesive and focused thesis topic. Students investigate multiple approaches and methodologies for constructing their problem statement, and engage in critical review of relevant academic and professional perspectives to inform the direction of their thesis.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "ITGM_765",
@@ -1559,7 +1559,7 @@
     ],
     "description": "With a strong emphasis on critique and process, students begin to develop and prototype the visual component of their graduate thesis. Grounded in a strong thesis direction and supported by a solid theoretical framework, students initiate and document their production process.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "ITGM_775",
@@ -1581,7 +1581,7 @@
     ],
     "description": "Evidence-based design uses objective assessments to provide empirical justification that validates design questions and claims. Through iterative user testing and various validation methodologies, students provide supportive data for their thesis and other previously prototyped design projects. Conclusive visualized data are amalgamated to enhance understanding and strengthen professional documentation and presentations.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "ITGM_779F",
@@ -1597,7 +1597,7 @@
     "prerequisites": [],
     "description": "Students in this course undertake a field assignment under the supervision of a faculty member.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "ITGM_779T",
@@ -1613,7 +1613,7 @@
     "prerequisites": [],
     "description": "Students in this course undertake a teaching assignment under the supervision of a faculty member.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "ITGM_790",
@@ -1640,7 +1640,7 @@
     ],
     "description": "As culmination of their graduate experience, students execute a thesis that demonstrates a mature, resolved body of work and advanced professional competence through mastery of the technical, creative, and aesthetic elements of the discipline. Students synthesize research from various sources with their own creative ideas, technical skills, aesthetic sensibility, and mastery of design principles to make an original contribution to the field of game art or interactive design.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_105",
@@ -1670,7 +1670,7 @@
     ],
     "description": "From advertisements to film, motion media plays a vital role in the appearance of branding and imagery in media. In this course, students explore the key aspects of motion media, including the historical application of typography and design principles, basic compositing, animation principles, keyframing, and vector and raster asset integration.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_115",
@@ -1695,7 +1695,7 @@
     "prerequisites": [],
     "description": "Motion media design evolution began with non-narrative experimental films of the 1930s and continued through to the innovative movie titles of Saul Bass in the 1950s, MTV\u2019s birth in the 1980s, and the influence of new technologies and media artists in the 1990s and 2000s. This course surveys the history of motion media design and the individuals, companies and current trends that define the field today.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_120",
@@ -1716,7 +1716,7 @@
     ],
     "description": "Creating concepts and explaining ideas, style and technique though storyboards are essential skills for the motion media designer. In this course students learn how to conceptualize and visualize motion graphic storyboards with digital techniques as required in the professional world.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_130",
@@ -1739,7 +1739,7 @@
     ],
     "description": "This interdisciplinary course trains students in the essential vocabularies and concepts of motion media design, examining a range of diverse issues of central importance to the motion media designer such as previsualization, cinematography, media theories, digital culture, new media and critical studies.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_206",
@@ -1766,7 +1766,7 @@
     ],
     "description": "This course continues to build upon the knowledge of motion techniques and software. It teaches advanced motion techniques in industry-standard motion graphic software to give students the ability to realize their concepts and ideas in upper-level courses.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_221",
@@ -1796,7 +1796,7 @@
     ],
     "description": "From commercials to immersive feature film trailers to branded entertainment experiences, virtual reality is transforming digital media and providing new opportunities for motion media designers. Students in this course examine the trends, aesthetics, theory and expanding impact of interactive and immersive technologies. Employing motion media techniques, students apply this knowledge to the design and execution of virtual reality content and 360-degree production.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_246",
@@ -1825,7 +1825,7 @@
     ],
     "description": "This course addresses basic historical and contemporary typographic design concepts utilized in creating simple film titles with graphic shapes, photographs and sound. Students construct graphic elements and typography for use in projects while addressing issues of motion and dynamic relationships.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_305",
@@ -1847,7 +1847,7 @@
     ],
     "description": "This course examines the use of projection systems to display motion media works at scales larger than the human body. Students are introduced to a range of practices in projection, from projection mapping on buildings to architectural and museum installations and projections in gallery contexts. Students are introduced to technical systems for developing and delivering large-scale projected media and apply these techniques in their own studio practice.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_309",
@@ -1875,7 +1875,7 @@
     ],
     "description": "This course introduces fundamental concepts for motion graphics, including graphics and promos for television networks and film titles and logos for advertising. The focus is on design presentation and development, screen composition, graphic transitions and content.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_310",
@@ -1902,7 +1902,7 @@
     ],
     "description": "This course explores a variety of historical techniques employed by avant-garde/experimental media artists in the creation of their time-based work. Students explore ideas of narrative form, image genres and visual language issues related to context and audience. Students create their own experimental work and improve their critical and conceptual facilities.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_315",
@@ -1928,7 +1928,7 @@
     ],
     "description": "The fusion of motion graphics with sound design heightens visual perception and elevates emotional impact. In this course, students explore the dynamic and complex relationship between the visual and auditory senses, elevating their compositions\u2019 visual through strategic integration of sound and design. Students create a collection of synchronized works using both instrumental and vocal music.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_333",
@@ -1953,7 +1953,7 @@
     ],
     "description": "In this elective course, students gain an advanced understanding of the design process in motion media production, through a concentrated study of the preparation of production boards across a range of styles. Students broaden their creative and technical experience though detailed exercises, studio sessions, and critiques of their design work, with the aim of producing portfolio quality production boards.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_360",
@@ -1979,7 +1979,7 @@
     ],
     "description": "This course addresses camera operation, lenses, film stocks, filters, lighting and light measuring, as well as the art and aesthetics of cinematography. Through hands-on practice and exercises, students are introduced to the science behind lighting ratios and exposures, film stocks and emulsion tests and telecine transfers.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_369",
@@ -2006,7 +2006,7 @@
     ],
     "description": "This course addresses historical and contemporary typographic design concepts using film and television. Students construct graphic elements and typography for use in projects while addressing issues of motion and dynamic relationships.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_390",
@@ -2032,7 +2032,7 @@
     ],
     "description": "Students are introduced to the multifaceted business of motion graphics in which they will be working. While developing a strategic framework for a portfolio, students also examine the industry structures and requirements. Issues of intellectual property, employment markets, contracts, marketing and overlap with other areas of study are considered.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_400",
@@ -2058,7 +2058,7 @@
     ],
     "description": "Students develop ideas and storyboards for their senior project. They execute the preproduction phase of the project and start production that is finished in a second course.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_401",
@@ -2089,7 +2089,7 @@
     ],
     "description": "This course explores the foundations of 3D environments. Modeling, textures, lighting and animating are covered with simple animations, logo and shape motion and environmental visual effects.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_408",
@@ -2115,7 +2115,7 @@
     ],
     "description": "This course discusses historical and contemporary broadcast packages as they relate to design, marketing strategies and branding. These concepts are useful in the creation of show openings, tags, bumpers and other elements that develop network identities and broadcast entities.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_440",
@@ -2139,7 +2139,7 @@
     ],
     "description": "From films and music videos to games and apps, 3D motion media is everywhere. In this course, students acquire the advanced motion design skills necessary to generate high-quality, 3D content. Using industry-standard technology solutions, students model, texture, light, animate and track 3D motion media content for a range of entertainment applications.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_448",
@@ -2165,7 +2165,7 @@
     ],
     "description": "Students execute the postproduction phase of a project, including analysis and critique, organization and scheduling. The goal is to create a final project that showcases the student\u2019s artistic vision through his or her acquired skills.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_479",
@@ -2181,7 +2181,7 @@
     "prerequisites": [],
     "description": "Internships offer students valuable opportunities to work in a professional environment and gain firsthand experience to help them prepare for careers. In an approved internship setting, a student typically spends one quarter working with an on-site professional supervisor and a faculty internship supervisor to achieve specific goals and objectives related to the program of study.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_501",
@@ -2204,7 +2204,7 @@
     "prerequisites": [],
     "description": "This course addresses the role of typography and design concepts applied in the field of motion media. Through a series of class projects, students develop the ability to effectively utilize the use of design principles and typographic values to address issues of motion and dynamic relationships.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_502",
@@ -2227,7 +2227,7 @@
     "prerequisites": [],
     "description": "This course directs students towards the successful analysis and application of advanced animation techniques and methodologies. Students gain a thorough and deep understanding of motion media techniques, as evidenced in contemporary motion design work. Students explore the impact of these techniques on their personal aesthetic through individual practice, lectures, assigned readings, class discussions and critiques.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_503",
@@ -2257,7 +2257,7 @@
     "prerequisites": [],
     "description": "This course explores how motion graphics developed from innovations in a variety of fields including animation, graphic design, advertising and interactive media. The aesthetics that inform contemporary motion graphics began in non-narrative experimental films, continued in the innovative movie titles of the 1950s, video art and MTV, and in new technologies of the 1990s and contemporary media art. This course surveys the history of motion graphics, the individuals, companies and current trends that define the field today.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_705",
@@ -2283,7 +2283,7 @@
     "prerequisites": [],
     "description": "In this course, students are expected to develop the ability to visualize various creative solutions to problems in motion media design. Students learn concept development, engage in the application of appropriate narrative and visual storytelling to those concepts, and produce storyboards that portray concepts accurately and vividly. In the creative phase of production, students are subject to traditional industry constraints, including typical production guides and guidelines.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_709",
@@ -2305,7 +2305,7 @@
     "prerequisites": [],
     "description": "This course introduces the foundations of filmmaking through the critical examination of historical materials. The theoretical and practical applications of the course culminate in the compilation of imagery that encompasses a variety of ideas and concepts and utilizes film and video cameras and editing techniques.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_711",
@@ -2329,7 +2329,7 @@
     "prerequisites": [],
     "description": "This course gives students the skills and techniques necessary to execute their concepts into motion. Students learn how to interpret and read a storyboard for production and apply industry-standard software in their future motion graphic projects. Students receive training in all phases of motion graphic techniques and production.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_712",
@@ -2347,7 +2347,7 @@
     ],
     "description": "Innovative projection techniques, when integrated with motion media prowess, artfully manipulate perceptions of space in physical environments. Using interactive controls, students create complex and responsive physical installations for objects, screens and architectural spaces.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_715",
@@ -2375,7 +2375,7 @@
     ],
     "description": "From animated sequences to visual effects, a synchronous relationship between kinetic and auditory design is paramount to the creation of compelling content. Through research and analysis of influential designers and compositions, students elevate their practice by applying advanced synchronization strategies that fuse sound with motion graphics and create innovative motion design productions.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_719",
@@ -2398,7 +2398,7 @@
     "prerequisites": [],
     "description": "This course integrates historical studies, contemporary art and visual theory and practice in the study of early and current thought in media theory. Students are expected to analyze and conceptualize the mass media through active discussion in the classroom, research projects and independent analyses in order to stimulate critical thinking that can be applied to film and digital media. Theoretical methods and models are utilized to inform and develop student practice.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_720",
@@ -2424,7 +2424,7 @@
     ],
     "description": "Successful motion media designers create production boards in a range of styles to meet the parameters of creative briefs. In this course, students sharpen their creative and technical expertise through a focused study of industry practices and advanced design strategies to produce compelling storyboards and visual concepts.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_721",
@@ -2440,7 +2440,7 @@
     "prerequisites": [],
     "description": "Through articles, case studies, practical assignments and projects, students learn the business side of the media industry including the essentials for running a business or project. Students learn about accounting, budgets, insurance, copyright and intellectual property law, management, and human resources. The course culminates with a project in which students explain how they would run an assigned media job that requires use of all the areas of business covered during the course.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_729",
@@ -2460,7 +2460,7 @@
     "prerequisites": [],
     "description": "This course reviews the theories and principles of typography and composition with a focus on understanding the dynamics of motion, legibility, content and message.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_735",
@@ -2487,7 +2487,7 @@
     ],
     "description": "In this seminar studio course, students begin the research and exploration necessary to ensure successful completion of a thesis. Students define a personal direction, engage in theoretical exploration and begin to formulate plans for their thesis project in a self-directed and flexible format.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_746",
@@ -2514,7 +2514,7 @@
     ],
     "description": "This course is one of the most important and prestigious aspects of motion graphics. In the tradition of the masters of title design, students learn to conceptualize and express the content they are titling though innovative titling. Students create a body of work of feature film and television main titles.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_747",
@@ -2541,7 +2541,7 @@
     ],
     "description": "This course is a comprehensive approach to design and branding for broadcast networks. Students create and pitch concepts, make storyboard presentations and as the final project, totally re-brand and re-design a network, including creation of a presentation book of their storyboard concepts and an animated montage of their redesign for the network.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_749",
@@ -2565,7 +2565,7 @@
     ],
     "description": "Students focus on the integration of imagery, websites, video and various other elements into a broadcast design portfolio. Students create effective tools for self-promotion, including a reel, CD compilation, website, cover letter and r\u00e9sum\u00e9. Proper and effective marketing techniques, interviewing skills, job search strategies and business practices are covered to provide an understanding of operations in the broadcast industry. M.A. students enroll in this course during their final quarter of the motion media program.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_758",
@@ -2596,7 +2596,7 @@
     "prerequisites": [],
     "description": "This course focuses on the creation of 3D elements for compositing with live action and 2D art. Students are responsible for the modeling and animation of 3D elements, with an emphasis on lighting and camera placement as they apply to motion graphics environments.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_760",
@@ -2623,7 +2623,7 @@
     ],
     "description": "This course explores a variety of nontraditional practices for time-based work. Students explore ideas of narrative form, image genres and visual language issues related to context and audience.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_775",
@@ -2649,7 +2649,7 @@
     ],
     "description": "This seminar studio continues the research and exploration of thesis ideas developed in Motion Media Design Studio I. In addition to continuing theoretical exploration, students engage in project organization and preproduction to prepare for the final thesis course.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_777",
@@ -2674,7 +2674,7 @@
     ],
     "description": "The integration of 3D models and environments adds dynamism and realism to motion media content. Through in-depth research of advanced 3D motion design techniques, students effectively implement and build high production value, 3D motion media content within simulated professional pipelines using industry-standard technology solutions.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_779F",
@@ -2690,7 +2690,7 @@
     "prerequisites": [],
     "description": "Students in this course undertake a field assignment under the supervision of a faculty member.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_779T",
@@ -2706,7 +2706,7 @@
     "prerequisites": [],
     "description": "Students in this course undertake a teaching assignment under the supervision of a faculty member.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "MOME_790",
@@ -2732,7 +2732,7 @@
     ],
     "description": "The motion media design M.F.A. degree program culminates with completion of a graduate-level thesis that presents a mature, resolved body of work, and demonstrates advanced professional competence through mastery of the technical, creative and aesthetic elements of the discipline. Upon successful completion of the M.F.A. in motion media design, students master the motion media tool set; create and document innovative, original motion media projects; and employ historical research and distinctive aesthetics to make a unique contribution to the discipline.",
     "source": "scraped",
-    "last_scraped": "2026-04-09T21:48:15.957498+00:00"
+    "last_scraped": "2026-04-09T21:58:51.288204+00:00"
   },
   {
     "id": "AI_201",
