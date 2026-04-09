@@ -114,7 +114,14 @@ python main.py --quarter fall
 # Check: no hard constraint violations, affinity highlights in yellow, time pref in orange
 ```
 
-**Status:** PENDING
+**Actual result:** All 3 modes solved OPTIMAL. 18-19/19 sections placed. One could_have
+section (ITGM_748) left unscheduled in affinity_first and balanced modes — correct
+solver behavior. output/schedule_fall_2026.xlsx written with 4 sheets, dept colour
+coding, affinity/time-pref highlights. No hard constraint violations.
+
+Scores: affinity_first=145, time_pref_first=15, balanced=75.
+
+**Status:** COMPLETE
 
 ---
 
