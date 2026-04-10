@@ -133,8 +133,15 @@ def _time_label(prof: dict, ts: str) -> str:
 # Main entry point
 # ---------------------------------------------------------------------------
 
-def run_schedule(quarter: str) -> dict:
+def run_schedule(quarter: str, locked: list | None = None) -> dict:
     """Run 3 CP-SAT solves (one per mode) for the given quarter.
+
+    Parameters
+    ----------
+    locked : list | None
+        Optional list of assignment dicts (cs_key, prof_id, room_id, day_group,
+        time_slot) that are pinned as hard constraints in every mode solve.
+        Used by the lock-and-tweak re-generate flow.
 
     Returns
     -------
@@ -155,7 +162,7 @@ def run_schedule(quarter: str) -> dict:
     mode_results = []
     for mode in MODE_WEIGHTS:
         print(f"\n[{mode}] Building model ...")
-        model, data = build_model(quarter, mode)
+        model, data = build_model(quarter, mode, locked=locked)
 
         print(f"[{mode}] Applying constraints ...")
         apply_hard_constraints(model, data)

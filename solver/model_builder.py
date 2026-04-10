@@ -94,7 +94,7 @@ def _eligible_rooms(course: dict, rooms: list[dict]) -> list[str]:
 # Main entry point
 # ---------------------------------------------------------------------------
 
-def build_model(quarter: str, mode: str = "balanced") -> tuple:
+def build_model(quarter: str, mode: str = "balanced", locked: list | None = None) -> tuple:
     """Load quarterly offerings and catalog, expand sections, build CP-SAT model.
 
     Parameters
@@ -104,6 +104,10 @@ def build_model(quarter: str, mode: str = "balanced") -> tuple:
     mode : str
         Optimization mode — 'affinity_first', 'time_pref_first', or 'balanced'.
         Stored in data dict and read by objectives.py.
+    locked : list | None
+        Optional list of assignment dicts (each with cs_key, prof_id, room_id,
+        day_group, time_slot) that are fixed to 1 as hard constraints. Used by
+        the lock-and-tweak re-generate flow in the UI.
 
     Returns
     -------
@@ -238,6 +242,18 @@ def build_model(quarter: str, mode: str = "balanced") -> tuple:
     for cs in course_sections:
         sections_by_catalog_id.setdefault(cs["catalog_id"], []).append(cs["cs_key"])
 
+    # --- Fix locked assignments to 1 (hard constraints for re-generate) ---
+    locked_keys: set[tuple] = set()
+    if locked:
+        for lock in locked:
+            key = (lock["cs_key"], lock["prof_id"], lock["room_id"],
+                   lock["day_group"], lock["time_slot"])
+            if key in assignments:
+                model.Add(assignments[key] == 1)
+                locked_keys.add(key)
+            else:
+                print(f"  [lock] {lock['cs_key']} — combo not in variable set, skipping lock")
+
     data = {
         # Identity
         "quarter":            quarter,
@@ -264,6 +280,7 @@ def build_model(quarter: str, mode: str = "balanced") -> tuple:
         "vars_by_prof":           vars_by_prof,
         "vars_by_cs_dg_ts":       vars_by_cs_dg_ts,
         "sections_by_catalog_id": sections_by_catalog_id,
+        "locked_keys":            locked_keys,
     }
 
     return model, data

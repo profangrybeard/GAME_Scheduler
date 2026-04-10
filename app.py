@@ -287,6 +287,10 @@ st.markdown(f"""
         padding: 6px 8px; margin-bottom: 4px; font-size: 0.78rem;
     }}
     .cal-course:last-child {{ margin-bottom: 0; }}
+    .cal-course.locked {{
+        background: #1C1C2A !important;
+        border-left: 3px solid {ACCENT} !important;
+    }}
     .cal-cid {{ font-weight: 700; font-size: 0.75rem; color: {TXT_ACCENT}; }}
     .cal-cname {{ color: {TXT_PRIMARY}; font-size: 0.75rem; margin-top: 1px;
         overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }}
@@ -1259,8 +1263,11 @@ else:
         else:
             total_sec = sum(o.get("sections", 1) for o in offerings)
             st.markdown(
-                f'<span style="font-weight:600; color:{TXT_PRIMARY};">{quarter.title()} {year}</span>'
-                f'<span style="color:{TXT_MUTED};"> — {len(offerings)} courses, {total_sec} sections</span>',
+                '<span style="font-weight:600; color:{pri};">{q} {yr}</span>'
+                '<span style="color:{mut};"> — {nc} courses, {ns} sections</span>'.format(
+                    pri=TXT_PRIMARY, q=quarter.title(), yr=year,
+                    mut=TXT_MUTED, nc=len(offerings), ns=total_sec,
+                ),
                 unsafe_allow_html=True,
             )
             st.markdown("")
@@ -1289,8 +1296,14 @@ else:
                         st.session_state["results"] = results
                         st.session_state["gen_quarter"] = quarter
                         st.session_state["gen_year"] = year
+                        # Clear working schedule so it rebuilds from fresh results
+                        for _k in ["working_schedule", "working_schedule_mode", "working_schedule_quarter"]:
+                            st.session_state.pop(_k, None)
+                        # Clear all working-schedule state on fresh generate
+                        for _mk in ("affinity_first", "time_pref_first", "balanced"):
+                            st.session_state.pop("ws_" + _mk, None)
                     except Exception as e:
-                        st.error(f"Solver error: {e}")
+                        st.error("Solver error: {}".format(e))
                         st.session_state["results"] = None
 
             if "results" in st.session_state and st.session_state.get("results"):
@@ -1314,14 +1327,18 @@ else:
                         status = r.get("status", "unknown")
                         border_c = ACCENT_GREEN if status == "optimal" else ACCENT_AMBER if status == "feasible" else ACCENT_RED
 
-                        st.markdown(f"""
-                        <div class="mode-card" style="border-top: 3px solid {border_c};">
-                            <div class="mc-label">{label}</div>
-                            <div class="mc-value">{placed}</div>
-                            <div class="mc-sub">sections placed · score {score}</div>
-                            <div class="mc-sub" style="margin-top:2px; color:{border_c};">{status.upper()}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
+                        st.markdown(
+                            '<div class="mode-card" style="border-top: 3px solid {bc};">'
+                            '<div class="mc-label">{lbl}</div>'
+                            '<div class="mc-value">{placed}</div>'
+                            '<div class="mc-sub">sections placed · score {score}</div>'
+                            '<div class="mc-sub" style="margin-top:2px; color:{bc};">{status}</div>'
+                            '</div>'.format(
+                                bc=border_c, lbl=label, placed=placed,
+                                score=score, status=status.upper(),
+                            ),
+                            unsafe_allow_html=True,
+                        )
 
                 st.markdown("")
 
@@ -1338,39 +1355,88 @@ else:
                 if not schedule:
                     st.warning("No assignments in this mode.")
                 else:
-                    # Build lookup: (day_group, time_slot) -> [assignments]
+                    # ── Init / sync working schedule for this mode ─────────
+                    ws_key = "ws_" + selected_mode
+                    if ws_key not in st.session_state:
+                        st.session_state[ws_key] = [
+                            dict(a, locked=False) for a in schedule
+                        ]
+                    working = st.session_state[ws_key]
+
+                    # Build locked-state lookup for calendar rendering
+                    locked_set = {a["cs_key"] for a in working if a.get("locked")}
+                    n_locked   = len(locked_set)
+                    n_unlocked = len(working) - n_locked
+
+                    # ── Lock toolbar (above calendar) ─────────────────────
+                    tb_c1, tb_c2, tb_c3 = st.columns([1, 1, 5])
+                    with tb_c1:
+                        if st.button("🔒 Lock All", key="lock_all_" + selected_mode):
+                            for a in working:
+                                a["locked"] = True
+                            st.rerun()
+                    with tb_c2:
+                        if st.button("🔓 Unlock All", key="unlock_all_" + selected_mode):
+                            for a in working:
+                                a["locked"] = False
+                            st.rerun()
+                    with tb_c3:
+                        st.markdown(
+                            '<div style="padding-top:6px; font-size:0.83rem; color:{mut};">'
+                            '<span style="color:{acc}; font-weight:600;">{nl} locked</span>'
+                            ' &nbsp;&middot;&nbsp; {nu} unlocked</div>'.format(
+                                mut=TXT_MUTED, acc=ACCENT,
+                                nl=n_locked, nu=n_unlocked,
+                            ),
+                            unsafe_allow_html=True,
+                        )
+
+                    # ── Calendar ───────────────────────────────────────────
                     cal_grid = {}
-                    for a in schedule:
+                    for a in working:
                         key = (a.get("day_group", 1), a.get("time_slot", ""))
                         cal_grid.setdefault(key, []).append(a)
 
-                    # day_group -> list of column indices (0=Mon,1=Tue,2=Wed,3=Thu,4=Fri)
                     DG_COLS = {1: [0, 2], 2: [1, 3]}
                     DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 
-                    def _course_card(a):
-                        dept = a.get("department", "game")
-                        dot  = DEPT_DOT.get(dept, "#666")
-                        cid   = a.get("catalog_id", "")
-                        cname = a.get("course_name", "")[:32]
-                        prof  = a.get("prof_name", "TBD")
-                        room  = a.get("room_name", "TBD")
+                    def _course_card(a, locked=False):
+                        dept  = a.get("department", "game")
+                        dot   = DEPT_DOT.get(dept, "#666")
+                        cid   = html.escape(a.get("catalog_id", ""))
+                        cname = html.escape(a.get("course_name", "")[:32])
+                        prof  = html.escape(a.get("prof_name", "TBD"))
+                        room  = html.escape(a.get("room_name", "TBD"))
+                        if locked:
+                            border_color = ACCENT           # #818CF8 per spec
+                            extra_style  = " background:#1a1a30;"
+                            lock_badge   = (
+                                '<span style="float:right; font-size:0.65rem; color:{acc};">&#128274;</span>'.format(
+                                    acc=ACCENT)
+                            )
+                        else:
+                            border_color = dot
+                            extra_style  = ""
+                            lock_badge   = ""
                         return (
-                            '<div class="cal-course" style="border-left: 3px solid {dot};">'
-                            '<div class="cal-cid">{cid}</div>'
+                            '<div class="cal-course" style="border-left: 3px solid {bc};{xs}">'
+                            '<div class="cal-cid">{cid}{lb}</div>'
                             '<div class="cal-cname">{cname}</div>'
                             '<div class="cal-detail">{prof} &middot; {room}</div>'
                             '</div>'
-                        ).format(dot=dot, cid=cid, cname=cname, prof=prof, room=room)
+                        ).format(bc=border_color, xs=extra_style,
+                                 cid=cid, lb=lock_badge,
+                                 cname=cname, prof=prof, room=room)
 
-                    # Build the full 5-column grid: col_cells[col_idx][ts] = html
                     col_cells = [{} for _ in range(5)]
-                    for (dg, ts), assignments in cal_grid.items():
-                        cards_html = "".join(_course_card(a) for a in assignments)
+                    for (dg, ts), slot_assignments in cal_grid.items():
+                        cards_html = "".join(
+                            _course_card(a, locked=a["cs_key"] in locked_set)
+                            for a in slot_assignments
+                        )
                         for col_idx in DG_COLS.get(dg, []):
                             col_cells[col_idx][ts] = cards_html
 
-                    # Render HTML table
                     header_row = "<tr><th class='cal-header' style='width:68px;'></th>"
                     for day in DAY_NAMES:
                         header_row += "<th class='cal-header'>{}</th>".format(day)
@@ -1394,12 +1460,240 @@ else:
 
                     st.markdown(cal_html, unsafe_allow_html=True)
 
-                    # Unscheduled
+                    # ── Per-assignment lock toggles ────────────────────────
+                    st.markdown(
+                        '<div class="section-label" style="margin-top:1.5rem;">Lock Individual Assignments</div>',
+                        unsafe_allow_html=True,
+                    )
+                    for i, a in enumerate(working):
+                        lk_col, info_col = st.columns([0.4, 7])
+                        with lk_col:
+                            new_locked = st.checkbox(
+                                "",
+                                value=a.get("locked", False),
+                                key="lock_{mode}_{cs}_{i}".format(
+                                    mode=selected_mode, cs=a["cs_key"], i=i),
+                            )
+                            working[i]["locked"] = new_locked
+                        with info_col:
+                            dg_label = "MW" if a.get("day_group") == 1 else "TTh"
+                            lock_icon = (
+                                '<span style="color:{amb}; font-size:0.72rem;">&#128274;</span>&nbsp;'.format(
+                                    amb=ACCENT_AMBER)
+                                if new_locked else ""
+                            )
+                            st.markdown(
+                                '<div style="font-size:0.82rem; color:{tc}; padding:3px 0;">'
+                                '{li}<span style="color:{acc}; font-weight:600;">{cid}</span>'
+                                ' &mdash; {pname} &middot; {room} &middot; {dg} {ts}'
+                                '</div>'.format(
+                                    tc=TXT_SECONDARY, li=lock_icon, acc=TXT_ACCENT,
+                                    cid=a.get("catalog_id", ""),
+                                    pname=a.get("prof_name", ""),
+                                    room=a.get("room_name", ""),
+                                    dg=dg_label, ts=a.get("time_slot", ""),
+                                ),
+                                unsafe_allow_html=True,
+                            )
+
+                    # ── Edit Assignment ────────────────────────────────────
+                    st.markdown("")
+                    with st.expander("Edit Assignment"):
+                        st.markdown(
+                            '<div style="font-size:0.84rem; color:{mut}; margin-bottom:10px;">'
+                            'Select an assignment, change prof / room / time, then Apply. '
+                            'Edited assignments are auto-locked.</div>'.format(mut=TXT_MUTED),
+                            unsafe_allow_html=True,
+                        )
+
+                        def _asgn_label(a):
+                            dg = "MW" if a.get("day_group") == 1 else "TTh"
+                            return "{cid} — {p} · {r} · {dg} {ts}".format(
+                                cid=a.get("catalog_id", ""),
+                                p=a.get("prof_name", ""),
+                                r=a.get("room_name", ""),
+                                dg=dg, ts=a.get("time_slot", ""),
+                            )
+
+                        edit_idx = st.selectbox(
+                            "Assignment to edit",
+                            range(len(working)),
+                            format_func=lambda i: _asgn_label(working[i]),
+                            key="edit_sel_" + selected_mode,
+                        )
+
+                        cur = working[edit_idx]
+                        ea_c1, ea_c2 = st.columns(2)
+
+                        with ea_c1:
+                            all_profs_edit = load_professors()
+                            prof_opts = [p["id"] for p in all_profs_edit]
+                            cur_prof_idx = prof_opts.index(cur["prof_id"]) if cur.get("prof_id") in prof_opts else 0
+                            new_prof_id = st.selectbox(
+                                "Professor",
+                                prof_opts,
+                                format_func=lambda x: next(
+                                    (p["name"] for p in all_profs_edit if p["id"] == x), x),
+                                index=cur_prof_idx,
+                                key="edit_prof_" + selected_mode,
+                            )
+
+                            dg_opts = [1, 2]
+                            dg_labels_edit = {1: "Mon / Wed", 2: "Tue / Thu"}
+                            cur_dg = cur.get("day_group", 1)
+                            cur_dg_idx = dg_opts.index(cur_dg) if cur_dg in dg_opts else 0
+                            new_dg = st.selectbox(
+                                "Day Group",
+                                dg_opts,
+                                format_func=lambda x: dg_labels_edit[x],
+                                index=cur_dg_idx,
+                                key="edit_dg_" + selected_mode,
+                            )
+
+                        with ea_c2:
+                            all_rooms_edit = load_rooms()
+                            room_opts = [r["id"] for r in all_rooms_edit]
+                            cur_room_idx = room_opts.index(cur["room_id"]) if cur.get("room_id") in room_opts else 0
+                            new_room_id = st.selectbox(
+                                "Room",
+                                room_opts,
+                                format_func=lambda x: next(
+                                    (r["name"] for r in all_rooms_edit if r["id"] == x), x),
+                                index=cur_room_idx,
+                                key="edit_room_" + selected_mode,
+                            )
+
+                            ts_opts = config.TIME_SLOTS
+                            cur_ts = cur.get("time_slot", ts_opts[0])
+                            cur_ts_idx = ts_opts.index(cur_ts) if cur_ts in ts_opts else 0
+                            new_ts = st.selectbox(
+                                "Time Slot",
+                                ts_opts,
+                                index=cur_ts_idx,
+                                key="edit_ts_" + selected_mode,
+                            )
+
+                        # Conflict check
+                        conflicts = []
+                        for j, other in enumerate(working):
+                            if j == edit_idx:
+                                continue
+                            if other.get("day_group") == new_dg and other.get("time_slot") == new_ts:
+                                if other.get("prof_id") == new_prof_id:
+                                    conflicts.append(
+                                        "Prof conflict: {} already teaching {} {}".format(
+                                            other.get("prof_name", ""),
+                                            dg_labels_edit[new_dg], new_ts,
+                                        )
+                                    )
+                                if other.get("room_id") == new_room_id:
+                                    conflicts.append(
+                                        "Room conflict: {} already in use {} {}".format(
+                                            other.get("room_name", ""),
+                                            dg_labels_edit[new_dg], new_ts,
+                                        )
+                                    )
+                        for conflict_msg in conflicts:
+                            st.warning(conflict_msg)
+
+                        if st.button(
+                            "Apply Edit (auto-locks this assignment)",
+                            key="edit_apply_" + selected_mode,
+                        ):
+                            new_prof_name = next(
+                                (p["name"] for p in all_profs_edit if p["id"] == new_prof_id),
+                                new_prof_id,
+                            )
+                            new_room_name = next(
+                                (r["name"] for r in all_rooms_edit if r["id"] == new_room_id),
+                                new_room_id,
+                            )
+                            working[edit_idx].update({
+                                "prof_id":   new_prof_id,
+                                "prof_name": new_prof_name,
+                                "room_id":   new_room_id,
+                                "room_name": new_room_name,
+                                "day_group": new_dg,
+                                "days":      config.DAY_GROUPS[new_dg],
+                                "time_slot": new_ts,
+                                "locked":    True,
+                            })
+                            st.success("Assignment updated and locked.")
+                            st.rerun()
+
+                    # ── Re-Generate (keep locked) ──────────────────────────
+                    st.markdown("---")
+                    rg_c1, rg_c2 = st.columns([2, 5])
+                    with rg_c1:
+                        regen_clicked = st.button(
+                            "Re-Generate (keep locked)",
+                            key="regen_" + selected_mode,
+                            type="primary",
+                            use_container_width=True,
+                        )
+                    with rg_c2:
+                        if n_locked > 0:
+                            st.markdown(
+                                '<div style="padding-top:6px; font-size:0.82rem; color:{mut};">'
+                                '{n} assignment(s) pinned — solver optimizes the remaining {u}.'
+                                '</div>'.format(mut=TXT_MUTED, n=n_locked, u=n_unlocked),
+                                unsafe_allow_html=True,
+                            )
+                        else:
+                            st.markdown(
+                                '<div style="padding-top:6px; font-size:0.82rem; color:{mut};">'
+                                'No assignments locked — equivalent to a full re-generate.'
+                                '</div>'.format(mut=TXT_MUTED),
+                                unsafe_allow_html=True,
+                            )
+                    if regen_clicked:
+                        locked_list = [a for a in working if a.get("locked")]
+                        prof_ov = active_project.get("prof_overrides", {})
+                        if prof_ov:
+                            updated = load_professors()
+                            for p in updated:
+                                ov = prof_ov.get(p["id"])
+                                if ov:
+                                    p["max_classes"] = ov["max_classes"]
+                                    p["time_preference"] = ov["time_preference"]
+                                    if ov["available"] and quarter not in p["available_quarters"]:
+                                        p["available_quarters"].append(quarter)
+                                    elif not ov["available"] and quarter in p["available_quarters"]:
+                                        p["available_quarters"] = [
+                                            q for q in p["available_quarters"] if q != quarter
+                                        ]
+                            save_professors_to_disk(updated)
+                        save_offerings(quarter, year, offerings)
+                        with st.spinner(
+                            "Re-running solver ({} locked)...".format(n_locked)
+                        ):
+                            try:
+                                new_results = run_schedule(quarter, locked=locked_list)
+                                st.session_state["results"] = new_results
+                                # Rebuild working schedules, preserving lock flags by cs_key
+                                prev_locked_keys = {
+                                    a["cs_key"] for a in working if a.get("locked")
+                                }
+                                new_modes_map = {
+                                    m["mode"]: m for m in new_results.get("modes", [])
+                                }
+                                for mk in mode_labels:
+                                    new_sched = new_modes_map.get(mk, {}).get("schedule", [])
+                                    st.session_state["ws_" + mk] = [
+                                        dict(a, locked=(a["cs_key"] in prev_locked_keys))
+                                        for a in new_sched
+                                    ]
+                                st.rerun()
+                            except Exception as e:
+                                st.error("Solver error: {}".format(e))
+
+                    # ── Unscheduled ────────────────────────────────────────
                     unscheduled = r.get("unscheduled", [])
                     if unscheduled:
                         st.markdown("")
                         st.markdown(
-                            f'<div class="section-label">Unscheduled ({len(unscheduled)})</div>',
+                            '<div class="section-label">Unscheduled ({n})</div>'.format(
+                                n=len(unscheduled)),
                             unsafe_allow_html=True,
                         )
                         for u in unscheduled:
@@ -1408,16 +1702,20 @@ else:
                             flag = " — MUST HAVE" if pri == "must_have" else ""
                             color = ACCENT_RED if pri == "must_have" else TXT_MUTED
                             st.markdown(
-                                f'<span style="color:{color}; font-size:0.85rem;">{sid}{flag}</span>',
+                                '<span style="color:{c}; font-size:0.85rem;">{sid}{flag}</span>'.format(
+                                    c=color, sid=sid, flag=flag),
                                 unsafe_allow_html=True,
                             )
 
-                    # Professor loads
+                    # ── Professor loads ────────────────────────────────────
                     st.markdown("")
-                    st.markdown('<div class="section-label">Professor Loads</div>', unsafe_allow_html=True)
+                    st.markdown(
+                        '<div class="section-label">Professor Loads</div>',
+                        unsafe_allow_html=True,
+                    )
 
                     prof_loads = {}
-                    for a in schedule:
+                    for a in working:
                         pid = a.get("prof_id", "")
                         pname = a.get("prof_name", pid)
                         if pid not in prof_loads:
@@ -1425,7 +1723,9 @@ else:
                         prof_loads[pid]["count"] += 1
 
                     load_cols = st.columns(min(len(prof_loads), 4) or 1)
-                    for i, (pid, info) in enumerate(sorted(prof_loads.items(), key=lambda x: -x[1]["count"])):
+                    for i, (pid, info) in enumerate(
+                        sorted(prof_loads.items(), key=lambda x: -x[1]["count"])
+                    ):
                         pname = info["name"]
                         count = info["count"]
                         prof_data = next((p for p in profs if p["id"] == pid), {})
@@ -1433,21 +1733,30 @@ else:
                         overloaded = count > config.STANDARD_MAX
                         bar_pct = min(count / max_c * 100, 100)
                         bar_color = ACCENT_RED if overloaded else ACCENT
+                        overload_span = (
+                            ' &mdash; <span style="color:{r};">overloaded</span>'.format(r=ACCENT_RED)
+                            if overloaded else ""
+                        )
 
                         with load_cols[i % len(load_cols)]:
-                            st.markdown(f"""
-                            <div style="margin-bottom:14px;">
-                                <div style="font-weight:500; font-size:0.85rem; color:{TXT_SECONDARY};">{pname}</div>
-                                <div class="load-bar-bg">
-                                    <div class="load-bar-fill" style="background:{bar_color}; width:{bar_pct}%;"></div>
-                                </div>
-                                <div style="font-size:0.73rem; color:{TXT_MUTED};">
-                                    {count} / {max_c}{f' — <span style="color:{ACCENT_RED};">overloaded</span>' if overloaded else ''}
-                                </div>
-                            </div>
-                            """, unsafe_allow_html=True)
+                            st.markdown(
+                                '<div style="margin-bottom:14px;">'
+                                '<div style="font-weight:500; font-size:0.85rem; color:{sec};">{pname}</div>'
+                                '<div class="load-bar-bg">'
+                                '<div class="load-bar-fill" style="background:{bc}; width:{pct}%;"></div>'
+                                '</div>'
+                                '<div style="font-size:0.73rem; color:{mut};">'
+                                '{count} / {max_c}{ovl}'
+                                '</div></div>'.format(
+                                    sec=TXT_SECONDARY, pname=pname,
+                                    bc=bar_color, pct=bar_pct,
+                                    mut=TXT_MUTED, count=count, max_c=max_c,
+                                    ovl=overload_span,
+                                ),
+                                unsafe_allow_html=True,
+                            )
 
-                    # Export
+                    # ── Export ─────────────────────────────────────────────
                     st.markdown("---")
                     e1, e2 = st.columns([1, 3])
                     with e1:
@@ -1455,7 +1764,7 @@ else:
                             out_dir = PROJECT_ROOT / "output"
                             try:
                                 out_path = write_excel(results, out_dir)
-                                st.success(f"Exported: {out_path.name}")
+                                st.success("Exported: {}".format(out_path.name))
                                 with open(out_path, "rb") as f:
                                     st.download_button(
                                         "Download",
@@ -1465,4 +1774,4 @@ else:
                                         use_container_width=True,
                                     )
                             except Exception as e:
-                                st.error(f"Export failed: {e}")
+                                st.error("Export failed: {}".format(e))
