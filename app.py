@@ -46,7 +46,7 @@ ACCENT_RED    = "#F87171"
 
 DEPT_DOT    = {"game": "#60A5FA", "motion_media": "#A78BFA", "ai": "#FBBF24"}
 DEPT_LABELS = {"game": "Game Design", "motion_media": "Motion Media", "ai": "AI"}
-PRIORITY_LABELS = {"must_have": "Must", "should_have": "Should", "could_have": "Could"}
+PRIORITY_LABELS = {"must_have": "Must", "should_have": "Should", "could_have": "Could", "nice_to_have": "Nice"}
 TIME_PREF_LABELS = {"morning": "Morning", "afternoon": "Afternoon", "afternoon_evening": "Afternoon / Evening"}
 
 # ─── Page Config ─────────────────────────────────────────────────────
@@ -685,7 +685,7 @@ else:
                 qa_room_idx = st.selectbox("Room Type", range(len(_QUICK_ROOM_TYPES)),
                                            format_func=lambda i: _QUICK_ROOM_LABELS[i], key="qa_room")
                 qa_room_type = _QUICK_ROOM_KEYS[qa_room_idx]
-                qa_priority  = st.selectbox("Priority", ["must_have", "should_have", "could_have"],
+                qa_priority  = st.selectbox("Priority", list(PRIORITY_LABELS.keys()),
                                             format_func=lambda x: PRIORITY_LABELS[x], key="qa_pri")
                 qa_sections  = st.number_input("Sections", min_value=1, max_value=4, value=1, key="qa_sec")
                 qa_cap       = st.number_input("Enrollment Cap", min_value=1, max_value=30, value=20, key="qa_cap")
@@ -1126,10 +1126,13 @@ else:
                     )
 
                 with r2:
+                    _pri_keys = list(PRIORITY_LABELS.keys())
+                    _cur_pri = o.get("priority", "must_have")
+                    _pri_idx = _pri_keys.index(_cur_pri) if _cur_pri in _pri_keys else 0
                     new_pri = st.selectbox(
-                        "pri", ["must_have", "should_have", "could_have"],
+                        "pri", _pri_keys,
                         format_func=lambda x: PRIORITY_LABELS[x],
-                        index=["must_have", "should_have", "could_have"].index(o.get("priority", "must_have")),
+                        index=_pri_idx,
                         key=f"pri_{idx}",
                         label_visibility="collapsed",
                     )
