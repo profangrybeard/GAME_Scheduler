@@ -1,0 +1,239 @@
+{
+  "name": "Eric's Winter Schedule",
+  "description": "Based on Eric Allen's rough schedule grid (April 2026)",
+  "professor_overrides": {
+    "prof_allen": {
+      "max_classes": 3,
+      "time_preference": "morning",
+      "available": true
+    },
+    "prof_lindsay": {
+      "max_classes": 3,
+      "time_preference": "afternoon_evening",
+      "available": true
+    },
+    "prof_dodson": {
+      "max_classes": 3,
+      "time_preference": "morning",
+      "available": true
+    },
+    "prof_avenali": {
+      "max_classes": 3,
+      "time_preference": "morning",
+      "available": true
+    },
+    "prof_spencer": {
+      "max_classes": 3,
+      "time_preference": "afternoon_evening",
+      "available": true
+    },
+    "prof_maloney": {
+      "max_classes": 3,
+      "time_preference": "afternoon_evening",
+      "available": true
+    },
+    "prof_imperato": {
+      "max_classes": 3,
+      "time_preference": "morning",
+      "available": true
+    }
+  },
+  "offerings": [
+    {
+      "catalog_id": "AI_101",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_121",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_130",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_220",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_236",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_266",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_326",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_333",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_415",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_503",
+      "priority": "nice_to_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "NOT IN CATALOG - needs to be added. Design Research"
+    },
+    {
+      "catalog_id": "GAME_505",
+      "priority": "nice_to_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": " (wishlist)"
+    },
+    {
+      "catalog_id": "GAME_512",
+      "priority": "nice_to_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "NOT IN CATALOG - needs to be added. 512 (unknown)"
+    },
+    {
+      "catalog_id": "GAME_712",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "Assigned to David (Morn) in Eric's schedule"
+    },
+    {
+      "catalog_id": "GAME_720",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": [
+        "prof_allen"
+      ],
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_722",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": [
+        "prof_avenali"
+      ],
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_724",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": [
+        "prof_dodson"
+      ],
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_730",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "IACT_330",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "NOT IN CATALOG - needs to be added. IACT 330"
+    },
+    {
+      "catalog_id": "IXDS_712",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "NOT IN CATALOG - needs to be added. IXDS 712"
+    },
+    {
+      "catalog_id": "IXDS_720",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "NOT IN CATALOG - needs to be added. IXDS 720 OL"
+    },
+    {
+      "catalog_id": "IXDS_732",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "NOT IN CATALOG - needs to be added. IXDS 732"
+    }
+  ],
+  "intended_quarter": "winter"
+}

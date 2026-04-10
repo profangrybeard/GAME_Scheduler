@@ -1,0 +1,279 @@
+{
+  "name": "Eric's Fall Schedule",
+  "description": "Based on Eric Allen's rough schedule grid (April 2026)",
+  "professor_overrides": {
+    "prof_allen": {
+      "max_classes": 3,
+      "time_preference": "morning",
+      "available": true
+    },
+    "prof_lindsay": {
+      "max_classes": 3,
+      "time_preference": "afternoon_evening",
+      "available": true
+    },
+    "prof_dodson": {
+      "max_classes": 3,
+      "time_preference": "morning",
+      "available": true
+    },
+    "prof_avenali": {
+      "max_classes": 3,
+      "time_preference": "morning",
+      "available": true
+    },
+    "prof_spencer": {
+      "max_classes": 3,
+      "time_preference": "afternoon_evening",
+      "available": true
+    },
+    "prof_maloney": {
+      "max_classes": 3,
+      "time_preference": "afternoon_evening",
+      "available": true
+    },
+    "prof_imperato": {
+      "max_classes": 3,
+      "time_preference": "morning",
+      "available": true
+    }
+  },
+  "offerings": [
+    {
+      "catalog_id": "AI_101",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "AI_201",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "AI_295",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_121",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_130",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_220",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_236",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_256",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_336",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_342",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_347",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_356",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_380",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_405",
+      "priority": "nice_to_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": " (wishlist)"
+    },
+    {
+      "catalog_id": "GAME_465",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": [
+        "prof_lindsay"
+      ],
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_502",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": [
+        "prof_lindsay"
+      ],
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_710",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": [
+        "prof_allen"
+      ],
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_714",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": [
+        "prof_dodson"
+      ],
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_734",
+      "priority": "nice_to_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": " (wishlist)"
+    },
+    {
+      "catalog_id": "IACT_317",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "NOT IN CATALOG - needs to be added. IACT 317"
+    },
+    {
+      "catalog_id": "ITGM_522",
+      "priority": "nice_to_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": " (wishlist)"
+    },
+    {
+      "catalog_id": "ITGM_708",
+      "priority": "nice_to_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": " (wishlist)"
+    },
+    {
+      "catalog_id": "ITGM_755",
+      "priority": "nice_to_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": " (wishlist)"
+    },
+    {
+      "catalog_id": "ITGM_765",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": [
+        "prof_lindsay"
+      ],
+      "notes": null
+    },
+    {
+      "catalog_id": "IXDS_710",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "NOT IN CATALOG - needs to be added. IXDS 710"
+    }
+  ],
+  "intended_quarter": "fall"
+}

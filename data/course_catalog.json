@@ -1,5 +1,387 @@
 [
   {
+    "id": "ADBR_335",
+    "name": "Creative Technology: Engineering Brand Experiences",
+    "department": "adbr",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "advertising",
+      "branding",
+      "creative_technology"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 140,
+    "prerequisites": [
+      "ADBR_305"
+    ],
+    "description": "Creative technologists create connections between diverse platforms and technologies to facilitate dynamic brand engagement. In this course, students conceptualize and build imaginative ideas grounded in technology as they learn project roles, workflows, and platforms for developing innovative branded content.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
+  },
+  {
+    "id": "AI_101",
+    "name": "Survey of AI Applications",
+    "department": "ai",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "ai_application",
+      "ai_design",
+      "ai_ideation"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 108,
+    "prerequisites": [],
+    "description": "A broad survey of AI application across creative industries. Students examine current AI tools, explore AI ideation techniques, and develop critical frameworks for evaluating AI's role in design and culture.",
+    "source": "manual",
+    "last_scraped": null
+  },
+  {
+    "id": "AI_180",
+    "name": "Unleashing Creativity",
+    "department": "ai",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "ai_application",
+      "ai_design",
+      "ai_ideation"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 109,
+    "prerequisites": [],
+    "description": "Students harness generative AI tools to expand creative practice through AI ideation, prompt design, and AI application to visual and conceptual workflows.",
+    "source": "manual",
+    "last_scraped": null
+  },
+  {
+    "id": "AI_201",
+    "name": "Creative Computing with AI",
+    "department": "ai",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "ai_application",
+      "ai_design",
+      "ai_ideation",
+      "ai_pipeline"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 110,
+    "prerequisites": [],
+    "description": "Students build creative computing projects using AI application and AI pipeline integration. Topics include generative systems, AI design workflows, AI ideation, and responsible deployment of AI tools.",
+    "source": "manual",
+    "last_scraped": null
+  },
+  {
+    "id": "AI_250",
+    "name": "Evolution of Computing",
+    "department": "ai",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "ai_application",
+      "ai_pipeline"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 111,
+    "prerequisites": [],
+    "description": "Historical and technical survey of computing from early machines through modern AI application. Students trace the AI pipeline from rule-based systems to neural networks and examine implications for creative practice.",
+    "source": "manual",
+    "last_scraped": null
+  },
+  {
+    "id": "AI_295",
+    "name": "Action Lab",
+    "department": "ai",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "ai_application",
+      "ai_design",
+      "ai_ideation"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 112,
+    "prerequisites": [],
+    "description": "Hands-on laboratory course where students rapidly prototype using AI application and AI ideation methods. Projects emphasize experimentation, iteration, and AI design thinking across multiple creative domains.",
+    "source": "manual",
+    "last_scraped": null
+  },
+  {
+    "id": "AI_301",
+    "name": "Agentic Design",
+    "department": "ai",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "ai_application",
+      "ai_design",
+      "ai_pipeline"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 113,
+    "prerequisites": [],
+    "description": "Students design and deploy AI agent systems, exploring agentic AI application, AI pipeline construction, and AI design patterns for autonomous creative tools.",
+    "source": "manual",
+    "last_scraped": null
+  },
+  {
+    "id": "AI_330",
+    "name": "Human in the Loop",
+    "department": "ai",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "ai_design",
+      "ai_ideation",
+      "ai_pipeline"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 114,
+    "prerequisites": [],
+    "description": "Examines the role of human judgment in AI-assisted creative processes. Students practice AI ideation, collaborative AI design, and methods for meaningful human oversight within AI pipeline workflows.",
+    "source": "manual",
+    "last_scraped": null
+  },
+  {
+    "id": "AI_360",
+    "name": "Systems Design",
+    "department": "ai",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "ai_application",
+      "ai_design",
+      "ai_pipeline"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 115,
+    "prerequisites": [],
+    "description": "Students design complex AI-driven systems, applying AI pipeline architecture, AI application integration, and systems thinking to solve open-ended creative and technical problems.",
+    "source": "manual",
+    "last_scraped": null
+  },
+  {
+    "id": "AI_395",
+    "name": "Studio X: Story, Space, Simulation",
+    "department": "ai",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "ai_application",
+      "ai_design",
+      "ai_ideation",
+      "interactive_design",
+      "narrative"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay",
+      "prof_dodson"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 116,
+    "prerequisites": [],
+    "description": "Interdisciplinary studio applying AI design and AI application to narrative, spatial, and simulation-based creative projects. Students develop AI ideation-driven works across story, space, and interactive simulation.",
+    "source": "manual",
+    "last_scraped": null
+  },
+  {
+    "id": "AI_410",
+    "name": "Applied AI Studio I",
+    "department": "ai",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "ai_application",
+      "ai_design",
+      "ai_pipeline"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 117,
+    "prerequisites": [],
+    "description": "First in a three-course applied studio sequence. Students develop portfolio-quality projects using full AI pipeline workflows, advanced AI application, and AI design methods.",
+    "source": "manual",
+    "last_scraped": null
+  },
+  {
+    "id": "AI_420",
+    "name": "Applied AI Studio II",
+    "department": "ai",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "ai_application",
+      "ai_design",
+      "ai_pipeline"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 118,
+    "prerequisites": [],
+    "description": "Continuation of the applied AI studio sequence. Students deepen AI design practice, refine AI pipeline implementations, and produce polished AI application works for professional presentation.",
+    "source": "manual",
+    "last_scraped": null
+  },
+  {
+    "id": "AI_430",
+    "name": "Applied AI Studio III",
+    "department": "ai",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "ai_application",
+      "ai_design",
+      "ai_ideation",
+      "ai_pipeline"
+    ],
+    "preferred_professors": [
+      "prof_allen",
+      "prof_lindsay"
+    ],
+    "enrollment_cap": 20,
+    "teaching_order": 119,
+    "prerequisites": [],
+    "description": "Capstone applied AI studio. Students complete a cohesive body of work demonstrating mastery of AI application, AI pipeline architecture, AI design, and AI ideation in a professional-quality portfolio.",
+    "source": "manual",
+    "last_scraped": null
+  },
+  {
+    "id": "DIGI_130",
+    "name": "Digital Communication",
+    "department": "digi",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "digital_media",
+      "communication",
+      "foundation"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 130,
+    "prerequisites": [],
+    "description": "Effective digital communication is fundamental for all creative professions. In this course, students investigate the diverse applications of digital tools and methods, developing foundational strategies for confident communication.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring",
+      "summer"
+    ]
+  },
+  {
+    "id": "DIGI_230",
+    "name": "Ethics of Emerging Technology",
+    "department": "digi",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "lecture_flex",
+    "specialization_tags": [
+      "digital_media",
+      "ethics",
+      "emerging_tech",
+      "ai"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 131,
+    "prerequisites": [
+      "AI_101"
+    ],
+    "description": "Students examine the social, cultural, and ethical impact of emerging technologies while developing a personal ethical code for designing responsible systems and experiences.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
+  },
+  {
+    "id": "DIGI_530",
+    "name": "Visual Communication Design",
+    "department": "digi",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "digital_media",
+      "visual_communication",
+      "design"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 132,
+    "prerequisites": [],
+    "description": "A graduate-level exploration of visual communication design principles and practices in digital media contexts.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
+  },
+  {
     "id": "GAME_120",
     "name": "Introduction to Interactive Design and Game Development",
     "department": "game",
@@ -1319,6 +1701,179 @@
     "last_scraped": "2026-04-09T23:26:33.010175+00:00"
   },
   {
+    "id": "IACT_315",
+    "name": "Human/Computer Interaction",
+    "department": "iact",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "interaction_design",
+      "hci",
+      "user_experience"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 120,
+    "prerequisites": [],
+    "description": "This course presents the principles of human/computer interaction and helps students contribute to the design process in computer-based, user-centered systems.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
+  },
+  {
+    "id": "IACT_317",
+    "name": "Interactive Product Design",
+    "department": "iact",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "interaction_design",
+      "product_design",
+      "user_experience"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 121,
+    "prerequisites": [],
+    "description": "Students explore interactive product design with a focus on interaction design principles, combining classic understandings of human-computer interaction with artistic and aesthetic approaches. The course offers a well-rounded survey of user experience disciplines.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
+  },
+  {
+    "id": "IACT_330",
+    "name": "Prototyping Electronics for Designers",
+    "department": "iact",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "large_game_lab",
+    "specialization_tags": [
+      "interaction_design",
+      "electronics",
+      "prototyping",
+      "physical_computing"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 122,
+    "prerequisites": [],
+    "description": "This course introduces practical techniques for sketching with sensors, electro-mechanical components, and code while exposing students to the theoretical underpinnings of electronic prototyping.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
+  },
+  {
+    "id": "IACT_335",
+    "name": "Advanced Prototyping Electronics",
+    "department": "iact",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "large_game_lab",
+    "specialization_tags": [
+      "interaction_design",
+      "electronics",
+      "prototyping",
+      "physical_computing"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 123,
+    "prerequisites": [
+      "IACT_330"
+    ],
+    "description": "Building on IACT 330, students advance their electronic prototyping skills with more complex sensor integration, networked devices, and refined physical computing techniques for interactive design applications.",
+    "source": "inferred",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
+  },
+  {
+    "id": "IACT_370",
+    "name": "Information Architecture",
+    "department": "iact",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "interaction_design",
+      "information_architecture",
+      "user_experience"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 124,
+    "prerequisites": [],
+    "description": "Students learn the principles and practices of information architecture, organizing and structuring content for interactive systems to support usability and findability.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
+  },
+  {
+    "id": "IACT_375",
+    "name": "Perceptual and Cognitive Human Factors",
+    "department": "iact",
+    "is_graduate": false,
+    "credits": 5,
+    "required_room_type": "lecture_flex",
+    "specialization_tags": [
+      "interaction_design",
+      "human_factors",
+      "cognitive_science",
+      "user_experience"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 125,
+    "prerequisites": [],
+    "description": "Students explore perceptual and cognitive human factors that influence the design of interactive systems, examining how human perception, attention, memory, and cognition shape user experience.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
+  },
+  {
+    "id": "IACT_731",
+    "name": "Information Architecture for Designers",
+    "department": "iact",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "interaction_design",
+      "information_architecture",
+      "user_experience"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 126,
+    "prerequisites": [],
+    "description": "This graduate-level course provides an overview of information architecture principles for designers, covering content organization, navigation systems, and labeling strategies for complex interactive systems.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
+  },
+  {
     "id": "ITGM_522",
     "name": "Programming for Designers",
     "department": "game",
@@ -1641,6 +2196,273 @@
     "description": "As culmination of their graduate experience, students execute a thesis that demonstrates a mature, resolved body of work and advanced professional competence through mastery of the technical, creative, and aesthetic elements of the discipline. Students synthesize research from various sources with their own creative ideas, technical skills, aesthetic sensibility, and mastery of design principles to make an original contribution to the field of game art or interactive design.",
     "source": "scraped",
     "last_scraped": "2026-04-09T23:26:33.010175+00:00"
+  },
+  {
+    "id": "IXDS_708",
+    "name": "Product Strategy and Storytelling",
+    "department": "ixds",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "lecture_flex",
+    "specialization_tags": [
+      "interactive_design",
+      "product_strategy",
+      "storytelling"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 101,
+    "prerequisites": [],
+    "description": "Product strategy empowers entrepreneurs to transform ideas into market-defining solutions. Students master cutting-edge frameworks including the Lean Canvas and Blue Ocean Strategy while navigating competitive market landscapes. Applying persuasive storytelling principles, students seamlessly integrate data, visuals, and design to craft compelling narratives that resonate with clients and stakeholders.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
+  },
+  {
+    "id": "IXDS_709",
+    "name": "Systems Innovation: Beyond Human-Centered Design",
+    "department": "ixds",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "lecture_flex",
+    "specialization_tags": [
+      "interactive_design",
+      "systems_design",
+      "innovation"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 102,
+    "prerequisites": [],
+    "description": "Systemic design transcends traditional human-centered approaches, empowering students to tackle complex, interconnected challenges through strategic frameworks and forward-thinking methodologies. Students master systems diagramming, stakeholder mapping, and intervention prototyping while navigating real-world problem landscapes. Applying ethical design principles, students seamlessly integrate responsible decision-making with innovative solutions addressing today's and tomorrow's pressing challenges.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
+  },
+  {
+    "id": "IXDS_710",
+    "name": "Patterns and Prototyping",
+    "department": "ixds",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "interactive_design",
+      "prototyping",
+      "design_patterns"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 103,
+    "prerequisites": [],
+    "description": "A foundational interactive design course where students explore design patterns and rapid prototyping methodologies for interactive systems. Serves as a prerequisite for many advanced IXDS courses.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
+  },
+  {
+    "id": "IXDS_712",
+    "name": "Game Engines for IX",
+    "department": "ixds",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "interactive_design",
+      "game_engines",
+      "game_development"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 104,
+    "prerequisites": [],
+    "description": "Students learn to leverage game engine technology for interactive design applications beyond traditional gaming. The course covers real-time 3D environments, interactive experiences, and the application of game engine pipelines to interactive design projects.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
+  },
+  {
+    "id": "IXDS_720",
+    "name": "MVP Lab: Idea to Execution",
+    "department": "ixds",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "interactive_design",
+      "mvp",
+      "product_development",
+      "ai"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 105,
+    "prerequisites": [],
+    "description": "MVP Lab teaches students to use low-code and AI-enhanced tools to rapidly build and deploy minimum viable products. Students learn to evaluate tools based on scalability, reliability, and user alignment. Through hands-on projects, they apply emerging technologies such as AI plugins, app builders, conversational platforms, and IoT systems to solve real-world problems. The course emphasizes rapid iteration, user testing, and deployment.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
+  },
+  {
+    "id": "IXDS_722",
+    "name": "Connective Systems for the Web",
+    "department": "ixds",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "interactive_design",
+      "web_systems",
+      "connectivity"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 106,
+    "prerequisites": [],
+    "description": "Students explore connected web systems, APIs, and networked interactive experiences. The course covers web technologies for building scalable, connected interactive applications.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
+  },
+  {
+    "id": "IXDS_724",
+    "name": "Interactive Experience Lab",
+    "department": "ixds",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "interactive_design",
+      "experience_design",
+      "lab"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 107,
+    "prerequisites": [],
+    "description": "A lab-based course where students design, build, and test interactive experiences. Students work through the full design cycle from concept to functional prototype.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
+  },
+  {
+    "id": "IXDS_732",
+    "name": "Physical Computing for Tangible Interfaces",
+    "department": "ixds",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "large_game_lab",
+    "specialization_tags": [
+      "interactive_design",
+      "physical_computing",
+      "tangible_interfaces",
+      "hardware"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 108,
+    "prerequisites": [],
+    "description": "Utilizing microprocessor boards, touch and motion sensors, and prototyping techniques, students research, design, and build interactive systems that use tangible interfaces to sense the physical world.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
+  },
+  {
+    "id": "IXDS_734",
+    "name": "Smart Devices",
+    "department": "ixds",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "interactive_design",
+      "iot",
+      "smart_devices",
+      "hardware"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 109,
+    "prerequisites": [],
+    "description": "Smart devices reshape how objects communicate and respond to user interactions through designs that creatively integrate hardware, software, and real-time data. Through hands-on prototyping with sensors, microcontrollers, and cloud platforms, students build secure, scalable systems for smart environments and everyday objects. The course emphasizes user-centered design, interoperability, and sustainability, with applications in healthcare, automation, and mobility.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
+  },
+  {
+    "id": "IXDS_744",
+    "name": "Speculative Design for Emerging Technologies",
+    "department": "ixds",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "lecture_flex",
+    "specialization_tags": [
+      "interactive_design",
+      "speculative_design",
+      "emerging_tech"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 110,
+    "prerequisites": [],
+    "description": "This course explores speculative design and emerging technologies, encouraging students to prototype innovative solutions for future scenarios. Students critically examine emerging technologies, considering their social, ethical, and environmental impacts. Using speculative methods, they design concepts that address future challenges and opportunities.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
+  },
+  {
+    "id": "IXDS_754",
+    "name": "IX Collaborative Production",
+    "department": "ixds",
+    "is_graduate": true,
+    "credits": 5,
+    "required_room_type": "pc_lab",
+    "specialization_tags": [
+      "interactive_design",
+      "collaborative",
+      "production"
+    ],
+    "preferred_professors": [],
+    "enrollment_cap": 20,
+    "teaching_order": 111,
+    "prerequisites": [],
+    "description": "A collaborative production course where students work in teams to design and develop interactive experiences from concept through delivery. Emphasizes project management, team dynamics, and professional production pipelines.",
+    "source": "scraped",
+    "usual_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
   },
   {
     "id": "MOME_105",
@@ -2733,285 +3555,5 @@
     "description": "The motion media design M.F.A. degree program culminates with completion of a graduate-level thesis that presents a mature, resolved body of work, and demonstrates advanced professional competence through mastery of the technical, creative and aesthetic elements of the discipline. Upon successful completion of the M.F.A. in motion media design, students master the motion media tool set; create and document innovative, original motion media projects; and employ historical research and distinctive aesthetics to make a unique contribution to the discipline.",
     "source": "scraped",
     "last_scraped": "2026-04-09T23:26:33.010175+00:00"
-  },
-  {
-    "id": "AI_101",
-    "name": "Survey of AI Applications",
-    "department": "ai",
-    "is_graduate": false,
-    "credits": 5,
-    "required_room_type": "pc_lab",
-    "specialization_tags": [
-      "ai_application",
-      "ai_design",
-      "ai_ideation"
-    ],
-    "preferred_professors": [
-      "prof_allen",
-      "prof_lindsay"
-    ],
-    "enrollment_cap": 20,
-    "teaching_order": 108,
-    "prerequisites": [],
-    "description": "A broad survey of AI application across creative industries. Students examine current AI tools, explore AI ideation techniques, and develop critical frameworks for evaluating AI's role in design and culture.",
-    "source": "manual",
-    "last_scraped": null
-  },
-  {
-    "id": "AI_180",
-    "name": "Unleashing Creativity",
-    "department": "ai",
-    "is_graduate": false,
-    "credits": 5,
-    "required_room_type": "pc_lab",
-    "specialization_tags": [
-      "ai_application",
-      "ai_design",
-      "ai_ideation"
-    ],
-    "preferred_professors": [
-      "prof_allen",
-      "prof_lindsay"
-    ],
-    "enrollment_cap": 20,
-    "teaching_order": 109,
-    "prerequisites": [],
-    "description": "Students harness generative AI tools to expand creative practice through AI ideation, prompt design, and AI application to visual and conceptual workflows.",
-    "source": "manual",
-    "last_scraped": null
-  },
-  {
-    "id": "AI_201",
-    "name": "Creative Computing with AI",
-    "department": "ai",
-    "is_graduate": false,
-    "credits": 5,
-    "required_room_type": "pc_lab",
-    "specialization_tags": [
-      "ai_application",
-      "ai_design",
-      "ai_ideation",
-      "ai_pipeline"
-    ],
-    "preferred_professors": [
-      "prof_allen",
-      "prof_lindsay"
-    ],
-    "enrollment_cap": 20,
-    "teaching_order": 110,
-    "prerequisites": [],
-    "description": "Students build creative computing projects using AI application and AI pipeline integration. Topics include generative systems, AI design workflows, AI ideation, and responsible deployment of AI tools.",
-    "source": "manual",
-    "last_scraped": null
-  },
-  {
-    "id": "AI_250",
-    "name": "Evolution of Computing",
-    "department": "ai",
-    "is_graduate": false,
-    "credits": 5,
-    "required_room_type": "pc_lab",
-    "specialization_tags": [
-      "ai_application",
-      "ai_pipeline"
-    ],
-    "preferred_professors": [
-      "prof_allen",
-      "prof_lindsay"
-    ],
-    "enrollment_cap": 20,
-    "teaching_order": 111,
-    "prerequisites": [],
-    "description": "Historical and technical survey of computing from early machines through modern AI application. Students trace the AI pipeline from rule-based systems to neural networks and examine implications for creative practice.",
-    "source": "manual",
-    "last_scraped": null
-  },
-  {
-    "id": "AI_295",
-    "name": "Action Lab",
-    "department": "ai",
-    "is_graduate": false,
-    "credits": 5,
-    "required_room_type": "pc_lab",
-    "specialization_tags": [
-      "ai_application",
-      "ai_design",
-      "ai_ideation"
-    ],
-    "preferred_professors": [
-      "prof_allen",
-      "prof_lindsay"
-    ],
-    "enrollment_cap": 20,
-    "teaching_order": 112,
-    "prerequisites": [],
-    "description": "Hands-on laboratory course where students rapidly prototype using AI application and AI ideation methods. Projects emphasize experimentation, iteration, and AI design thinking across multiple creative domains.",
-    "source": "manual",
-    "last_scraped": null
-  },
-  {
-    "id": "AI_301",
-    "name": "Agentic Design",
-    "department": "ai",
-    "is_graduate": false,
-    "credits": 5,
-    "required_room_type": "pc_lab",
-    "specialization_tags": [
-      "ai_application",
-      "ai_design",
-      "ai_pipeline"
-    ],
-    "preferred_professors": [
-      "prof_allen",
-      "prof_lindsay"
-    ],
-    "enrollment_cap": 20,
-    "teaching_order": 113,
-    "prerequisites": [],
-    "description": "Students design and deploy AI agent systems, exploring agentic AI application, AI pipeline construction, and AI design patterns for autonomous creative tools.",
-    "source": "manual",
-    "last_scraped": null
-  },
-  {
-    "id": "AI_330",
-    "name": "Human in the Loop",
-    "department": "ai",
-    "is_graduate": false,
-    "credits": 5,
-    "required_room_type": "pc_lab",
-    "specialization_tags": [
-      "ai_design",
-      "ai_ideation",
-      "ai_pipeline"
-    ],
-    "preferred_professors": [
-      "prof_allen",
-      "prof_lindsay"
-    ],
-    "enrollment_cap": 20,
-    "teaching_order": 114,
-    "prerequisites": [],
-    "description": "Examines the role of human judgment in AI-assisted creative processes. Students practice AI ideation, collaborative AI design, and methods for meaningful human oversight within AI pipeline workflows.",
-    "source": "manual",
-    "last_scraped": null
-  },
-  {
-    "id": "AI_360",
-    "name": "Systems Design",
-    "department": "ai",
-    "is_graduate": false,
-    "credits": 5,
-    "required_room_type": "pc_lab",
-    "specialization_tags": [
-      "ai_application",
-      "ai_design",
-      "ai_pipeline"
-    ],
-    "preferred_professors": [
-      "prof_allen",
-      "prof_lindsay"
-    ],
-    "enrollment_cap": 20,
-    "teaching_order": 115,
-    "prerequisites": [],
-    "description": "Students design complex AI-driven systems, applying AI pipeline architecture, AI application integration, and systems thinking to solve open-ended creative and technical problems.",
-    "source": "manual",
-    "last_scraped": null
-  },
-  {
-    "id": "AI_395",
-    "name": "Studio X: Story, Space, Simulation",
-    "department": "ai",
-    "is_graduate": false,
-    "credits": 5,
-    "required_room_type": "pc_lab",
-    "specialization_tags": [
-      "ai_application",
-      "ai_design",
-      "ai_ideation",
-      "interactive_design",
-      "narrative"
-    ],
-    "preferred_professors": [
-      "prof_allen",
-      "prof_lindsay",
-      "prof_dodson"
-    ],
-    "enrollment_cap": 20,
-    "teaching_order": 116,
-    "prerequisites": [],
-    "description": "Interdisciplinary studio applying AI design and AI application to narrative, spatial, and simulation-based creative projects. Students develop AI ideation-driven works across story, space, and interactive simulation.",
-    "source": "manual",
-    "last_scraped": null
-  },
-  {
-    "id": "AI_410",
-    "name": "Applied AI Studio I",
-    "department": "ai",
-    "is_graduate": false,
-    "credits": 5,
-    "required_room_type": "pc_lab",
-    "specialization_tags": [
-      "ai_application",
-      "ai_design",
-      "ai_pipeline"
-    ],
-    "preferred_professors": [
-      "prof_allen",
-      "prof_lindsay"
-    ],
-    "enrollment_cap": 20,
-    "teaching_order": 117,
-    "prerequisites": [],
-    "description": "First in a three-course applied studio sequence. Students develop portfolio-quality projects using full AI pipeline workflows, advanced AI application, and AI design methods.",
-    "source": "manual",
-    "last_scraped": null
-  },
-  {
-    "id": "AI_420",
-    "name": "Applied AI Studio II",
-    "department": "ai",
-    "is_graduate": false,
-    "credits": 5,
-    "required_room_type": "pc_lab",
-    "specialization_tags": [
-      "ai_application",
-      "ai_design",
-      "ai_pipeline"
-    ],
-    "preferred_professors": [
-      "prof_allen",
-      "prof_lindsay"
-    ],
-    "enrollment_cap": 20,
-    "teaching_order": 118,
-    "prerequisites": [],
-    "description": "Continuation of the applied AI studio sequence. Students deepen AI design practice, refine AI pipeline implementations, and produce polished AI application works for professional presentation.",
-    "source": "manual",
-    "last_scraped": null
-  },
-  {
-    "id": "AI_430",
-    "name": "Applied AI Studio III",
-    "department": "ai",
-    "is_graduate": false,
-    "credits": 5,
-    "required_room_type": "pc_lab",
-    "specialization_tags": [
-      "ai_application",
-      "ai_design",
-      "ai_ideation",
-      "ai_pipeline"
-    ],
-    "preferred_professors": [
-      "prof_allen",
-      "prof_lindsay"
-    ],
-    "enrollment_cap": 20,
-    "teaching_order": 119,
-    "prerequisites": [],
-    "description": "Capstone applied AI studio. Students complete a cohesive body of work demonstrating mastery of AI application, AI pipeline architecture, AI design, and AI ideation in a professional-quality portfolio.",
-    "source": "manual",
-    "last_scraped": null
   }
 ]

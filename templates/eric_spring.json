@@ -1,0 +1,232 @@
+{
+  "name": "Eric's Spring Schedule",
+  "description": "Based on Eric Allen's rough schedule grid (April 2026)",
+  "professor_overrides": {
+    "prof_allen": {
+      "max_classes": 3,
+      "time_preference": "morning",
+      "available": true
+    },
+    "prof_lindsay": {
+      "max_classes": 3,
+      "time_preference": "afternoon_evening",
+      "available": true
+    },
+    "prof_dodson": {
+      "max_classes": 3,
+      "time_preference": "morning",
+      "available": true
+    },
+    "prof_avenali": {
+      "max_classes": 3,
+      "time_preference": "morning",
+      "available": true
+    },
+    "prof_spencer": {
+      "max_classes": 3,
+      "time_preference": "afternoon_evening",
+      "available": true
+    },
+    "prof_maloney": {
+      "max_classes": 3,
+      "time_preference": "afternoon_evening",
+      "available": true
+    },
+    "prof_imperato": {
+      "max_classes": 3,
+      "time_preference": "morning",
+      "available": true
+    }
+  },
+  "offerings": [
+    {
+      "catalog_id": "AI_180",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "AI_301",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "DIGI_230",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "NOT IN CATALOG - needs to be added. Ethics of Emerging Tech"
+    },
+    {
+      "catalog_id": "GAME_121",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_130",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_236",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_266",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_310",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_356",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_358",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_366",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_370",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_475",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_740",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": [
+        "prof_avenali"
+      ],
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_742",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": [
+        "prof_allen"
+      ],
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_754",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "Assigned to David (Morn) in Eric's schedule"
+    },
+    {
+      "catalog_id": "IACT_315",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "NOT IN CATALOG - needs to be added. IACT 315"
+    },
+    {
+      "catalog_id": "ITGM_748",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": [
+        "prof_dodson"
+      ],
+      "notes": null
+    },
+    {
+      "catalog_id": "ITGM_790",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": [
+        "prof_lindsay"
+      ],
+      "notes": null
+    },
+    {
+      "catalog_id": "IXDS_709",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "NOT IN CATALOG - needs to be added. IXDS 709"
+    }
+  ],
+  "intended_quarter": "spring"
+}

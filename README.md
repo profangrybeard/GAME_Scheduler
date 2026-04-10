@@ -12,26 +12,32 @@ The scheduler combines a **Streamlit web interface** with an **OR-Tools CP-SAT c
 
 ## Features
 
-- **Template system** — save and reload quarterly offering sets (fall typical, grad focused, summer light, etc.)
+- **Template system** — save and reload quarterly offering sets; includes Eric Allen's fall/winter/spring templates
 - **Faculty preference editor** — set per-professor time preferences and max load directly in the UI
+- **Faculty availability dots** — sidebar shows red/green status per professor reflecting current overrides
 - **Three optimization modes** — `affinity_first`, `time_pref_first`, `balanced`
+- **Lock-and-tweak** — lock satisfied assignments after a solve, then re-run to fill remaining slots
 - **Weekly calendar view** — visual grid of the generated schedule before export
 - **Quick Add** — one-click addition of SCAD Serve and Pro courses
 - **Paste import** — paste a tab-separated course list from Google Sheets or Excel to bulk-add courses
+- **Start from full catalog** — one-click load of all 141 catalog courses as a starting point
 - **Excel export** — color-coded 4-sheet workbook (Summary + one sheet per schedule option)
 
 ---
 
 ## Rooms
 
-| Room | Type | Capacity | Notes |
-|---|---|---|---|
-| 261 | PC Lab | 20 PCs | Standard game lab |
-| 263 | PC Lab | 20 PCs | Standard game lab |
-| 156 | Large Game Lab | 10 PCs | Larger room, fewer machines |
-| 260 | Mac Lab | Mac workstations | Design / motion media |
-| Design Studio | Flex | Variable | Layout changes per use |
-| Lecture / Zoom | Lecture | Variable | No specialized equipment |
+Seven real SCAD rooms in Ivy Hall:
+
+| Room | Type | Stations | Displays | Capacity | Notes |
+|---|---|---|---|---|---|
+| 263 | PC Lab | 20 PCs | 2 | 20 | Standard game lab |
+| 261 | PC Lab | 20 PCs | 2 | 20 | Standard game lab |
+| 260 | Mac Lab | 20 Macs | 1 | 20 | Design / motion media |
+| 259 | PC Lab | 20 PCs | 1 | 20 | PC design lab |
+| 258 | Lecture/Flex | teacher station | 1 | 24 | Lecture, discussion, Zoom |
+| 257 | Lecture/Flex | teacher station | 1 | 24 | Lecture, discussion, Zoom |
+| 156 | Large Game Lab | 10 PCs | 1 | 20 | Senior / thesis studio |
 
 ---
 
@@ -205,7 +211,10 @@ GAME_Scheduler/
     ├── fall_typical.json
     ├── grad_focused.json
     ├── summer_light.json
-    └── full_catalog_preview.json
+    ├── full_catalog_preview.json
+    ├── eric_fall.json          Eric Allen's fall schedule (faculty baked in)
+    ├── eric_winter.json        Eric Allen's winter schedule (faculty baked in)
+    └── eric_spring.json        Eric Allen's spring schedule (faculty baked in)
 ```
 
 ---
@@ -242,7 +251,7 @@ GAME_Scheduler/
 
 ## Current Status
 
-### Phase 2 — Streamlit UI (active)
+### v2.2 — Phase 2 — Streamlit UI (active)
 
 **Done:**
 - Full Streamlit web interface (`app.py`)
@@ -253,7 +262,11 @@ GAME_Scheduler/
 - Paste import from spreadsheets
 - All three optimization modes wired to the UI
 - Excel export from the web interface
-- 119-course catalog (GAME + MOME + AI departments)
+- 141-course catalog (GAME, MOME, ITGM, AI, IXDS, IACT, DIGI, ADBR departments)
+- Lock-and-tweak post-solve editing
+- Faculty availability dots (red/green) in sidebar
+- Eric Allen quarterly templates (fall/winter/spring) with faculty baked in
+- Schedule audit report (`eric_schedule_audit.md`) — 45 matched, 12 missing vs catalog
 
 **Up next:**
 - Side-by-side comparison view of all three schedule options
