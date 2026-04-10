@@ -119,9 +119,30 @@ section (ITGM_748) left unscheduled in affinity_first and balanced modes — cor
 solver behavior. output/schedule_fall_2026.xlsx written with 4 sheets, dept colour
 coding, affinity/time-pref highlights. No hard constraint violations.
 
-Scores: affinity_first=145, time_pref_first=15, balanced=75.
+Score: affinity_first=145, time_pref_first=15, balanced=75.
 
 **Status:** COMPLETE
+
+---
+
+## M6 — Draft Room Refactor (Rev 1.3.0)
+
+**What was built:**
+- Unified 3-column "Quarter Planner" layout (Scout, Board, Roster).
+- Reclaimed sidebar space for a wider 1.2:3.5:1.3 board ratio.
+- Integrated "Scout Report" Inspector in Col 1 to replace overlapping tooltips.
+- Relocated Directory navigation and Template Save controls into the main dashboard.
+- Maintained legacy fallback at `app_v2.2_legacy.py`.
+
+**How to verify:**
+1. Run `streamlit run app.py`
+2. Select a quarter and click "Create New Schedule".
+3. Verify the three-column layout is visible.
+4. Click the `[i]` icon on any course in the Scout (Col 1) to see it in the Inspector.
+5. Add a course with `+` and verify it appears on The Board (Col 2).
+
+**Status:** COMPLETE (UI Scaffolding)
+
 
 ---
 

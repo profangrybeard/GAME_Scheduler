@@ -1,0 +1,18 @@
+{
+  "project_name": "GAME_Scheduler",
+  "version": "1.3.0",
+  "last_milestone": "M5",
+  "active_phase": "Phase 2 - Streamlit UI",
+  "key_files": [
+    "app.py",
+    "solver/scheduler.py",
+    "solver/model_builder.py",
+    "config.py"
+  ],
+  "dependencies": [
+    "streamlit",
+    "ortools",
+    "pandas",
+    "openpyxl"
+  ]
+}
