@@ -1,56 +1,65 @@
 [
   {
-    "id": "room_101",
-    "name": "ITGM Lab 101",
-    "station_count": 20,
-    "station_type": "pc",
-    "has_itgm_suite": true,
-    "has_design_suite": false,
-    "capacity": 24
-  },
-  {
-    "id": "room_102",
-    "name": "ITGM Lab 102",
+    "id": "room_156",
+    "name": "Room 156 \u2013 Game Lab",
+    "room_type": "large_game_lab",
     "station_count": 10,
     "station_type": "pc",
-    "has_itgm_suite": true,
-    "has_design_suite": false,
-    "capacity": 16
+    "capacity": 20,
+    "notes": "The Game Lab \u2013 large studio space, used for senior classes and senior studio"
   },
   {
-    "id": "room_201",
-    "name": "ITGM Lab 201",
+    "id": "room_263",
+    "name": "Room 263 \u2013 PC Lab",
+    "room_type": "pc_lab",
     "station_count": 20,
     "station_type": "pc",
-    "has_itgm_suite": true,
-    "has_design_suite": true,
-    "capacity": 24
+    "capacity": 20,
+    "notes": "Primary game PC lab \u2013 scheduled every day"
   },
   {
-    "id": "room_mac_a",
-    "name": "Mac Lab A",
+    "id": "room_261",
+    "name": "Room 261 \u2013 PC Lab",
+    "room_type": "pc_lab",
+    "station_count": 20,
+    "station_type": "pc",
+    "capacity": 20,
+    "notes": "Game PC lab"
+  },
+  {
+    "id": "room_259",
+    "name": "Room 259 \u2013 PC Lab",
+    "room_type": "pc_lab",
+    "station_count": 20,
+    "station_type": "pc",
+    "capacity": 20,
+    "notes": "PC room \u2013 verify full game software suite is installed"
+  },
+  {
+    "id": "room_260",
+    "name": "Room 260 \u2013 Mac Lab",
+    "room_type": "mac_lab",
     "station_count": 20,
     "station_type": "mac",
-    "has_itgm_suite": false,
-    "has_design_suite": true,
-    "capacity": 24
+    "capacity": 20,
+    "notes": "Mac lab \u2013 motion media use"
   },
   {
-    "id": "room_lecture_a",
-    "name": "Seminar A",
+    "id": "room_flex_tbd",
+    "name": "Room TBD \u2013 Design Studio",
+    "room_type": "flex_studio",
     "station_count": 0,
     "station_type": null,
-    "has_itgm_suite": false,
-    "has_design_suite": false,
-    "capacity": 30
+    "capacity": 24,
+    "notes": "Design/flex studio \u2013 no fixed PCs, students use own devices or work on physical/tabletop games. UPDATE room number when confirmed."
   },
   {
-    "id": "room_lecture_b",
-    "name": "Seminar B",
+    "id": "room_zoom_tbd",
+    "name": "Room TBD \u2013 Lecture/Zoom Room",
+    "room_type": "lecture_flex",
     "station_count": 0,
     "station_type": null,
-    "has_itgm_suite": false,
-    "has_design_suite": false,
-    "capacity": 20
+    "capacity": 24,
+    "notes": "Lecture/Zoom room \u2013 for SCAD Serve, SCAD Pro, discussion-based courses. UPDATE room number when confirmed."
   }
 ]

@@ -47,12 +47,16 @@ TIME_PREF_MAP = {
 
 # === Room compatibility matrix ===
 ROOM_COMPATIBILITY = {
-    "itgm_suite": lambda r: r["has_itgm_suite"] is True and r["station_count"] >= 10,
-    "pc_lab":     lambda r: r["station_type"] == "pc" and r["station_count"] >= 10,
-    "mac_lab":    lambda r: r["station_type"] == "mac" and r["station_count"] >= 10,
-    "any_lab":    lambda r: r["station_count"] >= 10,
-    "standard":   lambda r: True,
+    "pc_lab":         lambda r: r.get("room_type") == "pc_lab",
+    "large_game_lab": lambda r: r.get("room_type") == "large_game_lab",
+    "mac_lab":        lambda r: r.get("room_type") == "mac_lab",
+    "flex_studio":    lambda r: r.get("room_type") == "flex_studio",
+    "lecture_flex":   lambda r: r.get("room_type") in ("lecture_flex", "large_game_lab"),
+    "any_lab":        lambda r: r.get("station_count", 0) >= 10,
+    "standard":       lambda r: True,
 }
+
+VALID_ROOM_TYPES = ["pc_lab", "large_game_lab", "mac_lab", "flex_studio", "lecture_flex", "any_lab", "standard"]
 
 # === Catalog inference ===
 PREFIX_TO_DEPT = {
@@ -63,7 +67,7 @@ PREFIX_TO_DEPT = {
 }
 
 DEPT_DEFAULT_ROOM = {
-    "game": "itgm_suite",
+    "game": "pc_lab",
     "motion_media": "mac_lab",
     "ai": "pc_lab",
 }
@@ -81,22 +85,27 @@ VALID_SPECIALIZATIONS = [
     "2d_motion_graphics", "3d_motion_graphics", "visual_effects", "vfx",
     "compositing", "stop_motion", "storyboarding",
     # Tools
-    "maya", "zbrush", "unreal_engine", "blueprint", "cinema_4d",
+    "maya", "zbrush", "unreal_engine", "unreal_engine_4", "unreal_engine_5",
+    "cryengine", "blueprint", "cinema_4d",
     "after_effects", "adobe_creative_suite", "shader_creation",
     # Design
     "game_design", "game_mechanics", "game_systems", "game_design_documentation",
     "level_design", "quest_design", "narrative", "world_building",
+    "environmental_narrative", "combat_design", "encounter_design",
     "interactive_storytelling", "prototyping", "tabletop_game_design",
-    "environmental_design", "interaction_design", "ui_design",
+    "environmental_design", "interaction_design", "ui_design", "ui_ux_design",
     "interface_design", "information_design", "interactive_design",
     "interactive_multimedia", "digital_typography", "typography",
     "screen_design", "branding", "multimedia",
+    "pvp_design", "open_world", "procedural_world_building",
     # Engineering
     "programming", "cpp", "csharp", "scripting", "gameplay_engineering",
     "game_tech", "database_design", "electronics_prototyping",
+    "technical_art", "tool_development", "pipeline_development",
+    "map_optimization", "performance_optimization",
     # Production
     "production", "scrum", "agile", "game_development", "gameplay",
-    "creative_direction", "creative_writing",
+    "production_oversight", "creative_direction", "creative_writing",
     # Motion Media Specific
     "broadcast_design", "live_cinema", "video_installation",
     "projection_mapping", "live_performance", "vjing", "audio_visual",

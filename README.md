@@ -1,232 +1,286 @@
-# SCAD Game Department Course Scheduler
+# SCAD GAME Department Course Scheduler
 
-A tool that automatically builds three draft course schedules for any quarter, balancing professor preferences, room requirements, and teaching loads. You give it a list of courses to offer — it gives you three options to choose from, exported as a color-coded Excel workbook.
-
----
-
-## Prerequisites
-
-- **Python 3.10 or newer** — download from [python.org](https://www.python.org/downloads/)
-- **pip** — comes with Python
-
-That's it. No database, no server, no IT required.
+A constraint-solving web app that builds quarterly course schedules for SCAD's Game department. Give it a list of courses to offer — it produces three optimized draft schedules, viewable in a browser and exportable to Excel.
 
 ---
 
-## First Run — From Clone to Schedule
+## What It Does
 
-**1. Get the project**
+The scheduler combines a **Streamlit web interface** with an **OR-Tools CP-SAT constraint solver** to automate the most tedious part of quarterly planning. You pick courses from the catalog (or paste them in from a spreadsheet), set faculty preferences, and the solver generates three schedule options optimized for different priorities — all without double-booking professors, mismatching room types, or blowing past teaching load limits.
+
+---
+
+## Features
+
+- **Template system** — save and reload quarterly offering sets (fall typical, grad focused, summer light, etc.)
+- **Faculty preference editor** — set per-professor time preferences and max load directly in the UI
+- **Three optimization modes** — `affinity_first`, `time_pref_first`, `balanced`
+- **Weekly calendar view** — visual grid of the generated schedule before export
+- **Quick Add** — one-click addition of SCAD Serve and Pro courses
+- **Paste import** — paste a tab-separated course list from Google Sheets or Excel to bulk-add courses
+- **Excel export** — color-coded 4-sheet workbook (Summary + one sheet per schedule option)
+
+---
+
+## Rooms
+
+| Room | Type | Capacity | Notes |
+|---|---|---|---|
+| 261 | PC Lab | 20 PCs | Standard game lab |
+| 263 | PC Lab | 20 PCs | Standard game lab |
+| 156 | Large Game Lab | 10 PCs | Larger room, fewer machines |
+| 260 | Mac Lab | Mac workstations | Design / motion media |
+| Design Studio | Flex | Variable | Layout changes per use |
+| Lecture / Zoom | Lecture | Variable | No specialized equipment |
+
+---
+
+## Faculty
+
+Seven professors, each configured with:
+- **Available quarters** (sabbatical / leave support)
+- **Max teaching load** (chair: 2 courses, standard: 4, overload cap: 5)
+- **Time preferences** (morning, afternoon, or no preference)
+- **Teaching departments** and **specialization tags** that drive affinity matching
+
+---
+
+## Solver Constraints
+
+### Hard constraints (violations = infeasible)
+- Each course section gets exactly one assignment
+- No professor teaches two courses at the same time
+- No room hosts two courses at the same time
+- Professor total load stays within `max_classes`
+- `must_have` sections are always scheduled
+- Multi-section courses use non-overlapping time slots
+
+### Soft constraints (violations = penalty score)
+| Objective | What it penalizes |
+|---|---|
+| Affinity mismatch | Professor's specialization tags don't align with the course |
+| Time preference | Assignment falls outside the professor's preferred time window |
+| Overload | Professor exceeds standard load (still legal, but penalized) |
+| Dropped sections | `should_have` and `could_have` sections that couldn't be placed |
+
+---
+
+## User Workflow
+
+```mermaid
+flowchart TD
+    A([Home Screen]) --> B{Start fresh\nor load template?}
+    B -- Load template --> C[Select saved template]
+    B -- Start fresh --> D[Browse course catalog]
+    C --> E[Course selection list]
+    D --> E
+    E --> F[Quick Add SCAD Serve / Pro courses]
+    E --> G[Paste import from spreadsheet]
+    F --> H[Faculty Preferences editor]
+    G --> H
+    H --> I{Choose optimization mode}
+    I -- affinity_first --> J[Run CP-SAT solver]
+    I -- time_pref_first --> J
+    I -- balanced --> J
+    J --> K[Weekly calendar view]
+    K --> L[Export to Excel]
+    K --> M[Save as template]
+```
+
+---
+
+## Data Flow
+
+```mermaid
+flowchart LR
+    subgraph Data
+        CC[course_catalog.json]
+        PJ[professors.json]
+        RJ[rooms.json]
+        QO[quarterly_offerings.json]
+    end
+
+    subgraph Solver
+        MB[model_builder.py\nCP-SAT variables]
+        CN[constraints.py\n12 hard rules]
+        OB[objectives.py\nweighted penalties]
+        SC[scheduler.py\n3-mode runner]
+    end
+
+    subgraph UI
+        AP[app.py\nStreamlit]
+    end
+
+    subgraph Output
+        XL[Excel workbook\n4 sheets]
+    end
+
+    CC --> MB
+    PJ --> MB
+    RJ --> MB
+    QO --> MB
+    MB --> CN
+    CN --> OB
+    OB --> SC
+    SC --> AP
+    AP --> XL
+```
+
+---
+
+## Setup
+
+### Prerequisites
+
+- Python 3.10 or newer
+- pip (included with Python)
+
+### Install
 
 ```bash
 git clone <repo-url>
 cd GAME_Scheduler
-```
-
-**2. Install dependencies** (one time only)
-
-```bash
 pip install -r requirements.txt
 ```
 
-This installs the solver (OR-Tools), Excel writer (openpyxl), web scraper (BeautifulSoup), and a few other small libraries.
+### Run
 
-**3. Generate the schedule**
+```bash
+# Windows
+run.bat
+
+# Mac / Linux / any terminal
+streamlit run app.py
+```
+
+The app opens at `http://localhost:8501`.
+
+### CLI mode (batch / headless)
 
 ```bash
 python main.py --quarter fall
+# or offline (skips live catalog scrape):
+python main.py --quarter fall --offline
 ```
-
-That's the whole command. The tool will:
-- Pull the latest course list from the SCAD catalog website
-- Validate all data files
-- Run the optimizer three times with different priorities
-- Write the results to `output/schedule_fall_2026.xlsx`
-
-Open the Excel file and you'll see four sheets: a Summary and one sheet per schedule option.
-
-> **No internet?** Add `--offline` to skip the live scrape and use the existing catalog data:
-> ```bash
-> python main.py --quarter fall --offline
-> ```
 
 ---
 
-## Updating Data Between Quarters
+## File Structure
 
-### Changing which courses to offer
-
-Edit `data/quarterly_offerings.json`. This is the only file you need to change between quarters.
-
-Each entry looks like this:
-
-```json
-{
-  "catalog_id": "GAME_256",
-  "priority": "must_have",
-  "sections": 1,
-  "override_enrollment_cap": null,
-  "override_room_type": null,
-  "override_preferred_professors": null,
-  "notes": "Core game design — always offered"
-}
 ```
-
-| Field | What it means |
-|---|---|
-| `catalog_id` | The course ID from the SCAD catalog (e.g. `GAME_256`, `MOME_105`) |
-| `priority` | `must_have` — solver must schedule this; `should_have` — schedule if possible; `could_have` — only if room allows |
-| `sections` | How many sections to run (1 or 2). Use 2 for high-demand courses |
-| `override_enrollment_cap` | Override the default cap for this offering only. `null` uses the catalog default |
-| `override_room_type` | Force a specific room type (`itgm_suite`, `pc_lab`, `mac_lab`, `standard`). `null` uses the course default |
-| `override_preferred_professors` | Suggest a specific professor for this offering (e.g. `["prof_dodson"]`). The solver will strongly prefer them but can use others if needed. `null` uses the catalog preference list |
-| `notes` | Free text for your own reference. Ignored by the solver |
-
-Also update the `quarter` and `year` at the top of the file:
-
-```json
-{
-  "quarter": "winter",
-  "year": 2027,
-  "offerings": [ ... ]
-}
+GAME_Scheduler/
+├── app.py                      Streamlit web interface (primary entry point)
+├── main.py                     CLI entry point for headless / batch runs
+├── config.py                   Constants: time slots, penalty weights, room compat, tags
+├── requirements.txt            Python dependencies
+├── run.bat                     Windows one-click launcher
+│
+├── data/
+│   ├── quarterly_offerings.json   EDIT THIS each quarter — courses to schedule
+│   ├── course_catalog.json        Full course catalog (auto-generated by scraper)
+│   ├── professors.json            Faculty profiles, availability, time preferences
+│   └── rooms.json                 Room inventory with capacities and equipment types
+│
+├── schemas/                    JSON validation schemas
+│   ├── course_catalog.schema.json
+│   ├── professor.schema.json
+│   ├── quarterly_offering.schema.json
+│   └── room.schema.json
+│
+├── solver/
+│   ├── model_builder.py        Loads data, creates CP-SAT model and decision variables
+│   ├── constraints.py          Hard constraints HC1–HC12
+│   ├── objectives.py           Weighted penalty objective SO1–SO5
+│   └── scheduler.py            Runs solver in 3 modes, extracts and returns results
+│
+├── ingest/
+│   ├── catalog_scraper.py      Fetches courses from catalog.scad.edu (with fallback)
+│   ├── catalog_defaults.py     Infers room types, specialization tags, prof preferences
+│   └── validate.py             Schema + cross-reference validation before each solve
+│
+├── export/
+│   └── excel_writer.py         Writes the 4-sheet color-coded Excel workbook
+│
+└── templates/                  Saved quarterly offering sets (JSON)
+    ├── fall_typical.json
+    ├── grad_focused.json
+    ├── summer_light.json
+    └── full_catalog_preview.json
 ```
-
-### Updating professor availability
-
-Edit `data/professors.json`. Each professor has an `available_quarters` field:
-
-```json
-"available_quarters": ["fall", "winter", "spring"]
-```
-
-Remove a quarter if a professor is on leave. The solver will not assign them during quarters they're unavailable.
 
 ---
 
-## How to Read the Output
+## Optimization Modes
 
-Open `output/schedule_fall_2026.xlsx` (filename reflects the quarter and year).
+| Mode | Affinity weight | Time pref weight | Overload weight |
+|---|---|---|---|
+| `affinity_first` | 10 | 1 | 2 |
+| `time_pref_first` | 1 | 10 | 2 |
+| `balanced` | 5 | 5 | 3 |
 
-### The Summary sheet
+**Affinity** measures how well a professor's specialization tags match the course's required tags. A lower penalty score means a better match.
 
-Shows all three options side-by-side:
+---
 
-| Column | Meaning |
+## Reading the Excel Output
+
+| Sheet | Contents |
 |---|---|
-| Mode | Which priority the solver used (see below) |
-| Status | `OPTIMAL` = best possible solution found; `FEASIBLE` = a valid solution (may not be perfect) |
-| Penalty Score | Lower is better. Reflects how many compromises were made |
-| Placed | How many course sections were successfully scheduled |
-| Unscheduled | Sections the solver couldn't fit in. `must_have` sections should always be 0 |
+| Summary | All three modes side-by-side: status, penalty score, courses placed, unscheduled |
+| Affinity First | Full schedule optimized for professor-course fit |
+| Time Pref First | Full schedule optimized for professor time preferences |
+| Balanced | Even weighting across both objectives |
 
-### The three schedule options
+**Color coding:**
+- Blue rows — Game department courses
+- Purple rows — Motion Media department courses
+- Green rows — AI department courses
+- Yellow Affinity cell — professor is in the preferred list for this course
+- Orange Time Pref cell — assignment is outside the professor's preferred hours
 
-Each sheet is a different version of the schedule, optimized for a different priority:
+---
 
-| Sheet | What it prioritizes |
-|---|---|
-| **Affinity First** | Assigns professors to courses where their expertise is the best match. May accept less-preferred time slots to get the right professor |
-| **Time Pref First** | Puts professors in their preferred time slots (morning vs. afternoon). May use a less-specialized professor to hit the right time |
-| **Balanced** | Splits the difference — reasonable prof-course matches at reasonable times |
+## Current Status
 
-Pick the sheet that best fits your priorities for the quarter, or mix-and-match rows between sheets when presenting options to faculty.
+### Phase 2 — Streamlit UI (active)
 
-### Color coding
+**Done:**
+- Full Streamlit web interface (`app.py`)
+- Template save/load system
+- Faculty preference editor in the UI
+- Weekly calendar view of results
+- Quick Add for SCAD Serve and Pro courses
+- Paste import from spreadsheets
+- All three optimization modes wired to the UI
+- Excel export from the web interface
+- 119-course catalog (GAME + MOME + AI departments)
 
-| Color | Meaning |
-|---|---|
-| **Blue row** | Game department course |
-| **Purple row** | Motion Media department course |
-| **Green row** | AI department course |
-| **Yellow cell** (Affinity column) | Professor is in the preferred list for this course — good match |
-| **Orange cell** (Time Pref column) | This time slot is outside the professor's preferred hours |
-
-A schedule with mostly yellow Affinity cells and no orange Time Pref cells is as good as it gets.
+**Up next:**
+- Side-by-side comparison view of all three schedule options
+- Drag-and-drop manual overrides on the calendar
+- PDF export option
+- Multi-quarter planning view
 
 ---
 
 ## Troubleshooting
 
-### "Validation errors found. Fix them before scheduling."
-
-Run validation directly to see what's wrong:
+**Validation errors before solving**
 
 ```bash
 python -m ingest.validate
 ```
 
-Common causes:
-- A `catalog_id` in `quarterly_offerings.json` doesn't match any course in the catalog — check for typos (e.g. `GAME256` vs `GAME_256`)
-- A professor ID in `override_preferred_professors` doesn't exist — check `data/professors.json` for the correct ID (e.g. `prof_dodson`)
-- The `quarter` field in `quarterly_offerings.json` doesn't match what you passed to `--quarter`
+Common causes: typo in a `catalog_id`, professor ID that doesn't exist in `professors.json`, or a quarter mismatch between `quarterly_offerings.json` and the `--quarter` flag.
 
-### "INFEASIBLE" in the Status column
+**INFEASIBLE status**
 
-The solver couldn't find any valid schedule for that mode. Most likely cause: a `must_have` course has no eligible professors or no compatible room.
+The solver couldn't place one or more `must_have` sections. Check that the course has at least one eligible professor available that quarter, and that the required room type exists in `rooms.json`.
 
-Check:
-1. Does the course have any professors whose `teaching_departments` includes the course's department?
-2. Does the course's `required_room_type` match at least one room in `data/rooms.json`?
-3. Is at least one eligible professor available this quarter?
+**Scraper fallback**
 
-If you're stuck, run `python -m ingest.validate` — it will flag courses with no preferred professors, which is often a sign the eligibility filters are too restrictive.
+If the live scrape of `catalog.scad.edu` fails, the tool uses the built-in 2025–2026 catalog automatically. Add `--offline` to always skip the scrape.
 
-### Scraper fails or shows "FALLBACK"
+**Excel file won't write**
 
-The live scrape of catalog.scad.edu failed (network issue or the catalog website changed). The tool automatically falls back to the built-in course list, which is based on the 2025-2026 catalog. This is fine — the schedule will still run.
-
-To always skip the scrape:
-```bash
-python main.py --quarter fall --offline
-```
-
-### Excel file won't open / looks garbled
-
-Make sure you have Excel or LibreOffice Calc installed. The `.xlsx` file is written fresh each run — if it's open in Excel when you re-run the scheduler, close it first or the write will fail.
-
----
-
-## Repo Structure
-
-```
-GAME_Scheduler/
-├── main.py                     Entry point — run this to generate a schedule
-├── config.py                   All constants: time slots, penalties, weight vectors
-├── requirements.txt            Python dependencies
-│
-├── data/
-│   ├── quarterly_offerings.json   EDIT THIS each quarter — courses to schedule
-│   ├── course_catalog.json        Auto-generated by the scraper (do not edit)
-│   ├── professors.json            Professor profiles and availability
-│   └── rooms.json                 Room inventory with capacities and equipment
-│
-├── schemas/                    JSON validation schemas (do not edit)
-│
-├── ingest/
-│   ├── catalog_scraper.py      Fetches courses from catalog.scad.edu
-│   ├── catalog_defaults.py     Infers room types, tags, and prof preferences
-│   └── validate.py             Checks all data files for errors before solving
-│
-├── solver/
-│   ├── model_builder.py        Builds the constraint programming model
-│   ├── constraints.py          Hard rules (no double-booking, load caps, etc.)
-│   ├── objectives.py           Soft preferences turned into penalty scores
-│   └── scheduler.py            Runs the solver three times and collects results
-│
-├── export/
-│   └── excel_writer.py         Formats results into the 4-sheet Excel workbook
-│
-└── output/                     Generated schedules land here (gitignored)
-```
-
----
-
-## Quick Reference
-
-| Task | Command |
-|---|---|
-| Generate schedule (with live scrape) | `python main.py --quarter fall` |
-| Generate schedule (offline) | `python main.py --quarter fall --offline` |
-| Validate data only | `python -m ingest.validate` |
-| Refresh catalog only | `python -m ingest.catalog_scraper` |
-| Valid quarters | `fall`, `winter`, `spring`, `summer` |
+Close the file in Excel before re-running. The writer overwrites the file on each run.

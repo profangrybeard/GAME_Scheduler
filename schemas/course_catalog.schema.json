@@ -18,7 +18,7 @@
     "credits": { "type": "integer" },
     "required_room_type": {
       "type": "string",
-      "enum": ["itgm_suite", "pc_lab", "mac_lab", "any_lab", "standard"]
+      "enum": ["pc_lab", "large_game_lab", "mac_lab", "flex_studio", "lecture_flex", "any_lab", "standard"]
     },
     "specialization_tags": {
       "type": "array",
@@ -42,7 +42,8 @@
     },
     "last_scraped": {
       "type": ["string", "null"]
-    }
+    },
+    "custom": { "type": "boolean" }
   },
   "additionalProperties": false
 }

@@ -3,8 +3,16 @@
     "id": "prof_allen",
     "name": "Eric Allen",
     "home_department": "game",
-    "teaching_departments": ["game", "motion_media", "ai"],
-    "chairs": ["game", "motion_media", "ai"],
+    "teaching_departments": [
+      "game",
+      "motion_media",
+      "ai"
+    ],
+    "chairs": [
+      "game",
+      "motion_media",
+      "ai"
+    ],
     "is_chair": true,
     "max_classes": 2,
     "can_overload": false,
@@ -13,21 +21,44 @@
     "masters_in_progress": false,
     "time_preference": "morning",
     "specializations": [
-      "character_art", "character_animation", "character_rigging",
-      "zbrush", "maya", "animation", "computer_animation",
-      "3d_modeling", "texturing", "rendering", "lighting",
-      "motion_graphics", "visual_effects", "compositing",
-      "storyboarding", "production", "game_development",
-      "ai_application", "ai_pipeline", "ai_design", "ai_ideation"
+      "character_art",
+      "character_animation",
+      "character_rigging",
+      "zbrush",
+      "maya",
+      "animation",
+      "computer_animation",
+      "3d_modeling",
+      "texturing",
+      "rendering",
+      "lighting",
+      "motion_graphics",
+      "visual_effects",
+      "compositing",
+      "storyboarding",
+      "production",
+      "game_development",
+      "ai_application",
+      "ai_pipeline",
+      "ai_design",
+      "ai_ideation"
     ],
     "notes": "Associate chair of both ITGM and motion media since 2017. Co-author of Mastering Maya. Founding member of Daz Productions. IMAX character artist at Tandem Motion Picture Studios.",
-    "available_quarters": ["fall", "winter", "spring", "summer"]
+    "available_quarters": [
+      "fall",
+      "winter",
+      "spring",
+      "summer"
+    ]
   },
   {
     "id": "prof_lindsay",
     "name": "Timothy Lindsay",
     "home_department": "game",
-    "teaching_departments": ["game", "ai"],
+    "teaching_departments": [
+      "game",
+      "ai"
+    ],
     "chairs": [],
     "is_chair": false,
     "max_classes": 4,
@@ -37,23 +68,70 @@
     "masters_in_progress": true,
     "time_preference": "afternoon_evening",
     "specializations": [
-      "level_design", "environment_art", "game_development",
-      "game_design", "gameplay_engineering", "game_mechanics",
-      "programming", "cpp", "unreal_engine", "blueprint",
-      "game_tech", "3d_modeling", "modeling", "animation",
-      "lighting", "concept_art", "concept_design", "shader_creation",
-      "vfx", "production", "scrum", "agile",
-      "quest_design", "ai_application", "ai_pipeline",
-      "ai_design", "ai_ideation"
+      "level_design",
+      "environment_art",
+      "game_development",
+      "game_design",
+      "gameplay_engineering",
+      "game_mechanics",
+      "game_systems",
+      "combat_design",
+      "encounter_design",
+      "programming",
+      "cpp",
+      "unreal_engine",
+      "blueprint",
+      "unreal_engine_5",
+      "unreal_engine_4",
+      "cryengine",
+      "game_tech",
+      "3d_modeling",
+      "modeling",
+      "animation",
+      "lighting",
+      "concept_art",
+      "concept_design",
+      "shader_creation",
+      "vfx",
+      "technical_art",
+      "procedural_world_building",
+      "art_direction",
+      "ui_ux_design",
+      "branding",
+      "production",
+      "scrum",
+      "agile",
+      "production_oversight",
+      "pipeline_development",
+      "tool_development",
+      "quest_design",
+      "world_building",
+      "environmental_narrative",
+      "map_optimization",
+      "performance_optimization",
+      "multiplayer",
+      "pvp_design",
+      "open_world",
+      "ai_application",
+      "ai_pipeline",
+      "ai_design",
+      "ai_ideation"
     ],
-    "notes": "First year professor. AAA industry background at CCP Games (EVE Online) and Xaviant. Currently pursuing MFA at SCAD.",
-    "available_quarters": ["fall", "winter", "spring", "summer"]
+    "notes": "~30 years professional game development. Triple-discipline: artist, designer, engineer. Credits: Elder Scrolls IV Oblivion (Bethesda, dungeon artist/level designer), Global Agenda (Hi-Rez, lead level designer & lead environment artist), World of Darkness MMO (CCP Games, director of level design), Lichdom Battlemage (Xaviant, design director), The Culling (Xaviant, art director & sole level designer), Don't Die Minerva (Xaviant, art director). Currently developing Yuri's Resolve (UE5.4 indie, NASA-inspired factory survival) with Apothecary Games. Engines: UE3/4/5, CryEngine 3, Gamebryo, CCP proprietary. Platforms shipped: PC, Xbox 360, PS1, PS2. Currently pursuing MFA at SCAD.",
+    "available_quarters": [
+      "fall",
+      "winter",
+      "spring",
+      "summer"
+    ]
   },
   {
     "id": "prof_dodson",
     "name": "Chris Dodson",
     "home_department": "game",
-    "teaching_departments": ["game"],
+    "teaching_departments": [
+      "game"
+    ],
     "chairs": [],
     "is_chair": false,
     "max_classes": 4,
@@ -63,25 +141,52 @@
     "masters_in_progress": false,
     "time_preference": "morning",
     "specializations": [
-      "game_design", "level_design", "game_development",
-      "game_mechanics", "game_design_documentation", "game_systems",
-      "narrative", "world_building", "interactive_storytelling",
-      "prototyping", "tabletop_game_design", "mmorpg",
-      "concept_design", "art_direction", "interaction_design",
-      "ui_design", "environmental_design", "multiplayer",
-      "virtual_reality", "unreal_engine", "maya",
-      "3d_modeling", "texturing", "animation",
-      "cpp", "csharp", "scripting", "gameplay",
-      "production", "agile"
+      "game_design",
+      "level_design",
+      "game_development",
+      "game_mechanics",
+      "game_design_documentation",
+      "game_systems",
+      "narrative",
+      "world_building",
+      "interactive_storytelling",
+      "prototyping",
+      "tabletop_game_design",
+      "mmorpg",
+      "concept_design",
+      "art_direction",
+      "interaction_design",
+      "ui_design",
+      "environmental_design",
+      "multiplayer",
+      "virtual_reality",
+      "unreal_engine",
+      "maya",
+      "3d_modeling",
+      "texturing",
+      "animation",
+      "cpp",
+      "csharp",
+      "scripting",
+      "gameplay",
+      "production",
+      "agile"
     ],
     "notes": "30 years professional game design experience. Owner of Legynds Atlanta. Co-owner Aethercast Studios. Lead designer on AIR at Hatboy Studios. Should be priority pick for GAME 256 and all graduate game design classes.",
-    "available_quarters": ["fall", "winter", "spring", "summer"]
+    "available_quarters": [
+      "fall",
+      "winter",
+      "spring",
+      "summer"
+    ]
   },
   {
     "id": "prof_avenali",
     "name": "Adam Avenali",
     "home_department": "game",
-    "teaching_departments": ["game"],
+    "teaching_departments": [
+      "game"
+    ],
     "chairs": [],
     "is_chair": false,
     "max_classes": 4,
@@ -91,21 +196,44 @@
     "masters_in_progress": false,
     "time_preference": "morning",
     "specializations": [
-      "3d_modeling", "texturing", "uv_mapping", "materials",
-      "lighting", "rendering", "real_time_rendering", "arch_viz",
-      "environment_art", "unreal_engine", "maya", "zbrush",
-      "animation", "computer_animation", "visual_effects",
-      "compositing", "photogrammetry", "level_design",
-      "pbr_workflows", "graphic_design"
+      "3d_modeling",
+      "texturing",
+      "uv_mapping",
+      "materials",
+      "lighting",
+      "rendering",
+      "real_time_rendering",
+      "arch_viz",
+      "environment_art",
+      "unreal_engine",
+      "maya",
+      "zbrush",
+      "animation",
+      "computer_animation",
+      "visual_effects",
+      "compositing",
+      "photogrammetry",
+      "level_design",
+      "pbr_workflows",
+      "graphic_design"
     ],
     "notes": "First year professor. Strong arch viz and real-time rendering background in Unreal Engine. Unique pbr_workflows and photogrammetry skills not shared by other game profs.",
-    "available_quarters": ["fall", "winter", "spring", "summer"]
+    "available_quarters": [
+      "fall",
+      "winter",
+      "spring",
+      "summer"
+    ]
   },
   {
     "id": "prof_spencer",
     "name": "David Spencer",
     "home_department": "game",
-    "teaching_departments": ["game", "motion_media", "ai"],
+    "teaching_departments": [
+      "game",
+      "motion_media",
+      "ai"
+    ],
     "chairs": [],
     "is_chair": false,
     "max_classes": 4,
@@ -115,21 +243,39 @@
     "masters_in_progress": true,
     "time_preference": "afternoon_evening",
     "specializations": [
-      "electronics_prototyping", "sound_design", "interactive_design",
-      "information_design", "interface_design", "interactive_multimedia",
-      "digital_typography", "storyboarding", "ui_design",
-      "animation", "computer_animation", "multimedia",
-      "creative_writing", "adobe_creative_suite", "database_design",
-      "game_design", "branding"
+      "electronics_prototyping",
+      "sound_design",
+      "interactive_design",
+      "information_design",
+      "interface_design",
+      "interactive_multimedia",
+      "digital_typography",
+      "storyboarding",
+      "ui_design",
+      "animation",
+      "computer_animation",
+      "multimedia",
+      "creative_writing",
+      "adobe_creative_suite",
+      "database_design",
+      "game_design",
+      "branding"
     ],
     "notes": "Taught across 11 departments at SCAD. BFA from Atlanta College of Art. Currently pursuing masters. Broadest cross-department reach of any game faculty. Industry background in new media and interactive marketing.",
-    "available_quarters": ["fall", "winter", "spring", "summer"]
+    "available_quarters": [
+      "fall",
+      "winter",
+      "spring",
+      "summer"
+    ]
   },
   {
     "id": "prof_maloney",
     "name": "Christina Maloney",
     "home_department": "motion_media",
-    "teaching_departments": ["motion_media"],
+    "teaching_departments": [
+      "motion_media"
+    ],
     "chairs": [],
     "is_chair": false,
     "max_classes": 4,
@@ -139,22 +285,41 @@
     "masters_in_progress": false,
     "time_preference": "afternoon_evening",
     "specializations": [
-      "motion_graphics", "motion_design", "2d_motion_graphics",
-      "3d_motion_graphics", "after_effects", "cinema_4d",
-      "animation", "broadcast_design", "screen_design",
-      "branding", "stop_motion", "art_direction",
-      "creative_direction", "storyboarding", "typography",
-      "graphic_design", "illustration", "compositing",
-      "film", "adobe_creative_suite"
+      "motion_graphics",
+      "motion_design",
+      "2d_motion_graphics",
+      "3d_motion_graphics",
+      "after_effects",
+      "cinema_4d",
+      "animation",
+      "broadcast_design",
+      "screen_design",
+      "branding",
+      "stop_motion",
+      "art_direction",
+      "creative_direction",
+      "storyboarding",
+      "typography",
+      "graphic_design",
+      "illustration",
+      "compositing",
+      "film",
+      "adobe_creative_suite"
     ],
     "notes": "MFA from SCAD in broadcast design and motion graphics. Industry credits include Disney Channel, Cartoon Network, HGTV, AT&T, FX. Senior motion designer at Artifact Design 2008-2014. Not available summer quarter.",
-    "available_quarters": ["fall", "winter", "spring"]
+    "available_quarters": [
+      "fall",
+      "winter",
+      "spring"
+    ]
   },
   {
     "id": "prof_imperato",
     "name": "Alessandro Imperato",
     "home_department": "motion_media",
-    "teaching_departments": ["motion_media"],
+    "teaching_departments": [
+      "motion_media"
+    ],
     "chairs": [],
     "is_chair": false,
     "max_classes": 4,
@@ -164,14 +329,30 @@
     "masters_in_progress": false,
     "time_preference": "morning",
     "specializations": [
-      "motion_graphics", "motion_design", "live_cinema",
-      "video_installation", "projection_mapping", "live_performance",
-      "vjing", "audio_visual", "media_art",
-      "digital_scenography", "art_history", "media_theory",
-      "computer_art", "animation", "broadcast_design",
-      "creative_direction", "graduate_studies"
+      "motion_graphics",
+      "motion_design",
+      "live_cinema",
+      "video_installation",
+      "projection_mapping",
+      "live_performance",
+      "vjing",
+      "audio_visual",
+      "media_art",
+      "digital_scenography",
+      "art_history",
+      "media_theory",
+      "computer_art",
+      "animation",
+      "broadcast_design",
+      "creative_direction",
+      "graduate_studies"
     ],
     "notes": "PhD in visual arts from Keele University. MA in art history from Leeds. Graduate coordinator for motion media since 2012. At SCAD since 2000. Extensive international exhibition and live performance practice. Priority pick for all graduate level motion media classes.",
-    "available_quarters": ["fall", "winter", "spring", "summer"]
+    "available_quarters": [
+      "fall",
+      "winter",
+      "spring",
+      "summer"
+    ]
   }
 ]
