@@ -604,14 +604,19 @@ else:
         st.markdown(f'<div class="section-label">Faculty</div>', unsafe_allow_html=True)
         profs_sidebar = load_professors()
         _sb_ov = active_project.get("prof_overrides", {})
-        if _sb_ov:
-            apply_professor_overrides(profs_sidebar, _sb_ov, quarter)
         for p in profs_sidebar:
-            available = quarter in p.get("available_quarters", [])
+            pid = p["id"]
+            # Check toggle state first (live), then prof_overrides, then base data
+            if f"avail_{pid}" in st.session_state:
+                available = st.session_state[f"avail_{pid}"]
+            elif pid in _sb_ov and "available" in _sb_ov[pid]:
+                available = _sb_ov[pid]["available"]
+            else:
+                available = quarter in p.get("available_quarters", [])
             dot_color = ACCENT_GREEN if available else ACCENT_RED
             txt_color = TXT_SECONDARY if available else TXT_MUTED
             role = " (Chair)" if p.get("is_chair") else ""
-            max_c = p.get("max_classes", config.STANDARD_MAX)
+            max_c = _sb_ov.get(pid, {}).get("max_classes", p.get("max_classes", config.STANDARD_MAX))
             st.markdown(
                 f'<div style="font-size:0.82rem; color:{txt_color}; margin-bottom:3px;">'
                 f'<span style="color:{dot_color};">{"●" if available else "○"}</span> '
