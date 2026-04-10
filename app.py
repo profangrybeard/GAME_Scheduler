@@ -44,8 +44,8 @@ ACCENT_GREEN  = "#34D399"
 ACCENT_AMBER  = "#FBBF24"
 ACCENT_RED    = "#F87171"
 
-DEPT_DOT    = {"game": "#60A5FA", "motion_media": "#A78BFA", "ai": "#FBBF24"}
-DEPT_LABELS = {"game": "Game Design", "motion_media": "Motion Media", "ai": "AI"}
+DEPT_DOT    = {"game": "#60A5FA", "motion_media": "#A78BFA", "ai": "#FBBF24", "ixds": "#34D399", "iact": "#F472B6", "digi": "#FB923C", "adbr": "#E879F9"}
+DEPT_LABELS = {"game": "Game Design", "motion_media": "Motion Media", "ai": "AI", "ixds": "Interactive Design", "iact": "Interaction Design", "digi": "Digital Communication", "adbr": "Advertising & Branding"}
 PRIORITY_LABELS = {"must_have": "Must", "should_have": "Should", "could_have": "Could", "nice_to_have": "Nice"}
 TIME_PREF_LABELS = {"morning": "Morning", "afternoon": "Afternoon", "afternoon_evening": "Afternoon / Evening"}
 
@@ -678,7 +678,7 @@ else:
             with qa_c1:
                 qa_id   = st.text_input("Course ID",   placeholder="e.g. SERVE_F26, SCADPRO_001", key="qa_id")
                 qa_name = st.text_input("Course Name", placeholder="e.g. SCAD Serve: Game Dept", key="qa_name")
-                qa_dept = st.selectbox("Department", ["game", "motion_media", "ai"],
+                qa_dept = st.selectbox("Department", list(DEPT_LABELS.keys()),
                                        format_func=lambda x: DEPT_LABELS[x], key="qa_dept")
                 qa_grad = st.checkbox("Graduate course", key="qa_grad")
             with qa_c2:
@@ -994,11 +994,11 @@ else:
             if not filtered:
                 continue
 
-            dot_color = DEPT_DOT[dept]
+            dot_color = DEPT_DOT.get(dept, "#666")
             st.markdown(
                 f'<div class="section-label">'
                 f'<span class="dept-dot" style="background:{dot_color};"></span>'
-                f'{DEPT_LABELS[dept]} — {len(filtered)} courses</div>',
+                f'{DEPT_LABELS.get(dept, dept.upper())} — {len(filtered)} courses</div>',
                 unsafe_allow_html=True,
             )
 
