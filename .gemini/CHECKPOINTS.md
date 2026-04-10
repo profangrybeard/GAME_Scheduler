@@ -9,8 +9,8 @@ This document tracks the phased rollout of the new UX. Each stage must be **Veri
 
 ## Stage 2: The "Star & Assign" Flow
 - **Goal:** Wire the buttons for "Drafting" (Adding to current quarter) and "Assigning" (Attaching a prof to a course).
-- **Review Point:** If you "Star" a course in Col 1, does it appear in the "Bench" in Col 2? If you assign a Prof, does the card update?
-- **Validation:** Check `st.session_state` for data integrity.
+- **Status:** COMPLETE
+- **Verification:** Courses can be drafted/dropped with log feedback. Professors can be manually assigned/reverted via cards.
 
 ## Stage 3: The "Interactive Calendar"
 - **Goal:** Integrate the Weekly Grid into the center column. Implement "Pin to Time" logic.

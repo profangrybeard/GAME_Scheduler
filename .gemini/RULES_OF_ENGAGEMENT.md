@@ -16,7 +16,7 @@
 - **Reproducibility:** Documentation must be updated so a clean clone can reach the same state.
 - **No Force-Pushes:** Do not stage or commit without explicit discussion.
 
-## 4. Design Principles
-- **Catalog-First:** The experience should feel like "shopping" for a quarter, not editing a database.
-- **Visibility:** Class options and status should be clear at all times.
-- **Direct Manipulation:** Prefer "adding with a click" and "dragging" over menus and forms where possible.
+## 4. Validation Protocol (The "Syntax Gate")
+- **Automated Check:** After every file edit, the Agent MUST run `python -m py_compile <filename>` to verify syntax and indentation.
+- **Initialization First:** All shared utilities, session state inits, and helper functions (like `add_log`) MUST be placed at the top of the file to prevent `NameError` during Streamlit's top-down execution.
+- **Block Integrity:** When using the `replace` tool, the Agent must include enough surrounding context to ensure no "dangling" code or partial strings are left behind.

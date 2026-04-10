@@ -143,6 +143,26 @@ Score: affinity_first=145, time_pref_first=15, balanced=75.
 
 **Status:** COMPLETE (UI Scaffolding)
 
+---
+
+## M7 — Interactive Calendar & Stability (Rev 1.4.5)
+
+**What was built:**
+- **Interactive Weekly Grid:** Replaced static placeholder with a functional "Click-to-Pin" calendar.
+- **Professor Selector:** Integrated manual faculty assignment directly into draft cards.
+- **Draft Ticker:** Added a live activity log for all user actions (DRAFT, PIN, ASSIGN).
+- **Theme Fixes:** Nuked "Panic Reds" via `.streamlit/config.toml` and localized CSS.
+- **Engine Safety:** Refactored CSS injection to use `.format()` to prevent NameErrors.
+
+**How to verify:**
+1. Run `streamlit run app.py`
+2. Verify header shows `REVISION 1.4.4 — ACTIVE` (or later) and sidebar shows `Rev: 1.4.5-HOTFIX`.
+3. Add a course, click the 📍 icon, and click a slot in the Weekly Schedule to pin it.
+4. Verify the Draft Ticker logs the `PIN` action.
+5. Verify Toggles and chips are Indigo, not Red.
+
+**Status:** COMPLETE (Experience Layer)
+
 
 ---
 

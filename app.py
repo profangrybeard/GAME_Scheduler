@@ -18,6 +18,23 @@ from pathlib import Path
 
 import streamlit as st
 
+# DEBUG VERSION CHECK
+st.sidebar.code("Rev: 1.4.5-HOTFIX")
+
+# ─── Session State Init ───────────────────────────────────────────────
+if "active_project" not in st.session_state:
+    st.session_state["active_project"] = None
+if "draft_log" not in st.session_state:
+    st.session_state["draft_log"] = []
+
+def add_log(event_type, message):
+    from datetime import datetime
+    now = datetime.now().strftime("%H:%M:%S")
+    st.session_state["draft_log"].insert(0, {"time": now, "type": event_type, "msg": message})
+    # Keep last 15 items
+    if len(st.session_state["draft_log"]) > 15:
+        st.session_state["draft_log"] = st.session_state["draft_log"][:15]
+
 # Ensure project root is importable
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -58,7 +75,7 @@ st.set_page_config(
 )
 
 # ─── Global CSS ──────────────────────────────────────────────────────
-st.markdown(f"""
+CSS_TEMPLATE = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -199,8 +216,28 @@ st.markdown(f"""
     .stSelectbox > div > div, .stNumberInput > div > div > input, .stTextInput > div > div > input {{
         background: {BG_CARD} !important; border-color: {BORDER} !important;
         color: {TXT_PRIMARY} !important; font-size: 0.85rem !important;
+        min-height: 32px !important; height: 32px !important; padding: 0 8px !important;
     }}
+    .stSelectbox > div > div > div {{ padding-bottom: 0 !important; padding-top: 0 !important; }}
 
+    /* Compact UI Overrides for Draft Room */
+    .stButton > button {{
+        min-height: 28px !important; height: 28px !important;
+        padding: 0px 10px !important; margin-top: 4px !important;
+    }}
+    
+    div[data-testid="stToggle"] {{ padding-top: 2px; }}
+
+    /* ── Multiselect Tags (Absolute Neutralization) ── */
+    div[data-baseweb="tag"], div[role="button"][aria-label*="Remove"] {{
+        background-color: {BG_HOVER} !important;
+        border: 1px solid {BORDER} !important;
+        color: {TXT_SECONDARY} !important;
+    }}
+    div[data-baseweb="tag"] span, div[data-baseweb="tag"] div, .stMultiSelect span {{
+        color: {TXT_SECONDARY} !important;
+    }}
+    
     .metric-box {{
         background: {BG_CARD}; border: 1px solid {BORDER}; border-radius: 8px;
         padding: 16px; text-align: center;
@@ -337,7 +374,13 @@ st.markdown(f"""
         .course-card {{ padding: 10px 12px; }}
     }}
 </style>
-""", unsafe_allow_html=True)
+"""
+st.markdown(CSS_TEMPLATE.format(
+    BG_BASE=BG_BASE, BG_CARD=BG_CARD, BG_HOVER=BG_HOVER, BG_SIDEBAR=BG_SIDEBAR,
+    BORDER=BORDER, BORDER_LITE=BORDER_LITE,
+    TXT_PRIMARY=TXT_PRIMARY, TXT_SECONDARY=TXT_SECONDARY, TXT_MUTED=TXT_MUTED, TXT_ACCENT=TXT_ACCENT,
+    ACCENT=ACCENT, ACCENT_GREEN=ACCENT_GREEN, ACCENT_AMBER=ACCENT_AMBER, ACCENT_RED=ACCENT_RED
+), unsafe_allow_html=True)
 
 
 # ─── Data Loading ────────────────────────────────────────────────────
@@ -413,9 +456,14 @@ def save_professors_to_disk(profs):
 
 # ─── Header ──────────────────────────────────────────────────────────
 st.markdown(
-    f'<div style="padding-bottom:1.1rem; margin-bottom:0.5rem; border-bottom:1px solid {BORDER};">'
-    f'<div class="app-header">Course Scheduler</div>'
-    f'<div class="app-sub">SCAD Atlanta &nbsp;&middot;&nbsp; Game Design &nbsp;&middot;&nbsp; Motion Media &nbsp;&middot;&nbsp; AI</div>'
+    f'<div style="display:flex; justify-content:space-between; align-items:flex-start; padding:1rem; margin-bottom:1rem; border:2px solid {ACCENT}; border-radius:10px; background:{BG_CARD};">'
+    f'<div>'
+    f'  <div class="app-header">Course Scheduler</div>'
+    f'  <div class="app-sub">SCAD Atlanta &nbsp;&middot;&nbsp; Game Design &nbsp;&middot;&nbsp; Motion Media &nbsp;&middot;&nbsp; AI</div>'
+    f'</div>'
+    f'<div style="background:{ACCENT}; color:#FFF; padding:4px 12px; border-radius:20px; font-weight:700; font-size:0.8rem;">'
+    f'  REVISION 1.4.4 — ACTIVE'
+    f'</div>'
     f'</div>',
     unsafe_allow_html=True,
 )
@@ -610,11 +658,11 @@ else:
                 already = c["id"] in selected_ids
                 
                 with st.container():
-                    c1, c2, c3 = st.columns([3, 0.8, 0.8])
+                    c1, c2, c3 = st.columns([5, 1.2, 1.2])
                     with c1:
                         # Course "Label"
                         color = TXT_ACCENT if not already else TXT_MUTED
-                        st.markdown(f'<div style="font-size:0.82rem; font-weight:600; color:{color}; padding-top:4px;">{c["id"]}</div>', unsafe_allow_html=True)
+                        st.markdown(f'<div style="font-size:0.82rem; font-weight:600; color:{color}; padding-top:6px;">{c["id"]}</div>', unsafe_allow_html=True)
                     with c2:
                         if st.button("i", key=f"inspect_{c['id']}", help="Scout Report"):
                             st.session_state["inspected_course"] = c
@@ -622,6 +670,7 @@ else:
                         if already:
                             if st.button("×", key=f"rm_scout_{c['id']}", help="Remove"):
                                 active_project["offerings"] = [o for o in active_project["offerings"] if o["catalog_id"] != c["id"]]
+                                add_log("DROP", f"Removed {c['id']} from draft")
                                 st.rerun()
                         else:
                             if st.button("+", key=f"add_scout_{c['id']}", help="Add"):
@@ -630,6 +679,7 @@ else:
                                     "override_enrollment_cap": None, "override_room_type": None,
                                     "override_preferred_professors": None, "notes": None,
                                 })
+                                add_log("DRAFT", f"Drafted {c['id']} to the Bench")
                                 st.rerun()
 
         # ── THE SCOUT REPORT (Inspector) ──
@@ -687,6 +737,13 @@ else:
             
             # Draft List / Bench
             catalog_lookup = {c["id"]: c for c in catalog}
+            
+            # Pre-filter available professors for the dropdown
+            available_profs = [p for p in load_professors() if active_project.get("prof_overrides", {}).get(p["id"], {}).get("available", False)]
+            prof_options = ["Auto-Draft"] + [p["id"] for p in available_profs]
+            prof_labels = {p["id"]: p["name"] for p in available_profs}
+            prof_labels["Auto-Draft"] = "Auto-Draft"
+
             for idx, o in enumerate(offerings):
                 cid = o["catalog_id"]
                 course = catalog_lookup.get(cid, {})
@@ -694,25 +751,65 @@ else:
                 dot_color = DEPT_DOT.get(dept, "#666")
                 
                 with st.container():
-                    r1, r2, r3, r4 = st.columns([4, 2, 1, 0.5])
-                    with r1:
+                    # Row 1: Course Info and Delete
+                    r1_c1, r1_c2 = st.columns([10, 1])
+                    with r1_c1:
                         st.markdown(
-                            f'<div style="padding:5px 0;">'
+                            f'<div style="padding:2px 0;">'
                             f'<span class="dept-dot" style="background:{dot_color};"></span>'
                             f'<span class="cc-id">{cid}</span> '
                             f'<span style="color:{TXT_SECONDARY}; font-size:0.85rem;">{course.get("name", cid)}</span></div>',
                             unsafe_allow_html=True
                         )
-                    with r2:
-                        new_pri = st.selectbox("pri", list(PRIORITY_LABELS.keys()), format_func=lambda x: PRIORITY_LABELS[x], index=list(PRIORITY_LABELS.keys()).index(o.get("priority", "must_have")), key=f"board_pri_{idx}", label_visibility="collapsed")
-                        active_project["offerings"][idx]["priority"] = new_pri
-                    with r3:
-                        new_sec = st.number_input("sec", min_value=1, max_value=4, value=o.get("sections", 1), key=f"board_sec_{idx}", label_visibility="collapsed")
-                        active_project["offerings"][idx]["sections"] = new_sec
-                    with r4:
-                        if st.button("×", key=f"board_rm_{idx}"):
+                    with r1_c2:
+                        if st.button("×", key=f"board_rm_{idx}", help="Remove from draft"):
                             active_project["offerings"].pop(idx)
                             st.rerun()
+
+                    # Row 2: Controls (Priority, Sections, Professor, Place)
+                    r2_c1, r2_c2, r2_c3, r2_c4 = st.columns([1.5, 1, 3, 1], gap="small")
+                    with r2_c1:
+                        new_pri = st.selectbox("pri", list(PRIORITY_LABELS.keys()), format_func=lambda x: PRIORITY_LABELS[x], index=list(PRIORITY_LABELS.keys()).index(o.get("priority", "must_have")), key=f"board_pri_{idx}", label_visibility="collapsed")
+                        active_project["offerings"][idx]["priority"] = new_pri
+                    with r2_c2:
+                        new_sec = st.number_input("sec", min_value=1, max_value=4, value=o.get("sections", 1), key=f"board_sec_{idx}", label_visibility="collapsed")
+                        active_project["offerings"][idx]["sections"] = new_sec
+                    with r2_c3:
+                        # Professor assignment
+                        current_prof_list = o.get("override_preferred_professors")
+                        current_prof = current_prof_list[0] if current_prof_list else "Auto-Draft"
+                        
+                        if current_prof not in prof_options:
+                            current_prof = "Auto-Draft"
+                            
+                        new_prof = st.selectbox(
+                            "prof", prof_options,
+                            format_func=lambda x: prof_labels[x],
+                            index=prof_options.index(current_prof),
+                            key=f"board_prof_{idx}",
+                            label_visibility="collapsed"
+                        )
+                        
+                        if new_prof != current_prof:
+                            if new_prof == "Auto-Draft":
+                                active_project["offerings"][idx]["override_preferred_professors"] = None
+                                add_log("AUTO", f"Reverted {cid} to Auto-Draft")
+                            else:
+                                active_project["offerings"][idx]["override_preferred_professors"] = [new_prof]
+                                add_log("ASSIGN", f"Assigned {prof_labels[new_prof]} to {cid}")
+                            st.rerun()
+                    
+                    with r2_c4:
+                        is_placing = st.session_state.get("placing_offering_idx") == idx
+                        btn_label = "📍" if not is_placing else "⌛"
+                        if st.button(btn_label, key=f"place_btn_{idx}", help="Place on Calendar"):
+                            if is_placing:
+                                st.session_state["placing_offering_idx"] = None
+                            else:
+                                st.session_state["placing_offering_idx"] = idx
+                            st.rerun()
+
+                st.markdown(f'<div style="margin-bottom:12px; border-bottom:1px solid {BORDER_LITE};"></div>', unsafe_allow_html=True)
 
             st.markdown("---")
             st.markdown('<div style="text-align:center; color:#3F3F46; font-size:0.8rem; padding:2rem; border:1px dashed #2A2A30; border-radius:8px;">Calendar Grid Placeholder (Stage 3)</div>', unsafe_allow_html=True)
@@ -762,3 +859,6 @@ else:
                 active_project["prof_overrides"][pid] = {"max_classes": new_max, "time_preference": new_time, "available": new_avail}
                 
                 st.markdown(f'<div style="margin-bottom:8px; border-bottom:1px solid {BORDER_LITE};"></div>', unsafe_allow_html=True)
+
+        # ── THE DRAFT TICKER (Log) ──
+        st.markdown(f'<div class="section-label" style="margin-top:1.5rem;">Draft Ticker</div>', unsafe_allow_html=True)
