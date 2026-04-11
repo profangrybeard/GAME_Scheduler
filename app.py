@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "1.5.2"
+APP_VERSION = "1.5.3"
 
 st.sidebar.code(f"v{APP_VERSION}")
 
@@ -595,7 +595,7 @@ else:
     col_scout, col_board, col_roster = st.columns([1.2, 3.5, 1.3])
 
     # ══════════════════════════════════════════════════════════════════
-    # COLUMN 1: THE SCOUT (Catalog)
+    # COLUMN 1: SEARCH (Catalog)
     # ══════════════════════════════════════════════════════════════════
     with col_scout:
         # Mini Header
@@ -607,7 +607,7 @@ else:
         with c_ver:
             st.markdown(f'<div style="font-size:0.65rem; color:{TXT_MUTED}; text-align:right; padding-top:8px;">v{APP_VERSION}</div>', unsafe_allow_html=True)
 
-        st.markdown(f'<div class="section-label" style="margin-top:0.5rem;">The Scout</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="section-label" style="margin-top:0.5rem;">Search</div>', unsafe_allow_html=True)
         
         offerings = active_project["offerings"]
         selected_ids = {o["catalog_id"] for o in offerings}
@@ -688,13 +688,13 @@ else:
             st.markdown(f'<div style="font-size:0.75rem; color:{TXT_MUTED}; font-style:italic;">Click a course to preview.</div>', unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════════════════════
-    # COLUMN 2: THE BOARD (Draft & Calendar)
+    # COLUMN 2: 10 WEEKS (Draft & Calendar)
     # ══════════════════════════════════════════════════════════════════
     with col_board:
         # Header with Save/Load
         b1, b2, b3 = st.columns([4, 2, 1.5])
         with b1:
-            st.markdown(f'<div class="section-label">The Board ({quarter.title()} {year})</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="section-label">10 Weeks ({quarter.title()} {year})</div>', unsafe_allow_html=True)
         with b2:
             tmpl_name = st.text_input("Template name", placeholder="Save as...", label_visibility="collapsed", key="board_save")
         with b3:
@@ -707,7 +707,7 @@ else:
         offerings = active_project["offerings"]
         
         if not offerings:
-            st.info("Your draft is empty. Add courses from The Scout on the left.")
+            st.info("Your draft is empty. Add courses from Search on the left.")
         else:
             # Metrics
             total_sections = sum(o.get("sections", 1) for o in offerings)
