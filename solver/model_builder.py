@@ -94,7 +94,7 @@ def _eligible_rooms(course: dict, rooms: list[dict]) -> list[str]:
 # Main entry point
 # ---------------------------------------------------------------------------
 
-def build_model(quarter: str, mode: str = "balanced", locked: list | None = None) -> tuple:
+def build_model(quarter: str, mode: str = "balanced", locked: list | None = None, pinned: list | None = None) -> tuple:
     """Load quarterly offerings and catalog, expand sections, build CP-SAT model.
 
     Parameters
@@ -108,6 +108,10 @@ def build_model(quarter: str, mode: str = "balanced", locked: list | None = None
         Optional list of assignment dicts (each with cs_key, prof_id, room_id,
         day_group, time_slot) that are fixed to 1 as hard constraints. Used by
         the lock-and-tweak re-generate flow in the UI.
+    pinned : list | None
+        Optional list of dicts (each with cs_key, day_group, time_slot) that
+        constrain a section to a specific time slot while letting the solver
+        choose professor and room.
 
     Returns
     -------
@@ -253,6 +257,19 @@ def build_model(quarter: str, mode: str = "balanced", locked: list | None = None
                 locked_keys.add(key)
             else:
                 print(f"  [lock] {lock['cs_key']} — combo not in variable set, skipping lock")
+
+    # --- Fix pinned sections to specific time slots ---
+    if pinned:
+        for pin in pinned:
+            cs_key = pin["cs_key"]
+            dg = pin["day_group"]
+            ts = pin["time_slot"]
+            k = (cs_key, dg, ts)
+            if k in vars_by_cs_dg_ts:
+                model.Add(sum(vars_by_cs_dg_ts[k]) == 1)
+                print(f"  [pin] {cs_key} pinned to dg{dg}/{ts}")
+            else:
+                print(f"  [pin] {cs_key} at dg{dg}/{ts} — no variables available, skipping")
 
     data = {
         # Identity

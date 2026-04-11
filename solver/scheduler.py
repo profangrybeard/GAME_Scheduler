@@ -133,7 +133,7 @@ def _time_label(prof: dict, ts: str) -> str:
 # Main entry point
 # ---------------------------------------------------------------------------
 
-def run_schedule(quarter: str, locked: list | None = None) -> dict:
+def run_schedule(quarter: str, locked: list | None = None, pinned: list | None = None) -> dict:
     """Run 3 CP-SAT solves (one per mode) for the given quarter.
 
     Parameters
@@ -162,7 +162,7 @@ def run_schedule(quarter: str, locked: list | None = None) -> dict:
     mode_results = []
     for mode in MODE_WEIGHTS:
         print(f"\n[{mode}] Building model ...")
-        model, data = build_model(quarter, mode, locked=locked)
+        model, data = build_model(quarter, mode, locked=locked, pinned=pinned)
 
         print(f"[{mode}] Applying constraints ...")
         apply_hard_constraints(model, data)
