@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "1.7.5"
+APP_VERSION = "1.7.6"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -201,9 +201,9 @@ CSS_TEMPLATE = """
     .stButton > button {{
         background: transparent !important; border: 1px solid {BORDER} !important;
         color: {TXT_MUTED} !important; font-size: 0.82rem !important; font-weight: 500 !important;
-        padding: 0px 10px !important; border-radius: 6px !important;
-        transition: all 0.15s ease !important; min-height: 28px !important; height: 28px !important;
-        line-height: 1.6 !important; margin-top: 4px !important;
+        padding: 4px 10px !important; border-radius: 6px !important;
+        transition: all 0.15s ease !important; min-height: 28px !important;
+        line-height: 1.4 !important; margin-top: 2px !important;
     }}
     .stButton > button:hover {{
         background: {BG_HOVER} !important; border-color: {ACCENT} !important; color: {ACCENT} !important;
@@ -723,8 +723,8 @@ else:
         f'  @keyframes ghost-pulse {{ 0%, 100% {{ opacity: 0.12; }} 50% {{ opacity: 0.25; }} }}'
         f'  .ghost-pin {{ text-align:center; padding:8px; border:1px dashed {BORDER_LITE}; border-radius:6px; min-height:20px; font-size:0.8rem; color:#3F3F46; }}'
         f'  .ghost-pin.pulse {{ animation: ghost-pulse 3s ease-in-out infinite; }}'
-        f'  /* ADD/DROP button styling */'
-        f'  button[kind="secondary"]:has(> div > p) {{ min-width: 60px !important; }}'
+        f'  /* Vertically center column contents so buttons align */'
+        f'  [data-testid="stHorizontalBlock"] {{ align-items: center !important; }}'
         f'  [data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] > [data-testid="stLayoutWrapper"]:nth-child(3) {{'
         f'    position: sticky !important; top: 48px !important; z-index: 50 !important;'
         f'    background: {BG_BASE} !important; padding-bottom: 8px;'
@@ -907,21 +907,16 @@ else:
             for c in filtered:
                 already = c["id"] in selected_ids
                 is_inspected = c["id"] == inspected_id
-
-                # Row background tint
-                row_bg = f"{ACCENT_RED}08" if already else "transparent"
-                left_border = f"border-left:3px solid {ACCENT};" if is_inspected else f"border-left:3px solid transparent;"
-
-                st.markdown(
-                    f'<div style="display:flex; align-items:center; gap:6px; padding:3px 0; {left_border} padding-left:6px; margin-bottom:2px; background:{row_bg}; border-radius:4px;">',
-                    unsafe_allow_html=True,
-                )
-                c1, c2 = st.columns([4, 1.2])
-                with c1:
-                    if st.button(f"{c['id']}  {c['name']}", key=f"preview_{c['id']}", use_container_width=True, type="primary" if is_inspected else "secondary"):
+                # Single row: clickable name + action button
+                rc1, rc2 = st.columns([4, 1])
+                with rc1:
+                    if st.button(
+                        f"{c['id']}  {c['name']}", key=f"preview_{c['id']}",
+                        use_container_width=True, type="primary" if is_inspected else "secondary"
+                    ):
                         st.session_state["inspected_course"] = c
                         st.rerun()
-                with c2:
+                with rc2:
                     if already:
                         if st.button("DROP", key=f"rm_scout_{c['id']}", use_container_width=True, type="primary"):
                             active_project["offerings"] = [o for o in active_project["offerings"] if o["catalog_id"] != c["id"]]
@@ -936,7 +931,6 @@ else:
                             })
                             add_log("DRAFT", f"Drafted {c['id']} to the Bench")
                             st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
 
 
     # ══════════════════════════════════════════════════════════════════
