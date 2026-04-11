@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "1.5.0"
+APP_VERSION = "1.5.1"
 
 st.sidebar.code(f"v{APP_VERSION}")
 
@@ -718,7 +718,32 @@ else:
             
             # Draft List / Bench
             catalog_lookup = {c["id"]: c for c in catalog}
-            
+
+            # Build pinned course lookup for calendar grid
+            DG_LABELS = {1: "MW", 2: "TTh"}
+            pinned_map = {}  # {(day_group, time_slot): [(idx, offering, course), ...]}
+            for _i, _o in enumerate(offerings):
+                _pin = _o.get("pinned")
+                if _pin:
+                    _key = (_pin["day_group"], _pin["time_slot"])
+                    pinned_map.setdefault(_key, []).append((_i, _o, catalog_lookup.get(_o["catalog_id"], {})))
+
+            def has_pin_conflict(target_dg, target_ts, placing_idx):
+                """Check if placing course's prof already occupies this slot."""
+                placing_o = offerings[placing_idx]
+                p_profs = placing_o.get("override_preferred_professors") or []
+                if not p_profs:
+                    return False
+                for _i, _o in enumerate(offerings):
+                    if _i == placing_idx:
+                        continue
+                    _pin = _o.get("pinned")
+                    if _pin and _pin["day_group"] == target_dg and _pin["time_slot"] == target_ts:
+                        o_profs = _o.get("override_preferred_professors") or []
+                        if o_profs and o_profs[0] == p_profs[0]:
+                            return True
+                return False
+
             # Pre-filter available professors for the dropdown
             available_profs = [p for p in load_professors() if active_project.get("prof_overrides", {}).get(p["id"], {}).get("available", True)]
             prof_options = ["Auto-Draft"] + [p["id"] for p in available_profs]
@@ -781,19 +806,99 @@ else:
                             st.rerun()
                     
                     with r2_c4:
-                        is_placing = st.session_state.get("placing_offering_idx") == idx
-                        btn_label = "📍" if not is_placing else "⌛"
-                        if st.button(btn_label, key=f"place_btn_{idx}", help="Place on Calendar"):
-                            if is_placing:
-                                st.session_state["placing_offering_idx"] = None
-                            else:
-                                st.session_state["placing_offering_idx"] = idx
-                            st.rerun()
+                        pin = o.get("pinned")
+                        if pin:
+                            # Pinned — show lock label + unpin
+                            dg_lbl = DG_LABELS[pin["day_group"]]
+                            st.markdown(f'<div style="font-size:0.7rem; color:{ACCENT}; font-weight:600; padding-top:6px;">🔒 {dg_lbl} {pin["time_slot"]}</div>', unsafe_allow_html=True)
+                            if st.button("×", key=f"unpin_{idx}", help="Unpin"):
+                                active_project["offerings"][idx]["pinned"] = None
+                                add_log("UNPIN", f"Unpinned {cid}")
+                                st.rerun()
+                        else:
+                            # Not pinned — show place button
+                            is_placing = st.session_state.get("placing_offering_idx") == idx
+                            btn_label = "📍" if not is_placing else "⌛"
+                            if st.button(btn_label, key=f"place_btn_{idx}", help="Place on Calendar"):
+                                if is_placing:
+                                    st.session_state["placing_offering_idx"] = None
+                                else:
+                                    st.session_state["placing_offering_idx"] = idx
+                                st.rerun()
 
                 st.markdown(f'<div style="margin-bottom:12px; border-bottom:1px solid {BORDER_LITE};"></div>', unsafe_allow_html=True)
 
-            st.markdown("---")
-            st.markdown('<div style="text-align:center; color:#3F3F46; font-size:0.8rem; padding:2rem; border:1px dashed #2A2A30; border-radius:8px;">Calendar Grid Placeholder (Stage 3)</div>', unsafe_allow_html=True)
+            # ── Weekly Schedule Grid ──────────────────────────────────
+            st.markdown(f'<div class="section-label" style="margin-top:1rem;">Weekly Schedule</div>', unsafe_allow_html=True)
+
+            placing_idx = st.session_state.get("placing_offering_idx")
+            placing_cid = None
+            if placing_idx is not None and placing_idx < len(offerings):
+                placing_cid = offerings[placing_idx]["catalog_id"]
+                st.markdown(
+                    f'<div style="font-size:0.78rem; color:{ACCENT}; margin-bottom:8px;">'
+                    f'Placing <b>{placing_cid}</b> — click a slot below</div>',
+                    unsafe_allow_html=True,
+                )
+
+            # Header row
+            gh1, gh2, gh3 = st.columns([1, 3, 3])
+            with gh1:
+                st.markdown(f'<div style="font-size:0.7rem; color:{TXT_MUTED}; text-align:right; padding:6px 0;">TIME</div>', unsafe_allow_html=True)
+            with gh2:
+                st.markdown(f'<div style="font-size:0.72rem; font-weight:600; color:{TXT_SECONDARY}; text-align:center; padding:6px 0; background:{BG_CARD}; border:1px solid {BORDER}; border-radius:4px;">MW</div>', unsafe_allow_html=True)
+            with gh3:
+                st.markdown(f'<div style="font-size:0.72rem; font-weight:600; color:{TXT_SECONDARY}; text-align:center; padding:6px 0; background:{BG_CARD}; border:1px solid {BORDER}; border-radius:4px;">TTh</div>', unsafe_allow_html=True)
+
+            # Grid rows — one per time slot
+            for ts in config.TIME_SLOTS:
+                gc1, gc2, gc3 = st.columns([1, 3, 3])
+
+                # Time label
+                with gc1:
+                    st.markdown(f'<div style="font-size:0.72rem; font-weight:600; color:{TXT_MUTED}; text-align:right; padding:10px 4px 10px 0;">{ts}</div>', unsafe_allow_html=True)
+
+                # Day group cells
+                for dg, col in [(1, gc2), (2, gc3)]:
+                    with col:
+                        cell_key = (dg, ts)
+                        pinned_here = pinned_map.get(cell_key, [])
+
+                        if pinned_here:
+                            # Render pinned courses
+                            for _pi, _po, _pc in pinned_here:
+                                _dept = _pc.get("department", "game")
+                                _dot = DEPT_DOT.get(_dept, "#666")
+                                _prof_list = _po.get("override_preferred_professors") or []
+                                _prof_name = prof_labels.get(_prof_list[0], _prof_list[0]) if _prof_list else "Auto"
+                                st.markdown(
+                                    f'<div class="cal-course locked">'
+                                    f'<div class="cal-cid"><span class="dept-dot" style="background:{_dot};"></span>{_po["catalog_id"]}</div>'
+                                    f'<div class="cal-detail">{_prof_name}</div>'
+                                    f'</div>',
+                                    unsafe_allow_html=True,
+                                )
+                        elif placing_idx is not None and placing_idx < len(offerings):
+                            # Placing mode — show clickable slot or conflict
+                            conflict = has_pin_conflict(dg, ts, placing_idx)
+                            if conflict:
+                                st.markdown(
+                                    f'<div style="padding:10px; border:1px dashed {BORDER_LITE}; border-radius:6px; text-align:center; color:#3F3F46; font-size:0.7rem;">conflict</div>',
+                                    unsafe_allow_html=True,
+                                )
+                            else:
+                                dg_label = DG_LABELS[dg]
+                                if st.button(f"{dg_label} {ts}", key=f"pin_{dg}_{ts}", use_container_width=True):
+                                    offerings[placing_idx]["pinned"] = {"day_group": dg, "time_slot": ts}
+                                    add_log("PIN", f"Pinned {placing_cid} to {dg_label} {ts}")
+                                    st.session_state["placing_offering_idx"] = None
+                                    st.rerun()
+                        else:
+                            # Empty cell
+                            st.markdown(
+                                f'<div style="padding:10px; border:1px dashed {BORDER_LITE}; border-radius:6px; min-height:20px;"></div>',
+                                unsafe_allow_html=True,
+                            )
 
     # ══════════════════════════════════════════════════════════════════
     # COLUMN 3: THE ROSTER (Faculty)
