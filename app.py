@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "1.7.0"
+APP_VERSION = "1.7.1"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -734,11 +734,22 @@ else:
 
     cal_container = st.container()
     with cal_container:
-        col_preview, col_cal = st.columns([2.3, 3.7])
+        col_preview, col_cal = st.columns([2, 4])
 
-        # ── CLASS PREVIEW CARD (left of calendar) ────────────────
+        # ── SEARCH + CLASS PREVIEW (left of calendar, frozen) ────
         with col_preview:
             st.markdown(f'<div class="section-label">10 Weeks ({quarter.title()} {year})</div>', unsafe_allow_html=True)
+
+            # Search + Dept filter (compact, always visible)
+            search = st.text_input("Search", placeholder="Course ID or name...", label_visibility="collapsed", key="scout_search")
+            dept_filter = st.multiselect(
+                "Dept", list(DEPT_LABELS.keys()),
+                format_func=lambda x: DEPT_LABELS[x],
+                default=["game"],
+                key="scout_dept"
+            )
+
+            # Class Preview card
             inspect = st.session_state.get("inspected_course")
             if inspect:
                 _desc = html.escape(inspect.get("description", "No description available."))
@@ -749,24 +760,23 @@ else:
                 _dept = inspect.get("department", "game")
                 _dot = DEPT_DOT.get(_dept, "#666")
                 st.markdown(
-                    f'<div style="background:{BG_CARD}; border:1px solid {ACCENT}40; border-radius:10px; padding:16px; height:100%;">'
-                    f'<div style="font-size:0.85rem; font-weight:700; color:{TXT_ACCENT};">'
+                    f'<div style="background:{BG_CARD}; border:1px solid {ACCENT}40; border-radius:10px; padding:12px;">'
+                    f'<div style="font-size:0.82rem; font-weight:700; color:{TXT_ACCENT};">'
                     f'<span class="dept-dot" style="background:{_dot};"></span>{inspect["id"]}{_grad}</div>'
-                    f'<div style="font-size:0.82rem; font-weight:500; color:{TXT_PRIMARY}; margin:4px 0 8px 0;">{html.escape(inspect["name"])}</div>'
-                    f'<div style="font-size:0.73rem; color:{TXT_MUTED}; line-height:1.5; max-height:6em; overflow:hidden;">{_desc}</div>'
-                    f'<div style="margin-top:10px; font-size:0.7rem; color:{TXT_MUTED}; line-height:1.6;">'
-                    f'<b>Room:</b> {_room}<br>'
-                    f'<b>Faculty:</b> {_prof_str}'
+                    f'<div style="font-size:0.78rem; font-weight:500; color:{TXT_PRIMARY}; margin:2px 0 6px 0;">{html.escape(inspect["name"])}</div>'
+                    f'<div style="font-size:0.7rem; color:{TXT_MUTED}; line-height:1.4; max-height:3.5em; overflow:hidden;">{_desc}</div>'
+                    f'<div style="margin-top:6px; font-size:0.68rem; color:{TXT_MUTED}; line-height:1.5;">'
+                    f'<b>Room:</b> {_room} &middot; <b>Faculty:</b> {_prof_str}'
                     f'</div>'
                     f'</div>',
                     unsafe_allow_html=True
                 )
             else:
                 st.markdown(
-                    f'<div style="background:{BG_CARD}; border:1px solid {BORDER}; border-radius:10px; padding:16px; min-height:200px;'
-                    f' display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">'
-                    f'<div style="font-size:1.8rem; opacity:0.15; margin-bottom:8px;">📋</div>'
-                    f'<div style="font-size:0.78rem; color:{TXT_MUTED};">Click a course to reveal its details</div>'
+                    f'<div style="background:{BG_CARD}; border:1px solid {BORDER}; border-radius:10px; padding:14px;'
+                    f' text-align:center;">'
+                    f'<div style="font-size:1.4rem; opacity:0.12; margin-bottom:4px;">📋</div>'
+                    f'<div style="font-size:0.72rem; color:{TXT_MUTED};">Click a course to preview</div>'
                     f'</div>',
                     unsafe_allow_html=True
                 )
@@ -861,23 +871,11 @@ else:
     # ══════════════════════════════════════════════════════════════════
     # 2-Column Layout: SEARCH + DRAFT CARDS (scrolls under calendar)
     # ══════════════════════════════════════════════════════════════════
-    col_search, col_main = st.columns([2.3, 3.7])
+    col_search, col_main = st.columns([2, 4])
 
-    # ── SEARCH (Catalog) ────────────────────────────────────────────
+    # ── COURSE LIST (scrolls under frozen row) ─────────────────────
     with col_search:
-        st.markdown(f'<div class="section-label" style="margin-top:0.5rem;">Search</div>', unsafe_allow_html=True)
-        n_added = len(selected_ids)
-
-        search = st.text_input("Search", placeholder="Course ID...", label_visibility="collapsed", key="scout_search")
-        
-        dept_filter = st.multiselect(
-            "Dept", list(DEPT_LABELS.keys()),
-            format_func=lambda x: DEPT_LABELS[x],
-            default=["game"],
-            key="scout_dept"
-        )
-        
-        # Catalog course list
+        # Course list
         for dept in dept_filter:
             courses = dept_courses.get(dept, [])
             filtered = courses
