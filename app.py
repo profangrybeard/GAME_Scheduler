@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "1.6.7"
+APP_VERSION = "1.6.8"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -734,73 +734,111 @@ else:
 
     cal_container = st.container()
     with cal_container:
-        st.markdown(f'<div class="section-label">10 Weeks ({quarter.title()} {year})</div>', unsafe_allow_html=True)
+        col_preview, col_cal = st.columns([2.3, 3.7])
 
-        placing_idx = st.session_state.get("placing_offering_idx")
-        placing_cid = None
-        if placing_idx is not None and offerings and placing_idx < len(offerings):
-            placing_cid = offerings[placing_idx]["catalog_id"]
-            st.markdown(
-                f'<div style="font-size:0.78rem; color:{ACCENT}; margin-bottom:8px;">'
-                f'Placing <b>{placing_cid}</b> — click a slot below</div>',
-                unsafe_allow_html=True,
-            )
+        # ── CLASS PREVIEW CARD (left of calendar) ────────────────
+        with col_preview:
+            st.markdown(f'<div class="section-label">10 Weeks ({quarter.title()} {year})</div>', unsafe_allow_html=True)
+            inspect = st.session_state.get("inspected_course")
+            if inspect:
+                _desc = html.escape(inspect.get("description", "No description available."))
+                _room = inspect.get("required_room_type", "Any").replace("_", " ").title()
+                _profs = inspect.get("preferred_professors", [])
+                _prof_str = ", ".join(p.replace("prof_", "").replace("_", " ").title() for p in _profs[:3]) if _profs else "—"
+                _grad = f'<span style="font-size:0.6rem; background:{BG_HOVER}; border:1px solid {BORDER}; border-radius:3px; padding:1px 5px; margin-left:6px; color:{TXT_MUTED};">GRAD</span>' if inspect.get("is_graduate") else ""
+                _dept = inspect.get("department", "game")
+                _dot = DEPT_DOT.get(_dept, "#666")
+                st.markdown(
+                    f'<div style="background:{BG_CARD}; border:1px solid {ACCENT}40; border-radius:10px; padding:16px; height:100%;">'
+                    f'<div style="font-size:0.85rem; font-weight:700; color:{TXT_ACCENT};">'
+                    f'<span class="dept-dot" style="background:{_dot};"></span>{inspect["id"]}{_grad}</div>'
+                    f'<div style="font-size:0.82rem; font-weight:500; color:{TXT_PRIMARY}; margin:4px 0 8px 0;">{html.escape(inspect["name"])}</div>'
+                    f'<div style="font-size:0.73rem; color:{TXT_MUTED}; line-height:1.5; max-height:6em; overflow:hidden;">{_desc}</div>'
+                    f'<div style="margin-top:10px; font-size:0.7rem; color:{TXT_MUTED}; line-height:1.6;">'
+                    f'<b>Room:</b> {_room}<br>'
+                    f'<b>Faculty:</b> {_prof_str}'
+                    f'</div>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+            else:
+                st.markdown(
+                    f'<div style="background:{BG_CARD}; border:1px solid {BORDER}; border-radius:10px; padding:16px; min-height:200px;'
+                    f' display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">'
+                    f'<div style="font-size:1.8rem; opacity:0.15; margin-bottom:8px;">📋</div>'
+                    f'<div style="font-size:0.78rem; color:{TXT_MUTED};">Click a course to reveal its details</div>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
 
-        # Header row
-        gh1, gh2, gh3 = st.columns([2.3, 1.85, 1.85])
-        with gh1:
-            st.markdown(f'<div style="font-size:0.7rem; color:{TXT_MUTED}; text-align:right; padding:6px 0;">TIME</div>', unsafe_allow_html=True)
-        with gh2:
-            st.markdown(f'<div style="font-size:0.72rem; font-weight:600; color:{TXT_SECONDARY}; text-align:center; padding:6px 0; background:{BG_CARD}; border:1px solid {BORDER}; border-radius:4px;">MW</div>', unsafe_allow_html=True)
-        with gh3:
-            st.markdown(f'<div style="font-size:0.72rem; font-weight:600; color:{TXT_SECONDARY}; text-align:center; padding:6px 0; background:{BG_CARD}; border:1px solid {BORDER}; border-radius:4px;">TTh</div>', unsafe_allow_html=True)
+        # ── CALENDAR GRID (right) ────────────────────────────────
+        with col_cal:
+            placing_idx = st.session_state.get("placing_offering_idx")
+            placing_cid = None
+            if placing_idx is not None and offerings and placing_idx < len(offerings):
+                placing_cid = offerings[placing_idx]["catalog_id"]
+                st.markdown(
+                    f'<div style="font-size:0.78rem; color:{ACCENT}; margin-bottom:4px;">'
+                    f'Placing <b>{placing_cid}</b> — click a slot</div>',
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(f'<div style="height:22px;"></div>', unsafe_allow_html=True)
 
-        # Grid rows
-        for ts in config.TIME_SLOTS:
-            gc1, gc2, gc3 = st.columns([2.3, 1.85, 1.85])
-            with gc1:
-                st.markdown(f'<div style="font-size:0.72rem; font-weight:600; color:{TXT_MUTED}; text-align:right; padding:10px 4px 10px 0;">{ts}</div>', unsafe_allow_html=True)
+            # Header row
+            hc1, hc2, hc3 = st.columns([0.6, 3, 3])
+            with hc1:
+                st.markdown(f'<div style="font-size:0.65rem; color:{TXT_MUTED}; padding:6px 0;"></div>', unsafe_allow_html=True)
+            with hc2:
+                st.markdown(f'<div style="font-size:0.72rem; font-weight:600; color:{TXT_SECONDARY}; text-align:center; padding:6px 0; background:{BG_CARD}; border:1px solid {BORDER}; border-radius:4px;">MW</div>', unsafe_allow_html=True)
+            with hc3:
+                st.markdown(f'<div style="font-size:0.72rem; font-weight:600; color:{TXT_SECONDARY}; text-align:center; padding:6px 0; background:{BG_CARD}; border:1px solid {BORDER}; border-radius:4px;">TTh</div>', unsafe_allow_html=True)
 
-            for dg, col in [(1, gc2), (2, gc3)]:
-                with col:
-                    cell_key = (dg, ts)
-                    pinned_here = pinned_map.get(cell_key, [])
+            # Grid rows
+            for ts in config.TIME_SLOTS:
+                tc1, tc2, tc3 = st.columns([0.6, 3, 3])
+                with tc1:
+                    st.markdown(f'<div style="font-size:0.68rem; font-weight:600; color:{TXT_MUTED}; text-align:right; padding:10px 2px 10px 0;">{ts}</div>', unsafe_allow_html=True)
 
-                    if pinned_here:
-                        for _pi, _po, _pc in pinned_here:
-                            _dept = _pc.get("department", "game")
-                            _dot = DEPT_DOT.get(_dept, "#666")
-                            _prof_list = _po.get("override_preferred_professors") or []
-                            _prof_name = prof_labels.get(_prof_list[0], _prof_list[0]) if _prof_list else "Auto"
-                            st.markdown(
-                                f'<div class="cal-course locked">'
-                                f'<div class="cal-cid"><span class="dept-dot" style="background:{_dot};"></span>{_po["catalog_id"]}</div>'
-                                f'<div class="cal-detail">{_prof_name}</div>'
-                                f'</div>',
-                                unsafe_allow_html=True,
-                            )
-                    elif placing_idx is not None and offerings and placing_idx < len(offerings):
-                        conflict = has_pin_conflict(dg, ts, placing_idx)
-                        if conflict:
-                            st.markdown(
-                                f'<div style="padding:10px; border:1px dashed {BORDER_LITE}; border-radius:6px; text-align:center; color:#3F3F46; font-size:0.7rem;">conflict</div>',
-                                unsafe_allow_html=True,
-                            )
+                for dg, col in [(1, tc2), (2, tc3)]:
+                    with col:
+                        cell_key = (dg, ts)
+                        pinned_here = pinned_map.get(cell_key, [])
+
+                        if pinned_here:
+                            for _pi, _po, _pc in pinned_here:
+                                _dept = _pc.get("department", "game")
+                                _dot = DEPT_DOT.get(_dept, "#666")
+                                _prof_list = _po.get("override_preferred_professors") or []
+                                _prof_name = prof_labels.get(_prof_list[0], _prof_list[0]) if _prof_list else "Auto"
+                                st.markdown(
+                                    f'<div class="cal-course locked">'
+                                    f'<div class="cal-cid"><span class="dept-dot" style="background:{_dot};"></span>{_po["catalog_id"]}</div>'
+                                    f'<div class="cal-detail">{_prof_name}</div>'
+                                    f'</div>',
+                                    unsafe_allow_html=True,
+                                )
+                        elif placing_idx is not None and offerings and placing_idx < len(offerings):
+                            conflict = has_pin_conflict(dg, ts, placing_idx)
+                            if conflict:
+                                st.markdown(
+                                    f'<div style="padding:10px; border:1px dashed {BORDER_LITE}; border-radius:6px; text-align:center; color:#3F3F46; font-size:0.7rem;">conflict</div>',
+                                    unsafe_allow_html=True,
+                                )
+                            else:
+                                dg_label = DG_LABELS[dg]
+                                if st.button(f"{dg_label} {ts}", key=f"pin_{dg}_{ts}", use_container_width=True):
+                                    offerings[placing_idx]["pinned"] = {"day_group": dg, "time_slot": ts}
+                                    add_log("PIN", f"Pinned {placing_cid} to {dg_label} {ts}")
+                                    st.session_state["placing_offering_idx"] = None
+                                    st.rerun()
                         else:
-                            dg_label = DG_LABELS[dg]
-                            if st.button(f"{dg_label} {ts}", key=f"pin_{dg}_{ts}", use_container_width=True):
-                                offerings[placing_idx]["pinned"] = {"day_group": dg, "time_slot": ts}
-                                add_log("PIN", f"Pinned {placing_cid} to {dg_label} {ts}")
-                                st.session_state["placing_offering_idx"] = None
-                                st.rerun()
-                    else:
-                        # Empty cell — ghost pin hint when courses exist
-                        pulse_class = "pulse" if has_unpinned else ""
-                        ghost = "📍" if has_unpinned else ""
-                        st.markdown(
-                            f'<div class="ghost-pin {pulse_class}">{ghost}</div>',
-                            unsafe_allow_html=True,
-                        )
+                            pulse_class = "pulse" if has_unpinned else ""
+                            ghost = "📍" if has_unpinned else ""
+                            st.markdown(
+                                f'<div class="ghost-pin {pulse_class}">{ghost}</div>',
+                                unsafe_allow_html=True,
+                            )
 
     # ══════════════════════════════════════════════════════════════════
     # 2-Column Layout: SEARCH + DRAFT CARDS (scrolls under calendar)
@@ -862,29 +900,6 @@ else:
                                 add_log("DRAFT", f"Drafted {c['id']} to the Bench")
                                 st.rerun()
 
-        # ── CLASS PREVIEW ──
-        st.markdown(f'<div class="section-label" style="margin-top:1.5rem;">Class Preview</div>', unsafe_allow_html=True)
-        inspect = st.session_state.get("inspected_course")
-        if inspect:
-            _desc = html.escape(inspect.get("description", "No description available."))
-            _room = inspect.get("required_room_type", "Any").replace("_", " ").title()
-            _profs = inspect.get("preferred_professors", [])
-            _prof_str = ", ".join(p.replace("prof_", "").replace("_", " ").title() for p in _profs[:3]) if _profs else "—"
-            _grad = '<span style="font-size:0.65rem; background:#2A2A30; border:1px solid #333; border-radius:3px; padding:1px 5px; margin-left:6px; color:#9CA3AF;">GRAD</span>' if inspect.get("is_graduate") else ""
-            st.markdown(
-                f'<div style="background:{BG_CARD}; border:1px solid {ACCENT}40; border-radius:8px; padding:12px;">'
-                f'<div style="font-size:0.82rem; font-weight:700; color:{TXT_ACCENT};">{inspect["id"]}{_grad}</div>'
-                f'<div style="font-size:0.82rem; font-weight:500; color:{TXT_PRIMARY}; margin-bottom:6px;">{html.escape(inspect["name"])}</div>'
-                f'<div style="font-size:0.73rem; color:{TXT_MUTED}; line-height:1.5; max-height:4.5em; overflow:hidden;">{_desc}</div>'
-                f'<div style="margin-top:8px; font-size:0.7rem; color:{TXT_MUTED}; line-height:1.6;">'
-                f'<b>Room:</b> {_room}<br>'
-                f'<b>Faculty:</b> {_prof_str}'
-                f'</div>'
-                f'</div>',
-                unsafe_allow_html=True
-            )
-        else:
-            st.markdown(f'<div style="font-size:0.75rem; color:{TXT_MUTED}; font-style:italic;">Click a course to preview.</div>', unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════════════════════
     # COLUMN 2: 10 WEEKS (Draft & Calendar)
