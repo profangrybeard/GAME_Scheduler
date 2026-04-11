@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "1.7.2"
+APP_VERSION = "1.7.3"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -84,7 +84,7 @@ CSS_TEMPLATE = """
         background: {BG_BASE};
         color: {TXT_PRIMARY};
     }}
-    .block-container {{ padding-top: 0.5rem; max-width: 1400px; }}
+    .block-container {{ padding-top: 3rem; max-width: 1400px; }}
     /* Hide Deploy + hamburger, keep sidebar expand arrow */
     [data-testid="stToolbarActions"] {{ display: none !important; }}
     [data-testid="stAppDeployButton"] {{ display: none !important; }}
@@ -724,7 +724,7 @@ else:
         f'  .ghost-pin {{ text-align:center; padding:8px; border:1px dashed {BORDER_LITE}; border-radius:6px; min-height:20px; font-size:0.8rem; color:#3F3F46; }}'
         f'  .ghost-pin.pulse {{ animation: ghost-pulse 3s ease-in-out infinite; }}'
         f'  [data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] > [data-testid="stLayoutWrapper"]:nth-child(3) {{'
-        f'    position: sticky !important; top: 0 !important; z-index: 50 !important;'
+        f'    position: sticky !important; top: 48px !important; z-index: 50 !important;'
         f'    background: {BG_BASE} !important; padding-bottom: 8px;'
         f'    border-bottom: 1px solid {BORDER};'
         f'  }}'
