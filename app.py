@@ -86,7 +86,7 @@ CSS_TEMPLATE = """
         background: {BG_BASE};
         color: {TXT_PRIMARY};
     }}
-    .block-container {{ padding-top: 3rem; max-width: 1400px; }}
+    .block-container {{ padding-top: 1.5rem; max-width: 1400px; }}
     /* Hide Deploy + hamburger, keep sidebar expand arrow */
     [data-testid="stToolbarActions"] {{ display: none !important; }}
     [data-testid="stAppDeployButton"] {{ display: none !important; }}
@@ -384,9 +384,16 @@ CSS_TEMPLATE = """
     }}
     .badge-room {{ background: {ACCENT_AMBER}15; color: {TXT_MUTED}; border: 1px solid {BORDER}; }}
 
-    @media (max-width: 768px) {{
-        .metric-box .num {{ font-size: 1.2rem; }}
-        .course-card {{ padding: 10px 12px; }}
+    /* Desktop-only gate: show overlay on small screens */
+    @media (max-width: 1024px) {{
+        .stApp::before {{
+            content: "This app is designed for laptop screens (1440\00d7 900+). Please use a MacBook or similar display.";
+            position: fixed; inset: 0; z-index: 99999;
+            display: flex; align-items: center; justify-content: center;
+            background: {BG_BASE}; color: {TXT_SECONDARY};
+            font-size: 1.1rem; font-weight: 500; text-align: center;
+            padding: 2rem; font-family: 'Inter', sans-serif;
+        }}
     }}
 </style>
 """
@@ -773,12 +780,7 @@ else:
         f'    border-bottom: 1px solid {BORDER} !important;'
         f'    padding-bottom: 2px;'
         f'  }}'
-        f'  /* Mobile */'
-        f'  @media (max-width: 768px) {{'
-        f'    [data-baseweb="tab-list"] {{ display: none !important; }}'
-        f'    .block-container {{ padding-bottom: 72px !important; }}'
-        f'  }}'
-        f'  @media (min-width: 769px) {{ .bottom-nav {{ display: none !important; }} }}'
+        f'  /* No mobile layout — desktop only (see CLAUDE.md Rule 1) */'
         f'</style>',
         unsafe_allow_html=True,
     )
@@ -1248,18 +1250,4 @@ else:
         elif total_cat == 0 and dept_filter:
             st.markdown(f'<div style="text-align:center; color:{TXT_MUTED}; padding:2rem; font-size:0.8rem;">No courses match your search.</div>', unsafe_allow_html=True)
 
-    # ── Mobile bottom nav ────────────────────────────────────────
-    st.html(
-        f'<style>'
-        f'.bottom-nav {{ position:fixed; bottom:0; left:0; right:0; height:52px; background:{BG_SIDEBAR}; border-top:1px solid {BORDER}; display:flex; justify-content:space-around; align-items:center; z-index:100; padding-bottom:env(safe-area-inset-bottom); }}'
-        f'.bottom-nav button {{ display:flex; flex-direction:column; align-items:center; background:none; border:none; color:{TXT_MUTED}; font-size:0.6rem; font-weight:600; gap:2px; cursor:pointer; font-family:inherit; }}'
-        f'.bottom-nav button:active {{ color:{ACCENT}; }}'
-        f'.bottom-nav .nav-icon {{ font-size:1.1rem; }}'
-        f'@media (min-width:769px) {{ .bottom-nav {{ display:none !important; }} }}'
-        f'</style>'
-        f'<div class="bottom-nav">'
-        f'<button onclick="try{{document.querySelectorAll(\'[data-baseweb=tab]\')[0].click()}}catch(e){{}}"><span class="nav-icon">📚</span><span>Catalog</span></button>'
-        f'<button onclick="try{{document.querySelectorAll(\'[data-baseweb=tab]\')[1].click()}}catch(e){{}}"><span class="nav-icon">📋</span><span>Courses</span></button>'
-        f'<button onclick="try{{document.querySelectorAll(\'[data-baseweb=tab]\')[2].click()}}catch(e){{}}"><span class="nav-icon">📅</span><span>Schedule</span></button>'
-        f'</div>'
-    )
+    # Mobile bottom nav removed — desktop only (see CLAUDE.md Rule 1)
