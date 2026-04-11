@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "1.6.2"
+APP_VERSION = "1.6.3"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -744,7 +744,7 @@ else:
             )
 
         # Header row
-        gh1, gh2, gh3 = st.columns([1, 3, 3])
+        gh1, gh2, gh3 = st.columns([1.2, 2.4, 2.4])
         with gh1:
             st.markdown(f'<div style="font-size:0.7rem; color:{TXT_MUTED}; text-align:right; padding:6px 0;">TIME</div>', unsafe_allow_html=True)
         with gh2:
@@ -754,7 +754,7 @@ else:
 
         # Grid rows
         for ts in config.TIME_SLOTS:
-            gc1, gc2, gc3 = st.columns([1, 3, 3])
+            gc1, gc2, gc3 = st.columns([1.2, 2.4, 2.4])
             with gc1:
                 st.markdown(f'<div style="font-size:0.72rem; font-weight:600; color:{TXT_MUTED}; text-align:right; padding:10px 4px 10px 0;">{ts}</div>', unsafe_allow_html=True)
 
