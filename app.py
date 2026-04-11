@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "1.6.4"
+APP_VERSION = "1.6.5"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -84,7 +84,8 @@ CSS_TEMPLATE = """
         background: {BG_BASE};
         color: {TXT_PRIMARY};
     }}
-    .block-container {{ padding-top: 2.5rem; max-width: 1200px; }}
+    .block-container {{ padding-top: 0.5rem; max-width: 1400px; }}
+    header[data-testid="stHeader"] {{ display: none !important; }}
 
     section[data-testid="stSidebar"] {{
         background: {BG_SIDEBAR};
