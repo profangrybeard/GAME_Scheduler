@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "1.6.6"
+APP_VERSION = "1.6.7"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -747,7 +747,7 @@ else:
             )
 
         # Header row
-        gh1, gh2, gh3 = st.columns([1.2, 2.4, 2.4])
+        gh1, gh2, gh3 = st.columns([2.3, 1.85, 1.85])
         with gh1:
             st.markdown(f'<div style="font-size:0.7rem; color:{TXT_MUTED}; text-align:right; padding:6px 0;">TIME</div>', unsafe_allow_html=True)
         with gh2:
@@ -757,7 +757,7 @@ else:
 
         # Grid rows
         for ts in config.TIME_SLOTS:
-            gc1, gc2, gc3 = st.columns([1.2, 2.4, 2.4])
+            gc1, gc2, gc3 = st.columns([2.3, 1.85, 1.85])
             with gc1:
                 st.markdown(f'<div style="font-size:0.72rem; font-weight:600; color:{TXT_MUTED}; text-align:right; padding:10px 4px 10px 0;">{ts}</div>', unsafe_allow_html=True)
 
@@ -805,7 +805,7 @@ else:
     # ══════════════════════════════════════════════════════════════════
     # 2-Column Layout: SEARCH + DRAFT CARDS (scrolls under calendar)
     # ══════════════════════════════════════════════════════════════════
-    col_search, col_main = st.columns([1.2, 4.8])
+    col_search, col_main = st.columns([2.3, 3.7])
 
     # ── SEARCH (Catalog) ────────────────────────────────────────────
     with col_search:
@@ -901,28 +901,27 @@ else:
                 dot_color = DEPT_DOT.get(dept, "#666")
 
                 with st.container():
-                    r1_c1, r1_c2 = st.columns([10, 1])
-                    with r1_c1:
+                    # Single-row compact layout
+                    rc_name, rc_pri, rc_sec, rc_prof, rc_pin, rc_rm = st.columns([3, 1, 0.7, 2, 1, 0.5], gap="small")
+                    with rc_name:
                         st.markdown(
-                            f'<div style="padding:2px 0;">'
+                            f'<div style="padding:4px 0; font-size:0.8rem; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">'
                             f'<span class="dept-dot" style="background:{dot_color};"></span>'
                             f'<span class="cc-id">{cid}</span> '
-                            f'<span style="color:{TXT_SECONDARY}; font-size:0.85rem;">{course.get("name", cid)}</span></div>',
+                            f'<span style="color:{TXT_SECONDARY};">{course.get("name", cid)}</span></div>',
                             unsafe_allow_html=True
                         )
-                    with r1_c2:
-                        if st.button("×", key=f"board_rm_{idx}", help="Remove from draft"):
+                    with rc_rm:
+                        if st.button("×", key=f"board_rm_{idx}", help="Remove"):
                             active_project["offerings"].pop(idx)
                             st.rerun()
-
-                    r2_c1, r2_c2, r2_c3, r2_c4 = st.columns([1.5, 1, 3, 1], gap="small")
-                    with r2_c1:
+                    with rc_pri:
                         new_pri = st.selectbox("pri", list(PRIORITY_LABELS.keys()), format_func=lambda x: PRIORITY_LABELS[x], index=list(PRIORITY_LABELS.keys()).index(o.get("priority", "must_have")), key=f"board_pri_{idx}", label_visibility="collapsed")
                         active_project["offerings"][idx]["priority"] = new_pri
-                    with r2_c2:
+                    with rc_sec:
                         new_sec = st.number_input("sec", min_value=1, max_value=4, value=o.get("sections", 1), key=f"board_sec_{idx}", label_visibility="collapsed")
                         active_project["offerings"][idx]["sections"] = new_sec
-                    with r2_c3:
+                    with rc_prof:
                         current_prof_list = o.get("override_preferred_professors")
                         current_prof = current_prof_list[0] if current_prof_list else "Auto-Draft"
                         if current_prof not in prof_options:
@@ -943,7 +942,7 @@ else:
                                 add_log("ASSIGN", f"Assigned {prof_labels[new_prof]} to {cid}")
                             st.rerun()
 
-                    with r2_c4:
+                    with rc_pin:
                         pin = o.get("pinned")
                         if pin:
                             dg_lbl = DG_LABELS[pin["day_group"]]
