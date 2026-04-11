@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "1.6.9"
+APP_VERSION = "1.7.0"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -804,7 +804,11 @@ else:
                     with col:
                         cell_key = (dg, ts)
                         pinned_here = pinned_map.get(cell_key, [])
+                        n_pinned = len(pinned_here)
+                        total_rooms = len(rooms)
+                        over_cap = n_pinned > total_rooms
 
+                        # Render pinned courses (always, even when placing)
                         if pinned_here:
                             for _pi, _po, _pc in pinned_here:
                                 _dept = _pc.get("department", "game")
@@ -818,21 +822,35 @@ else:
                                     f'</div>',
                                     unsafe_allow_html=True,
                                 )
-                        elif placing_idx is not None and offerings and placing_idx < len(offerings):
+
+                        # Capacity indicator
+                        if n_pinned > 0:
+                            cap_color = ACCENT_RED if over_cap else (ACCENT_AMBER if n_pinned >= total_rooms else TXT_MUTED)
+                            warn = " !" if over_cap else ""
+                            st.markdown(
+                                f'<div style="font-size:0.6rem; color:{cap_color}; text-align:right; padding:1px 4px;">'
+                                f'{n_pinned}/{total_rooms}{warn}</div>',
+                                unsafe_allow_html=True,
+                            )
+
+                        # Placing mode — allow adding to cells (even with existing courses)
+                        if placing_idx is not None and offerings and placing_idx < len(offerings):
                             conflict = has_pin_conflict(dg, ts, placing_idx)
                             if conflict:
-                                st.markdown(
-                                    f'<div style="padding:10px; border:1px dashed {BORDER_LITE}; border-radius:6px; text-align:center; color:#3F3F46; font-size:0.7rem;">conflict</div>',
-                                    unsafe_allow_html=True,
-                                )
+                                if not pinned_here:
+                                    st.markdown(
+                                        f'<div style="padding:8px; border:1px dashed {BORDER_LITE}; border-radius:6px; text-align:center; color:#3F3F46; font-size:0.7rem;">conflict</div>',
+                                        unsafe_allow_html=True,
+                                    )
                             else:
                                 dg_label = DG_LABELS[dg]
-                                if st.button(f"{dg_label} {ts}", key=f"pin_{dg}_{ts}", use_container_width=True):
+                                if st.button(f"+ {dg_label} {ts}", key=f"pin_{dg}_{ts}", use_container_width=True):
                                     offerings[placing_idx]["pinned"] = {"day_group": dg, "time_slot": ts}
                                     add_log("PIN", f"Pinned {placing_cid} to {dg_label} {ts}")
                                     st.session_state["placing_offering_idx"] = None
                                     st.rerun()
-                        else:
+                        elif not pinned_here:
+                            # Empty cell — ghost pin
                             pulse_class = "pulse" if has_unpinned else ""
                             ghost = "📍" if has_unpinned else ""
                             st.markdown(
