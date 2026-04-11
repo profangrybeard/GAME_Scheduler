@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "1.7.1"
+APP_VERSION = "1.7.2"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -738,45 +738,47 @@ else:
 
         # ── SEARCH + CLASS PREVIEW (left of calendar, frozen) ────
         with col_preview:
-            st.markdown(f'<div class="section-label">10 Weeks ({quarter.title()} {year})</div>', unsafe_allow_html=True)
+            # Search + Dept on one row
+            sf1, sf2 = st.columns([3, 2])
+            with sf1:
+                search = st.text_input("Search", placeholder="Course ID or name...", label_visibility="collapsed", key="scout_search")
+            with sf2:
+                dept_filter = st.multiselect(
+                    "Dept", list(DEPT_LABELS.keys()),
+                    format_func=lambda x: DEPT_LABELS.get(x, x)[:4],
+                    default=["game"],
+                    key="scout_dept",
+                    label_visibility="collapsed"
+                )
 
-            # Search + Dept filter (compact, always visible)
-            search = st.text_input("Search", placeholder="Course ID or name...", label_visibility="collapsed", key="scout_search")
-            dept_filter = st.multiselect(
-                "Dept", list(DEPT_LABELS.keys()),
-                format_func=lambda x: DEPT_LABELS[x],
-                default=["game"],
-                key="scout_dept"
-            )
-
-            # Class Preview card
+            # Class Preview card (fixed height, no overflow)
             inspect = st.session_state.get("inspected_course")
             if inspect:
                 _desc = html.escape(inspect.get("description", "No description available."))
                 _room = inspect.get("required_room_type", "Any").replace("_", " ").title()
                 _profs = inspect.get("preferred_professors", [])
-                _prof_str = ", ".join(p.replace("prof_", "").replace("_", " ").title() for p in _profs[:3]) if _profs else "—"
-                _grad = f'<span style="font-size:0.6rem; background:{BG_HOVER}; border:1px solid {BORDER}; border-radius:3px; padding:1px 5px; margin-left:6px; color:{TXT_MUTED};">GRAD</span>' if inspect.get("is_graduate") else ""
+                _prof_str = ", ".join(p.replace("prof_", "").replace("_", " ").title() for p in _profs[:2]) if _profs else "—"
+                _grad = f'<span style="font-size:0.55rem; background:{BG_HOVER}; border:1px solid {BORDER}; border-radius:3px; padding:0px 4px; margin-left:4px; color:{TXT_MUTED};">GRAD</span>' if inspect.get("is_graduate") else ""
                 _dept = inspect.get("department", "game")
                 _dot = DEPT_DOT.get(_dept, "#666")
                 st.markdown(
-                    f'<div style="background:{BG_CARD}; border:1px solid {ACCENT}40; border-radius:10px; padding:12px;">'
-                    f'<div style="font-size:0.82rem; font-weight:700; color:{TXT_ACCENT};">'
+                    f'<div style="background:{BG_CARD}; border:1px solid {ACCENT}40; border-radius:8px; padding:10px; max-height:180px; overflow:hidden;">'
+                    f'<div style="font-size:0.7rem; font-weight:700; color:{TXT_ACCENT};">'
                     f'<span class="dept-dot" style="background:{_dot};"></span>{inspect["id"]}{_grad}</div>'
-                    f'<div style="font-size:0.78rem; font-weight:500; color:{TXT_PRIMARY}; margin:2px 0 6px 0;">{html.escape(inspect["name"])}</div>'
-                    f'<div style="font-size:0.7rem; color:{TXT_MUTED}; line-height:1.4; max-height:3.5em; overflow:hidden;">{_desc}</div>'
-                    f'<div style="margin-top:6px; font-size:0.68rem; color:{TXT_MUTED}; line-height:1.5;">'
-                    f'<b>Room:</b> {_room} &middot; <b>Faculty:</b> {_prof_str}'
+                    f'<div style="font-size:0.75rem; font-weight:500; color:{TXT_PRIMARY}; margin:2px 0 4px 0;">{html.escape(inspect["name"])}</div>'
+                    f'<div style="font-size:0.65rem; color:{TXT_MUTED}; line-height:1.4; max-height:2.8em; overflow:hidden;">{_desc}</div>'
+                    f'<div style="margin-top:4px; font-size:0.62rem; color:{TXT_MUTED};">'
+                    f'{_room} &middot; {_prof_str}'
                     f'</div>'
                     f'</div>',
                     unsafe_allow_html=True
                 )
             else:
                 st.markdown(
-                    f'<div style="background:{BG_CARD}; border:1px solid {BORDER}; border-radius:10px; padding:14px;'
-                    f' text-align:center;">'
-                    f'<div style="font-size:1.4rem; opacity:0.12; margin-bottom:4px;">📋</div>'
-                    f'<div style="font-size:0.72rem; color:{TXT_MUTED};">Click a course to preview</div>'
+                    f'<div style="background:{BG_CARD}; border:1px solid {BORDER}; border-radius:8px; padding:10px;'
+                    f' text-align:center; max-height:180px;">'
+                    f'<div style="font-size:1.2rem; opacity:0.12; margin-bottom:2px;">📋</div>'
+                    f'<div style="font-size:0.68rem; color:{TXT_MUTED};">Click a course to preview</div>'
                     f'</div>',
                     unsafe_allow_html=True
                 )
