@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "1.5.1"
+APP_VERSION = "1.5.2"
 
 st.sidebar.code(f"v{APP_VERSION}")
 
@@ -637,24 +637,24 @@ else:
 
             for c in filtered:
                 already = c["id"] in selected_ids
-                
+
                 with st.container():
-                    c1, c2, c3 = st.columns([5, 1.2, 1.2])
+                    c1, c2 = st.columns([6, 1])
                     with c1:
-                        # Course "Label"
-                        color = TXT_ACCENT if not already else TXT_MUTED
-                        st.markdown(f'<div style="font-size:0.82rem; font-weight:600; color:{color}; padding-top:6px;">{c["id"]}</div>', unsafe_allow_html=True)
-                    with c2:
-                        if st.button("i", key=f"inspect_{c['id']}", help="Scout Report"):
+                        # Course label — click to preview
+                        id_color = TXT_MUTED if already else TXT_ACCENT
+                        name_color = TXT_MUTED if already else TXT_PRIMARY
+                        if st.button(f"{c['id']}  {c['name']}", key=f"preview_{c['id']}", use_container_width=True, help="Preview"):
                             st.session_state["inspected_course"] = c
-                    with c3:
+                            st.rerun()
+                    with c2:
                         if already:
-                            if st.button("×", key=f"rm_scout_{c['id']}", help="Remove"):
+                            if st.button("×", key=f"rm_scout_{c['id']}", help="Remove from draft"):
                                 active_project["offerings"] = [o for o in active_project["offerings"] if o["catalog_id"] != c["id"]]
                                 add_log("DROP", f"Removed {c['id']} from draft")
                                 st.rerun()
                         else:
-                            if st.button("+", key=f"add_scout_{c['id']}", help="Add"):
+                            if st.button("+", key=f"add_scout_{c['id']}", help="Add to draft"):
                                 active_project["offerings"].append({
                                     "catalog_id": c["id"], "priority": "must_have", "sections": 1,
                                     "override_enrollment_cap": None, "override_room_type": None,
@@ -663,24 +663,29 @@ else:
                                 add_log("DRAFT", f"Drafted {c['id']} to the Bench")
                                 st.rerun()
 
-        # ── THE SCOUT REPORT (Inspector) ──
-        st.markdown(f'<div class="section-label" style="margin-top:1.5rem;">Scout Report</div>', unsafe_allow_html=True)
+        # ── CLASS PREVIEW ──
+        st.markdown(f'<div class="section-label" style="margin-top:1.5rem;">Class Preview</div>', unsafe_allow_html=True)
         inspect = st.session_state.get("inspected_course")
         if inspect:
+            _desc = html.escape(inspect.get("description", "No description available."))
+            _room = inspect.get("required_room_type", "Any").replace("_", " ").title()
+            _profs = inspect.get("preferred_professors", [])
+            _prof_str = ", ".join(p.replace("prof_", "").replace("_", " ").title() for p in _profs[:3]) if _profs else "—"
+            _grad = '<span style="font-size:0.65rem; background:#2A2A30; border:1px solid #333; border-radius:3px; padding:1px 5px; margin-left:6px; color:#9CA3AF;">GRAD</span>' if inspect.get("is_graduate") else ""
             st.markdown(
                 f'<div style="background:{BG_CARD}; border:1px solid {ACCENT}40; border-radius:8px; padding:12px;">'
-                f'<div style="font-size:0.88rem; font-weight:700; color:{TXT_PRIMARY};">{inspect["id"]}</div>'
-                f'<div style="font-size:0.82rem; font-weight:600; color:{TXT_SECONDARY}; margin-bottom:8px;">{inspect["name"]}</div>'
-                f'<div style="font-size:0.75rem; color:{TXT_MUTED}; line-height:1.4;">{inspect.get("description", "No description available.")}</div>'
-                f'<div style="margin-top:10px; font-size:0.7rem; color:{TXT_MUTED};">'
-                f'<b>Room Type:</b> {inspect.get("required_room_type", "Any")}<br>'
-                f'<b>Suggested:</b> {", ".join(inspect.get("preferred_professors", [])[:2])}'
+                f'<div style="font-size:0.82rem; font-weight:700; color:{TXT_ACCENT};">{inspect["id"]}{_grad}</div>'
+                f'<div style="font-size:0.82rem; font-weight:500; color:{TXT_PRIMARY}; margin-bottom:6px;">{html.escape(inspect["name"])}</div>'
+                f'<div style="font-size:0.73rem; color:{TXT_MUTED}; line-height:1.5; max-height:4.5em; overflow:hidden;">{_desc}</div>'
+                f'<div style="margin-top:8px; font-size:0.7rem; color:{TXT_MUTED}; line-height:1.6;">'
+                f'<b>Room:</b> {_room}<br>'
+                f'<b>Faculty:</b> {_prof_str}'
                 f'</div>'
                 f'</div>',
                 unsafe_allow_html=True
             )
         else:
-            st.markdown(f'<div style="font-size:0.75rem; color:{TXT_MUTED}; font-style:italic;">Click [i] for details.</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="font-size:0.75rem; color:{TXT_MUTED}; font-style:italic;">Click a course to preview.</div>', unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════════════════════
     # COLUMN 2: THE BOARD (Draft & Calendar)
