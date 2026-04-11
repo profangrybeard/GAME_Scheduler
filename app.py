@@ -20,9 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "1.5.3"
-
-st.sidebar.code(f"v{APP_VERSION}")
+APP_VERSION = "1.6.0"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -368,6 +366,12 @@ st.markdown(CSS_TEMPLATE.format(
     ACCENT=ACCENT, ACCENT_GREEN=ACCENT_GREEN, ACCENT_AMBER=ACCENT_AMBER, ACCENT_RED=ACCENT_RED
 ), unsafe_allow_html=True)
 
+# ─── Sidebar Branding ───────────────────────────────────────────────
+st.sidebar.markdown(
+    f'<div style="font-weight:700; font-size:1.1rem; color:{TXT_PRIMARY}; letter-spacing:-0.02em;">Course Scheduler</div>'
+    f'<div style="font-size:0.65rem; color:{TXT_MUTED}; margin-bottom:1rem;">SCAD Atlanta &middot; v{APP_VERSION}</div>',
+    unsafe_allow_html=True,
+)
 
 # ─── Data Loading ────────────────────────────────────────────────────
 @st.cache_data
@@ -440,19 +444,8 @@ def save_professors_to_disk(profs):
     load_professors.clear()  # bust cache
 
 
-# ─── Header ──────────────────────────────────────────────────────────
-st.markdown(
-    f'<div style="display:flex; justify-content:space-between; align-items:flex-start; padding:1rem; margin-bottom:1rem; border:2px solid {ACCENT}; border-radius:10px; background:{BG_CARD};">'
-    f'<div>'
-    f'  <div class="app-header">Course Scheduler</div>'
-    f'  <div class="app-sub">SCAD Atlanta &nbsp;&middot;&nbsp; Game Design &nbsp;&middot;&nbsp; Motion Media &nbsp;&middot;&nbsp; AI</div>'
-    f'</div>'
-    f'<div style="background:{ACCENT}; color:#FFF; padding:4px 12px; border-radius:20px; font-weight:700; font-size:0.8rem;">'
-    f'  v{APP_VERSION}'
-    f'</div>'
-    f'</div>',
-    unsafe_allow_html=True,
-)
+
+
 
 
 # ─── Load catalog data (always needed) ───────────────────────────────
@@ -585,27 +578,110 @@ if active_project is None:
 
 
 # ══════════════════════════════════════════════════════════════════════
-# SCREEN 2 — Active Workspace (Draft Room)
+# SCREEN 2 — Active Workspace
 # ══════════════════════════════════════════════════════════════════════
 else:
     quarter = active_project["quarter"]
     year = active_project["year"]
 
-    # ── 3-Column Workspace Layout ────────────────────────────────────
-    col_scout, col_board, col_roster = st.columns([1.2, 3.5, 1.3])
+    # ── Sidebar: workspace controls ─────────────────────────────────
+    with st.sidebar:
+        if st.button("← Directory", use_container_width=True, key="back_btn"):
+            st.session_state["active_project"] = None
+            st.rerun()
+
+        st.markdown(f'<div class="section-label" style="margin-top:0.5rem;">{quarter.title()} {year}</div>', unsafe_allow_html=True)
+
+        # Save template
+        sb1, sb2 = st.columns([3, 1])
+        with sb1:
+            tmpl_name = st.text_input("Template name", placeholder="Save as...", label_visibility="collapsed", key="board_save")
+        with sb2:
+            if st.button("Save", use_container_width=True):
+                if active_project["offerings"]:
+                    save_template(tmpl_name or f"{quarter}_{year}", active_project["offerings"], active_project.get("prof_overrides"), quarter)
+                    st.success("Saved")
+                else: st.warning("Empty")
+
+        # Metrics
+        offerings_sb = active_project["offerings"]
+        total_sections_sb = sum(o.get("sections", 1) for o in offerings_sb)
+        st.markdown(
+            f'<div style="font-size:0.82rem; color:{TXT_PRIMARY}; margin:8px 0;">'
+            f'<b>{len(offerings_sb)}</b> <span style="color:{TXT_MUTED};">courses</span> &middot; '
+            f'<b>{total_sections_sb}</b> <span style="color:{TXT_MUTED};">sections</span></div>',
+            unsafe_allow_html=True,
+        )
+        if st.button("Generate Remainder", type="primary", use_container_width=True):
+            # Solver trigger placeholder
+            pass
+
+        # Roster (collapsible)
+        with st.expander("Roster", expanded=False):
+            faculty = load_professors()
+            prof_overrides = active_project.get("prof_overrides", {})
+            if prof_overrides:
+                apply_professor_overrides(faculty, prof_overrides, quarter)
+
+            for p in faculty:
+                pid = p["id"]
+                available = quarter in p.get("available_quarters", [])
+                dot_color = DEPT_DOT.get(p.get("home_department", "game"), "#666")
+
+                with st.container():
+                    f_c1, f_c2 = st.columns([1, 4])
+                    with f_c1:
+                        new_avail = st.toggle("avail", value=available, key=f"roster_avail_{pid}", label_visibility="collapsed")
+                    with f_c2:
+                        st.markdown(
+                            f'<div style="padding-top:2px;">'
+                            f'<span class="dept-dot" style="background:{dot_color if new_avail else "#333"};"></span>'
+                            f'<span style="font-weight:600; font-size:0.85rem; color:{TXT_PRIMARY if new_avail else TXT_MUTED};">{p["name"]}</span>'
+                            f'</div>',
+                            unsafe_allow_html=True
+                        )
+
+                    if new_avail:
+                        m_col, t_col = st.columns([1, 2])
+                        with m_col:
+                            new_max = st.number_input("Max", 1, 6, p.get("max_classes", 4), key=f"roster_max_{pid}", label_visibility="collapsed")
+                        with t_col:
+                            time_opts = list(TIME_PREF_LABELS.keys())
+                            new_time = st.selectbox("Time", time_opts, format_func=lambda x: TIME_PREF_LABELS[x], index=time_opts.index(p.get("time_preference", "morning")), key=f"roster_time_{pid}", label_visibility="collapsed")
+                    else:
+                        new_max = p.get("max_classes", 4)
+                        new_time = p.get("time_preference", "morning")
+
+                    if "prof_overrides" not in active_project: active_project["prof_overrides"] = {}
+                    active_project["prof_overrides"][pid] = {"max_classes": new_max, "time_preference": new_time, "available": new_avail}
+
+                    st.markdown(f'<div style="margin-bottom:4px; border-bottom:1px solid {BORDER_LITE};"></div>', unsafe_allow_html=True)
+
+        # Draft Ticker
+        st.markdown(f'<div class="section-label" style="margin-top:1rem;">Draft Ticker</div>', unsafe_allow_html=True)
+        log = st.session_state.get("draft_log", [])
+        if log:
+            EVENT_COLORS = {"DRAFT": ACCENT, "DROP": ACCENT_RED, "ASSIGN": ACCENT_GREEN, "AUTO": ACCENT_AMBER, "PIN": TXT_ACCENT}
+            for entry in log:
+                ev_color = EVENT_COLORS.get(entry["type"], TXT_MUTED)
+                st.markdown(
+                    f'<div style="font-size:0.75rem; color:{TXT_MUTED}; padding:3px 0; border-bottom:1px solid {BORDER_LITE};">'
+                    f'<span style="color:{ev_color}; font-weight:600;">{entry["type"]}</span> '
+                    f'{html.escape(entry["msg"])} '
+                    f'<span style="color:#3F3F46; font-size:0.65rem;">{entry["time"]}</span>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+        else:
+            st.markdown(f'<div style="font-size:0.75rem; color:{TXT_MUTED}; font-style:italic;">No activity yet.</div>', unsafe_allow_html=True)
+
+    # ── 2-Column Main Layout ────────────────────────────────────────
+    col_search, col_main = st.columns([1.2, 4.8])
 
     # ══════════════════════════════════════════════════════════════════
     # COLUMN 1: SEARCH (Catalog)
     # ══════════════════════════════════════════════════════════════════
-    with col_scout:
-        # Mini Header
-        c_back, c_ver = st.columns([3, 2])
-        with c_back:
-            if st.button("← Directory", use_container_width=True, key="back_btn"):
-                st.session_state["active_project"] = None
-                st.rerun()
-        with c_ver:
-            st.markdown(f'<div style="font-size:0.65rem; color:{TXT_MUTED}; text-align:right; padding-top:8px;">v{APP_VERSION}</div>', unsafe_allow_html=True)
+    with col_search:
 
         st.markdown(f'<div class="section-label" style="margin-top:0.5rem;">Search</div>', unsafe_allow_html=True)
         
@@ -690,152 +766,46 @@ else:
     # ══════════════════════════════════════════════════════════════════
     # COLUMN 2: 10 WEEKS (Draft & Calendar)
     # ══════════════════════════════════════════════════════════════════
-    with col_board:
-        # Header with Save/Load
-        b1, b2, b3 = st.columns([4, 2, 1.5])
-        with b1:
-            st.markdown(f'<div class="section-label">10 Weeks ({quarter.title()} {year})</div>', unsafe_allow_html=True)
-        with b2:
-            tmpl_name = st.text_input("Template name", placeholder="Save as...", label_visibility="collapsed", key="board_save")
-        with b3:
-            if st.button("Save", use_container_width=True):
-                if active_project["offerings"]:
-                    save_template(tmpl_name or f"{quarter}_{year}", active_project["offerings"], active_project.get("prof_overrides"), quarter)
-                    st.success("Saved")
-                else: st.warning("Empty")
+    with col_main:
+        st.markdown(f'<div class="section-label">10 Weeks ({quarter.title()} {year})</div>', unsafe_allow_html=True)
 
         offerings = active_project["offerings"]
-        
+        catalog_lookup = {c["id"]: c for c in catalog}
+
+        # Build pinned course lookup for calendar grid
+        DG_LABELS = {1: "MW", 2: "TTh"}
+        pinned_map = {}
+        for _i, _o in enumerate(offerings):
+            _pin = _o.get("pinned")
+            if _pin:
+                _key = (_pin["day_group"], _pin["time_slot"])
+                pinned_map.setdefault(_key, []).append((_i, _o, catalog_lookup.get(_o["catalog_id"], {})))
+
+        def has_pin_conflict(target_dg, target_ts, placing_idx):
+            placing_o = offerings[placing_idx]
+            p_profs = placing_o.get("override_preferred_professors") or []
+            if not p_profs:
+                return False
+            for _i, _o in enumerate(offerings):
+                if _i == placing_idx:
+                    continue
+                _pin = _o.get("pinned")
+                if _pin and _pin["day_group"] == target_dg and _pin["time_slot"] == target_ts:
+                    o_profs = _o.get("override_preferred_professors") or []
+                    if o_profs and o_profs[0] == p_profs[0]:
+                        return True
+            return False
+
+        # Pre-filter available professors for the dropdown
+        available_profs = [p for p in load_professors() if active_project.get("prof_overrides", {}).get(p["id"], {}).get("available", True)]
+        prof_options = ["Auto-Draft"] + [p["id"] for p in available_profs]
+        prof_labels = {p["id"]: p["name"] for p in available_profs}
+        prof_labels["Auto-Draft"] = "Auto-Draft"
+
         if not offerings:
             st.info("Your draft is empty. Add courses from Search on the left.")
         else:
-            # Metrics
-            total_sections = sum(o.get("sections", 1) for o in offerings)
-            m1, m2, m3 = st.columns(3)
-            with m1: st.markdown(f'<div class="metric-box" style="padding:10px;"><div class="num" style="font-size:1.2rem;">{len(offerings)}</div><div class="lbl">Courses</div></div>', unsafe_allow_html=True)
-            with m2: st.markdown(f'<div class="metric-box" style="padding:10px;"><div class="num" style="font-size:1.2rem;">{total_sections}</div><div class="lbl">Sections</div></div>', unsafe_allow_html=True)
-            with m3:
-                if st.button("Generate Remainder", type="primary", use_container_width=True):
-                    # Solver trigger placeholder
-                    pass
-
-            st.markdown("")
-            
-            # Draft List / Bench
-            catalog_lookup = {c["id"]: c for c in catalog}
-
-            # Build pinned course lookup for calendar grid
-            DG_LABELS = {1: "MW", 2: "TTh"}
-            pinned_map = {}  # {(day_group, time_slot): [(idx, offering, course), ...]}
-            for _i, _o in enumerate(offerings):
-                _pin = _o.get("pinned")
-                if _pin:
-                    _key = (_pin["day_group"], _pin["time_slot"])
-                    pinned_map.setdefault(_key, []).append((_i, _o, catalog_lookup.get(_o["catalog_id"], {})))
-
-            def has_pin_conflict(target_dg, target_ts, placing_idx):
-                """Check if placing course's prof already occupies this slot."""
-                placing_o = offerings[placing_idx]
-                p_profs = placing_o.get("override_preferred_professors") or []
-                if not p_profs:
-                    return False
-                for _i, _o in enumerate(offerings):
-                    if _i == placing_idx:
-                        continue
-                    _pin = _o.get("pinned")
-                    if _pin and _pin["day_group"] == target_dg and _pin["time_slot"] == target_ts:
-                        o_profs = _o.get("override_preferred_professors") or []
-                        if o_profs and o_profs[0] == p_profs[0]:
-                            return True
-                return False
-
-            # Pre-filter available professors for the dropdown
-            available_profs = [p for p in load_professors() if active_project.get("prof_overrides", {}).get(p["id"], {}).get("available", True)]
-            prof_options = ["Auto-Draft"] + [p["id"] for p in available_profs]
-            prof_labels = {p["id"]: p["name"] for p in available_profs}
-            prof_labels["Auto-Draft"] = "Auto-Draft"
-
-            for idx, o in enumerate(offerings):
-                cid = o["catalog_id"]
-                course = catalog_lookup.get(cid, {})
-                dept = course.get("department", "game")
-                dot_color = DEPT_DOT.get(dept, "#666")
-                
-                with st.container():
-                    # Row 1: Course Info and Delete
-                    r1_c1, r1_c2 = st.columns([10, 1])
-                    with r1_c1:
-                        st.markdown(
-                            f'<div style="padding:2px 0;">'
-                            f'<span class="dept-dot" style="background:{dot_color};"></span>'
-                            f'<span class="cc-id">{cid}</span> '
-                            f'<span style="color:{TXT_SECONDARY}; font-size:0.85rem;">{course.get("name", cid)}</span></div>',
-                            unsafe_allow_html=True
-                        )
-                    with r1_c2:
-                        if st.button("×", key=f"board_rm_{idx}", help="Remove from draft"):
-                            active_project["offerings"].pop(idx)
-                            st.rerun()
-
-                    # Row 2: Controls (Priority, Sections, Professor, Place)
-                    r2_c1, r2_c2, r2_c3, r2_c4 = st.columns([1.5, 1, 3, 1], gap="small")
-                    with r2_c1:
-                        new_pri = st.selectbox("pri", list(PRIORITY_LABELS.keys()), format_func=lambda x: PRIORITY_LABELS[x], index=list(PRIORITY_LABELS.keys()).index(o.get("priority", "must_have")), key=f"board_pri_{idx}", label_visibility="collapsed")
-                        active_project["offerings"][idx]["priority"] = new_pri
-                    with r2_c2:
-                        new_sec = st.number_input("sec", min_value=1, max_value=4, value=o.get("sections", 1), key=f"board_sec_{idx}", label_visibility="collapsed")
-                        active_project["offerings"][idx]["sections"] = new_sec
-                    with r2_c3:
-                        # Professor assignment
-                        current_prof_list = o.get("override_preferred_professors")
-                        current_prof = current_prof_list[0] if current_prof_list else "Auto-Draft"
-                        
-                        if current_prof not in prof_options:
-                            current_prof = "Auto-Draft"
-                            
-                        new_prof = st.selectbox(
-                            "prof", prof_options,
-                            format_func=lambda x: prof_labels[x],
-                            index=prof_options.index(current_prof),
-                            key=f"board_prof_{idx}",
-                            label_visibility="collapsed"
-                        )
-                        
-                        if new_prof != current_prof:
-                            if new_prof == "Auto-Draft":
-                                active_project["offerings"][idx]["override_preferred_professors"] = None
-                                add_log("AUTO", f"Reverted {cid} to Auto-Draft")
-                            else:
-                                active_project["offerings"][idx]["override_preferred_professors"] = [new_prof]
-                                add_log("ASSIGN", f"Assigned {prof_labels[new_prof]} to {cid}")
-                            st.rerun()
-                    
-                    with r2_c4:
-                        pin = o.get("pinned")
-                        if pin:
-                            # Pinned — show lock label + unpin
-                            dg_lbl = DG_LABELS[pin["day_group"]]
-                            st.markdown(f'<div style="font-size:0.7rem; color:{ACCENT}; font-weight:600; padding-top:6px;">🔒 {dg_lbl} {pin["time_slot"]}</div>', unsafe_allow_html=True)
-                            if st.button("×", key=f"unpin_{idx}", help="Unpin"):
-                                active_project["offerings"][idx]["pinned"] = None
-                                add_log("UNPIN", f"Unpinned {cid}")
-                                st.rerun()
-                        else:
-                            # Not pinned — show place button
-                            is_placing = st.session_state.get("placing_offering_idx") == idx
-                            btn_label = "📍" if not is_placing else "⌛"
-                            if st.button(btn_label, key=f"place_btn_{idx}", help="Place on Calendar"):
-                                if is_placing:
-                                    st.session_state["placing_offering_idx"] = None
-                                else:
-                                    st.session_state["placing_offering_idx"] = idx
-                                st.rerun()
-
-                st.markdown(f'<div style="margin-bottom:12px; border-bottom:1px solid {BORDER_LITE};"></div>', unsafe_allow_html=True)
-
-            # ── Weekly Schedule Grid ──────────────────────────────────
-            st.markdown(f'<div class="section-label" style="margin-top:1rem;">Weekly Schedule</div>', unsafe_allow_html=True)
-
+            # ── CALENDAR GRID (hero) ─────────────────────────────────
             placing_idx = st.session_state.get("placing_offering_idx")
             placing_cid = None
             if placing_idx is not None and placing_idx < len(offerings):
@@ -855,22 +825,18 @@ else:
             with gh3:
                 st.markdown(f'<div style="font-size:0.72rem; font-weight:600; color:{TXT_SECONDARY}; text-align:center; padding:6px 0; background:{BG_CARD}; border:1px solid {BORDER}; border-radius:4px;">TTh</div>', unsafe_allow_html=True)
 
-            # Grid rows — one per time slot
+            # Grid rows
             for ts in config.TIME_SLOTS:
                 gc1, gc2, gc3 = st.columns([1, 3, 3])
-
-                # Time label
                 with gc1:
                     st.markdown(f'<div style="font-size:0.72rem; font-weight:600; color:{TXT_MUTED}; text-align:right; padding:10px 4px 10px 0;">{ts}</div>', unsafe_allow_html=True)
 
-                # Day group cells
                 for dg, col in [(1, gc2), (2, gc3)]:
                     with col:
                         cell_key = (dg, ts)
                         pinned_here = pinned_map.get(cell_key, [])
 
                         if pinned_here:
-                            # Render pinned courses
                             for _pi, _po, _pc in pinned_here:
                                 _dept = _pc.get("department", "game")
                                 _dot = DEPT_DOT.get(_dept, "#666")
@@ -884,7 +850,6 @@ else:
                                     unsafe_allow_html=True,
                                 )
                         elif placing_idx is not None and placing_idx < len(offerings):
-                            # Placing mode — show clickable slot or conflict
                             conflict = has_pin_conflict(dg, ts, placing_idx)
                             if conflict:
                                 st.markdown(
@@ -899,73 +864,80 @@ else:
                                     st.session_state["placing_offering_idx"] = None
                                     st.rerun()
                         else:
-                            # Empty cell
                             st.markdown(
                                 f'<div style="padding:10px; border:1px dashed {BORDER_LITE}; border-radius:6px; min-height:20px;"></div>',
                                 unsafe_allow_html=True,
                             )
 
-    # ══════════════════════════════════════════════════════════════════
-    # COLUMN 3: THE ROSTER (Faculty)
-    # ══════════════════════════════════════════════════════════════════
-    with col_roster:
-        st.markdown(f'<div class="section-label">The Roster (Faculty)</div>', unsafe_allow_html=True)
-        
-        faculty = load_professors()
-        prof_overrides = active_project.get("prof_overrides", {})
-        if prof_overrides:
-            apply_professor_overrides(faculty, prof_overrides, quarter)
+            # ── DRAFT CARDS (below calendar) ─────────────────────────
+            st.markdown(f'<div class="section-label" style="margin-top:1.5rem;">Draft Cards</div>', unsafe_allow_html=True)
 
-        for p in faculty:
-            pid = p["id"]
-            available = quarter in p.get("available_quarters", [])
-            dot_color = DEPT_DOT.get(p.get("home_department", "game"), "#666")
-            
-            # Faculty Card
-            with st.container():
-                f_c1, f_c2 = st.columns([1, 4])
-                with f_c1:
-                    new_avail = st.toggle("avail", value=available, key=f"roster_avail_{pid}", label_visibility="collapsed")
-                with f_c2:
-                    st.markdown(
-                        f'<div style="padding-top:2px;">'
-                        f'<span class="dept-dot" style="background:{dot_color if new_avail else "#333"};"></span>'
-                        f'<span style="font-weight:600; font-size:0.85rem; color:{TXT_PRIMARY if new_avail else TXT_MUTED};">{p["name"]}</span>'
-                        f'</div>',
-                        unsafe_allow_html=True
-                    )
-                
-                if new_avail:
-                    m_col, t_col = st.columns([1, 2])
-                    with m_col:
-                        new_max = st.number_input("Max", 1, 6, p.get("max_classes", 4), key=f"roster_max_{pid}", label_visibility="collapsed")
-                    with t_col:
-                        time_opts = list(TIME_PREF_LABELS.keys())
-                        new_time = st.selectbox("Time", time_opts, format_func=lambda x: TIME_PREF_LABELS[x], index=time_opts.index(p.get("time_preference", "morning")), key=f"roster_time_{pid}", label_visibility="collapsed")
-                else:
-                    new_max = p.get("max_classes", 4)
-                    new_time = p.get("time_preference", "morning")
+            for idx, o in enumerate(offerings):
+                cid = o["catalog_id"]
+                course = catalog_lookup.get(cid, {})
+                dept = course.get("department", "game")
+                dot_color = DEPT_DOT.get(dept, "#666")
 
-                if "prof_overrides" not in active_project: active_project["prof_overrides"] = {}
-                active_project["prof_overrides"][pid] = {"max_classes": new_max, "time_preference": new_time, "available": new_avail}
-                
-                st.markdown(f'<div style="margin-bottom:8px; border-bottom:1px solid {BORDER_LITE};"></div>', unsafe_allow_html=True)
+                with st.container():
+                    r1_c1, r1_c2 = st.columns([10, 1])
+                    with r1_c1:
+                        st.markdown(
+                            f'<div style="padding:2px 0;">'
+                            f'<span class="dept-dot" style="background:{dot_color};"></span>'
+                            f'<span class="cc-id">{cid}</span> '
+                            f'<span style="color:{TXT_SECONDARY}; font-size:0.85rem;">{course.get("name", cid)}</span></div>',
+                            unsafe_allow_html=True
+                        )
+                    with r1_c2:
+                        if st.button("×", key=f"board_rm_{idx}", help="Remove from draft"):
+                            active_project["offerings"].pop(idx)
+                            st.rerun()
 
-        # ── THE DRAFT TICKER (Log) ──
-        st.markdown(f'<div class="section-label" style="margin-top:1.5rem;">Draft Ticker</div>', unsafe_allow_html=True)
+                    r2_c1, r2_c2, r2_c3, r2_c4 = st.columns([1.5, 1, 3, 1], gap="small")
+                    with r2_c1:
+                        new_pri = st.selectbox("pri", list(PRIORITY_LABELS.keys()), format_func=lambda x: PRIORITY_LABELS[x], index=list(PRIORITY_LABELS.keys()).index(o.get("priority", "must_have")), key=f"board_pri_{idx}", label_visibility="collapsed")
+                        active_project["offerings"][idx]["priority"] = new_pri
+                    with r2_c2:
+                        new_sec = st.number_input("sec", min_value=1, max_value=4, value=o.get("sections", 1), key=f"board_sec_{idx}", label_visibility="collapsed")
+                        active_project["offerings"][idx]["sections"] = new_sec
+                    with r2_c3:
+                        current_prof_list = o.get("override_preferred_professors")
+                        current_prof = current_prof_list[0] if current_prof_list else "Auto-Draft"
+                        if current_prof not in prof_options:
+                            current_prof = "Auto-Draft"
+                        new_prof = st.selectbox(
+                            "prof", prof_options,
+                            format_func=lambda x: prof_labels[x],
+                            index=prof_options.index(current_prof),
+                            key=f"board_prof_{idx}",
+                            label_visibility="collapsed"
+                        )
+                        if new_prof != current_prof:
+                            if new_prof == "Auto-Draft":
+                                active_project["offerings"][idx]["override_preferred_professors"] = None
+                                add_log("AUTO", f"Reverted {cid} to Auto-Draft")
+                            else:
+                                active_project["offerings"][idx]["override_preferred_professors"] = [new_prof]
+                                add_log("ASSIGN", f"Assigned {prof_labels[new_prof]} to {cid}")
+                            st.rerun()
 
-        log = st.session_state.get("draft_log", [])
-        if log:
-            EVENT_COLORS = {"DRAFT": ACCENT, "DROP": ACCENT_RED, "ASSIGN": ACCENT_GREEN, "AUTO": ACCENT_AMBER, "PIN": TXT_ACCENT}
-            for entry in log:
-                ev_color = EVENT_COLORS.get(entry["type"], TXT_MUTED)
-                st.markdown(
-                    f'<div style="font-size:0.75rem; color:{TXT_MUTED}; padding:3px 0; border-bottom:1px solid {BORDER_LITE};">'
-                    f'<span style="color:{ev_color}; font-weight:600;">{entry["type"]}</span> '
-                    f'{html.escape(entry["msg"])} '
-                    f'<span style="color:#3F3F46; font-size:0.65rem;">{entry["time"]}</span>'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
-        else:
-            st.markdown(f'<div style="font-size:0.75rem; color:{TXT_MUTED}; font-style:italic;">No activity yet.</div>', unsafe_allow_html=True)
+                    with r2_c4:
+                        pin = o.get("pinned")
+                        if pin:
+                            dg_lbl = DG_LABELS[pin["day_group"]]
+                            st.markdown(f'<div style="font-size:0.7rem; color:{ACCENT}; font-weight:600; padding-top:6px;">🔒 {dg_lbl} {pin["time_slot"]}</div>', unsafe_allow_html=True)
+                            if st.button("×", key=f"unpin_{idx}", help="Unpin"):
+                                active_project["offerings"][idx]["pinned"] = None
+                                add_log("UNPIN", f"Unpinned {cid}")
+                                st.rerun()
+                        else:
+                            is_placing = st.session_state.get("placing_offering_idx") == idx
+                            btn_label = "📍" if not is_placing else "⌛"
+                            if st.button(btn_label, key=f"place_btn_{idx}", help="Place on Calendar"):
+                                if is_placing:
+                                    st.session_state["placing_offering_idx"] = None
+                                else:
+                                    st.session_state["placing_offering_idx"] = idx
+                                st.rerun()
+
+                st.markdown(f'<div style="margin-bottom:12px; border-bottom:1px solid {BORDER_LITE};"></div>', unsafe_allow_html=True)
