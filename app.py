@@ -623,6 +623,13 @@ else:
 
         st.markdown(f'<div class="section-label" style="margin-top:0.5rem;">{quarter.title()} {year}</div>', unsafe_allow_html=True)
 
+        # Placing notification (sidebar warning + persistent edge strip)
+        if st.session_state.get("placing_offering_idx") is not None:
+            _pi_sb = st.session_state["placing_offering_idx"]
+            if _pi_sb < len(active_project["offerings"]):
+                _pi_cid = active_project["offerings"][_pi_sb]["catalog_id"]
+                st.warning(f"Locking **{_pi_cid}** — go to **Schedule** tab and click a time slot.")
+
         # Save template
         sb1, sb2 = st.columns([3, 1])
         with sb1:
@@ -634,22 +641,25 @@ else:
                     st.success("Saved")
                 else: st.warning("Empty")
 
-        # Metrics
+        # Metrics strip
         offerings_sb = active_project["offerings"]
         total_sections_sb = sum(o.get("sections", 1) for o in offerings_sb)
+        n_locked_sb = sum(1 for o in offerings_sb if o.get("locked"))
+        lock_str = f' &middot; <span style="color:{ACCENT_AMBER};">&#128274; {n_locked_sb}</span>' if n_locked_sb else ""
         st.markdown(
             f'<div style="font-size:0.82rem; color:{TXT_PRIMARY}; margin:8px 0;">'
             f'<b>{len(offerings_sb)}</b> <span style="color:{TXT_MUTED};">courses</span> &middot; '
-            f'<b>{total_sections_sb}</b> <span style="color:{TXT_MUTED};">sections</span></div>',
+            f'<b>{total_sections_sb}</b> <span style="color:{TXT_MUTED};">sections</span>{lock_str}</div>',
             unsafe_allow_html=True,
         )
-        # Roster (collapsible)
-        with st.expander("Roster", expanded=False):
-            faculty = load_professors()
-            prof_overrides = active_project.get("prof_overrides", {})
-            if prof_overrides:
-                apply_professor_overrides(faculty, prof_overrides, quarter)
 
+        # Roster
+        faculty = load_professors()
+        prof_overrides = active_project.get("prof_overrides", {})
+        if prof_overrides:
+            apply_professor_overrides(faculty, prof_overrides, quarter)
+        n_avail = sum(1 for p in faculty if quarter in p.get("available_quarters", []))
+        with st.expander(f"Roster  —  {n_avail} available", expanded=False):
             for p in faculty:
                 pid = p["id"]
                 available = quarter in p.get("available_quarters", [])
@@ -685,22 +695,23 @@ else:
                     st.markdown(f'<div style="margin-bottom:4px; border-bottom:1px solid {BORDER_LITE};"></div>', unsafe_allow_html=True)
 
         # Draft Ticker
-        st.markdown(f'<div class="section-label" style="margin-top:1rem;">Draft Ticker</div>', unsafe_allow_html=True)
         log = st.session_state.get("draft_log", [])
-        if log:
-            EVENT_COLORS = {"DRAFT": ACCENT, "DROP": ACCENT_RED, "ASSIGN": ACCENT_GREEN, "AUTO": ACCENT_AMBER, "PIN": TXT_ACCENT}
-            for entry in log:
-                ev_color = EVENT_COLORS.get(entry["type"], TXT_MUTED)
-                st.markdown(
-                    f'<div style="font-size:0.75rem; color:{TXT_MUTED}; padding:3px 0; border-bottom:1px solid {BORDER_LITE};">'
-                    f'<span style="color:{ev_color}; font-weight:600;">{entry["type"]}</span> '
-                    f'{html.escape(entry["msg"])} '
-                    f'<span style="color:#3F3F46; font-size:0.65rem;">{entry["time"]}</span>'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
-        else:
-            st.markdown(f'<div style="font-size:0.75rem; color:{TXT_MUTED}; font-style:italic;">No activity yet.</div>', unsafe_allow_html=True)
+        ticker_count = f"  —  {len(log)}" if log else ""
+        with st.expander(f"Draft Ticker{ticker_count}", expanded=bool(log)):
+            if log:
+                EVENT_COLORS = {"DRAFT": ACCENT, "DROP": ACCENT_RED, "ASSIGN": ACCENT_GREEN, "AUTO": ACCENT_AMBER, "PIN": TXT_ACCENT, "SOLVE": ACCENT_GREEN, "LOCK": ACCENT_AMBER, "UNLOCK": TXT_MUTED}
+                for entry in log:
+                    ev_color = EVENT_COLORS.get(entry["type"], TXT_MUTED)
+                    st.markdown(
+                        f'<div style="font-size:0.75rem; color:{TXT_MUTED}; padding:3px 0; border-bottom:1px solid {BORDER_LITE};">'
+                        f'<span style="color:{ev_color}; font-weight:600;">{entry["type"]}</span> '
+                        f'{html.escape(entry["msg"])} '
+                        f'<span style="color:#3F3F46; font-size:0.65rem;">{entry["time"]}</span>'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+            else:
+                st.caption("No activity yet.")
 
     # ── Data setup (shared by calendar + draft cards) ─────────────
     offerings = active_project["offerings"]
@@ -772,6 +783,32 @@ else:
         unsafe_allow_html=True,
     )
 
+    # ── Placing indicator (collapsed sidebar strip + auto-switch to Schedule)
+    _placing_just_started = st.session_state.pop("_placing_just_started", False)
+    if st.session_state.get("placing_offering_idx") is not None:
+        _pi_edge = st.session_state["placing_offering_idx"]
+        if _pi_edge < len(offerings):
+            st.html(
+                f'<div style="position:fixed; left:6px; top:80px; z-index:999; '
+                f'font-size:1rem; color:{ACCENT_AMBER}; filter:drop-shadow(0 0 4px {ACCENT_AMBER}66);">'
+                f'&#128274;</div>'
+            )
+            st.markdown(
+                f'<style>'
+                f'@keyframes tab-nudge {{ 0%,100% {{ color: inherit; }} 50% {{ color: {ACCENT_AMBER}; }} }}'
+                f'[data-baseweb="tab"]:nth-child(3) {{ animation: tab-nudge 2s ease-in-out 2; }}'
+                f'</style>',
+                unsafe_allow_html=True,
+            )
+            if _placing_just_started:
+                import streamlit.components.v1 as components
+                components.html(
+                    '<script>setTimeout(function(){'
+                    'try{window.parent.document.querySelectorAll("[data-baseweb=tab]")[2].click()}catch(e){}'
+                    '},150);</script>',
+                    height=0,
+                )
+
     # ══════════════════════════════════════════════════════════════════
     # CONTEXT BAR (always visible above tabs)
     # ══════════════════════════════════════════════════════════════════
@@ -816,10 +853,33 @@ else:
 
     # ── TAB 1: COURSES ───────────────────────────────────────────
     with tab_courses:
-        if st.session_state.get("placing_offering_idx") is not None:
-            _pi = st.session_state["placing_offering_idx"]
-            if _pi < len(offerings):
-                st.warning(f"Locking **{offerings[_pi]['catalog_id']}** to a slot — switch to the **Schedule** tab and click a time slot.")
+        # Quick-add search bar
+        _qa_search = st.text_input("Add a course", placeholder="Search catalog to add...", label_visibility="collapsed", key="courses_quick_add")
+        if _qa_search and len(_qa_search) >= 2:
+            _qa_s = _qa_search.lower()
+            _qa_matches = [c for c in catalog if (_qa_s in c["id"].lower() or _qa_s in c["name"].lower()) and c["id"] not in selected_ids]
+            if _qa_matches:
+                for _qc in _qa_matches[:5]:
+                    _qa_dept = _qc.get("department", "game")
+                    _qa_dot = DEPT_DOT.get(_qa_dept, "#666")
+                    _qa1, _qa2 = st.columns([5, 1])
+                    with _qa1:
+                        st.markdown(
+                            f'<div style="font-size:0.82rem; padding:4px 0;">'
+                            f'<span class="dept-dot" style="background:{_qa_dot};"></span>'
+                            f'<span style="color:{TXT_ACCENT}; font-weight:600;">{_qc["id"]}</span> '
+                            f'<span style="color:{TXT_SECONDARY};">{_qc["name"]}</span></div>',
+                            unsafe_allow_html=True,
+                        )
+                    with _qa2:
+                        if st.button("ADD", key=f"qa_add_{_qc['id']}", use_container_width=True):
+                            active_project["offerings"].append({"catalog_id": _qc["id"], "priority": "must_have", "sections": 1, "override_enrollment_cap": None, "override_room_type": None, "override_preferred_professors": None, "notes": None})
+                            add_log("DRAFT", f"Added {_qc['id']}")
+                            st.rerun()
+                if len(_qa_matches) > 5:
+                    st.caption(f"+{len(_qa_matches) - 5} more — refine your search")
+            else:
+                st.caption("No matching courses (or already added)")
 
         # Check if we should auto-expand a specific offering (from Schedule Edit button)
         _auto_expand_idx = st.session_state.get("expand_offering_idx")
@@ -877,6 +937,10 @@ else:
                                 st.session_state["placing_offering_idx"] = None
                             else:
                                 st.session_state["placing_offering_idx"] = idx
+                                st.session_state["_placing_just_started"] = True
+                                # Clear solver results so Schedule tab shows slot-picking grid
+                                if "solver_results" in st.session_state:
+                                    del st.session_state["solver_results"]
                             st.rerun()
 
                     # Row 2: Professor + Room
@@ -1072,7 +1136,7 @@ else:
                                 if st.button(f"🔒 {dg_label} {ts}", key=f"lock_slot_{dg}_{ts}", use_container_width=True):
                                     offerings[placing_idx]["locked"] = {"day_group": dg, "time_slot": ts}
                                     add_log("LOCK", f"Locked {placing_cid} to {dg_label} {ts}")
-                                    st.session_state["placing_offering_idx"] = None; st.rerun()
+                                    st.session_state["placing_offering_idx"] = None
                         elif not locked_here and not has_results:
                             pulse_class = "pulse" if has_unlocked else ""
                             ghost = "🔒" if has_unlocked else ""
