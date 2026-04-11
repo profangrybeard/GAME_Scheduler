@@ -14,12 +14,15 @@ import html
 import json
 import random
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import streamlit as st
 
-# DEBUG VERSION CHECK
-st.sidebar.code("Rev: 1.4.5-HOTFIX")
+# ─── Version ────────────────────────────────────────────────────────
+APP_VERSION = "1.5.0"
+
+st.sidebar.code(f"v{APP_VERSION}")
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -28,7 +31,6 @@ if "draft_log" not in st.session_state:
     st.session_state["draft_log"] = []
 
 def add_log(event_type, message):
-    from datetime import datetime
     now = datetime.now().strftime("%H:%M:%S")
     st.session_state["draft_log"].insert(0, {"time": now, "type": event_type, "msg": message})
     # Keep last 15 items
@@ -196,8 +198,9 @@ CSS_TEMPLATE = """
     .stButton > button {{
         background: transparent !important; border: 1px solid {BORDER} !important;
         color: {TXT_MUTED} !important; font-size: 0.82rem !important; font-weight: 500 !important;
-        padding: 4px 14px !important; border-radius: 6px !important;
-        transition: all 0.15s ease !important; min-height: 0 !important; line-height: 1.6 !important;
+        padding: 0px 10px !important; border-radius: 6px !important;
+        transition: all 0.15s ease !important; min-height: 28px !important; height: 28px !important;
+        line-height: 1.6 !important; margin-top: 4px !important;
     }}
     .stButton > button:hover {{
         background: {BG_HOVER} !important; border-color: {ACCENT} !important; color: {ACCENT} !important;
@@ -220,12 +223,6 @@ CSS_TEMPLATE = """
     }}
     .stSelectbox > div > div > div {{ padding-bottom: 0 !important; padding-top: 0 !important; }}
 
-    /* Compact UI Overrides for Draft Room */
-    .stButton > button {{
-        min-height: 28px !important; height: 28px !important;
-        padding: 0px 10px !important; margin-top: 4px !important;
-    }}
-    
     div[data-testid="stToggle"] {{ padding-top: 2px; }}
 
     /* ── Multiselect Tags (Absolute Neutralization) ── */
@@ -279,17 +276,6 @@ CSS_TEMPLATE = """
     .sched-card .sc-course .sc-id {{ color: {TXT_ACCENT}; }}
     .sched-card .sc-detail {{ color: {TXT_SECONDARY}; font-size: 0.8rem; margin-top: 2px; }}
     .sched-card .sc-flags {{ font-size: 0.73rem; color: {TXT_MUTED}; margin-top: 2px; }}
-
-    /* legacy sched-row/sched-time/sched-empty kept for safety — unused in grid */
-    .sched-row {{ display: flex; align-items: stretch; gap: 10px; margin-bottom: 5px; }}
-    .sched-time {{
-        width: 72px; flex-shrink: 0; font-size: 0.78rem; font-weight: 500;
-        color: {TXT_MUTED}; padding-top: 10px; text-align: right; padding-right: 8px;
-    }}
-    .sched-empty {{
-        flex: 1; border-radius: 6px; padding: 10px 14px;
-        background: transparent; border: 1px dashed {BORDER_LITE}; color: #3F3F46; font-size: 0.8rem;
-    }}
 
     .load-bar-bg {{ background: {BORDER}; border-radius: 3px; height: 5px; margin: 5px 0; }}
     .load-bar-fill {{ height: 5px; border-radius: 3px; }}
@@ -462,16 +448,11 @@ st.markdown(
     f'  <div class="app-sub">SCAD Atlanta &nbsp;&middot;&nbsp; Game Design &nbsp;&middot;&nbsp; Motion Media &nbsp;&middot;&nbsp; AI</div>'
     f'</div>'
     f'<div style="background:{ACCENT}; color:#FFF; padding:4px 12px; border-radius:20px; font-weight:700; font-size:0.8rem;">'
-    f'  REVISION 1.4.4 — ACTIVE'
+    f'  v{APP_VERSION}'
     f'</div>'
     f'</div>',
     unsafe_allow_html=True,
 )
-
-
-# ─── Session State Init ───────────────────────────────────────────────
-if "active_project" not in st.session_state:
-    st.session_state["active_project"] = None
 
 
 # ─── Load catalog data (always needed) ───────────────────────────────
@@ -624,7 +605,7 @@ else:
                 st.session_state["active_project"] = None
                 st.rerun()
         with c_ver:
-            st.markdown(f'<div style="font-size:0.65rem; color:{TXT_MUTED}; text-align:right; padding-top:8px;">v2.2 · Rev 1.3</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="font-size:0.65rem; color:{TXT_MUTED}; text-align:right; padding-top:8px;">v{APP_VERSION}</div>', unsafe_allow_html=True)
 
         st.markdown(f'<div class="section-label" style="margin-top:0.5rem;">The Scout</div>', unsafe_allow_html=True)
         
@@ -739,7 +720,7 @@ else:
             catalog_lookup = {c["id"]: c for c in catalog}
             
             # Pre-filter available professors for the dropdown
-            available_profs = [p for p in load_professors() if active_project.get("prof_overrides", {}).get(p["id"], {}).get("available", False)]
+            available_profs = [p for p in load_professors() if active_project.get("prof_overrides", {}).get(p["id"], {}).get("available", True)]
             prof_options = ["Auto-Draft"] + [p["id"] for p in available_profs]
             prof_labels = {p["id"]: p["name"] for p in available_profs}
             prof_labels["Auto-Draft"] = "Auto-Draft"
@@ -862,3 +843,19 @@ else:
 
         # ── THE DRAFT TICKER (Log) ──
         st.markdown(f'<div class="section-label" style="margin-top:1.5rem;">Draft Ticker</div>', unsafe_allow_html=True)
+
+        log = st.session_state.get("draft_log", [])
+        if log:
+            EVENT_COLORS = {"DRAFT": ACCENT, "DROP": ACCENT_RED, "ASSIGN": ACCENT_GREEN, "AUTO": ACCENT_AMBER, "PIN": TXT_ACCENT}
+            for entry in log:
+                ev_color = EVENT_COLORS.get(entry["type"], TXT_MUTED)
+                st.markdown(
+                    f'<div style="font-size:0.75rem; color:{TXT_MUTED}; padding:3px 0; border-bottom:1px solid {BORDER_LITE};">'
+                    f'<span style="color:{ev_color}; font-weight:600;">{entry["type"]}</span> '
+                    f'{html.escape(entry["msg"])} '
+                    f'<span style="color:#3F3F46; font-size:0.65rem;">{entry["time"]}</span>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+        else:
+            st.markdown(f'<div style="font-size:0.75rem; color:{TXT_MUTED}; font-style:italic;">No activity yet.</div>', unsafe_allow_html=True)
