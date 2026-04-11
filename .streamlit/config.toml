@@ -1,3 +1,6 @@
+[server]
+folderWatchBlacklist = ["data", "templates", "solver", "export"]
+
 [theme]
 primaryColor="#818CF8"
 backgroundColor="#111113"

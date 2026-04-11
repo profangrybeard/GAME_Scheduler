@@ -22,7 +22,7 @@ from solver.constraints import apply_hard_constraints
 from solver.objectives import build_objective, _affinity_level, _time_pref_penalty
 
 
-_SOLVER_TIME_LIMIT = 60.0   # seconds per mode; more than enough for this problem size
+_SOLVER_TIME_LIMIT = 10.0   # seconds per mode
 
 _STATUS_NAMES = {
     cp_model.OPTIMAL:       "optimal",
@@ -172,7 +172,7 @@ def run_schedule(quarter: str, locked: list | None = None) -> dict:
 
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = _SOLVER_TIME_LIMIT
-        solver.parameters.num_search_workers  = 1   # deterministic output
+        solver.parameters.num_search_workers  = 0   # use all CPU cores
 
         print(f"[{mode}] Solving ...")
         raw_status = solver.Solve(model)
