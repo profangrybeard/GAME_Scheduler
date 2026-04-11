@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "1.7.7"
+APP_VERSION = "1.7.9"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -883,114 +883,118 @@ else:
                                 unsafe_allow_html=True,
                             )
 
-            # ── DRAFT CARDS (inside frozen area, below grid) ─────
-            if offerings:
-                st.markdown(f'<div class="section-label" style="margin-top:6px;">Draft Cards ({len(offerings)})</div>', unsafe_allow_html=True)
 
-                for idx, o in enumerate(offerings):
-                    cid = o["catalog_id"]
-                    course = catalog_lookup.get(cid, {})
-                    _dept = course.get("department", "game")
-                    _dot = DEPT_DOT.get(_dept, "#666")
+    # ══════════════════════════════════════════════════════════════════
+    # COURSE LIST (left) + DRAFT CARDS (right) — scroll together
+    # ══════════════════════════════════════════════════════════════════
+    col_list, col_draft = st.columns([2, 4])
+    with col_list:
+        for dept in dept_filter:
+            courses = dept_courses.get(dept, [])
+            filtered = courses
+            if search:
+                s = search.lower()
+                filtered = [c for c in filtered if s in c["id"].lower() or s in c["name"].lower()]
 
-                    rc_name, rc_pri, rc_sec, rc_prof, rc_pin, rc_rm = st.columns([3, 1, 0.7, 2, 1, 0.5], gap="small")
-                    with rc_name:
-                        st.markdown(
-                            f'<div style="padding:4px 0; font-size:0.8rem; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">'
-                            f'<span class="dept-dot" style="background:{_dot};"></span>'
-                            f'<span class="cc-id">{cid}</span> '
-                            f'<span style="color:{TXT_SECONDARY};">{course.get("name", cid)}</span></div>',
-                            unsafe_allow_html=True
-                        )
-                    with rc_rm:
-                        if st.button("×", key=f"board_rm_{idx}", help="Remove"):
-                            active_project["offerings"].pop(idx)
+            if not filtered: continue
+
+            dot_color = DEPT_DOT.get(dept, "#666")
+            st.markdown(f'<div style="font-size:0.65rem; font-weight:700; color:{TXT_MUTED}; margin-top:10px; border-bottom:1px solid {BORDER_LITE};">{DEPT_LABELS[dept].upper()}</div>', unsafe_allow_html=True)
+
+            inspected_id = (st.session_state.get("inspected_course") or {}).get("id")
+
+            for c in filtered:
+                already = c["id"] in selected_ids
+                is_inspected = c["id"] == inspected_id
+                rc1, rc2 = st.columns([4, 1])
+                with rc1:
+                    if st.button(
+                        f"{c['id']}  {c['name']}", key=f"preview_{c['id']}",
+                        use_container_width=True, type="primary" if is_inspected else "secondary"
+                    ):
+                        st.session_state["inspected_course"] = c
+                        st.rerun()
+                with rc2:
+                    if already:
+                        if st.button("DROP", key=f"rm_scout_{c['id']}", use_container_width=True, type="primary"):
+                            active_project["offerings"] = [o for o in active_project["offerings"] if o["catalog_id"] != c["id"]]
+                            add_log("DROP", f"Removed {c['id']} from draft")
                             st.rerun()
-                    with rc_pri:
-                        new_pri = st.selectbox("pri", list(PRIORITY_LABELS.keys()), format_func=lambda x: PRIORITY_LABELS[x], index=list(PRIORITY_LABELS.keys()).index(o.get("priority", "must_have")), key=f"board_pri_{idx}", label_visibility="collapsed")
-                        active_project["offerings"][idx]["priority"] = new_pri
-                    with rc_sec:
-                        new_sec = st.number_input("sec", min_value=1, max_value=4, value=o.get("sections", 1), key=f"board_sec_{idx}", label_visibility="collapsed")
-                        active_project["offerings"][idx]["sections"] = new_sec
-                    with rc_prof:
-                        current_prof_list = o.get("override_preferred_professors")
-                        current_prof = current_prof_list[0] if current_prof_list else "Auto-Draft"
-                        if current_prof not in prof_options:
-                            current_prof = "Auto-Draft"
-                        new_prof = st.selectbox(
-                            "prof", prof_options,
-                            format_func=lambda x: prof_labels[x],
-                            index=prof_options.index(current_prof),
-                            key=f"board_prof_{idx}",
-                            label_visibility="collapsed"
-                        )
-                        if new_prof != current_prof:
-                            if new_prof == "Auto-Draft":
-                                active_project["offerings"][idx]["override_preferred_professors"] = None
-                                add_log("AUTO", f"Reverted {cid} to Auto-Draft")
-                            else:
-                                active_project["offerings"][idx]["override_preferred_professors"] = [new_prof]
-                                add_log("ASSIGN", f"Assigned {prof_labels[new_prof]} to {cid}")
+                    else:
+                        if st.button("ADD", key=f"add_scout_{c['id']}", use_container_width=True):
+                            active_project["offerings"].append({
+                                "catalog_id": c["id"], "priority": "must_have", "sections": 1,
+                                "override_enrollment_cap": None, "override_room_type": None,
+                                "override_preferred_professors": None, "notes": None,
+                            })
+                            add_log("DRAFT", f"Drafted {c['id']} to the Bench")
                             st.rerun()
-                    with rc_pin:
-                        pin = o.get("pinned")
-                        if pin:
-                            dg_lbl = DG_LABELS[pin["day_group"]]
-                            st.markdown(f'<div style="font-size:0.7rem; color:{ACCENT}; font-weight:600; padding-top:6px;">🔒 {dg_lbl} {pin["time_slot"]}</div>', unsafe_allow_html=True)
-                            if st.button("×", key=f"unpin_{idx}", help="Unpin"):
-                                active_project["offerings"][idx]["pinned"] = None
-                                add_log("UNPIN", f"Unpinned {cid}")
-                                st.rerun()
+
+    # ── DRAFT CARDS (right column) ───────────────────────────────
+    with col_draft:
+        if offerings:
+            st.markdown(f'<div class="section-label" style="margin-top:0;">Draft Cards ({len(offerings)})</div>', unsafe_allow_html=True)
+
+            for idx, o in enumerate(offerings):
+                cid = o["catalog_id"]
+                course = catalog_lookup.get(cid, {})
+                _dept = course.get("department", "game")
+                _dot = DEPT_DOT.get(_dept, "#666")
+
+                rc_name, rc_pri, rc_sec, rc_prof, rc_pin, rc_rm = st.columns([3, 1, 0.7, 2, 1, 0.5], gap="small")
+                with rc_name:
+                    st.markdown(
+                        f'<div style="padding:4px 0; font-size:0.8rem; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">'
+                        f'<span class="dept-dot" style="background:{_dot};"></span>'
+                        f'<span class="cc-id">{cid}</span> '
+                        f'<span style="color:{TXT_SECONDARY};">{course.get("name", cid)}</span></div>',
+                        unsafe_allow_html=True
+                    )
+                with rc_rm:
+                    if st.button("×", key=f"board_rm_{idx}", help="Remove"):
+                        active_project["offerings"].pop(idx)
+                        st.rerun()
+                with rc_pri:
+                    new_pri = st.selectbox("pri", list(PRIORITY_LABELS.keys()), format_func=lambda x: PRIORITY_LABELS[x], index=list(PRIORITY_LABELS.keys()).index(o.get("priority", "must_have")), key=f"board_pri_{idx}", label_visibility="collapsed")
+                    active_project["offerings"][idx]["priority"] = new_pri
+                with rc_sec:
+                    new_sec = st.number_input("sec", min_value=1, max_value=4, value=o.get("sections", 1), key=f"board_sec_{idx}", label_visibility="collapsed")
+                    active_project["offerings"][idx]["sections"] = new_sec
+                with rc_prof:
+                    current_prof_list = o.get("override_preferred_professors")
+                    current_prof = current_prof_list[0] if current_prof_list else "Auto-Draft"
+                    if current_prof not in prof_options:
+                        current_prof = "Auto-Draft"
+                    new_prof = st.selectbox(
+                        "prof", prof_options,
+                        format_func=lambda x: prof_labels[x],
+                        index=prof_options.index(current_prof),
+                        key=f"board_prof_{idx}",
+                        label_visibility="collapsed"
+                    )
+                    if new_prof != current_prof:
+                        if new_prof == "Auto-Draft":
+                            active_project["offerings"][idx]["override_preferred_professors"] = None
+                            add_log("AUTO", f"Reverted {cid} to Auto-Draft")
                         else:
-                            is_placing = st.session_state.get("placing_offering_idx") == idx
-                            btn_label = "📍" if not is_placing else "⌛"
-                            if st.button(btn_label, key=f"place_btn_{idx}", help="Place on Calendar"):
-                                if is_placing:
-                                    st.session_state["placing_offering_idx"] = None
-                                else:
-                                    st.session_state["placing_offering_idx"] = idx
-                                st.rerun()
-
-    # ══════════════════════════════════════════════════════════════════
-    # COURSE LIST (scrolls under frozen row)
-    # ══════════════════════════════════════════════════════════════════
-    for dept in dept_filter:
-        courses = dept_courses.get(dept, [])
-        filtered = courses
-        if search:
-            s = search.lower()
-            filtered = [c for c in filtered if s in c["id"].lower() or s in c["name"].lower()]
-
-        if not filtered: continue
-
-        dot_color = DEPT_DOT.get(dept, "#666")
-        st.markdown(f'<div style="font-size:0.65rem; font-weight:700; color:{TXT_MUTED}; margin-top:10px; border-bottom:1px solid {BORDER_LITE};">{DEPT_LABELS[dept].upper()}</div>', unsafe_allow_html=True)
-
-        inspected_id = (st.session_state.get("inspected_course") or {}).get("id")
-
-        for c in filtered:
-            already = c["id"] in selected_ids
-            is_inspected = c["id"] == inspected_id
-            rc1, rc2 = st.columns([4, 1])
-            with rc1:
-                if st.button(
-                    f"{c['id']}  {c['name']}", key=f"preview_{c['id']}",
-                    use_container_width=True, type="primary" if is_inspected else "secondary"
-                ):
-                    st.session_state["inspected_course"] = c
-                    st.rerun()
-            with rc2:
-                if already:
-                    if st.button("DROP", key=f"rm_scout_{c['id']}", use_container_width=True, type="primary"):
-                        active_project["offerings"] = [o for o in active_project["offerings"] if o["catalog_id"] != c["id"]]
-                        add_log("DROP", f"Removed {c['id']} from draft")
+                            active_project["offerings"][idx]["override_preferred_professors"] = [new_prof]
+                            add_log("ASSIGN", f"Assigned {prof_labels[new_prof]} to {cid}")
                         st.rerun()
-                else:
-                    if st.button("ADD", key=f"add_scout_{c['id']}", use_container_width=True):
-                        active_project["offerings"].append({
-                            "catalog_id": c["id"], "priority": "must_have", "sections": 1,
-                            "override_enrollment_cap": None, "override_room_type": None,
-                            "override_preferred_professors": None, "notes": None,
-                        })
-                        add_log("DRAFT", f"Drafted {c['id']} to the Bench")
-                        st.rerun()
+                with rc_pin:
+                    pin = o.get("pinned")
+                    if pin:
+                        dg_lbl = DG_LABELS[pin["day_group"]]
+                        st.markdown(f'<div style="font-size:0.7rem; color:{ACCENT}; font-weight:600; padding-top:6px;">🔒 {dg_lbl} {pin["time_slot"]}</div>', unsafe_allow_html=True)
+                        if st.button("×", key=f"unpin_{idx}", help="Unpin"):
+                            active_project["offerings"][idx]["pinned"] = None
+                            add_log("UNPIN", f"Unpinned {cid}")
+                            st.rerun()
+                    else:
+                        is_placing = st.session_state.get("placing_offering_idx") == idx
+                        btn_label = "📍" if not is_placing else "⌛"
+                        if st.button(btn_label, key=f"place_btn_{idx}", help="Place on Calendar"):
+                            if is_placing:
+                                st.session_state["placing_offering_idx"] = None
+                            else:
+                                st.session_state["placing_offering_idx"] = idx
+                            st.rerun()
