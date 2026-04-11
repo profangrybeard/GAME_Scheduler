@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "1.8.0"
+APP_VERSION = "1.8.1"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -947,13 +947,59 @@ else:
                                 ghost = "📍" if has_unpinned else ""
                                 st.markdown(f'<div class="ghost-pin {pulse_class}">{ghost}</div>', unsafe_allow_html=True)
 
-            # ── Unscheduled warnings ─────────────────────────────
+            # ── Unscheduled / Dropped ────────────────────────────
             if has_results:
                 unsched = mode_data.get("unscheduled", [])
                 if unsched:
-                    st.markdown(f'<div style="margin-top:8px; font-size:0.72rem; color:{ACCENT_AMBER}; font-weight:600;">Unscheduled ({len(unsched)})</div>', unsafe_allow_html=True)
-                    for u in unsched:
-                        st.markdown(f'<div style="font-size:0.68rem; color:{TXT_MUTED}; padding:1px 0;">{u["catalog_id"]} ({u["priority"]})</div>', unsafe_allow_html=True)
+                    pri_order = {"must_have": 0, "should_have": 1, "could_have": 2, "nice_to_have": 3}
+                    unsched_sorted = sorted(unsched, key=lambda u: pri_order.get(u["priority"], 9))
+                    pri_colors = {"must_have": ACCENT_RED, "should_have": ACCENT_AMBER, "could_have": TXT_MUTED, "nice_to_have": TXT_MUTED}
+
+                    st.markdown(
+                        f'<div style="margin-top:8px; font-size:0.75rem; color:{ACCENT_AMBER}; font-weight:600;">'
+                        f'Dropped ({len(unsched)})</div>',
+                        unsafe_allow_html=True,
+                    )
+
+                    for u in unsched_sorted:
+                        _cid = u["catalog_id"]
+                        _course = catalog_lookup.get(_cid, {})
+                        _name = _course.get("name", _cid)
+                        _dept = _course.get("department", "game")
+                        _dot = DEPT_DOT.get(_dept, "#666")
+                        _pri = u["priority"]
+                        _pri_label = PRIORITY_LABELS.get(_pri, _pri)
+                        _pri_color = pri_colors.get(_pri, TXT_MUTED)
+                        _room_type = _course.get("required_room_type", "any").replace("_", " ")
+
+                        uc1, uc2, uc3 = st.columns([4, 1.5, 1])
+                        with uc1:
+                            st.markdown(
+                                f'<div style="font-size:0.72rem; padding:3px 0;">'
+                                f'<span class="dept-dot" style="background:{_dot};"></span>'
+                                f'<span style="color:{TXT_ACCENT}; font-weight:600;">{_cid}</span> '
+                                f'<span style="color:{TXT_SECONDARY};">{_name}</span>'
+                                f'</div>',
+                                unsafe_allow_html=True,
+                            )
+                        with uc2:
+                            st.markdown(
+                                f'<div style="font-size:0.65rem; padding:5px 0;">'
+                                f'<span style="color:{_pri_color}; font-weight:600;">{_pri_label}</span>'
+                                f' <span style="color:{TXT_MUTED};">&middot; {_room_type}</span>'
+                                f'</div>',
+                                unsafe_allow_html=True,
+                            )
+                        with uc3:
+                            if st.button("PIN", key=f"force_pin_{_cid}_{u.get('section_idx',0)}", use_container_width=True):
+                                # Find offering index for this course
+                                for _oi, _oo in enumerate(offerings):
+                                    if _oo["catalog_id"] == _cid:
+                                        st.session_state["placing_offering_idx"] = _oi
+                                        st.session_state["solver_results"] = None  # clear results to enter pin mode
+                                        add_log("OVERRIDE", f"Overriding solver — placing {_cid}")
+                                        st.rerun()
+                                        break
 
 
     # ══════════════════════════════════════════════════════════════════
