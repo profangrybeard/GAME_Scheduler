@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "1.6.8"
+APP_VERSION = "1.6.9"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -872,16 +872,18 @@ else:
             dot_color = DEPT_DOT.get(dept, "#666")
             st.markdown(f'<div style="font-size:0.65rem; font-weight:700; color:{TXT_MUTED}; margin-top:10px; border-bottom:1px solid {BORDER_LITE};">{DEPT_LABELS[dept].upper()}</div>', unsafe_allow_html=True)
 
+            inspected_id = (st.session_state.get("inspected_course") or {}).get("id")
+
             for c in filtered:
                 already = c["id"] in selected_ids
+                is_inspected = c["id"] == inspected_id
 
                 with st.container():
+                    if is_inspected:
+                        st.markdown(f'<div style="border-left:3px solid {ACCENT}; padding-left:4px; margin-left:-7px;">', unsafe_allow_html=True)
                     c1, c2 = st.columns([6, 1])
                     with c1:
-                        # Course label — click to preview
-                        id_color = TXT_MUTED if already else TXT_ACCENT
-                        name_color = TXT_MUTED if already else TXT_PRIMARY
-                        if st.button(f"{c['id']}  {c['name']}", key=f"preview_{c['id']}", use_container_width=True, help="Preview"):
+                        if st.button(f"{c['id']}  {c['name']}", key=f"preview_{c['id']}", use_container_width=True, help="Preview", type="primary" if is_inspected else "secondary"):
                             st.session_state["inspected_course"] = c
                             st.rerun()
                     with c2:
@@ -899,6 +901,8 @@ else:
                                 })
                                 add_log("DRAFT", f"Drafted {c['id']} to the Bench")
                                 st.rerun()
+                    if is_inspected:
+                        st.markdown('</div>', unsafe_allow_html=True)
 
 
     # ══════════════════════════════════════════════════════════════════
