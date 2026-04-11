@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "1.7.4"
+APP_VERSION = "1.7.5"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -723,6 +723,8 @@ else:
         f'  @keyframes ghost-pulse {{ 0%, 100% {{ opacity: 0.12; }} 50% {{ opacity: 0.25; }} }}'
         f'  .ghost-pin {{ text-align:center; padding:8px; border:1px dashed {BORDER_LITE}; border-radius:6px; min-height:20px; font-size:0.8rem; color:#3F3F46; }}'
         f'  .ghost-pin.pulse {{ animation: ghost-pulse 3s ease-in-out infinite; }}'
+        f'  /* ADD/DROP button styling */'
+        f'  button[kind="secondary"]:has(> div > p) {{ min-width: 60px !important; }}'
         f'  [data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] > [data-testid="stLayoutWrapper"]:nth-child(3) {{'
         f'    position: sticky !important; top: 48px !important; z-index: 50 !important;'
         f'    background: {BG_BASE} !important; padding-bottom: 8px;'
@@ -906,41 +908,35 @@ else:
                 already = c["id"] in selected_ids
                 is_inspected = c["id"] == inspected_id
 
-                with st.container():
-                    if is_inspected:
-                        st.markdown(f'<div style="border-left:3px solid {ACCENT}; padding-left:4px; margin-left:-7px;">', unsafe_allow_html=True)
-                    c1, c2 = st.columns([6, 1])
-                    with c1:
-                        if st.button(f"{c['id']}  {c['name']}", key=f"preview_{c['id']}", use_container_width=True, help="Preview", type="primary" if is_inspected else "secondary"):
-                            st.session_state["inspected_course"] = c
+                # Row background tint
+                row_bg = f"{ACCENT_RED}08" if already else "transparent"
+                left_border = f"border-left:3px solid {ACCENT};" if is_inspected else f"border-left:3px solid transparent;"
+
+                st.markdown(
+                    f'<div style="display:flex; align-items:center; gap:6px; padding:3px 0; {left_border} padding-left:6px; margin-bottom:2px; background:{row_bg}; border-radius:4px;">',
+                    unsafe_allow_html=True,
+                )
+                c1, c2 = st.columns([4, 1.2])
+                with c1:
+                    if st.button(f"{c['id']}  {c['name']}", key=f"preview_{c['id']}", use_container_width=True, type="primary" if is_inspected else "secondary"):
+                        st.session_state["inspected_course"] = c
+                        st.rerun()
+                with c2:
+                    if already:
+                        if st.button("DROP", key=f"rm_scout_{c['id']}", use_container_width=True, type="primary"):
+                            active_project["offerings"] = [o for o in active_project["offerings"] if o["catalog_id"] != c["id"]]
+                            add_log("DROP", f"Removed {c['id']} from draft")
                             st.rerun()
-                    with c2:
-                        if already:
-                            # Drafted — red-tinted remove button
-                            st.markdown(
-                                f'<style>#rm_scout_{c["id"].replace("_","")} {{ background:{ACCENT_RED}20 !important; border-color:{ACCENT_RED}60 !important; color:{ACCENT_RED} !important; }}</style>',
-                                unsafe_allow_html=True,
-                            )
-                            if st.button("DROP", key=f"rm_scout_{c['id']}", help="Remove from draft"):
-                                active_project["offerings"] = [o for o in active_project["offerings"] if o["catalog_id"] != c["id"]]
-                                add_log("DROP", f"Removed {c['id']} from draft")
-                                st.rerun()
-                        else:
-                            # Available — green-tinted add button
-                            st.markdown(
-                                f'<style>#add_scout_{c["id"].replace("_","")} {{ background:{ACCENT_GREEN}20 !important; border-color:{ACCENT_GREEN}60 !important; color:{ACCENT_GREEN} !important; }}</style>',
-                                unsafe_allow_html=True,
-                            )
-                            if st.button("ADD", key=f"add_scout_{c['id']}", help="Add to draft"):
-                                active_project["offerings"].append({
-                                    "catalog_id": c["id"], "priority": "must_have", "sections": 1,
-                                    "override_enrollment_cap": None, "override_room_type": None,
-                                    "override_preferred_professors": None, "notes": None,
-                                })
-                                add_log("DRAFT", f"Drafted {c['id']} to the Bench")
-                                st.rerun()
-                    if is_inspected:
-                        st.markdown('</div>', unsafe_allow_html=True)
+                    else:
+                        if st.button("ADD", key=f"add_scout_{c['id']}", use_container_width=True):
+                            active_project["offerings"].append({
+                                "catalog_id": c["id"], "priority": "must_have", "sections": 1,
+                                "override_enrollment_cap": None, "override_room_type": None,
+                                "override_preferred_professors": None, "notes": None,
+                            })
+                            add_log("DRAFT", f"Drafted {c['id']} to the Bench")
+                            st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
 
 
     # ══════════════════════════════════════════════════════════════════
