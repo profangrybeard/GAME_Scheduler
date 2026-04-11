@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "1.6.3"
+APP_VERSION = "1.6.4"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -711,20 +711,18 @@ else:
     # ══════════════════════════════════════════════════════════════════
     # CALENDAR GRID (full-width, sticky at top)
     # ══════════════════════════════════════════════════════════════════
-    st.markdown(
-        f'<style>'
-        f'  .sticky-cal {{ position: sticky; top: 0; z-index: 10; background: {BG_BASE}; padding-bottom: 8px; border-bottom: 1px solid {BORDER}; }}'
-        f'</style>',
-        unsafe_allow_html=True,
-    )
-
-    # Ghost pin pulse animation
+    # Ghost pin pulse + sticky calendar CSS (single style block to keep nth-child stable)
     has_unpinned = any(not o.get("pinned") for o in offerings) if offerings else False
     st.markdown(
         f'<style>'
         f'  @keyframes ghost-pulse {{ 0%, 100% {{ opacity: 0.12; }} 50% {{ opacity: 0.25; }} }}'
         f'  .ghost-pin {{ text-align:center; padding:8px; border:1px dashed {BORDER_LITE}; border-radius:6px; min-height:20px; font-size:0.8rem; color:#3F3F46; }}'
         f'  .ghost-pin.pulse {{ animation: ghost-pulse 3s ease-in-out infinite; }}'
+        f'  [data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] > [data-testid="stLayoutWrapper"]:nth-child(3) {{'
+        f'    position: sticky !important; top: 0 !important; z-index: 50 !important;'
+        f'    background: {BG_BASE} !important; padding-bottom: 8px;'
+        f'    border-bottom: 1px solid {BORDER};'
+        f'  }}'
         f'</style>',
         unsafe_allow_html=True,
     )
