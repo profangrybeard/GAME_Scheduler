@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "1.6.1"
+APP_VERSION = "1.6.2"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -718,75 +718,86 @@ else:
         unsafe_allow_html=True,
     )
 
+    # Ghost pin pulse animation
+    has_unpinned = any(not o.get("pinned") for o in offerings) if offerings else False
+    st.markdown(
+        f'<style>'
+        f'  @keyframes ghost-pulse {{ 0%, 100% {{ opacity: 0.12; }} 50% {{ opacity: 0.25; }} }}'
+        f'  .ghost-pin {{ text-align:center; padding:8px; border:1px dashed {BORDER_LITE}; border-radius:6px; min-height:20px; font-size:0.8rem; color:#3F3F46; }}'
+        f'  .ghost-pin.pulse {{ animation: ghost-pulse 3s ease-in-out infinite; }}'
+        f'</style>',
+        unsafe_allow_html=True,
+    )
+
     cal_container = st.container()
     with cal_container:
         st.markdown(f'<div class="section-label">10 Weeks ({quarter.title()} {year})</div>', unsafe_allow_html=True)
 
-        if not offerings:
-            st.markdown(f'<div style="text-align:center; color:{TXT_MUTED}; font-size:0.82rem; padding:1.5rem; border:1px dashed {BORDER_LITE}; border-radius:8px;">Add courses from Search below to start building your schedule.</div>', unsafe_allow_html=True)
-        else:
-            placing_idx = st.session_state.get("placing_offering_idx")
-            placing_cid = None
-            if placing_idx is not None and placing_idx < len(offerings):
-                placing_cid = offerings[placing_idx]["catalog_id"]
-                st.markdown(
-                    f'<div style="font-size:0.78rem; color:{ACCENT}; margin-bottom:8px;">'
-                    f'Placing <b>{placing_cid}</b> — click a slot below</div>',
-                    unsafe_allow_html=True,
-                )
+        placing_idx = st.session_state.get("placing_offering_idx")
+        placing_cid = None
+        if placing_idx is not None and offerings and placing_idx < len(offerings):
+            placing_cid = offerings[placing_idx]["catalog_id"]
+            st.markdown(
+                f'<div style="font-size:0.78rem; color:{ACCENT}; margin-bottom:8px;">'
+                f'Placing <b>{placing_cid}</b> — click a slot below</div>',
+                unsafe_allow_html=True,
+            )
 
-            # Header row
-            gh1, gh2, gh3 = st.columns([1, 3, 3])
-            with gh1:
-                st.markdown(f'<div style="font-size:0.7rem; color:{TXT_MUTED}; text-align:right; padding:6px 0;">TIME</div>', unsafe_allow_html=True)
-            with gh2:
-                st.markdown(f'<div style="font-size:0.72rem; font-weight:600; color:{TXT_SECONDARY}; text-align:center; padding:6px 0; background:{BG_CARD}; border:1px solid {BORDER}; border-radius:4px;">MW</div>', unsafe_allow_html=True)
-            with gh3:
-                st.markdown(f'<div style="font-size:0.72rem; font-weight:600; color:{TXT_SECONDARY}; text-align:center; padding:6px 0; background:{BG_CARD}; border:1px solid {BORDER}; border-radius:4px;">TTh</div>', unsafe_allow_html=True)
+        # Header row
+        gh1, gh2, gh3 = st.columns([1, 3, 3])
+        with gh1:
+            st.markdown(f'<div style="font-size:0.7rem; color:{TXT_MUTED}; text-align:right; padding:6px 0;">TIME</div>', unsafe_allow_html=True)
+        with gh2:
+            st.markdown(f'<div style="font-size:0.72rem; font-weight:600; color:{TXT_SECONDARY}; text-align:center; padding:6px 0; background:{BG_CARD}; border:1px solid {BORDER}; border-radius:4px;">MW</div>', unsafe_allow_html=True)
+        with gh3:
+            st.markdown(f'<div style="font-size:0.72rem; font-weight:600; color:{TXT_SECONDARY}; text-align:center; padding:6px 0; background:{BG_CARD}; border:1px solid {BORDER}; border-radius:4px;">TTh</div>', unsafe_allow_html=True)
 
-            # Grid rows
-            for ts in config.TIME_SLOTS:
-                gc1, gc2, gc3 = st.columns([1, 3, 3])
-                with gc1:
-                    st.markdown(f'<div style="font-size:0.72rem; font-weight:600; color:{TXT_MUTED}; text-align:right; padding:10px 4px 10px 0;">{ts}</div>', unsafe_allow_html=True)
+        # Grid rows
+        for ts in config.TIME_SLOTS:
+            gc1, gc2, gc3 = st.columns([1, 3, 3])
+            with gc1:
+                st.markdown(f'<div style="font-size:0.72rem; font-weight:600; color:{TXT_MUTED}; text-align:right; padding:10px 4px 10px 0;">{ts}</div>', unsafe_allow_html=True)
 
-                for dg, col in [(1, gc2), (2, gc3)]:
-                    with col:
-                        cell_key = (dg, ts)
-                        pinned_here = pinned_map.get(cell_key, [])
+            for dg, col in [(1, gc2), (2, gc3)]:
+                with col:
+                    cell_key = (dg, ts)
+                    pinned_here = pinned_map.get(cell_key, [])
 
-                        if pinned_here:
-                            for _pi, _po, _pc in pinned_here:
-                                _dept = _pc.get("department", "game")
-                                _dot = DEPT_DOT.get(_dept, "#666")
-                                _prof_list = _po.get("override_preferred_professors") or []
-                                _prof_name = prof_labels.get(_prof_list[0], _prof_list[0]) if _prof_list else "Auto"
-                                st.markdown(
-                                    f'<div class="cal-course locked">'
-                                    f'<div class="cal-cid"><span class="dept-dot" style="background:{_dot};"></span>{_po["catalog_id"]}</div>'
-                                    f'<div class="cal-detail">{_prof_name}</div>'
-                                    f'</div>',
-                                    unsafe_allow_html=True,
-                                )
-                        elif placing_idx is not None and placing_idx < len(offerings):
-                            conflict = has_pin_conflict(dg, ts, placing_idx)
-                            if conflict:
-                                st.markdown(
-                                    f'<div style="padding:10px; border:1px dashed {BORDER_LITE}; border-radius:6px; text-align:center; color:#3F3F46; font-size:0.7rem;">conflict</div>',
-                                    unsafe_allow_html=True,
-                                )
-                            else:
-                                dg_label = DG_LABELS[dg]
-                                if st.button(f"{dg_label} {ts}", key=f"pin_{dg}_{ts}", use_container_width=True):
-                                    offerings[placing_idx]["pinned"] = {"day_group": dg, "time_slot": ts}
-                                    add_log("PIN", f"Pinned {placing_cid} to {dg_label} {ts}")
-                                    st.session_state["placing_offering_idx"] = None
-                                    st.rerun()
-                        else:
+                    if pinned_here:
+                        for _pi, _po, _pc in pinned_here:
+                            _dept = _pc.get("department", "game")
+                            _dot = DEPT_DOT.get(_dept, "#666")
+                            _prof_list = _po.get("override_preferred_professors") or []
+                            _prof_name = prof_labels.get(_prof_list[0], _prof_list[0]) if _prof_list else "Auto"
                             st.markdown(
-                                f'<div style="padding:10px; border:1px dashed {BORDER_LITE}; border-radius:6px; min-height:20px;"></div>',
+                                f'<div class="cal-course locked">'
+                                f'<div class="cal-cid"><span class="dept-dot" style="background:{_dot};"></span>{_po["catalog_id"]}</div>'
+                                f'<div class="cal-detail">{_prof_name}</div>'
+                                f'</div>',
                                 unsafe_allow_html=True,
                             )
+                    elif placing_idx is not None and offerings and placing_idx < len(offerings):
+                        conflict = has_pin_conflict(dg, ts, placing_idx)
+                        if conflict:
+                            st.markdown(
+                                f'<div style="padding:10px; border:1px dashed {BORDER_LITE}; border-radius:6px; text-align:center; color:#3F3F46; font-size:0.7rem;">conflict</div>',
+                                unsafe_allow_html=True,
+                            )
+                        else:
+                            dg_label = DG_LABELS[dg]
+                            if st.button(f"{dg_label} {ts}", key=f"pin_{dg}_{ts}", use_container_width=True):
+                                offerings[placing_idx]["pinned"] = {"day_group": dg, "time_slot": ts}
+                                add_log("PIN", f"Pinned {placing_cid} to {dg_label} {ts}")
+                                st.session_state["placing_offering_idx"] = None
+                                st.rerun()
+                    else:
+                        # Empty cell — ghost pin hint when courses exist
+                        pulse_class = "pulse" if has_unpinned else ""
+                        ghost = "📍" if has_unpinned else ""
+                        st.markdown(
+                            f'<div class="ghost-pin {pulse_class}">{ghost}</div>',
+                            unsafe_allow_html=True,
+                        )
 
     # ══════════════════════════════════════════════════════════════════
     # 2-Column Layout: SEARCH + DRAFT CARDS (scrolls under calendar)
