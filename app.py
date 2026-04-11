@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "1.7.3"
+APP_VERSION = "1.7.4"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -738,18 +738,28 @@ else:
 
         # ── SEARCH + CLASS PREVIEW (left of calendar, frozen) ────
         with col_preview:
-            # Search + Dept on one row
-            sf1, sf2 = st.columns([3, 2])
-            with sf1:
-                search = st.text_input("Search", placeholder="Course ID or name...", label_visibility="collapsed", key="scout_search")
-            with sf2:
-                dept_filter = st.multiselect(
-                    "Dept", list(DEPT_LABELS.keys()),
-                    format_func=lambda x: DEPT_LABELS.get(x, x)[:4],
-                    default=["game"],
-                    key="scout_dept",
-                    label_visibility="collapsed"
-                )
+            # Search
+            search = st.text_input("Search", placeholder="Course ID or name...", label_visibility="collapsed", key="scout_search")
+
+            # Department toggles (compact popover)
+            if "active_depts" not in st.session_state:
+                st.session_state["active_depts"] = ["game"]
+            with st.popover("Depts", use_container_width=True):
+                for dk, dl in DEPT_LABELS.items():
+                    dot = DEPT_DOT.get(dk, "#666")
+                    is_on = dk in st.session_state["active_depts"]
+                    if st.checkbox(dl, value=is_on, key=f"dept_tog_{dk}"):
+                        if dk not in st.session_state["active_depts"]:
+                            st.session_state["active_depts"].append(dk)
+                    else:
+                        if dk in st.session_state["active_depts"]:
+                            st.session_state["active_depts"].remove(dk)
+            dept_filter = st.session_state["active_depts"]
+
+            # Active dept dots
+            if dept_filter:
+                dots_html = " ".join(f'<span class="dept-dot" style="background:{DEPT_DOT.get(d, "#666")}; width:6px; height:6px;"></span>' for d in dept_filter)
+                st.markdown(f'<div style="margin:-8px 0 4px 0;">{dots_html}</div>', unsafe_allow_html=True)
 
             # Class Preview card (fixed height, no overflow)
             inspect = st.session_state.get("inspected_course")
@@ -906,12 +916,22 @@ else:
                             st.rerun()
                     with c2:
                         if already:
-                            if st.button("×", key=f"rm_scout_{c['id']}", help="Remove from draft"):
+                            # Drafted — red-tinted remove button
+                            st.markdown(
+                                f'<style>#rm_scout_{c["id"].replace("_","")} {{ background:{ACCENT_RED}20 !important; border-color:{ACCENT_RED}60 !important; color:{ACCENT_RED} !important; }}</style>',
+                                unsafe_allow_html=True,
+                            )
+                            if st.button("DROP", key=f"rm_scout_{c['id']}", help="Remove from draft"):
                                 active_project["offerings"] = [o for o in active_project["offerings"] if o["catalog_id"] != c["id"]]
                                 add_log("DROP", f"Removed {c['id']} from draft")
                                 st.rerun()
                         else:
-                            if st.button("+", key=f"add_scout_{c['id']}", help="Add to draft"):
+                            # Available — green-tinted add button
+                            st.markdown(
+                                f'<style>#add_scout_{c["id"].replace("_","")} {{ background:{ACCENT_GREEN}20 !important; border-color:{ACCENT_GREEN}60 !important; color:{ACCENT_GREEN} !important; }}</style>',
+                                unsafe_allow_html=True,
+                            )
+                            if st.button("ADD", key=f"add_scout_{c['id']}", help="Add to draft"):
                                 active_project["offerings"].append({
                                     "catalog_id": c["id"], "priority": "must_have", "sections": 1,
                                     "override_enrollment_cap": None, "override_room_type": None,
