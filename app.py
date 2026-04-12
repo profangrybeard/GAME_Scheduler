@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "2.5.4"
+APP_VERSION = "2.5.5"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
