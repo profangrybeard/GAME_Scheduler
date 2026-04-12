@@ -63,9 +63,7 @@
       "sections": 1,
       "override_enrollment_cap": null,
       "override_room_type": null,
-      "override_preferred_professors": [
-        "prof_dodson"
-      ],
+      "override_preferred_professors": null,
       "notes": null
     },
     {

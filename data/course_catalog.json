@@ -397,7 +397,6 @@
     ],
     "preferred_professors": [
       "prof_lindsay",
-      "prof_dodson",
       "prof_spencer"
     ],
     "enrollment_cap": 20,
@@ -424,8 +423,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay",
-      "prof_dodson"
+      "prof_lindsay"
     ],
     "enrollment_cap": 20,
     "teaching_order": 2,
@@ -472,8 +470,7 @@
       "scripting"
     ],
     "preferred_professors": [
-      "prof_lindsay",
-      "prof_dodson"
+      "prof_lindsay"
     ],
     "enrollment_cap": 20,
     "teaching_order": 4,
@@ -526,7 +523,6 @@
     ],
     "preferred_professors": [
       "prof_lindsay",
-      "prof_dodson",
       "prof_spencer"
     ],
     "enrollment_cap": 20,
@@ -558,8 +554,7 @@
     ],
     "preferred_professors": [
       "prof_lindsay",
-      "prof_allen",
-      "prof_dodson"
+      "prof_allen"
     ],
     "enrollment_cap": 20,
     "teaching_order": 7,
@@ -671,8 +666,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay",
-      "prof_dodson"
+      "prof_lindsay"
     ],
     "enrollment_cap": 20,
     "teaching_order": 11,
@@ -701,8 +695,7 @@
     ],
     "preferred_professors": [
       "prof_lindsay",
-      "prof_allen",
-      "prof_dodson"
+      "prof_allen"
     ],
     "enrollment_cap": 20,
     "teaching_order": 12,
@@ -757,7 +750,6 @@
       "game_design"
     ],
     "preferred_professors": [
-      "prof_dodson",
       "prof_lindsay",
       "prof_spencer"
     ],
@@ -815,7 +807,6 @@
       "narrative"
     ],
     "preferred_professors": [
-      "prof_dodson",
       "prof_lindsay",
       "prof_spencer"
     ],
@@ -847,8 +838,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_avenali",
-      "prof_dodson"
+      "prof_avenali"
     ],
     "enrollment_cap": 20,
     "teaching_order": 17,
@@ -893,7 +883,6 @@
     ],
     "preferred_professors": [
       "prof_lindsay",
-      "prof_dodson",
       "prof_spencer"
     ],
     "enrollment_cap": 20,
@@ -924,7 +913,6 @@
       "game_systems"
     ],
     "preferred_professors": [
-      "prof_dodson",
       "prof_lindsay",
       "prof_spencer"
     ],
@@ -979,7 +967,6 @@
     ],
     "preferred_professors": [
       "prof_lindsay",
-      "prof_dodson",
       "prof_avenali"
     ],
     "enrollment_cap": 20,
@@ -1009,7 +996,6 @@
     ],
     "preferred_professors": [
       "prof_lindsay",
-      "prof_dodson",
       "prof_spencer"
     ],
     "enrollment_cap": 20,
@@ -1032,9 +1018,7 @@
     "specialization_tags": [
       "scripting"
     ],
-    "preferred_professors": [
-      "prof_dodson"
-    ],
+    "preferred_professors": [],
     "enrollment_cap": 20,
     "teaching_order": 24,
     "prerequisites": [
@@ -1109,8 +1093,7 @@
     ],
     "preferred_professors": [
       "prof_spencer",
-      "prof_lindsay",
-      "prof_dodson"
+      "prof_lindsay"
     ],
     "enrollment_cap": 20,
     "teaching_order": 27,
@@ -1142,8 +1125,7 @@
     ],
     "preferred_professors": [
       "prof_lindsay",
-      "prof_allen",
-      "prof_dodson"
+      "prof_allen"
     ],
     "enrollment_cap": 20,
     "teaching_order": 28,
@@ -1234,7 +1216,6 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_dodson",
       "prof_lindsay"
     ],
     "enrollment_cap": 20,
@@ -1259,7 +1240,6 @@
       "interactive_design"
     ],
     "preferred_professors": [
-      "prof_dodson",
       "prof_spencer"
     ],
     "enrollment_cap": 20,
@@ -1285,7 +1265,6 @@
     ],
     "preferred_professors": [
       "prof_lindsay",
-      "prof_dodson",
       "prof_allen"
     ],
     "enrollment_cap": 20,
@@ -1316,7 +1295,6 @@
     ],
     "preferred_professors": [
       "prof_lindsay",
-      "prof_dodson",
       "prof_allen"
     ],
     "enrollment_cap": 20,
@@ -1357,8 +1335,8 @@
       "media_art"
     ],
     "preferred_professors": [
-      "prof_lindsay",
       "prof_dodson",
+      "prof_lindsay",
       "prof_spencer"
     ],
     "enrollment_cap": 16,
@@ -1376,7 +1354,9 @@
     "credits": 5,
     "required_room_type": "itgm_suite",
     "specialization_tags": [],
-    "preferred_professors": [],
+    "preferred_professors": [
+      "prof_dodson"
+    ],
     "enrollment_cap": 16,
     "teaching_order": 37,
     "prerequisites": [],
@@ -1421,8 +1401,8 @@
       "production"
     ],
     "preferred_professors": [
-      "prof_lindsay",
       "prof_dodson",
+      "prof_lindsay",
       "prof_spencer"
     ],
     "enrollment_cap": 16,
@@ -1470,8 +1450,8 @@
       "game_mechanics"
     ],
     "preferred_professors": [
-      "prof_lindsay",
       "prof_dodson",
+      "prof_lindsay",
       "prof_spencer"
     ],
     "enrollment_cap": 16,
@@ -1521,6 +1501,7 @@
       "texturing"
     ],
     "preferred_professors": [
+      "prof_dodson",
       "prof_avenali",
       "prof_allen",
       "prof_lindsay"
@@ -1632,8 +1613,8 @@
       "production"
     ],
     "preferred_professors": [
-      "prof_lindsay",
       "prof_dodson",
+      "prof_lindsay",
       "prof_allen"
     ],
     "enrollment_cap": 16,
@@ -1685,8 +1666,8 @@
       "production"
     ],
     "preferred_professors": [
-      "prof_lindsay",
       "prof_dodson",
+      "prof_lindsay",
       "prof_allen"
     ],
     "enrollment_cap": 16,
@@ -1885,6 +1866,7 @@
       "programming"
     ],
     "preferred_professors": [
+      "prof_dodson",
       "prof_lindsay",
       "prof_spencer"
     ],
@@ -1907,9 +1889,9 @@
       "interactive_design"
     ],
     "preferred_professors": [
+      "prof_dodson",
       "prof_spencer",
-      "prof_lindsay",
-      "prof_dodson"
+      "prof_lindsay"
     ],
     "enrollment_cap": 16,
     "teaching_order": 51,
@@ -1929,8 +1911,8 @@
       "game_design"
     ],
     "preferred_professors": [
-      "prof_lindsay",
       "prof_dodson",
+      "prof_lindsay",
       "prof_spencer"
     ],
     "enrollment_cap": 16,
@@ -1954,9 +1936,9 @@
       "sound_design"
     ],
     "preferred_professors": [
+      "prof_dodson",
       "prof_spencer",
-      "prof_lindsay",
-      "prof_dodson"
+      "prof_lindsay"
     ],
     "enrollment_cap": 16,
     "teaching_order": 53,
@@ -1976,9 +1958,9 @@
       "game_development"
     ],
     "preferred_professors": [
+      "prof_dodson",
       "prof_allen",
-      "prof_lindsay",
-      "prof_dodson"
+      "prof_lindsay"
     ],
     "enrollment_cap": 16,
     "teaching_order": 54,
@@ -2005,9 +1987,9 @@
       "visual_effects"
     ],
     "preferred_professors": [
+      "prof_dodson",
       "prof_allen",
-      "prof_lindsay",
-      "prof_dodson"
+      "prof_lindsay"
     ],
     "enrollment_cap": 16,
     "teaching_order": 55,
@@ -2032,8 +2014,8 @@
       "level_design"
     ],
     "preferred_professors": [
-      "prof_lindsay",
       "prof_dodson",
+      "prof_lindsay",
       "prof_spencer"
     ],
     "enrollment_cap": 16,
@@ -2059,6 +2041,7 @@
       "interface_design"
     ],
     "preferred_professors": [
+      "prof_dodson",
       "prof_spencer"
     ],
     "enrollment_cap": 16,
@@ -2081,7 +2064,9 @@
     "credits": 5,
     "required_room_type": "itgm_suite",
     "specialization_tags": [],
-    "preferred_professors": [],
+    "preferred_professors": [
+      "prof_dodson"
+    ],
     "enrollment_cap": 16,
     "teaching_order": 58,
     "prerequisites": [
@@ -2124,7 +2109,9 @@
     "credits": 5,
     "required_room_type": "itgm_suite",
     "specialization_tags": [],
-    "preferred_professors": [],
+    "preferred_professors": [
+      "prof_dodson"
+    ],
     "enrollment_cap": 16,
     "teaching_order": 60,
     "prerequisites": [
@@ -2146,7 +2133,9 @@
     "credits": 5,
     "required_room_type": "itgm_suite",
     "specialization_tags": [],
-    "preferred_professors": [],
+    "preferred_professors": [
+      "prof_dodson"
+    ],
     "enrollment_cap": 16,
     "teaching_order": 61,
     "prerequisites": [],
@@ -2162,7 +2151,9 @@
     "credits": 5,
     "required_room_type": "itgm_suite",
     "specialization_tags": [],
-    "preferred_professors": [],
+    "preferred_professors": [
+      "prof_dodson"
+    ],
     "enrollment_cap": 16,
     "teaching_order": 62,
     "prerequisites": [],
