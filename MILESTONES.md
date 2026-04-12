@@ -14,7 +14,7 @@ Each milestone is a self-contained checkpoint. At each milestone boundary:
 - Repository folder structure matching spec Section 3
 - `config.py` — all constants, penalties, weight vectors, mappings from Section 11
 - JSON schemas in `schemas/` — professor, course_catalog, quarterly_offering, room
-- `data/professors.json` — 7 professors from Google Doc (Allen, Lindsay, Dodson, Avenali, Spencer, Maloney, Imperato)
+- `data/professors.json` — 7 professors from Google Doc (Allen, Lindsey, Dodson, Avenali, Spencer, Maloney, Imperato)
 - `data/rooms.json` — 6 dummy rooms from Section 8.3
 - `requirements.txt` — ortools, openpyxl, jsonschema, beautifulsoup4, requests, gspread
 - `.gitignore`, `.env.example`
