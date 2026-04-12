@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "2.3.3"
+APP_VERSION = "2.4.0"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -1027,23 +1027,44 @@ else:
                     with open(excel_path, "rb") as ef:
                         st.download_button("Export Excel", ef, file_name=excel_path.name, mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
 
+            # Lock All / Unlock All buttons
+            _la_c1, _la_c2, _la_spacer = st.columns([1, 1, 5])
+            with _la_c1:
+                if st.button("🔒 Lock All", use_container_width=True, key="lock_all_btn"):
+                    existing = {la["cs_key"] for la in st.session_state["locked_assignments"]}
+                    added = 0
+                    for _a in mode_data["schedule"]:
+                        if _a["cs_key"] in existing:
+                            continue
+                        st.session_state["locked_assignments"].append({
+                            "cs_key": _a["cs_key"],
+                            "prof_id": _a["prof_id"],
+                            "room_id": _a["room_id"],
+                            "day_group": _a["day_group"],
+                            "time_slot": _a["time_slot"],
+                        })
+                        added += 1
+                    add_log("LOCK", f"Locked All (+{added})")
+                    st.rerun()
+            with _la_c2:
+                if st.button("🔓 Unlock All", use_container_width=True, key="unlock_all_btn"):
+                    n = len(st.session_state["locked_assignments"])
+                    st.session_state["locked_assignments"] = []
+                    add_log("UNLOCK", f"Unlocked All ({n})")
+                    st.rerun()
+
             # Status line
             n_placed = len(mode_data["schedule"]); n_unsched = len(mode_data["unscheduled"])
             n_locked = len(locked_set)
             status = mode_data["status"].upper(); score = mode_data.get("objective", "—")
             stat_color = ACCENT_GREEN if status == "OPTIMAL" else ACCENT_AMBER
             lock_str = f" · {n_locked} locked" if n_locked else ""
-            _n_pinned = sum(1 for _o in offerings if _o.get("locked"))
-            pin_str = f" · {_n_pinned} pinned" if _n_pinned else ""
-            st.markdown(f'<div style="font-size:0.68rem; color:{stat_color}; text-align:right; padding:2px 0 4px 0;">{status} · {n_placed} placed · {n_unsched} dropped · score {score}{lock_str}{pin_str}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="font-size:0.68rem; color:{stat_color}; text-align:right; padding:2px 0 4px 0;">{status} · {n_placed} placed · {n_unsched} dropped · score {score}{lock_str}</div>', unsafe_allow_html=True)
 
             solve_map = {}
             for a in mode_data["schedule"]:
                 key = (a["day_group"], a["time_slot"]); solve_map.setdefault(key, []).append(a)
         else:
-            _n_pinned_pre = sum(1 for _o in offerings if _o.get("locked"))
-            if _n_pinned_pre > 0:
-                st.markdown(f'<div style="font-size:0.75rem; color:{ACCENT_AMBER}; text-align:right; padding:4px 0; font-weight:600;">📍 {_n_pinned_pre} pending pin{"s" if _n_pinned_pre > 1 else ""} — click Generate Schedule to apply</div>', unsafe_allow_html=True)
             placing_idx = st.session_state.get("placing_offering_idx")
             placing_cid = None
             if placing_idx is not None and offerings and placing_idx < len(offerings):
@@ -1083,13 +1104,9 @@ else:
                                 _tp_short = {"preferred": "Pref time", "acceptable": "OK time", "not_preferred": "Off hours"}
                                 _tp_color = _tp_colors.get(_tp, TXT_MUTED)
                                 _tp_label = _tp_short.get(_tp, "—")
-                                # Check if this course has a user-set slot pin
-                                _card_offering = next((o for o in offerings if o["catalog_id"] == a["catalog_id"]), None)
-                                _card_pinned = bool(_card_offering and _card_offering.get("locked"))
-                                _pin_icon = "📍 " if _card_pinned else ""
                                 st.markdown(
                                     f'<div class="cal-course {_lock_class}" style="border-left-color:{_aff_color};">'
-                                    f'<div class="cal-cid"><span class="dept-dot" style="background:{_dot};"></span>{_lock_icon}{_pin_icon}{a["catalog_id"]}</div>'
+                                    f'<div class="cal-cid"><span class="dept-dot" style="background:{_dot};"></span>{_lock_icon}{a["catalog_id"]}</div>'
                                     f'<div class="cal-cname">{a["course_name"]}</div>'
                                     f'<div class="cal-detail">{a["prof_name"]} · {_room_short}'
                                     f' · <span style="color:{_aff_color};">{_aff_label}</span>'
@@ -1122,69 +1139,51 @@ else:
                                     if _edit_idx is not None:
                                         _eo = offerings[_edit_idx]
                                         with st.popover("Edit", use_container_width=True):
+                                            # Priority
                                             _ep_pri = st.selectbox("Priority", list(PRIORITY_LABELS.keys()), format_func=lambda x: PRIORITY_LABELS[x], index=list(PRIORITY_LABELS.keys()).index(_eo.get("priority", "must_have")), key=f"ep_pri_{a['cs_key']}_{dg}_{ts}")
-                                            if _ep_pri != _eo.get("priority"):
-                                                offerings[_edit_idx]["priority"] = _ep_pri
+                                            # Professor
                                             _ep_prof_list = _eo.get("override_preferred_professors")
-                                            _ep_prof = _ep_prof_list[0] if _ep_prof_list else "Auto-Draft"
-                                            if _ep_prof not in prof_options:
-                                                _ep_prof = "Auto-Draft"
-                                            _ep_new_prof = st.selectbox("Professor", prof_options, format_func=lambda x: prof_labels[x], index=prof_options.index(_ep_prof), key=f"ep_prof_{a['cs_key']}_{dg}_{ts}")
-                                            if _ep_new_prof != _ep_prof:
-                                                if _ep_new_prof == "Auto-Draft":
-                                                    offerings[_edit_idx]["override_preferred_professors"] = None
-                                                else:
-                                                    offerings[_edit_idx]["override_preferred_professors"] = [_ep_new_prof]
+                                            _ep_prof_default = _ep_prof_list[0] if _ep_prof_list else a["prof_id"]
+                                            if _ep_prof_default not in prof_options:
+                                                _ep_prof_default = "Auto-Draft"
+                                            _ep_new_prof = st.selectbox("Professor", prof_options, format_func=lambda x: prof_labels[x], index=prof_options.index(_ep_prof_default), key=f"ep_prof_{a['cs_key']}_{dg}_{ts}")
+                                            # Room Type
                                             _ep_room_opts = config.VALID_ROOM_TYPES
                                             _ep_cur_room = _eo.get("override_room_type") or catalog_lookup.get(a["catalog_id"], {}).get("required_room_type", "standard")
                                             if _ep_cur_room not in _ep_room_opts:
                                                 _ep_cur_room = "standard"
                                             _ep_new_room = st.selectbox("Room Type", _ep_room_opts, format_func=lambda x: x.replace("_", " ").title(), index=_ep_room_opts.index(_ep_cur_room), key=f"ep_room_{a['cs_key']}_{dg}_{ts}")
-                                            if _ep_new_room != _ep_cur_room:
-                                                offerings[_edit_idx]["override_room_type"] = _ep_new_room
-                                            # Day / Time selection — auto-pins the course to the chosen slot
-                                            _current_pin = _eo.get("locked")
-                                            _default_dg = _current_pin["day_group"] if _current_pin else a["day_group"]
-                                            _default_ts = _current_pin["time_slot"] if _current_pin else a["time_slot"]
+                                            # Day / Time — pure selectboxes, no auto-commit
                                             _ep_dt1, _ep_dt2 = st.columns(2)
                                             with _ep_dt1:
                                                 _ep_dg_opts = list(DG_LABELS.keys())
-                                                _ep_new_dg = st.selectbox("Day", _ep_dg_opts, format_func=lambda x: DG_LABELS[x], index=_ep_dg_opts.index(_default_dg), key=f"ep_dg_{a['cs_key']}_{dg}_{ts}")
+                                                _ep_new_dg = st.selectbox("Day", _ep_dg_opts, format_func=lambda x: DG_LABELS[x], index=_ep_dg_opts.index(a["day_group"]), key=f"ep_dg_{a['cs_key']}_{dg}_{ts}")
                                             with _ep_dt2:
                                                 _ep_ts_opts = config.TIME_SLOTS
-                                                _ep_new_ts = st.selectbox("Time", _ep_ts_opts, index=_ep_ts_opts.index(_default_ts) if _default_ts in _ep_ts_opts else 0, key=f"ep_ts_{a['cs_key']}_{dg}_{ts}")
-                                            # Only fire when selectboxes differ from the stored pin (or from solver position if no pin)
-                                            _reference_dg = _current_pin["day_group"] if _current_pin else a["day_group"]
-                                            _reference_ts = _current_pin["time_slot"] if _current_pin else a["time_slot"]
-                                            if _ep_new_dg != _reference_dg or _ep_new_ts != _reference_ts:
-                                                # User changed the selectbox — create/update pin
-                                                offerings[_edit_idx]["locked"] = {"day_group": _ep_new_dg, "time_slot": _ep_new_ts}
-                                                st.session_state["locked_assignments"] = [la for la in st.session_state["locked_assignments"] if la["cs_key"] != a["cs_key"]]
-                                                st.session_state["solver_results"] = None
-                                                add_log("PIN", f"Pinned {a['catalog_id']} → {DG_LABELS[_ep_new_dg]} {_ep_new_ts}")
-                                                st.rerun()
-                                            # Show pin status + explicit Clear pin button
-                                            if _current_pin:
-                                                st.caption(f"📍 Pinned to {DG_LABELS[_current_pin['day_group']]} {_current_pin['time_slot']}")
-                                                if st.button("Clear pin", key=f"ep_unpin_{a['cs_key']}_{dg}_{ts}", use_container_width=True):
-                                                    offerings[_edit_idx]["locked"] = None
-                                                    st.session_state["solver_results"] = None
-                                                    add_log("UNPIN", f"Unpinned {a['catalog_id']}")
-                                                    st.rerun()
-                                            # Lock button INSIDE the popover — reads selectbox values directly
-                                            _ep_lock_prof = _ep_new_prof if _ep_new_prof != "Auto-Draft" else a["prof_id"]
-                                            _ep_lock_label = "🔒 Lock with these settings" if not _is_locked else "🔒 Update lock"
+                                                _ep_new_ts = st.selectbox("Time", _ep_ts_opts, index=_ep_ts_opts.index(a["time_slot"]) if a["time_slot"] in _ep_ts_opts else 0, key=f"ep_ts_{a['cs_key']}_{dg}_{ts}")
+                                            # SINGLE COMMIT BUTTON — locks all popover changes
+                                            _ep_lock_label = "🔒 Lock this class" if not _is_locked else "🔒 Update lock"
                                             if st.button(_ep_lock_label, key=f"ep_lock_{a['cs_key']}_{dg}_{ts}", use_container_width=True, type="primary"):
-                                                # Remove any existing lock for this section
+                                                # Commit all popover values to the offering
+                                                offerings[_edit_idx]["priority"] = _ep_pri
+                                                if _ep_new_prof == "Auto-Draft":
+                                                    offerings[_edit_idx]["override_preferred_professors"] = None
+                                                else:
+                                                    offerings[_edit_idx]["override_preferred_professors"] = [_ep_new_prof]
+                                                offerings[_edit_idx]["override_room_type"] = _ep_new_room
+                                                # Determine which professor id to lock
+                                                _lock_prof = _ep_new_prof if _ep_new_prof != "Auto-Draft" else a["prof_id"]
+                                                # Remove any existing lock for this section, replace with new
                                                 st.session_state["locked_assignments"] = [la for la in st.session_state["locked_assignments"] if la["cs_key"] != a["cs_key"]]
-                                                # Create lock with the EXACT values from this popover (may include new day/time)
                                                 st.session_state["locked_assignments"].append({
-                                                    "cs_key": a["cs_key"], "prof_id": _ep_lock_prof,
-                                                    "room_id": a["room_id"], "day_group": _ep_new_dg,
+                                                    "cs_key": a["cs_key"],
+                                                    "prof_id": _lock_prof,
+                                                    "room_id": a["room_id"],
+                                                    "day_group": _ep_new_dg,
                                                     "time_slot": _ep_new_ts,
                                                 })
-                                                _ep_lock_name = prof_labels.get(_ep_lock_prof, _ep_lock_prof)
-                                                add_log("LOCK", f"Locked {a['catalog_id']} → {DG_LABELS[_ep_new_dg]} {_ep_new_ts} ({_ep_lock_name})")
+                                                _lock_name = prof_labels.get(_lock_prof, _lock_prof)
+                                                add_log("LOCK", f"Locked {a['catalog_id']} → {DG_LABELS[_ep_new_dg]} {_ep_new_ts} ({_lock_name})")
                                                 st.rerun()
                                             if st.button("Drop Course", key=f"ep_drop_{a['cs_key']}_{dg}_{ts}", use_container_width=True):
                                                 active_project["offerings"].pop(_edit_idx)
