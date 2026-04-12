@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "2.4.1"
+APP_VERSION = "2.4.2"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -902,6 +902,67 @@ else:
     # TABS: Courses | Schedule | Catalog
     # ══════════════════════════════════════════════════════════════════
     tab_catalog, tab_courses, tab_schedule = st.tabs(["Catalog", "Courses", "Schedule"])
+
+    # Tab persistence — remember which tab the user was on across reruns
+    import streamlit.components.v1 as _tab_components
+    _tab_components.html(
+        """
+        <script>
+        (function() {
+          const doc = window.parent.document;
+          const STORAGE_KEY = 'gameSchedulerActiveTab';
+
+          function getTabs() {
+            return Array.from(doc.querySelectorAll('[data-baseweb="tab"]'));
+          }
+
+          function saveActive() {
+            const tabs = getTabs();
+            const activeIdx = tabs.findIndex(t => t.getAttribute('aria-selected') === 'true');
+            if (activeIdx >= 0) {
+              sessionStorage.setItem(STORAGE_KEY, activeIdx.toString());
+            }
+          }
+
+          function restore() {
+            const tabs = getTabs();
+            if (tabs.length === 0) return;
+            const saved = parseInt(sessionStorage.getItem(STORAGE_KEY) || '0');
+            if (saved < 0 || saved >= tabs.length) return;
+            const activeIdx = tabs.findIndex(t => t.getAttribute('aria-selected') === 'true');
+            if (activeIdx !== saved) {
+              tabs[saved].click();
+            }
+          }
+
+          // Save when user clicks any tab
+          doc.addEventListener('click', (e) => {
+            const tab = e.target.closest('[data-baseweb="tab"]');
+            if (tab) setTimeout(saveActive, 30);
+          }, true);
+
+          // Clean up any previous observer from earlier rerun
+          if (window.parent.__gsTabObserver) {
+            try { window.parent.__gsTabObserver.disconnect(); } catch(e) {}
+          }
+
+          // Watch for DOM changes (Streamlit reruns) and restore the tab
+          let debounce = null;
+          const observer = new MutationObserver(() => {
+            clearTimeout(debounce);
+            debounce = setTimeout(restore, 50);
+          });
+          observer.observe(doc.body, { childList: true, subtree: true });
+          window.parent.__gsTabObserver = observer;
+
+          // Initial restore after small delay to let DOM settle
+          setTimeout(restore, 100);
+          setTimeout(restore, 400);
+        })();
+        </script>
+        """,
+        height=0,
+    )
 
     # ── TAB 1: COURSES ───────────────────────────────────────────
     with tab_courses:
