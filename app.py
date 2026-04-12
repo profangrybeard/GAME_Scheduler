@@ -1126,12 +1126,21 @@ else:
                                                     offerings[_edit_idx]["override_preferred_professors"] = None
                                                 else:
                                                     offerings[_edit_idx]["override_preferred_professors"] = [_ep_new_prof]
+                                                # Clear lock — user wants a different assignment, stale lock would override this
+                                                st.session_state["locked_assignments"] = [la for la in st.session_state["locked_assignments"] if la["cs_key"] != a["cs_key"]]
+                                                st.session_state["solver_results"] = None
                                             _ep_room_opts = config.VALID_ROOM_TYPES
                                             _ep_cur_room = _eo.get("override_room_type") or catalog_lookup.get(a["catalog_id"], {}).get("required_room_type", "standard")
                                             if _ep_cur_room not in _ep_room_opts:
                                                 _ep_cur_room = "standard"
                                             _ep_new_room = st.selectbox("Room Type", _ep_room_opts, format_func=lambda x: x.replace("_", " ").title(), index=_ep_room_opts.index(_ep_cur_room), key=f"ep_room_{a['cs_key']}_{dg}_{ts}")
-                                            offerings[_edit_idx]["override_room_type"] = _ep_new_room
+                                            if _ep_new_room != _ep_cur_room:
+                                                offerings[_edit_idx]["override_room_type"] = _ep_new_room
+                                                # Clear lock — room change makes stale lock invalid
+                                                st.session_state["locked_assignments"] = [la for la in st.session_state["locked_assignments"] if la["cs_key"] != a["cs_key"]]
+                                                st.session_state["solver_results"] = None
+                                            else:
+                                                offerings[_edit_idx]["override_room_type"] = _ep_new_room
                                             if st.button("Drop Course", key=f"ep_drop_{a['cs_key']}_{dg}_{ts}", use_container_width=True):
                                                 active_project["offerings"].pop(_edit_idx)
                                                 st.session_state["locked_assignments"] = [la for la in st.session_state["locked_assignments"] if la["cs_key"] != a["cs_key"]]
