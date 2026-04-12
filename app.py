@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "2.4.0"
+APP_VERSION = "2.4.1"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -818,6 +818,52 @@ else:
     # ══════════════════════════════════════════════════════════════════
     # CONTEXT BAR (always visible above tabs)
     # ══════════════════════════════════════════════════════════════════
+    # Compute pending locks early so Generate button can show amber glow
+    _solver_results_early = st.session_state.get("solver_results")
+    _pending_now = 0
+    if _solver_results_early and st.session_state.get("locked_assignments"):
+        _sr_mode_idx = {"affinity_first": 0, "time_pref_first": 1, "balanced": 2}.get(st.session_state.get("solver_mode", "balanced"), 2)
+        _sr_schedule = _solver_results_early["modes"][_sr_mode_idx]["schedule"]
+        _solved_map = {sa["cs_key"]: sa for sa in _sr_schedule}
+        for _la in st.session_state["locked_assignments"]:
+            _sa = _solved_map.get(_la["cs_key"])
+            if not _sa:
+                _pending_now += 1
+                continue
+            if (_la["day_group"] != _sa["day_group"] or _la["time_slot"] != _sa["time_slot"]
+                    or _la["prof_id"] != _sa["prof_id"] or _la["room_id"] != _sa["room_id"]):
+                _pending_now += 1
+    st.session_state["_pending_count"] = _pending_now
+
+    # Inject amber glow onto Generate Schedule button when pending changes exist
+    if _pending_now > 0:
+        import streamlit.components.v1 as _components
+        _components.html(
+            f'<style>@keyframes gen-pulse {{'
+            f'  0%,100% {{ box-shadow: 0 0 0 2px {ACCENT_AMBER}, 0 0 8px {ACCENT_AMBER}88; }}'
+            f'  50%     {{ box-shadow: 0 0 0 2px {ACCENT_AMBER}, 0 0 20px {ACCENT_AMBER}; }}'
+            f'}}</style>'
+            f'<script>'
+            f'(function() {{'
+            f'  const apply = () => {{'
+            f'    const doc = window.parent.document;'
+            f'    const btns = doc.querySelectorAll("button");'
+            f'    for (const b of btns) {{'
+            f'      if (b.textContent.trim() === "Generate Schedule") {{'
+            f'        b.style.boxShadow = "0 0 0 2px {ACCENT_AMBER}, 0 0 14px {ACCENT_AMBER}66";'
+            f'        b.style.borderColor = "{ACCENT_AMBER}";'
+            f'        b.style.animation = "gen-pulse 2s ease-in-out infinite";'
+            f'      }}'
+            f'    }}'
+            f'  }};'
+            f'  apply();'
+            f'  setTimeout(apply, 200);'
+            f'  setTimeout(apply, 600);'
+            f'}})();'
+            f'</script>',
+            height=0,
+        )
+
     total_sections = sum(o.get("sections", 1) for o in offerings)
     ctx1, ctx2, ctx3 = st.columns([2, 2, 2])
     with ctx1:
@@ -1058,8 +1104,21 @@ else:
             n_locked = len(locked_set)
             status = mode_data["status"].upper(); score = mode_data.get("objective", "—")
             stat_color = ACCENT_GREEN if status == "OPTIMAL" else ACCENT_AMBER
+            # Count pending locks — ones whose stored values don't match current solver assignment
+            _solved_by_cs = {sa["cs_key"]: sa for sa in mode_data["schedule"]}
+            _n_pending = 0
+            for _la in st.session_state.get("locked_assignments", []):
+                _sa = _solved_by_cs.get(_la["cs_key"])
+                if not _sa:
+                    _n_pending += 1
+                    continue
+                if (_la["day_group"] != _sa["day_group"] or _la["time_slot"] != _sa["time_slot"]
+                        or _la["prof_id"] != _sa["prof_id"] or _la["room_id"] != _sa["room_id"]):
+                    _n_pending += 1
+            st.session_state["_pending_count"] = _n_pending
             lock_str = f" · {n_locked} locked" if n_locked else ""
-            st.markdown(f'<div style="font-size:0.68rem; color:{stat_color}; text-align:right; padding:2px 0 4px 0;">{status} · {n_placed} placed · {n_unsched} dropped · score {score}{lock_str}</div>', unsafe_allow_html=True)
+            pending_str = f" · {_n_pending} pending" if _n_pending else ""
+            st.markdown(f'<div style="font-size:0.68rem; color:{stat_color}; text-align:right; padding:2px 0 4px 0;">{status} · {n_placed} placed · {n_unsched} dropped · score {score}{lock_str}<span style="color:{ACCENT_AMBER};">{pending_str}</span></div>', unsafe_allow_html=True)
 
             solve_map = {}
             for a in mode_data["schedule"]:
@@ -1104,13 +1163,39 @@ else:
                                 _tp_short = {"preferred": "Pref time", "acceptable": "OK time", "not_preferred": "Off hours"}
                                 _tp_color = _tp_colors.get(_tp, TXT_MUTED)
                                 _tp_label = _tp_short.get(_tp, "—")
+                                # Check if this course has a pending lock (stored lock doesn't match solver's assignment)
+                                _my_lock = next((la for la in st.session_state.get("locked_assignments", []) if la["cs_key"] == a["cs_key"]), None)
+                                _is_pending = False
+                                _pending_lines = []
+                                if _my_lock:
+                                    if _my_lock["day_group"] != a["day_group"] or _my_lock["time_slot"] != a["time_slot"]:
+                                        _is_pending = True
+                                        _pending_lines.append(f'{DG_LABELS[_my_lock["day_group"]]} {_my_lock["time_slot"]}')
+                                    if _my_lock["prof_id"] != a["prof_id"]:
+                                        _is_pending = True
+                                        _pending_name = prof_labels.get(_my_lock["prof_id"], _my_lock["prof_id"])
+                                        _pending_lines.append(_pending_name)
+                                    if _my_lock["room_id"] != a["room_id"]:
+                                        _is_pending = True
+                                        _rm = next((r for r in rooms if r["id"] == _my_lock["room_id"]), None)
+                                        _rm_name = _rm["name"].split("–")[0].strip() if _rm else _my_lock["room_id"]
+                                        _pending_lines.append(_rm_name)
+                                _border_color = ACCENT_AMBER if _is_pending else _aff_color
+                                _pending_html = ""
+                                if _is_pending:
+                                    _pending_html = (
+                                        f'<div class="cal-detail" style="color:{ACCENT_AMBER}; font-weight:600; margin-top:2px;">'
+                                        f'⚠ Pending → {" · ".join(_pending_lines)}</div>'
+                                    )
+                                _card_extra_style = f"background:#2A1F0A;" if _is_pending else ""
                                 st.markdown(
-                                    f'<div class="cal-course {_lock_class}" style="border-left-color:{_aff_color};">'
+                                    f'<div class="cal-course {_lock_class}" style="border-left-color:{_border_color};{_card_extra_style}">'
                                     f'<div class="cal-cid"><span class="dept-dot" style="background:{_dot};"></span>{_lock_icon}{a["catalog_id"]}</div>'
                                     f'<div class="cal-cname">{a["course_name"]}</div>'
                                     f'<div class="cal-detail">{a["prof_name"]} · {_room_short}'
                                     f' · <span style="color:{_aff_color};">{_aff_label}</span>'
                                     f' · <span style="color:{_tp_color};">{_tp_label}</span></div>'
+                                    f'{_pending_html}'
                                     f'</div>',
                                     unsafe_allow_html=True,
                                 )
