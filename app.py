@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "2.3.0"
+APP_VERSION = "2.3.1"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -1131,20 +1131,28 @@ else:
                                                 _ep_cur_room = "standard"
                                             _ep_new_room = st.selectbox("Room Type", _ep_room_opts, format_func=lambda x: x.replace("_", " ").title(), index=_ep_room_opts.index(_ep_cur_room), key=f"ep_room_{a['cs_key']}_{dg}_{ts}")
                                             offerings[_edit_idx]["override_room_type"] = _ep_new_room
+                                            # Day / Time selection — lets user move the course to a different slot
+                                            _ep_dt1, _ep_dt2 = st.columns(2)
+                                            with _ep_dt1:
+                                                _ep_dg_opts = list(DG_LABELS.keys())
+                                                _ep_new_dg = st.selectbox("Day", _ep_dg_opts, format_func=lambda x: DG_LABELS[x], index=_ep_dg_opts.index(a["day_group"]), key=f"ep_dg_{a['cs_key']}_{dg}_{ts}")
+                                            with _ep_dt2:
+                                                _ep_ts_opts = config.TIME_SLOTS
+                                                _ep_new_ts = st.selectbox("Time", _ep_ts_opts, index=_ep_ts_opts.index(a["time_slot"]) if a["time_slot"] in _ep_ts_opts else 0, key=f"ep_ts_{a['cs_key']}_{dg}_{ts}")
                                             # Lock button INSIDE the popover — reads selectbox values directly
                                             _ep_lock_prof = _ep_new_prof if _ep_new_prof != "Auto-Draft" else a["prof_id"]
                                             _ep_lock_label = "🔒 Lock with these settings" if not _is_locked else "🔒 Update lock"
                                             if st.button(_ep_lock_label, key=f"ep_lock_{a['cs_key']}_{dg}_{ts}", use_container_width=True, type="primary"):
                                                 # Remove any existing lock for this section
                                                 st.session_state["locked_assignments"] = [la for la in st.session_state["locked_assignments"] if la["cs_key"] != a["cs_key"]]
-                                                # Create lock with the EXACT values from this popover
+                                                # Create lock with the EXACT values from this popover (may include new day/time)
                                                 st.session_state["locked_assignments"].append({
                                                     "cs_key": a["cs_key"], "prof_id": _ep_lock_prof,
-                                                    "room_id": a["room_id"], "day_group": a["day_group"],
-                                                    "time_slot": a["time_slot"],
+                                                    "room_id": a["room_id"], "day_group": _ep_new_dg,
+                                                    "time_slot": _ep_new_ts,
                                                 })
                                                 _ep_lock_name = prof_labels.get(_ep_lock_prof, _ep_lock_prof)
-                                                add_log("LOCK", f"Locked {a['catalog_id']} → {DG_LABELS[a['day_group']]} {a['time_slot']} ({_ep_lock_name})")
+                                                add_log("LOCK", f"Locked {a['catalog_id']} → {DG_LABELS[_ep_new_dg]} {_ep_new_ts} ({_ep_lock_name})")
                                                 st.rerun()
                                             if st.button("Drop Course", key=f"ep_drop_{a['cs_key']}_{dg}_{ts}", use_container_width=True):
                                                 active_project["offerings"].pop(_edit_idx)
