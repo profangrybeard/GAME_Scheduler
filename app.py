@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "2.5.7"
+APP_VERSION = "2.6.0"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -96,9 +96,33 @@ def _prof_initials(name: str) -> str:
         return parts[0][:2].upper()
     return (parts[0][0] + parts[-1][0]).upper()
 
+def _prof_portrait_path(prof_id: str | None):
+    """Return Path to uploaded portrait for this prof, or None."""
+    if not prof_id:
+        return None
+    portraits_dir = PROJECT_ROOT / "data" / "portraits"
+    if not portraits_dir.exists():
+        return None
+    for ext in ("png", "jpg", "jpeg", "webp"):
+        p = portraits_dir / f"{prof_id}.{ext}"
+        if p.exists():
+            return p
+    return None
+
+@st.cache_data
+def _portrait_data_url(path_str: str, mtime: float) -> str:
+    """Cache-friendly base64 data URL for a portrait. mtime busts cache on update."""
+    import base64, mimetypes
+    from pathlib import Path as _P
+    p = _P(path_str)
+    mime = mimetypes.guess_type(str(p))[0] or "image/png"
+    return f"data:{mime};base64,{base64.b64encode(p.read_bytes()).decode()}"
+
 def prof_avatar_html(prof_id: str | None, prof_name: str | None = None, size: int = 18) -> str:
-    """Return HTML for a small professor avatar square.
-    Auto-draft (no prof) renders a neutral silhouette placeholder.
+    """Return HTML for a professor avatar square.
+    - If a portrait image exists at data/portraits/<prof_id>.*, use that.
+    - Otherwise, render a colored initials square.
+    - Auto-draft (no prof) renders a neutral silhouette placeholder.
     """
     if not prof_id or prof_id == "Auto-Draft":
         return (
@@ -106,18 +130,28 @@ def prof_avatar_html(prof_id: str | None, prof_name: str | None = None, size: in
             f'width:{size}px;height:{size}px;border-radius:4px;'
             f'background:{BG_HOVER};border:1px dashed {BORDER};'
             f'color:{TXT_MUTED};font-size:{max(10, size-6)}px;line-height:1;'
-            f'vertical-align:middle;margin-right:5px;flex-shrink:0;" title="Auto-Draft">'
-            f'<svg width="{size-6}" height="{size-6}" viewBox="0 0 24 24" fill="none" '
+            f'vertical-align:middle;flex-shrink:0;" title="Auto-Draft">'
+            f'<svg width="{max(10, size-6)}" height="{max(10, size-6)}" viewBox="0 0 24 24" fill="none" '
             f'stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">'
             f'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></span>'
         )
+    # Photo portrait if uploaded
+    portrait_path = _prof_portrait_path(prof_id)
+    if portrait_path:
+        data_url = _portrait_data_url(str(portrait_path), portrait_path.stat().st_mtime)
+        return (
+            f'<img src="{data_url}" alt="{prof_name or prof_id}" title="{prof_name or prof_id}" '
+            f'style="width:{size}px;height:{size}px;border-radius:{max(4, size//6)}px;'
+            f'object-fit:cover;flex-shrink:0;vertical-align:middle;" />'
+        )
+    # Initials fallback
     color = PROF_COLORS.get(prof_id, "#6B7280")
     initials = _prof_initials(prof_name or prof_id)
     return (
         f'<span style="display:inline-flex;align-items:center;justify-content:center;'
-        f'width:{size}px;height:{size}px;border-radius:4px;background:{color};'
-        f'color:#FFF;font-size:{max(9, size-8)}px;font-weight:700;line-height:1;'
-        f'vertical-align:middle;margin-right:5px;flex-shrink:0;letter-spacing:-0.02em;" '
+        f'width:{size}px;height:{size}px;border-radius:{max(4, size//6)}px;background:{color};'
+        f'color:#FFF;font-size:{max(9, int(size*0.42))}px;font-weight:700;line-height:1;'
+        f'vertical-align:middle;flex-shrink:0;letter-spacing:-0.02em;" '
         f'title="{prof_name or prof_id}">{initials}</span>'
     )
 
@@ -726,17 +760,54 @@ else:
                 dot_color = DEPT_DOT.get(p.get("home_department", "game"), "#666")
 
                 with st.container():
-                    f_c1, f_c2 = st.columns([1, 4])
+                    f_c1, f_c2, f_c3, f_c4 = st.columns([1, 1.5, 4, 1])
                     with f_c1:
                         new_avail = st.toggle("avail", value=available, key=f"roster_avail_{pid}", label_visibility="collapsed")
                     with f_c2:
+                        _avatar_size = 40 if new_avail else 32
                         st.markdown(
-                            f'<div style="padding-top:2px;">'
-                            f'<span class="dept-dot" style="background:{dot_color if new_avail else "#333"};"></span>'
+                            f'<div style="padding-top:2px;">{prof_avatar_html(pid, p["name"], size=_avatar_size)}</div>',
+                            unsafe_allow_html=True,
+                        )
+                    with f_c3:
+                        st.markdown(
+                            f'<div style="padding-top:6px;">'
                             f'<span style="font-weight:600; font-size:0.85rem; color:{TXT_PRIMARY if new_avail else TXT_MUTED};">{p["name"]}</span>'
                             f'</div>',
-                            unsafe_allow_html=True
+                            unsafe_allow_html=True,
                         )
+                    with f_c4:
+                        with st.popover("📷", use_container_width=True):
+                            st.markdown(f"**Portrait: {p['name']}**")
+                            _current_portrait = _prof_portrait_path(pid)
+                            if _current_portrait:
+                                _cur_url = _portrait_data_url(str(_current_portrait), _current_portrait.stat().st_mtime)
+                                st.markdown(
+                                    f'<img src="{_cur_url}" style="width:96px;height:96px;border-radius:8px;object-fit:cover;" />',
+                                    unsafe_allow_html=True,
+                                )
+                                if st.button("Remove", key=f"portrait_rm_{pid}", use_container_width=True):
+                                    _current_portrait.unlink()
+                                    st.cache_data.clear()
+                                    st.rerun()
+                            _uploaded = st.file_uploader(
+                                "Upload new portrait",
+                                type=["png", "jpg", "jpeg", "webp"],
+                                key=f"portrait_up_{pid}",
+                                label_visibility="collapsed",
+                            )
+                            if _uploaded is not None:
+                                _ext = _uploaded.name.rsplit(".", 1)[-1].lower()
+                                _pdir = PROJECT_ROOT / "data" / "portraits"
+                                _pdir.mkdir(parents=True, exist_ok=True)
+                                # Remove any existing portrait (different ext) for this prof
+                                for _e in ("png", "jpg", "jpeg", "webp"):
+                                    _existing = _pdir / f"{pid}.{_e}"
+                                    if _existing.exists():
+                                        _existing.unlink()
+                                (_pdir / f"{pid}.{_ext}").write_bytes(_uploaded.getvalue())
+                                st.cache_data.clear()
+                                st.rerun()
 
                     # Derive default max from solver tier: chair→2, overload→5, standard→4
                     _solver_max = config.CHAIR_MAX if p.get("is_chair") else (config.OVERLOAD_MAX if p.get("can_overload") else config.STANDARD_MAX)
@@ -1104,7 +1175,15 @@ else:
                 _expander_label = f"{cid}  {course.get('name', cid)}{_label_suffix}"
                 _should_expand = (_auto_expand_idx == idx)
                 with st.expander(_expander_label, expanded=_should_expand):
-                    st.markdown(f'<div class="badge-row">{_badges}</div>', unsafe_allow_html=True)
+                    # Portrait right-justified + badges left
+                    _exp_portrait = prof_avatar_html(_prof_id_for_badge, _prof_display, size=56)
+                    st.markdown(
+                        f'<div style="display:flex;align-items:flex-start;gap:12px;">'
+                        f'<div class="badge-row" style="flex:1;">{_badges}</div>'
+                        f'{_exp_portrait}'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
 
                     # Row 1: Day/Time (primary action)
                     lock = o.get("locked")
@@ -1329,15 +1408,16 @@ else:
                                     )
                                 _card_extra_style = f"background:#2A1F0A;" if _is_pending else ""
                                 st.markdown(
-                                    f'<div class="cal-course {_lock_class}" style="border-left-color:{_border_color};{_card_extra_style}">'
+                                    f'<div class="cal-course {_lock_class}" style="border-left-color:{_border_color};{_card_extra_style}display:flex;gap:8px;align-items:flex-start;">'
+                                    f'<div style="flex:1;min-width:0;">'
                                     f'<div class="cal-cid"><span class="dept-dot" style="background:{_dot};"></span>{_lock_icon}{a["catalog_id"]}</div>'
                                     f'<div class="cal-cname">{a["course_name"]}</div>'
-                                    f'<div class="cal-detail" style="display:flex;align-items:center;gap:0;">'
-                                    f'{prof_avatar_html(a.get("prof_id"), a.get("prof_name"), size=18)}'
-                                    f'<span>{a["prof_name"]} · {_room_short}'
+                                    f'<div class="cal-detail">{a["prof_name"]} · {_room_short}'
                                     f' · <span style="color:{_aff_color};">{_aff_label}</span>'
-                                    f' · <span style="color:{_tp_color};">{_tp_label}</span></span></div>'
+                                    f' · <span style="color:{_tp_color};">{_tp_label}</span></div>'
                                     f'{_pending_html}'
+                                    f'</div>'
+                                    f'{prof_avatar_html(a.get("prof_id"), a.get("prof_name"), size=38)}'
                                     f'</div>',
                                     unsafe_allow_html=True,
                                 )
