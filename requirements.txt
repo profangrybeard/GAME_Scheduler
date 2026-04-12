@@ -3,5 +3,4 @@ openpyxl>=3.1
 jsonschema>=4.20
 beautifulsoup4>=4.12
 requests>=2.31
-gspread>=6.0
 streamlit>=1.30
