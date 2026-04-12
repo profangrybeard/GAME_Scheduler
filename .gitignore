@@ -13,6 +13,7 @@ test_flow.js
 verify.js
 demo*.js
 zoom.js
+inspect.js
 # Per-session scratchpad for current quarterly offerings.
 # Seeded from data/quarterly_offerings.default.json on first run.
 data/quarterly_offerings.json

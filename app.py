@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "2.5.1"
+APP_VERSION = "2.5.2"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -75,6 +75,51 @@ DEPT_DOT    = {"game": "#60A5FA", "motion_media": "#A78BFA", "ai": "#FBBF24", "i
 DEPT_LABELS = {"game": "Game Design", "motion_media": "Motion Media", "ai": "AI", "ixds": "Interactive Design", "iact": "Interaction Design", "digi": "Digital Communication", "adbr": "Advertising & Branding"}
 PRIORITY_LABELS = {"must_have": "Must", "should_have": "Should", "could_have": "Could", "nice_to_have": "Nice"}
 TIME_PREF_LABELS = {"morning": "Morning", "afternoon": "Afternoon", "afternoon_evening": "Afternoon / Evening"}
+
+# ─── Professor Avatars ──────────────────────────────────────────────
+# Distinct colors per professor for quick visual identification on cards.
+PROF_COLORS = {
+    "prof_allen":    "#3B82F6",  # blue
+    "prof_lindsay":  "#A78BFA",  # purple
+    "prof_dodson":   "#EC4899",  # pink
+    "prof_avenali":  "#F59E0B",  # amber
+    "prof_spencer":  "#10B981",  # green
+    "prof_maloney":  "#EF4444",  # red
+    "prof_imperato": "#F97316",  # orange
+}
+
+def _prof_initials(name: str) -> str:
+    parts = [p for p in name.split() if p]
+    if not parts:
+        return "?"
+    if len(parts) == 1:
+        return parts[0][:2].upper()
+    return (parts[0][0] + parts[-1][0]).upper()
+
+def prof_avatar_html(prof_id: str | None, prof_name: str | None = None, size: int = 18) -> str:
+    """Return HTML for a small professor avatar square.
+    Auto-draft (no prof) renders a neutral silhouette placeholder.
+    """
+    if not prof_id or prof_id == "Auto-Draft":
+        return (
+            f'<span style="display:inline-flex;align-items:center;justify-content:center;'
+            f'width:{size}px;height:{size}px;border-radius:4px;'
+            f'background:{BG_HOVER};border:1px dashed {BORDER};'
+            f'color:{TXT_MUTED};font-size:{max(10, size-6)}px;line-height:1;'
+            f'vertical-align:middle;margin-right:5px;flex-shrink:0;" title="Auto-Draft">'
+            f'<svg width="{size-6}" height="{size-6}" viewBox="0 0 24 24" fill="none" '
+            f'stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">'
+            f'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></span>'
+        )
+    color = PROF_COLORS.get(prof_id, "#6B7280")
+    initials = _prof_initials(prof_name or prof_id)
+    return (
+        f'<span style="display:inline-flex;align-items:center;justify-content:center;'
+        f'width:{size}px;height:{size}px;border-radius:4px;background:{color};'
+        f'color:#FFF;font-size:{max(9, size-8)}px;font-weight:700;line-height:1;'
+        f'vertical-align:middle;margin-right:5px;flex-shrink:0;letter-spacing:-0.02em;" '
+        f'title="{prof_name or prof_id}">{initials}</span>'
+    )
 
 # ─── Page Config ─────────────────────────────────────────────────────
 st.set_page_config(
@@ -1030,7 +1075,9 @@ else:
                 _pri_label = PRIORITY_LABELS.get(_pri, "Must")
                 _pri_class = {"must_have": "badge-must", "should_have": "badge-should", "could_have": "badge-could", "nice_to_have": "badge-nice"}.get(_pri, "badge-could")
                 _prof_list = o.get("override_preferred_professors") or []
+                _prof_id_for_badge = _prof_list[0] if _prof_list else None
                 _prof_display = prof_labels.get(_prof_list[0], _prof_list[0]) if _prof_list else "Auto"
+                _prof_avatar = prof_avatar_html(_prof_id_for_badge, _prof_display, size=16)
                 _sec_count = o.get("sections", 1)
                 _lock = o.get("locked")
                 _room = o.get("override_room_type") or course.get("required_room_type", "standard")
@@ -1039,7 +1086,7 @@ else:
                 # Badges HTML
                 _badges = f'<span class="badge {_pri_class}">{_pri_label}</span>'
                 _badges += f'<span class="badge badge-sec">{_sec_count} sec</span>'
-                _badges += f'<span class="badge badge-prof">{html.escape(_prof_display)}</span>'
+                _badges += f'<span class="badge badge-prof" style="display:inline-flex;align-items:center;">{_prof_avatar}{html.escape(_prof_display)}</span>'
                 _badges += f'<span class="badge badge-room">{_room_label}</span>'
                 if _lock:
                     _badges += f'<span class="badge badge-lock-gold">🔒 {DG_LABELS[_lock["day_group"]]} {_lock["time_slot"]}</span>'
@@ -1276,9 +1323,11 @@ else:
                                     f'<div class="cal-course {_lock_class}" style="border-left-color:{_border_color};{_card_extra_style}">'
                                     f'<div class="cal-cid"><span class="dept-dot" style="background:{_dot};"></span>{_lock_icon}{a["catalog_id"]}</div>'
                                     f'<div class="cal-cname">{a["course_name"]}</div>'
-                                    f'<div class="cal-detail">{a["prof_name"]} · {_room_short}'
+                                    f'<div class="cal-detail" style="display:flex;align-items:center;gap:0;">'
+                                    f'{prof_avatar_html(a.get("prof_id"), a.get("prof_name"), size=18)}'
+                                    f'<span>{a["prof_name"]} · {_room_short}'
                                     f' · <span style="color:{_aff_color};">{_aff_label}</span>'
-                                    f' · <span style="color:{_tp_color};">{_tp_label}</span></div>'
+                                    f' · <span style="color:{_tp_color};">{_tp_label}</span></span></div>'
                                     f'{_pending_html}'
                                     f'</div>',
                                     unsafe_allow_html=True,
