@@ -685,15 +685,19 @@ else:
                             unsafe_allow_html=True
                         )
 
+                    # Derive default max from solver tier: chair→2, overload→5, standard→4
+                    _solver_max = config.CHAIR_MAX if p.get("is_chair") else (config.OVERLOAD_MAX if p.get("can_overload") else config.STANDARD_MAX)
+                    _default_max = p.get("max_classes", _solver_max)
+
                     if new_avail:
                         m_col, t_col = st.columns([1, 2])
                         with m_col:
-                            new_max = st.number_input("Max", 1, 6, p.get("max_classes", 4), key=f"roster_max_{pid}", label_visibility="collapsed")
+                            new_max = st.number_input("Max", 1, 6, _default_max, key=f"roster_max_{pid}", label_visibility="collapsed")
                         with t_col:
                             time_opts = list(TIME_PREF_LABELS.keys())
                             new_time = st.selectbox("Time", time_opts, format_func=lambda x: TIME_PREF_LABELS[x], index=time_opts.index(p.get("time_preference", "morning")), key=f"roster_time_{pid}", label_visibility="collapsed")
                     else:
-                        new_max = p.get("max_classes", 4)
+                        new_max = _default_max
                         new_time = p.get("time_preference", "morning")
 
                     if "prof_overrides" not in active_project: active_project["prof_overrides"] = {}
