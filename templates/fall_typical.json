@@ -1,6 +1,6 @@
 {
-  "name": "Full Catalog Preview",
-  "description": "Large offering to stress-test the solver. All core UG + key grad courses across every department. Good for seeing how far the schedule can stretch.",
+  "name": "Fall Typical",
+  "description": "A standard fall quarter with core courses across all three departments, 2 sections on high-demand classes, and graduate offerings.",
   "professor_overrides": {
     "prof_allen": {
       "max_classes": 2,
@@ -46,7 +46,7 @@
       "override_enrollment_cap": null,
       "override_room_type": null,
       "override_preferred_professors": null,
-      "notes": null
+      "notes": "Intro - always high demand"
     },
     {
       "catalog_id": "GAME_220",
@@ -55,7 +55,7 @@
       "override_enrollment_cap": null,
       "override_room_type": null,
       "override_preferred_professors": null,
-      "notes": null
+      "notes": "Core Programming - 2 sections"
     },
     {
       "catalog_id": "GAME_236",
@@ -73,46 +73,10 @@
       "override_enrollment_cap": null,
       "override_room_type": null,
       "override_preferred_professors": null,
-      "notes": null
-    },
-    {
-      "catalog_id": "GAME_266",
-      "priority": "should_have",
-      "sections": 1,
-      "override_enrollment_cap": null,
-      "override_room_type": null,
-      "override_preferred_professors": null,
-      "notes": null
-    },
-    {
-      "catalog_id": "GAME_310",
-      "priority": "should_have",
-      "sections": 1,
-      "override_enrollment_cap": null,
-      "override_room_type": null,
-      "override_preferred_professors": null,
-      "notes": null
-    },
-    {
-      "catalog_id": "GAME_326",
-      "priority": "should_have",
-      "sections": 1,
-      "override_enrollment_cap": null,
-      "override_room_type": null,
-      "override_preferred_professors": null,
-      "notes": null
+      "notes": "Dodson preferred"
     },
     {
       "catalog_id": "GAME_342",
-      "priority": "should_have",
-      "sections": 1,
-      "override_enrollment_cap": null,
-      "override_room_type": null,
-      "override_preferred_professors": null,
-      "notes": null
-    },
-    {
-      "catalog_id": "GAME_356",
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
@@ -130,22 +94,13 @@
       "notes": null
     },
     {
-      "catalog_id": "GAME_364",
-      "priority": "could_have",
-      "sections": 1,
-      "override_enrollment_cap": null,
-      "override_room_type": null,
-      "override_preferred_professors": null,
-      "notes": null
-    },
-    {
       "catalog_id": "GAME_405",
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
       "override_room_type": null,
       "override_preferred_professors": null,
-      "notes": null
+      "notes": "Capstone entry"
     },
     {
       "catalog_id": "GAME_465",
@@ -165,25 +120,7 @@
       "override_preferred_professors": [
         "prof_dodson"
       ],
-      "notes": null
-    },
-    {
-      "catalog_id": "GAME_714",
-      "priority": "should_have",
-      "sections": 1,
-      "override_enrollment_cap": 16,
-      "override_room_type": null,
-      "override_preferred_professors": null,
-      "notes": null
-    },
-    {
-      "catalog_id": "ITGM_705",
-      "priority": "must_have",
-      "sections": 1,
-      "override_enrollment_cap": 16,
-      "override_room_type": null,
-      "override_preferred_professors": null,
-      "notes": null
+      "notes": "Grad seminar"
     },
     {
       "catalog_id": "MOME_105",
@@ -192,29 +129,11 @@
       "override_enrollment_cap": null,
       "override_room_type": null,
       "override_preferred_professors": null,
-      "notes": null
+      "notes": "Intro - high demand"
     },
     {
       "catalog_id": "MOME_130",
       "priority": "must_have",
-      "sections": 1,
-      "override_enrollment_cap": null,
-      "override_room_type": null,
-      "override_preferred_professors": null,
-      "notes": null
-    },
-    {
-      "catalog_id": "MOME_206",
-      "priority": "should_have",
-      "sections": 1,
-      "override_enrollment_cap": null,
-      "override_room_type": null,
-      "override_preferred_professors": null,
-      "notes": null
-    },
-    {
-      "catalog_id": "MOME_333",
-      "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
       "override_room_type": null,
@@ -228,7 +147,7 @@
       "override_enrollment_cap": null,
       "override_room_type": null,
       "override_preferred_professors": null,
-      "notes": null
+      "notes": "Senior project"
     },
     {
       "catalog_id": "MOME_719",
@@ -239,16 +158,16 @@
       "override_preferred_professors": [
         "prof_imperato"
       ],
-      "notes": null
+      "notes": "Grad media theory"
     },
     {
-      "catalog_id": "AI_101",
-      "priority": "should_have",
+      "catalog_id": "ITGM_705",
+      "priority": "must_have",
       "sections": 1,
-      "override_enrollment_cap": null,
+      "override_enrollment_cap": 16,
       "override_room_type": null,
       "override_preferred_professors": null,
-      "notes": null
+      "notes": "Grad ITGM core"
     },
     {
       "catalog_id": "AI_201",
@@ -257,16 +176,16 @@
       "override_enrollment_cap": 20,
       "override_room_type": "pc_lab",
       "override_preferred_professors": null,
-      "notes": null
+      "notes": "Applied AI"
     },
     {
-      "catalog_id": "AI_301",
-      "priority": "could_have",
+      "catalog_id": "AI_101",
+      "priority": "should_have",
       "sections": 1,
-      "override_enrollment_cap": 20,
-      "override_room_type": "pc_lab",
+      "override_enrollment_cap": null,
+      "override_room_type": null,
       "override_preferred_professors": null,
-      "notes": null
+      "notes": "AI survey intro"
     }
   ],
   "intended_quarter": "fall"

@@ -1,0 +1,183 @@
+{
+  "name": "Grad Focused",
+  "description": "Heavy graduate schedule with essential undergrad cores. Good for quarters with strong MFA/MA cohorts.",
+  "professor_overrides": {
+    "prof_allen": {
+      "max_classes": 2,
+      "time_preference": "morning",
+      "available": true
+    },
+    "prof_lindsay": {
+      "max_classes": 5,
+      "time_preference": "afternoon_evening",
+      "available": true
+    },
+    "prof_dodson": {
+      "max_classes": 5,
+      "time_preference": "morning",
+      "available": true
+    },
+    "prof_avenali": {
+      "max_classes": 5,
+      "time_preference": "morning",
+      "available": true
+    },
+    "prof_spencer": {
+      "max_classes": 5,
+      "time_preference": "afternoon_evening",
+      "available": true
+    },
+    "prof_maloney": {
+      "max_classes": 5,
+      "time_preference": "afternoon_evening",
+      "available": true
+    },
+    "prof_imperato": {
+      "max_classes": 5,
+      "time_preference": "morning",
+      "available": true
+    }
+  },
+  "offerings": [
+    {
+      "catalog_id": "GAME_220",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_256",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_405",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_502",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": 16,
+      "override_room_type": "standard",
+      "override_preferred_professors": null,
+      "notes": "Grad perspectives"
+    },
+    {
+      "catalog_id": "GAME_706",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": 16,
+      "override_room_type": "standard",
+      "override_preferred_professors": [
+        "prof_dodson"
+      ],
+      "notes": "Grad design docs"
+    },
+    {
+      "catalog_id": "GAME_714",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": 16,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "Grad ludic methodology"
+    },
+    {
+      "catalog_id": "GAME_734",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": 16,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "Grad systems & simulation"
+    },
+    {
+      "catalog_id": "ITGM_705",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": 16,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "ITGM grad core"
+    },
+    {
+      "catalog_id": "ITGM_755",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": 16,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "Thesis I"
+    },
+    {
+      "catalog_id": "ITGM_765",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": 16,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "Thesis II"
+    },
+    {
+      "catalog_id": "MOME_105",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "MOME_719",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": 16,
+      "override_room_type": null,
+      "override_preferred_professors": [
+        "prof_imperato"
+      ],
+      "notes": "Grad media theory"
+    },
+    {
+      "catalog_id": "MOME_735",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": 16,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "Thesis preproduction"
+    },
+    {
+      "catalog_id": "MOME_775",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": 16,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "Thesis development"
+    },
+    {
+      "catalog_id": "AI_301",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": 20,
+      "override_room_type": "pc_lab",
+      "override_preferred_professors": null,
+      "notes": "Agentic Design"
+    }
+  ],
+  "intended_quarter": "fall"
+}

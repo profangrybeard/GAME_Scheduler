@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "2.1.0"
+APP_VERSION = "2.5.4"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -40,6 +40,14 @@ def add_log(event_type, message):
 # Ensure project root is importable
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
+
+# Bootstrap the per-session scratchpad from the committed default if missing.
+# quarterly_offerings.json is gitignored and rewritten by save_offerings().
+_offerings_live = PROJECT_ROOT / "data" / "quarterly_offerings.json"
+_offerings_default = PROJECT_ROOT / "data" / "quarterly_offerings.default.json"
+if not _offerings_live.exists() and _offerings_default.exists():
+    import shutil
+    shutil.copyfile(_offerings_default, _offerings_live)
 
 import config
 from solver.scheduler import run_schedule
@@ -68,6 +76,51 @@ DEPT_LABELS = {"game": "Game Design", "motion_media": "Motion Media", "ai": "AI"
 PRIORITY_LABELS = {"must_have": "Must", "should_have": "Should", "could_have": "Could", "nice_to_have": "Nice"}
 TIME_PREF_LABELS = {"morning": "Morning", "afternoon": "Afternoon", "afternoon_evening": "Afternoon / Evening"}
 
+# ─── Professor Avatars ──────────────────────────────────────────────
+# Distinct colors per professor for quick visual identification on cards.
+PROF_COLORS = {
+    "prof_allen":    "#3B82F6",  # blue
+    "prof_lindsay":  "#A78BFA",  # purple
+    "prof_dodson":   "#14B8A6",  # teal
+    "prof_avenali":  "#F59E0B",  # amber
+    "prof_spencer":  "#10B981",  # green
+    "prof_maloney":  "#EF4444",  # red
+    "prof_imperato": "#F97316",  # orange
+}
+
+def _prof_initials(name: str) -> str:
+    parts = [p for p in name.split() if p]
+    if not parts:
+        return "?"
+    if len(parts) == 1:
+        return parts[0][:2].upper()
+    return (parts[0][0] + parts[-1][0]).upper()
+
+def prof_avatar_html(prof_id: str | None, prof_name: str | None = None, size: int = 18) -> str:
+    """Return HTML for a small professor avatar square.
+    Auto-draft (no prof) renders a neutral silhouette placeholder.
+    """
+    if not prof_id or prof_id == "Auto-Draft":
+        return (
+            f'<span style="display:inline-flex;align-items:center;justify-content:center;'
+            f'width:{size}px;height:{size}px;border-radius:4px;'
+            f'background:{BG_HOVER};border:1px dashed {BORDER};'
+            f'color:{TXT_MUTED};font-size:{max(10, size-6)}px;line-height:1;'
+            f'vertical-align:middle;margin-right:5px;flex-shrink:0;" title="Auto-Draft">'
+            f'<svg width="{size-6}" height="{size-6}" viewBox="0 0 24 24" fill="none" '
+            f'stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">'
+            f'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></span>'
+        )
+    color = PROF_COLORS.get(prof_id, "#6B7280")
+    initials = _prof_initials(prof_name or prof_id)
+    return (
+        f'<span style="display:inline-flex;align-items:center;justify-content:center;'
+        f'width:{size}px;height:{size}px;border-radius:4px;background:{color};'
+        f'color:#FFF;font-size:{max(9, size-8)}px;font-weight:700;line-height:1;'
+        f'vertical-align:middle;margin-right:5px;flex-shrink:0;letter-spacing:-0.02em;" '
+        f'title="{prof_name or prof_id}">{initials}</span>'
+    )
+
 # ─── Page Config ─────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Course Scheduler",
@@ -86,7 +139,7 @@ CSS_TEMPLATE = """
         background: {BG_BASE};
         color: {TXT_PRIMARY};
     }}
-    .block-container {{ padding-top: 3rem; max-width: 1400px; }}
+    .block-container {{ padding-top: 1.5rem; max-width: 1400px; }}
     /* Hide Deploy + hamburger, keep sidebar expand arrow */
     [data-testid="stToolbarActions"] {{ display: none !important; }}
     [data-testid="stAppDeployButton"] {{ display: none !important; }}
@@ -384,9 +437,16 @@ CSS_TEMPLATE = """
     }}
     .badge-room {{ background: {ACCENT_AMBER}15; color: {TXT_MUTED}; border: 1px solid {BORDER}; }}
 
-    @media (max-width: 768px) {{
-        .metric-box .num {{ font-size: 1.2rem; }}
-        .course-card {{ padding: 10px 12px; }}
+    /* Desktop-only gate: show overlay on small screens */
+    @media (max-width: 1024px) {{
+        .stApp::before {{
+            content: "This app is designed for laptop screens (1440\00d7 900+). Please use a MacBook or similar display.";
+            position: fixed; inset: 0; z-index: 99999;
+            display: flex; align-items: center; justify-content: center;
+            background: {BG_BASE}; color: {TXT_SECONDARY};
+            font-size: 1.1rem; font-weight: 500; text-align: center;
+            padding: 2rem; font-family: 'Inter', sans-serif;
+        }}
     }}
 </style>
 """
@@ -678,15 +738,19 @@ else:
                             unsafe_allow_html=True
                         )
 
+                    # Derive default max from solver tier: chair→2, overload→5, standard→4
+                    _solver_max = config.CHAIR_MAX if p.get("is_chair") else (config.OVERLOAD_MAX if p.get("can_overload") else config.STANDARD_MAX)
+                    _default_max = p.get("max_classes", _solver_max)
+
                     if new_avail:
                         m_col, t_col = st.columns([1, 2])
                         with m_col:
-                            new_max = st.number_input("Max", 1, 6, p.get("max_classes", 4), key=f"roster_max_{pid}", label_visibility="collapsed")
+                            new_max = st.number_input("Max", 1, 6, _default_max, key=f"roster_max_{pid}", label_visibility="collapsed")
                         with t_col:
                             time_opts = list(TIME_PREF_LABELS.keys())
                             new_time = st.selectbox("Time", time_opts, format_func=lambda x: TIME_PREF_LABELS[x], index=time_opts.index(p.get("time_preference", "morning")), key=f"roster_time_{pid}", label_visibility="collapsed")
                     else:
-                        new_max = p.get("max_classes", 4)
+                        new_max = _default_max
                         new_time = p.get("time_preference", "morning")
 
                     if "prof_overrides" not in active_project: active_project["prof_overrides"] = {}
@@ -773,12 +837,7 @@ else:
         f'    border-bottom: 1px solid {BORDER} !important;'
         f'    padding-bottom: 2px;'
         f'  }}'
-        f'  /* Mobile */'
-        f'  @media (max-width: 768px) {{'
-        f'    [data-baseweb="tab-list"] {{ display: none !important; }}'
-        f'    .block-container {{ padding-bottom: 72px !important; }}'
-        f'  }}'
-        f'  @media (min-width: 769px) {{ .bottom-nav {{ display: none !important; }} }}'
+        f'  /* No mobile layout — desktop only (see CLAUDE.md Rule 1) */'
         f'</style>',
         unsafe_allow_html=True,
     )
@@ -812,6 +871,52 @@ else:
     # ══════════════════════════════════════════════════════════════════
     # CONTEXT BAR (always visible above tabs)
     # ══════════════════════════════════════════════════════════════════
+    # Compute pending locks early so Generate button can show amber glow
+    _solver_results_early = st.session_state.get("solver_results")
+    _pending_now = 0
+    if _solver_results_early and st.session_state.get("locked_assignments"):
+        _sr_mode_idx = {"affinity_first": 0, "time_pref_first": 1, "balanced": 2}.get(st.session_state.get("solver_mode", "balanced"), 2)
+        _sr_schedule = _solver_results_early["modes"][_sr_mode_idx]["schedule"]
+        _solved_map = {sa["cs_key"]: sa for sa in _sr_schedule}
+        for _la in st.session_state["locked_assignments"]:
+            _sa = _solved_map.get(_la["cs_key"])
+            if not _sa:
+                _pending_now += 1
+                continue
+            if (_la["day_group"] != _sa["day_group"] or _la["time_slot"] != _sa["time_slot"]
+                    or _la["prof_id"] != _sa["prof_id"] or _la["room_id"] != _sa["room_id"]):
+                _pending_now += 1
+    st.session_state["_pending_count"] = _pending_now
+
+    # Inject amber glow onto Generate Schedule button when pending changes exist
+    if _pending_now > 0:
+        import streamlit.components.v1 as _components
+        _components.html(
+            f'<style>@keyframes gen-pulse {{'
+            f'  0%,100% {{ box-shadow: 0 0 0 2px {ACCENT_AMBER}, 0 0 8px {ACCENT_AMBER}88; }}'
+            f'  50%     {{ box-shadow: 0 0 0 2px {ACCENT_AMBER}, 0 0 20px {ACCENT_AMBER}; }}'
+            f'}}</style>'
+            f'<script>'
+            f'(function() {{'
+            f'  const apply = () => {{'
+            f'    const doc = window.parent.document;'
+            f'    const btns = doc.querySelectorAll("button");'
+            f'    for (const b of btns) {{'
+            f'      if (b.textContent.trim() === "Generate Schedule") {{'
+            f'        b.style.boxShadow = "0 0 0 2px {ACCENT_AMBER}, 0 0 14px {ACCENT_AMBER}66";'
+            f'        b.style.borderColor = "{ACCENT_AMBER}";'
+            f'        b.style.animation = "gen-pulse 2s ease-in-out infinite";'
+            f'      }}'
+            f'    }}'
+            f'  }};'
+            f'  apply();'
+            f'  setTimeout(apply, 200);'
+            f'  setTimeout(apply, 600);'
+            f'}})();'
+            f'</script>',
+            height=0,
+        )
+
     total_sections = sum(o.get("sections", 1) for o in offerings)
     ctx1, ctx2, ctx3 = st.columns([2, 2, 2])
     with ctx1:
@@ -849,7 +954,83 @@ else:
     # ══════════════════════════════════════════════════════════════════
     # TABS: Courses | Schedule | Catalog
     # ══════════════════════════════════════════════════════════════════
-    tab_catalog, tab_courses, tab_schedule = st.tabs(["Catalog", "Courses", "Schedule"])
+    # Schedule tab state indicator
+    #   State 0: empty        — no offerings yet
+    #   State 1: ready        — offerings exist, not yet generated
+    #   State 2: generating   — handled inline by st.spinner during solve
+    #   State 3: fresh        — generated, no pending changes
+    #   State 4: stale        — generated, pending changes (needs regenerate)
+    if not offerings:
+        _sched_label = "Schedule"
+    elif not st.session_state.get("solver_results"):
+        _sched_label = "Schedule ◌"
+    elif _pending_now > 0:
+        _sched_label = "Schedule ⚠"
+    else:
+        _sched_label = "Schedule ✓"
+
+    tab_catalog, tab_courses, tab_schedule = st.tabs(["Catalog", "Courses", _sched_label])
+
+    # Tab persistence — remember which tab the user was on across reruns
+    import streamlit.components.v1 as _tab_components
+    _tab_components.html(
+        """
+        <script>
+        (function() {
+          const doc = window.parent.document;
+          const STORAGE_KEY = 'gameSchedulerActiveTab';
+
+          function getTabs() {
+            return Array.from(doc.querySelectorAll('[data-baseweb="tab"]'));
+          }
+
+          function saveActive() {
+            const tabs = getTabs();
+            const activeIdx = tabs.findIndex(t => t.getAttribute('aria-selected') === 'true');
+            if (activeIdx >= 0) {
+              sessionStorage.setItem(STORAGE_KEY, activeIdx.toString());
+            }
+          }
+
+          function restore() {
+            const tabs = getTabs();
+            if (tabs.length === 0) return;
+            const saved = parseInt(sessionStorage.getItem(STORAGE_KEY) || '0');
+            if (saved < 0 || saved >= tabs.length) return;
+            const activeIdx = tabs.findIndex(t => t.getAttribute('aria-selected') === 'true');
+            if (activeIdx !== saved) {
+              tabs[saved].click();
+            }
+          }
+
+          // Save when user clicks any tab
+          doc.addEventListener('click', (e) => {
+            const tab = e.target.closest('[data-baseweb="tab"]');
+            if (tab) setTimeout(saveActive, 30);
+          }, true);
+
+          // Clean up any previous observer from earlier rerun
+          if (window.parent.__gsTabObserver) {
+            try { window.parent.__gsTabObserver.disconnect(); } catch(e) {}
+          }
+
+          // Watch for DOM changes (Streamlit reruns) and restore the tab
+          let debounce = null;
+          const observer = new MutationObserver(() => {
+            clearTimeout(debounce);
+            debounce = setTimeout(restore, 50);
+          });
+          observer.observe(doc.body, { childList: true, subtree: true });
+          window.parent.__gsTabObserver = observer;
+
+          // Initial restore after small delay to let DOM settle
+          setTimeout(restore, 100);
+          setTimeout(restore, 400);
+        })();
+        </script>
+        """,
+        height=0,
+    )
 
     # ── TAB 1: COURSES ───────────────────────────────────────────
     with tab_courses:
@@ -894,7 +1075,9 @@ else:
                 _pri_label = PRIORITY_LABELS.get(_pri, "Must")
                 _pri_class = {"must_have": "badge-must", "should_have": "badge-should", "could_have": "badge-could", "nice_to_have": "badge-nice"}.get(_pri, "badge-could")
                 _prof_list = o.get("override_preferred_professors") or []
+                _prof_id_for_badge = _prof_list[0] if _prof_list else None
                 _prof_display = prof_labels.get(_prof_list[0], _prof_list[0]) if _prof_list else "Auto"
+                _prof_avatar = prof_avatar_html(_prof_id_for_badge, _prof_display, size=16)
                 _sec_count = o.get("sections", 1)
                 _lock = o.get("locked")
                 _room = o.get("override_room_type") or course.get("required_room_type", "standard")
@@ -903,13 +1086,20 @@ else:
                 # Badges HTML
                 _badges = f'<span class="badge {_pri_class}">{_pri_label}</span>'
                 _badges += f'<span class="badge badge-sec">{_sec_count} sec</span>'
-                _badges += f'<span class="badge badge-prof">{html.escape(_prof_display)}</span>'
+                _badges += f'<span class="badge badge-prof" style="display:inline-flex;align-items:center;">{_prof_avatar}{html.escape(_prof_display)}</span>'
                 _badges += f'<span class="badge badge-room">{_room_label}</span>'
                 if _lock:
                     _badges += f'<span class="badge badge-lock-gold">🔒 {DG_LABELS[_lock["day_group"]]} {_lock["time_slot"]}</span>'
 
-                _lock_indicator = f"  `🔒 {DG_LABELS[_lock['day_group']]} {_lock['time_slot']}`" if _lock else ""
-                _expander_label = f"{cid}  {course.get('name', cid)}{_lock_indicator}"
+                # Build always-visible status pills for the expander label
+                _prof_code_for_label = _prof_initials(_prof_display) if _prof_list else "Auto"
+                _label_parts = [f"`{_pri_label}`", f"`{_prof_code_for_label}`"]
+                if _sec_count > 1:
+                    _label_parts.append(f"`{_sec_count} sec`")
+                if _lock:
+                    _label_parts.append(f"`🔒 {DG_LABELS[_lock['day_group']]} {_lock['time_slot']}`")
+                _label_suffix = "  " + "  ".join(_label_parts)
+                _expander_label = f"{cid}  {course.get('name', cid)}{_label_suffix}"
                 _should_expand = (_auto_expand_idx == idx)
                 with st.expander(_expander_label, expanded=_should_expand):
                     st.markdown(f'<div class="badge-row">{_badges}</div>', unsafe_allow_html=True)
@@ -1021,13 +1211,52 @@ else:
                     with open(excel_path, "rb") as ef:
                         st.download_button("Export Excel", ef, file_name=excel_path.name, mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
 
+            # Lock All / Unlock All buttons
+            _la_c1, _la_c2, _la_spacer = st.columns([1, 1, 5])
+            with _la_c1:
+                if st.button("🔒 Lock All", use_container_width=True, key="lock_all_btn"):
+                    existing = {la["cs_key"] for la in st.session_state["locked_assignments"]}
+                    added = 0
+                    for _a in mode_data["schedule"]:
+                        if _a["cs_key"] in existing:
+                            continue
+                        st.session_state["locked_assignments"].append({
+                            "cs_key": _a["cs_key"],
+                            "prof_id": _a["prof_id"],
+                            "room_id": _a["room_id"],
+                            "day_group": _a["day_group"],
+                            "time_slot": _a["time_slot"],
+                        })
+                        added += 1
+                    add_log("LOCK", f"Locked All (+{added})")
+                    st.rerun()
+            with _la_c2:
+                if st.button("🔓 Unlock All", use_container_width=True, key="unlock_all_btn"):
+                    n = len(st.session_state["locked_assignments"])
+                    st.session_state["locked_assignments"] = []
+                    add_log("UNLOCK", f"Unlocked All ({n})")
+                    st.rerun()
+
             # Status line
             n_placed = len(mode_data["schedule"]); n_unsched = len(mode_data["unscheduled"])
             n_locked = len(locked_set)
             status = mode_data["status"].upper(); score = mode_data.get("objective", "—")
             stat_color = ACCENT_GREEN if status == "OPTIMAL" else ACCENT_AMBER
+            # Count pending locks — ones whose stored values don't match current solver assignment
+            _solved_by_cs = {sa["cs_key"]: sa for sa in mode_data["schedule"]}
+            _n_pending = 0
+            for _la in st.session_state.get("locked_assignments", []):
+                _sa = _solved_by_cs.get(_la["cs_key"])
+                if not _sa:
+                    _n_pending += 1
+                    continue
+                if (_la["day_group"] != _sa["day_group"] or _la["time_slot"] != _sa["time_slot"]
+                        or _la["prof_id"] != _sa["prof_id"] or _la["room_id"] != _sa["room_id"]):
+                    _n_pending += 1
+            st.session_state["_pending_count"] = _n_pending
             lock_str = f" · {n_locked} locked" if n_locked else ""
-            st.markdown(f'<div style="font-size:0.68rem; color:{stat_color}; text-align:right; padding:2px 0 4px 0;">{status} · {n_placed} placed · {n_unsched} dropped · score {score}{lock_str}</div>', unsafe_allow_html=True)
+            pending_str = f" · {_n_pending} pending" if _n_pending else ""
+            st.markdown(f'<div style="font-size:0.68rem; color:{stat_color}; text-align:right; padding:2px 0 4px 0;">{status} · {n_placed} placed · {n_unsched} dropped · score {score}{lock_str}<span style="color:{ACCENT_AMBER};">{pending_str}</span></div>', unsafe_allow_html=True)
 
             solve_map = {}
             for a in mode_data["schedule"]:
@@ -1065,46 +1294,128 @@ else:
                                 _is_locked = a["cs_key"] in locked_set
                                 _lock_icon = "🔒 " if _is_locked else ""
                                 _lock_class = "locked" if _is_locked else ""
-                                st.markdown(f'<div class="cal-course {_lock_class}" style="border-left-color:{_aff_color};"><div class="cal-cid"><span class="dept-dot" style="background:{_dot};"></span>{_lock_icon}{a["catalog_id"]}</div><div class="cal-cname">{a["course_name"]}</div><div class="cal-detail">{a["prof_name"]} · {_room_short}</div></div>', unsafe_allow_html=True)
+                                _aff_labels = {0: "Picked", 1: "Good fit", 2: "Available"}
+                                _aff_label = _aff_labels.get(_aff, "—")
+                                _tp = a.get("time_pref", "unknown")
+                                _tp_colors = {"preferred": ACCENT_GREEN, "acceptable": ACCENT_AMBER, "not_preferred": ACCENT_RED}
+                                _tp_short = {"preferred": "Pref time", "acceptable": "OK time", "not_preferred": "Off hours"}
+                                _tp_color = _tp_colors.get(_tp, TXT_MUTED)
+                                _tp_label = _tp_short.get(_tp, "—")
+                                # Check if this course has a pending lock (stored lock doesn't match solver's assignment)
+                                _my_lock = next((la for la in st.session_state.get("locked_assignments", []) if la["cs_key"] == a["cs_key"]), None)
+                                _is_pending = False
+                                _pending_lines = []
+                                if _my_lock:
+                                    if _my_lock["day_group"] != a["day_group"] or _my_lock["time_slot"] != a["time_slot"]:
+                                        _is_pending = True
+                                        _pending_lines.append(f'{DG_LABELS[_my_lock["day_group"]]} {_my_lock["time_slot"]}')
+                                    if _my_lock["prof_id"] != a["prof_id"]:
+                                        _is_pending = True
+                                        _pending_name = prof_labels.get(_my_lock["prof_id"], _my_lock["prof_id"])
+                                        _pending_lines.append(_pending_name)
+                                    if _my_lock["room_id"] != a["room_id"]:
+                                        _is_pending = True
+                                        _rm = next((r for r in rooms if r["id"] == _my_lock["room_id"]), None)
+                                        _rm_name = _rm["name"].split("–")[0].strip() if _rm else _my_lock["room_id"]
+                                        _pending_lines.append(_rm_name)
+                                _border_color = ACCENT_AMBER if _is_pending else _aff_color
+                                _pending_html = ""
+                                if _is_pending:
+                                    _pending_html = (
+                                        f'<div class="cal-detail" style="color:{ACCENT_AMBER}; font-weight:600; margin-top:2px;">'
+                                        f'⚠ Pending → {" · ".join(_pending_lines)}</div>'
+                                    )
+                                _card_extra_style = f"background:#2A1F0A;" if _is_pending else ""
+                                st.markdown(
+                                    f'<div class="cal-course {_lock_class}" style="border-left-color:{_border_color};{_card_extra_style}">'
+                                    f'<div class="cal-cid"><span class="dept-dot" style="background:{_dot};"></span>{_lock_icon}{a["catalog_id"]}</div>'
+                                    f'<div class="cal-cname">{a["course_name"]}</div>'
+                                    f'<div class="cal-detail" style="display:flex;align-items:center;gap:0;">'
+                                    f'{prof_avatar_html(a.get("prof_id"), a.get("prof_name"), size=18)}'
+                                    f'<span>{a["prof_name"]} · {_room_short}'
+                                    f' · <span style="color:{_aff_color};">{_aff_label}</span>'
+                                    f' · <span style="color:{_tp_color};">{_tp_label}</span></span></div>'
+                                    f'{_pending_html}'
+                                    f'</div>',
+                                    unsafe_allow_html=True,
+                                )
                                 # Lock/Unlock + Edit popover
                                 _btn1, _btn2 = st.columns(2)
                                 with _btn1:
-                                    _lock_label = "🔓 Unlock" if _is_locked else "Lock"
-                                    _lock_type = "primary" if _is_locked else "secondary"
-                                    if st.button(_lock_label, key=f"lock_{a['cs_key']}_{dg}_{ts}", use_container_width=True, type=_lock_type):
-                                        if _is_locked:
+                                    if _is_locked:
+                                        if st.button("🔓 Unlock", key=f"lock_{a['cs_key']}_{dg}_{ts}", use_container_width=True, type="primary"):
                                             st.session_state["locked_assignments"] = [la for la in st.session_state["locked_assignments"] if la["cs_key"] != a["cs_key"]]
-                                            # Also clear offering-level lock
                                             for _oi, _oo in enumerate(offerings):
                                                 if _oo["catalog_id"] == a["catalog_id"] and _oo.get("locked"):
                                                     offerings[_oi]["locked"] = None
                                             add_log("UNLOCK", f"Unlocked {a['catalog_id']}")
-                                        else:
+                                            st.rerun()
+                                    else:
+                                        if st.button("Lock", key=f"lock_{a['cs_key']}_{dg}_{ts}", use_container_width=True):
                                             st.session_state["locked_assignments"].append({
                                                 "cs_key": a["cs_key"], "prof_id": a["prof_id"],
                                                 "room_id": a["room_id"], "day_group": a["day_group"],
                                                 "time_slot": a["time_slot"],
                                             })
-                                            add_log("LOCK", f"Locked {a['catalog_id']} → {DG_LABELS[a['day_group']]} {a['time_slot']}")
-                                        st.rerun()
+                                            add_log("LOCK", f"Locked {a['catalog_id']} → {DG_LABELS[a['day_group']]} {a['time_slot']} ({a['prof_name']})")
+                                            st.rerun()
                                 with _btn2:
                                     _edit_idx = next((i for i, o in enumerate(offerings) if o["catalog_id"] == a["catalog_id"]), None)
                                     if _edit_idx is not None:
                                         _eo = offerings[_edit_idx]
                                         with st.popover("Edit", use_container_width=True):
+                                            # Priority
                                             _ep_pri = st.selectbox("Priority", list(PRIORITY_LABELS.keys()), format_func=lambda x: PRIORITY_LABELS[x], index=list(PRIORITY_LABELS.keys()).index(_eo.get("priority", "must_have")), key=f"ep_pri_{a['cs_key']}_{dg}_{ts}")
-                                            offerings[_edit_idx]["priority"] = _ep_pri
+                                            # Professor
                                             _ep_prof_list = _eo.get("override_preferred_professors")
-                                            _ep_prof = _ep_prof_list[0] if _ep_prof_list else "Auto-Draft"
-                                            if _ep_prof not in prof_options:
-                                                _ep_prof = "Auto-Draft"
-                                            _ep_new_prof = st.selectbox("Professor", prof_options, format_func=lambda x: prof_labels[x], index=prof_options.index(_ep_prof), key=f"ep_prof_{a['cs_key']}_{dg}_{ts}")
-                                            if _ep_new_prof != _ep_prof:
+                                            _ep_prof_default = _ep_prof_list[0] if _ep_prof_list else a["prof_id"]
+                                            if _ep_prof_default not in prof_options:
+                                                _ep_prof_default = "Auto-Draft"
+                                            _ep_new_prof = st.selectbox("Professor", prof_options, format_func=lambda x: prof_labels[x], index=prof_options.index(_ep_prof_default), key=f"ep_prof_{a['cs_key']}_{dg}_{ts}")
+                                            # Room Type
+                                            _ep_room_opts = config.VALID_ROOM_TYPES
+                                            _ep_cur_room = _eo.get("override_room_type") or catalog_lookup.get(a["catalog_id"], {}).get("required_room_type", "standard")
+                                            if _ep_cur_room not in _ep_room_opts:
+                                                _ep_cur_room = "standard"
+                                            _ep_new_room = st.selectbox("Room Type", _ep_room_opts, format_func=lambda x: x.replace("_", " ").title(), index=_ep_room_opts.index(_ep_cur_room), key=f"ep_room_{a['cs_key']}_{dg}_{ts}")
+                                            # Day / Time — pure selectboxes, no auto-commit
+                                            _ep_dt1, _ep_dt2 = st.columns(2)
+                                            with _ep_dt1:
+                                                _ep_dg_opts = list(DG_LABELS.keys())
+                                                _ep_new_dg = st.selectbox("Day", _ep_dg_opts, format_func=lambda x: DG_LABELS[x], index=_ep_dg_opts.index(a["day_group"]), key=f"ep_dg_{a['cs_key']}_{dg}_{ts}")
+                                            with _ep_dt2:
+                                                _ep_ts_opts = config.TIME_SLOTS
+                                                _ep_new_ts = st.selectbox("Time", _ep_ts_opts, index=_ep_ts_opts.index(a["time_slot"]) if a["time_slot"] in _ep_ts_opts else 0, key=f"ep_ts_{a['cs_key']}_{dg}_{ts}")
+                                            # SINGLE COMMIT BUTTON — locks all popover changes
+                                            _ep_lock_label = "🔒 Lock this class" if not _is_locked else "🔒 Update lock"
+                                            if st.button(_ep_lock_label, key=f"ep_lock_{a['cs_key']}_{dg}_{ts}", use_container_width=True, type="primary"):
+                                                # Commit all popover values to the offering
+                                                offerings[_edit_idx]["priority"] = _ep_pri
                                                 if _ep_new_prof == "Auto-Draft":
                                                     offerings[_edit_idx]["override_preferred_professors"] = None
                                                 else:
                                                     offerings[_edit_idx]["override_preferred_professors"] = [_ep_new_prof]
-                                            st.caption("Full editing on Courses tab")
+                                                offerings[_edit_idx]["override_room_type"] = _ep_new_room
+                                                # Determine which professor id to lock
+                                                _lock_prof = _ep_new_prof if _ep_new_prof != "Auto-Draft" else a["prof_id"]
+                                                # Remove any existing lock for this section, replace with new
+                                                st.session_state["locked_assignments"] = [la for la in st.session_state["locked_assignments"] if la["cs_key"] != a["cs_key"]]
+                                                st.session_state["locked_assignments"].append({
+                                                    "cs_key": a["cs_key"],
+                                                    "prof_id": _lock_prof,
+                                                    "room_id": a["room_id"],
+                                                    "day_group": _ep_new_dg,
+                                                    "time_slot": _ep_new_ts,
+                                                })
+                                                _lock_name = prof_labels.get(_lock_prof, _lock_prof)
+                                                add_log("LOCK", f"Locked {a['catalog_id']} → {DG_LABELS[_ep_new_dg]} {_ep_new_ts} ({_lock_name})")
+                                                st.rerun()
+                                            if st.button("Drop Course", key=f"ep_drop_{a['cs_key']}_{dg}_{ts}", use_container_width=True):
+                                                active_project["offerings"].pop(_edit_idx)
+                                                st.session_state["locked_assignments"] = [la for la in st.session_state["locked_assignments"] if la["cs_key"] != a["cs_key"]]
+                                                st.session_state["solver_results"] = None
+                                                add_log("DROP", f"Dropped {a['catalog_id']} from grid")
+                                                st.rerun()
                             n_here = len(solved_here)
                             cap_color = ACCENT_AMBER if n_here >= total_rooms else TXT_MUTED
                             st.markdown(f'<div style="font-size:0.6rem; color:{cap_color}; text-align:right; padding:1px 4px;">{n_here}/{total_rooms}</div>', unsafe_allow_html=True)
@@ -1151,14 +1462,30 @@ else:
                 pri_colors = {"must_have": ACCENT_RED, "should_have": ACCENT_AMBER, "could_have": TXT_MUTED, "nice_to_have": TXT_MUTED}
                 st.markdown(f'<div style="margin-top:8px; font-size:0.75rem; color:{ACCENT_AMBER}; font-weight:600;">Dropped ({len(unsched)})</div>', unsafe_allow_html=True)
 
+                _solver_data = mode_data.get("data", {})
                 for u in unsched_sorted:
                     _cid = u["catalog_id"]; _course = catalog_lookup.get(_cid, {}); _name = _course.get("name", _cid)
                     _dept = _course.get("department", "game"); _dot = DEPT_DOT.get(_dept, "#666")
                     _pri = u["priority"]; _pri_label = PRIORITY_LABELS.get(_pri, _pri); _pri_color = pri_colors.get(_pri, TXT_MUTED)
                     _room_type = _course.get("required_room_type", "any").replace("_", " ")
 
+                    # Compute drop reason from solver data
+                    _cs_key = u.get("cs_key", "")
+                    _ep = _solver_data.get("eligible_profs", {}).get(_cs_key, [])
+                    _er = _solver_data.get("eligible_rooms", {}).get(_cs_key, [])
+                    if not _ep:
+                        _drop_reason = "No eligible professor"
+                    elif not _er:
+                        _drop_reason = "No compatible room"
+                    elif _pri in ("could_have", "nice_to_have"):
+                        _drop_reason = "Lower priority — solver fit higher-ranked courses first"
+                    elif _pri == "should_have":
+                        _drop_reason = "Couldn't fit — slots or professors fully committed"
+                    else:
+                        _drop_reason = "Constraint conflict — all slot/prof/room combos blocked"
+
                     uc1, uc2, uc3 = st.columns([4, 1.5, 1])
-                    with uc1: st.markdown(f'<div style="font-size:0.72rem; padding:3px 0;"><span class="dept-dot" style="background:{_dot};"></span><span style="color:{TXT_ACCENT}; font-weight:600;">{_cid}</span> <span style="color:{TXT_SECONDARY};">{_name}</span></div>', unsafe_allow_html=True)
+                    with uc1: st.markdown(f'<div style="font-size:0.72rem; padding:3px 0;"><span class="dept-dot" style="background:{_dot};"></span><span style="color:{TXT_ACCENT}; font-weight:600;">{_cid}</span> <span style="color:{TXT_SECONDARY};">{_name}</span><br/><span style="font-size:0.65rem; color:{TXT_MUTED};">{_drop_reason}</span></div>', unsafe_allow_html=True)
                     with uc2: st.markdown(f'<div style="font-size:0.65rem; padding:5px 0;"><span style="color:{_pri_color}; font-weight:600;">{_pri_label}</span> <span style="color:{TXT_MUTED};">&middot; {_room_type}</span></div>', unsafe_allow_html=True)
                     with uc3:
                         if st.button("Lock", key=f"force_lock_{_cid}_{u.get('section_idx',0)}", use_container_width=True):
@@ -1248,18 +1575,4 @@ else:
         elif total_cat == 0 and dept_filter:
             st.markdown(f'<div style="text-align:center; color:{TXT_MUTED}; padding:2rem; font-size:0.8rem;">No courses match your search.</div>', unsafe_allow_html=True)
 
-    # ── Mobile bottom nav ────────────────────────────────────────
-    st.html(
-        f'<style>'
-        f'.bottom-nav {{ position:fixed; bottom:0; left:0; right:0; height:52px; background:{BG_SIDEBAR}; border-top:1px solid {BORDER}; display:flex; justify-content:space-around; align-items:center; z-index:100; padding-bottom:env(safe-area-inset-bottom); }}'
-        f'.bottom-nav button {{ display:flex; flex-direction:column; align-items:center; background:none; border:none; color:{TXT_MUTED}; font-size:0.6rem; font-weight:600; gap:2px; cursor:pointer; font-family:inherit; }}'
-        f'.bottom-nav button:active {{ color:{ACCENT}; }}'
-        f'.bottom-nav .nav-icon {{ font-size:1.1rem; }}'
-        f'@media (min-width:769px) {{ .bottom-nav {{ display:none !important; }} }}'
-        f'</style>'
-        f'<div class="bottom-nav">'
-        f'<button onclick="try{{document.querySelectorAll(\'[data-baseweb=tab]\')[0].click()}}catch(e){{}}"><span class="nav-icon">📚</span><span>Catalog</span></button>'
-        f'<button onclick="try{{document.querySelectorAll(\'[data-baseweb=tab]\')[1].click()}}catch(e){{}}"><span class="nav-icon">📋</span><span>Courses</span></button>'
-        f'<button onclick="try{{document.querySelectorAll(\'[data-baseweb=tab]\')[2].click()}}catch(e){{}}"><span class="nav-icon">📅</span><span>Schedule</span></button>'
-        f'</div>'
-    )
+    # Mobile bottom nav removed — desktop only (see CLAUDE.md Rule 1)

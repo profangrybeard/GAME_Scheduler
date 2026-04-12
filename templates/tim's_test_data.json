@@ -1,0 +1,190 @@
+{
+  "name": "tim's test data",
+  "offerings": [
+    {
+      "catalog_id": "GAME_120",
+      "priority": "must_have",
+      "sections": 2,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "Intro - always high demand"
+    },
+    {
+      "catalog_id": "GAME_220",
+      "priority": "must_have",
+      "sections": 2,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "Core Programming - 2 sections"
+    },
+    {
+      "catalog_id": "GAME_236",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_256",
+      "priority": "must_have",
+      "sections": 2,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "Dodson preferred"
+    },
+    {
+      "catalog_id": "GAME_342",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_360",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_405",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "Capstone entry"
+    },
+    {
+      "catalog_id": "GAME_465",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_706",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": 16,
+      "override_room_type": "standard",
+      "override_preferred_professors": [
+        "prof_dodson"
+      ],
+      "notes": "Grad seminar"
+    },
+    {
+      "catalog_id": "MOME_105",
+      "priority": "must_have",
+      "sections": 2,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "Intro - high demand"
+    },
+    {
+      "catalog_id": "MOME_130",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "MOME_400",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "Senior project"
+    },
+    {
+      "catalog_id": "MOME_719",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": 16,
+      "override_room_type": null,
+      "override_preferred_professors": [
+        "prof_imperato"
+      ],
+      "notes": "Grad media theory"
+    },
+    {
+      "catalog_id": "ITGM_705",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": 16,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "Grad ITGM core"
+    },
+    {
+      "catalog_id": "AI_201",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": 20,
+      "override_room_type": "pc_lab",
+      "override_preferred_professors": null,
+      "notes": "Applied AI"
+    },
+    {
+      "catalog_id": "AI_101",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": null,
+      "override_preferred_professors": null,
+      "notes": "AI survey intro"
+    }
+  ],
+  "professor_overrides": {
+    "prof_allen": {
+      "max_classes": 2,
+      "time_preference": "morning",
+      "available": true
+    },
+    "prof_lindsay": {
+      "max_classes": 5,
+      "time_preference": "afternoon_evening",
+      "available": true
+    },
+    "prof_dodson": {
+      "max_classes": 5,
+      "time_preference": "morning",
+      "available": true
+    },
+    "prof_avenali": {
+      "max_classes": 5,
+      "time_preference": "morning",
+      "available": true
+    },
+    "prof_spencer": {
+      "max_classes": 5,
+      "time_preference": "afternoon_evening",
+      "available": true
+    },
+    "prof_maloney": {
+      "max_classes": 5,
+      "time_preference": "afternoon_evening",
+      "available": true
+    },
+    "prof_imperato": {
+      "max_classes": 5,
+      "time_preference": "morning",
+      "available": true
+    }
+  }
+}
