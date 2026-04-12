@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "2.3.2"
+APP_VERSION = "2.3.3"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -1087,13 +1087,9 @@ else:
                                 _card_offering = next((o for o in offerings if o["catalog_id"] == a["catalog_id"]), None)
                                 _card_pinned = bool(_card_offering and _card_offering.get("locked"))
                                 _pin_icon = "📍 " if _card_pinned else ""
-                                _edit_mark = ""
-                                if _card_offering:
-                                    if _card_offering.get("override_preferred_professors") or _card_offering.get("override_room_type"):
-                                        _edit_mark = "✏️ "
                                 st.markdown(
                                     f'<div class="cal-course {_lock_class}" style="border-left-color:{_aff_color};">'
-                                    f'<div class="cal-cid"><span class="dept-dot" style="background:{_dot};"></span>{_lock_icon}{_pin_icon}{_edit_mark}{a["catalog_id"]}</div>'
+                                    f'<div class="cal-cid"><span class="dept-dot" style="background:{_dot};"></span>{_lock_icon}{_pin_icon}{a["catalog_id"]}</div>'
                                     f'<div class="cal-cname">{a["course_name"]}</div>'
                                     f'<div class="cal-detail">{a["prof_name"]} · {_room_short}'
                                     f' · <span style="color:{_aff_color};">{_aff_label}</span>'
@@ -1127,7 +1123,8 @@ else:
                                         _eo = offerings[_edit_idx]
                                         with st.popover("Edit", use_container_width=True):
                                             _ep_pri = st.selectbox("Priority", list(PRIORITY_LABELS.keys()), format_func=lambda x: PRIORITY_LABELS[x], index=list(PRIORITY_LABELS.keys()).index(_eo.get("priority", "must_have")), key=f"ep_pri_{a['cs_key']}_{dg}_{ts}")
-                                            offerings[_edit_idx]["priority"] = _ep_pri
+                                            if _ep_pri != _eo.get("priority"):
+                                                offerings[_edit_idx]["priority"] = _ep_pri
                                             _ep_prof_list = _eo.get("override_preferred_professors")
                                             _ep_prof = _ep_prof_list[0] if _ep_prof_list else "Auto-Draft"
                                             if _ep_prof not in prof_options:
@@ -1143,7 +1140,8 @@ else:
                                             if _ep_cur_room not in _ep_room_opts:
                                                 _ep_cur_room = "standard"
                                             _ep_new_room = st.selectbox("Room Type", _ep_room_opts, format_func=lambda x: x.replace("_", " ").title(), index=_ep_room_opts.index(_ep_cur_room), key=f"ep_room_{a['cs_key']}_{dg}_{ts}")
-                                            offerings[_edit_idx]["override_room_type"] = _ep_new_room
+                                            if _ep_new_room != _ep_cur_room:
+                                                offerings[_edit_idx]["override_room_type"] = _ep_new_room
                                             # Day / Time selection — auto-pins the course to the chosen slot
                                             _current_pin = _eo.get("locked")
                                             _default_dg = _current_pin["day_group"] if _current_pin else a["day_group"]
@@ -1155,26 +1153,24 @@ else:
                                             with _ep_dt2:
                                                 _ep_ts_opts = config.TIME_SLOTS
                                                 _ep_new_ts = st.selectbox("Time", _ep_ts_opts, index=_ep_ts_opts.index(_default_ts) if _default_ts in _ep_ts_opts else 0, key=f"ep_ts_{a['cs_key']}_{dg}_{ts}")
-                                            # Auto-commit day/time as slot pin
-                                            _pin_matches_solver = (_ep_new_dg == a["day_group"] and _ep_new_ts == a["time_slot"])
-                                            _pin_matches_current = (_current_pin and _current_pin.get("day_group") == _ep_new_dg and _current_pin.get("time_slot") == _ep_new_ts)
-                                            if _pin_matches_solver and _current_pin is not None:
-                                                # User reset to solver's slot — clear pin
-                                                offerings[_edit_idx]["locked"] = None
-                                                st.session_state["locked_assignments"] = [la for la in st.session_state["locked_assignments"] if la["cs_key"] != a["cs_key"]]
-                                                st.session_state["solver_results"] = None
-                                                add_log("UNPIN", f"Unpinned {a['catalog_id']}")
-                                                st.rerun()
-                                            elif not _pin_matches_solver and not _pin_matches_current:
-                                                # User picked a new slot — save pin, clear 5-tuple lock, clear results
+                                            # Only fire when selectboxes differ from the stored pin (or from solver position if no pin)
+                                            _reference_dg = _current_pin["day_group"] if _current_pin else a["day_group"]
+                                            _reference_ts = _current_pin["time_slot"] if _current_pin else a["time_slot"]
+                                            if _ep_new_dg != _reference_dg or _ep_new_ts != _reference_ts:
+                                                # User changed the selectbox — create/update pin
                                                 offerings[_edit_idx]["locked"] = {"day_group": _ep_new_dg, "time_slot": _ep_new_ts}
                                                 st.session_state["locked_assignments"] = [la for la in st.session_state["locked_assignments"] if la["cs_key"] != a["cs_key"]]
                                                 st.session_state["solver_results"] = None
                                                 add_log("PIN", f"Pinned {a['catalog_id']} → {DG_LABELS[_ep_new_dg]} {_ep_new_ts}")
                                                 st.rerun()
-                                            # Show pin status indicator in popover
+                                            # Show pin status + explicit Clear pin button
                                             if _current_pin:
-                                                st.caption(f"📍 Pinned to {DG_LABELS[_current_pin['day_group']]} {_current_pin['time_slot']} — click Generate to apply")
+                                                st.caption(f"📍 Pinned to {DG_LABELS[_current_pin['day_group']]} {_current_pin['time_slot']}")
+                                                if st.button("Clear pin", key=f"ep_unpin_{a['cs_key']}_{dg}_{ts}", use_container_width=True):
+                                                    offerings[_edit_idx]["locked"] = None
+                                                    st.session_state["solver_results"] = None
+                                                    add_log("UNPIN", f"Unpinned {a['catalog_id']}")
+                                                    st.rerun()
                                             # Lock button INSIDE the popover — reads selectbox values directly
                                             _ep_lock_prof = _ep_new_prof if _ep_new_prof != "Auto-Draft" else a["prof_id"]
                                             _ep_lock_label = "🔒 Lock with these settings" if not _is_locked else "🔒 Update lock"
