@@ -3,26 +3,58 @@
   "year": 2026,
   "offerings": [
     {
-      "catalog_id": "GAME_120",
+      "catalog_id": "AI_101",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "pc_lab",
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "AI_201",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "pc_lab",
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "AI_295",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "pc_lab",
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_121",
       "priority": "must_have",
-      "sections": 2,
+      "sections": 1,
       "override_enrollment_cap": null,
       "override_room_type": "standard",
       "override_preferred_professors": null,
-      "notes": "Intro - always high demand",
-      "locked": {
-        "day_group": 2,
-        "time_slot": "2:00PM"
-      }
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_130",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "standard",
+      "override_preferred_professors": null,
+      "notes": null
     },
     {
       "catalog_id": "GAME_220",
       "priority": "must_have",
-      "sections": 2,
+      "sections": 1,
       "override_enrollment_cap": null,
       "override_room_type": "standard",
       "override_preferred_professors": null,
-      "notes": "Core Programming - 2 sections"
+      "notes": null
     },
     {
       "catalog_id": "GAME_236",
@@ -36,13 +68,20 @@
     {
       "catalog_id": "GAME_256",
       "priority": "must_have",
-      "sections": 2,
+      "sections": 1,
       "override_enrollment_cap": null,
       "override_room_type": "standard",
-      "override_preferred_professors": [
-        "prof_dodson"
-      ],
-      "notes": "Dodson preferred"
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_336",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "standard",
+      "override_preferred_professors": null,
+      "notes": null
     },
     {
       "catalog_id": "GAME_342",
@@ -54,7 +93,25 @@
       "notes": null
     },
     {
-      "catalog_id": "GAME_360",
+      "catalog_id": "GAME_347",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "standard",
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_356",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "standard",
+      "override_preferred_professors": null,
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_380",
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
@@ -64,12 +121,12 @@
     },
     {
       "catalog_id": "GAME_405",
-      "priority": "must_have",
+      "priority": "nice_to_have",
       "sections": 1,
       "override_enrollment_cap": null,
       "override_room_type": "standard",
       "override_preferred_professors": null,
-      "notes": "Capstone entry"
+      "notes": " (wishlist)"
     },
     {
       "catalog_id": "GAME_465",
@@ -77,84 +134,108 @@
       "sections": 1,
       "override_enrollment_cap": null,
       "override_room_type": "standard",
-      "override_preferred_professors": null,
+      "override_preferred_professors": [
+        "prof_lindsay"
+      ],
       "notes": null
     },
     {
-      "catalog_id": "GAME_706",
+      "catalog_id": "GAME_502",
       "priority": "must_have",
       "sections": 1,
-      "override_enrollment_cap": 16,
+      "override_enrollment_cap": null,
+      "override_room_type": "standard",
+      "override_preferred_professors": [
+        "prof_lindsay"
+      ],
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_710",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "standard",
+      "override_preferred_professors": [
+        "prof_allen"
+      ],
+      "notes": null
+    },
+    {
+      "catalog_id": "GAME_714",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
       "override_room_type": "standard",
       "override_preferred_professors": [
         "prof_dodson"
       ],
-      "notes": "Grad seminar"
-    },
-    {
-      "catalog_id": "MOME_105",
-      "priority": "must_have",
-      "sections": 2,
-      "override_enrollment_cap": null,
-      "override_room_type": "mac_lab",
-      "override_preferred_professors": null,
-      "notes": "Intro - high demand"
-    },
-    {
-      "catalog_id": "MOME_130",
-      "priority": "must_have",
-      "sections": 1,
-      "override_enrollment_cap": null,
-      "override_room_type": "mac_lab",
-      "override_preferred_professors": null,
       "notes": null
     },
     {
-      "catalog_id": "MOME_400",
-      "priority": "must_have",
+      "catalog_id": "GAME_734",
+      "priority": "nice_to_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "mac_lab",
-      "override_preferred_professors": null,
-      "notes": "Senior project"
-    },
-    {
-      "catalog_id": "MOME_719",
-      "priority": "should_have",
-      "sections": 1,
-      "override_enrollment_cap": 16,
-      "override_room_type": "mac_lab",
-      "override_preferred_professors": [
-        "prof_imperato"
-      ],
-      "notes": "Grad media theory"
-    },
-    {
-      "catalog_id": "ITGM_705",
-      "priority": "must_have",
-      "sections": 1,
-      "override_enrollment_cap": 16,
       "override_room_type": "standard",
       "override_preferred_professors": null,
-      "notes": "Grad ITGM core"
+      "notes": " (wishlist)"
     },
     {
-      "catalog_id": "AI_201",
-      "priority": "should_have",
-      "sections": 1,
-      "override_enrollment_cap": 20,
-      "override_room_type": "pc_lab",
-      "override_preferred_professors": null,
-      "notes": "Applied AI"
-    },
-    {
-      "catalog_id": "AI_101",
+      "catalog_id": "IACT_317",
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
       "override_room_type": "pc_lab",
       "override_preferred_professors": null,
-      "notes": "AI survey intro"
+      "notes": "NOT IN CATALOG - needs to be added. IACT 317"
+    },
+    {
+      "catalog_id": "ITGM_522",
+      "priority": "nice_to_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "standard",
+      "override_preferred_professors": null,
+      "notes": " (wishlist)"
+    },
+    {
+      "catalog_id": "ITGM_708",
+      "priority": "nice_to_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "standard",
+      "override_preferred_professors": null,
+      "notes": " (wishlist)"
+    },
+    {
+      "catalog_id": "ITGM_755",
+      "priority": "nice_to_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "standard",
+      "override_preferred_professors": null,
+      "notes": " (wishlist)"
+    },
+    {
+      "catalog_id": "ITGM_765",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "standard",
+      "override_preferred_professors": [
+        "prof_lindsay"
+      ],
+      "notes": null
+    },
+    {
+      "catalog_id": "IXDS_710",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "pc_lab",
+      "override_preferred_professors": null,
+      "notes": "NOT IN CATALOG - needs to be added. IXDS 710"
     }
   ]
 }
