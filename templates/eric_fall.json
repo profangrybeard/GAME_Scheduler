@@ -3,37 +3,37 @@
   "description": "Based on Eric Allen's rough schedule grid (April 2026)",
   "professor_overrides": {
     "prof_allen": {
-      "max_classes": 3,
+      "max_classes": 2,
       "time_preference": "morning",
       "available": true
     },
     "prof_lindsay": {
-      "max_classes": 3,
+      "max_classes": 5,
       "time_preference": "afternoon_evening",
       "available": true
     },
     "prof_dodson": {
-      "max_classes": 3,
+      "max_classes": 5,
       "time_preference": "morning",
       "available": true
     },
     "prof_avenali": {
-      "max_classes": 3,
+      "max_classes": 5,
       "time_preference": "morning",
       "available": true
     },
     "prof_spencer": {
-      "max_classes": 3,
+      "max_classes": 5,
       "time_preference": "afternoon_evening",
       "available": true
     },
     "prof_maloney": {
-      "max_classes": 3,
+      "max_classes": 5,
       "time_preference": "afternoon_evening",
       "available": true
     },
     "prof_imperato": {
-      "max_classes": 3,
+      "max_classes": 5,
       "time_preference": "morning",
       "available": true
     }

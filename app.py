@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "2.4.2"
+APP_VERSION = "2.5.0"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -40,6 +40,14 @@ def add_log(event_type, message):
 # Ensure project root is importable
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
+
+# Bootstrap the per-session scratchpad from the committed default if missing.
+# quarterly_offerings.json is gitignored and rewritten by save_offerings().
+_offerings_live = PROJECT_ROOT / "data" / "quarterly_offerings.json"
+_offerings_default = PROJECT_ROOT / "data" / "quarterly_offerings.default.json"
+if not _offerings_live.exists() and _offerings_default.exists():
+    import shutil
+    shutil.copyfile(_offerings_default, _offerings_live)
 
 import config
 from solver.scheduler import run_schedule
@@ -901,7 +909,22 @@ else:
     # ══════════════════════════════════════════════════════════════════
     # TABS: Courses | Schedule | Catalog
     # ══════════════════════════════════════════════════════════════════
-    tab_catalog, tab_courses, tab_schedule = st.tabs(["Catalog", "Courses", "Schedule"])
+    # Schedule tab state indicator
+    #   State 0: empty        — no offerings yet
+    #   State 1: ready        — offerings exist, not yet generated
+    #   State 2: generating   — handled inline by st.spinner during solve
+    #   State 3: fresh        — generated, no pending changes
+    #   State 4: stale        — generated, pending changes (needs regenerate)
+    if not offerings:
+        _sched_label = "Schedule"
+    elif not st.session_state.get("solver_results"):
+        _sched_label = "Schedule ◌"
+    elif _pending_now > 0:
+        _sched_label = "Schedule ⚠"
+    else:
+        _sched_label = "Schedule ✓"
+
+    tab_catalog, tab_courses, tab_schedule = st.tabs(["Catalog", "Courses", _sched_label])
 
     # Tab persistence — remember which tab the user was on across reruns
     import streamlit.components.v1 as _tab_components

@@ -8,22 +8,22 @@
       "available": true
     },
     "prof_lindsay": {
-      "max_classes": 4,
+      "max_classes": 5,
       "time_preference": "afternoon_evening",
       "available": true
     },
     "prof_dodson": {
-      "max_classes": 3,
+      "max_classes": 5,
       "time_preference": "morning",
       "available": true
     },
     "prof_avenali": {
-      "max_classes": 3,
+      "max_classes": 5,
       "time_preference": "morning",
       "available": true
     },
     "prof_spencer": {
-      "max_classes": 3,
+      "max_classes": 5,
       "time_preference": "afternoon_evening",
       "available": true
     },
@@ -33,7 +33,7 @@
       "available": false
     },
     "prof_imperato": {
-      "max_classes": 3,
+      "max_classes": 5,
       "time_preference": "morning",
       "available": true
     }
