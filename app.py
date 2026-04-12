@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "2.5.2"
+APP_VERSION = "2.5.3"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -81,7 +81,7 @@ TIME_PREF_LABELS = {"morning": "Morning", "afternoon": "Afternoon", "afternoon_e
 PROF_COLORS = {
     "prof_allen":    "#3B82F6",  # blue
     "prof_lindsay":  "#A78BFA",  # purple
-    "prof_dodson":   "#EC4899",  # pink
+    "prof_dodson":   "#14B8A6",  # teal
     "prof_avenali":  "#F59E0B",  # amber
     "prof_spencer":  "#10B981",  # green
     "prof_maloney":  "#EF4444",  # red
