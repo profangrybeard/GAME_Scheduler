@@ -7,7 +7,7 @@
       "time_preference": "morning",
       "available": true
     },
-    "prof_lindsay": {
+    "prof_lindsey": {
       "max_classes": 5,
       "time_preference": "afternoon_evening",
       "available": true
@@ -214,7 +214,7 @@
       "override_enrollment_cap": null,
       "override_room_type": null,
       "override_preferred_professors": [
-        "prof_lindsay"
+        "prof_lindsey"
       ],
       "notes": null
     },

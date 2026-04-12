@@ -80,7 +80,7 @@ TIME_PREF_LABELS = {"morning": "Morning", "afternoon": "Afternoon", "afternoon_e
 # Distinct colors per professor for quick visual identification on cards.
 PROF_COLORS = {
     "prof_allen":    "#3B82F6",  # blue
-    "prof_lindsay":  "#A78BFA",  # purple
+    "prof_lindsey":  "#A78BFA",  # purple
     "prof_dodson":   "#14B8A6",  # teal
     "prof_avenali":  "#F59E0B",  # amber
     "prof_spencer":  "#10B981",  # green
@@ -1093,7 +1093,7 @@ else:
 
                 # Build always-visible status pills for the expander label (native Streamlit colored badges)
                 _pri_badge_color = {"must_have": "violet", "should_have": "orange", "could_have": "gray", "nice_to_have": "gray"}.get(_pri, "gray")
-                _prof_badge_color = {"prof_allen": "blue", "prof_lindsay": "violet", "prof_dodson": "green", "prof_avenali": "orange", "prof_spencer": "primary", "prof_maloney": "red", "prof_imperato": "rainbow"}.get(_prof_id_for_badge, "gray")
+                _prof_badge_color = {"prof_allen": "blue", "prof_lindsey": "violet", "prof_dodson": "green", "prof_avenali": "orange", "prof_spencer": "primary", "prof_maloney": "red", "prof_imperato": "rainbow"}.get(_prof_id_for_badge, "gray")
                 _prof_code_for_label = _prof_initials(_prof_display) if _prof_list else "Auto"
                 _label_parts = [f":{_pri_badge_color}-badge[{_pri_label}]", f":{_prof_badge_color}-badge[{_prof_code_for_label}]"]
                 if _sec_count > 1:

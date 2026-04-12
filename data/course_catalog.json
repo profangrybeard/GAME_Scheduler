@@ -39,7 +39,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 108,
@@ -62,7 +62,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 109,
@@ -86,7 +86,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 110,
@@ -108,7 +108,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 111,
@@ -131,7 +131,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 112,
@@ -154,7 +154,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 113,
@@ -177,7 +177,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 114,
@@ -200,7 +200,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 115,
@@ -225,7 +225,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_dodson"
     ],
     "enrollment_cap": 20,
@@ -249,7 +249,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 117,
@@ -272,7 +272,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 118,
@@ -296,7 +296,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 119,
@@ -396,7 +396,7 @@
       "motion_design"
     ],
     "preferred_professors": [
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_spencer"
     ],
     "enrollment_cap": 20,
@@ -423,7 +423,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 2,
@@ -470,7 +470,7 @@
       "scripting"
     ],
     "preferred_professors": [
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 4,
@@ -491,7 +491,7 @@
       "materials"
     ],
     "preferred_professors": [
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_avenali"
     ],
     "enrollment_cap": 20,
@@ -522,7 +522,7 @@
       "game_mechanics"
     ],
     "preferred_professors": [
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_spencer"
     ],
     "enrollment_cap": 20,
@@ -553,7 +553,7 @@
       "modeling"
     ],
     "preferred_professors": [
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_allen"
     ],
     "enrollment_cap": 20,
@@ -581,7 +581,7 @@
     ],
     "preferred_professors": [
       "prof_avenali",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_allen"
     ],
     "enrollment_cap": 20,
@@ -666,7 +666,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 11,
@@ -694,7 +694,7 @@
       "programming"
     ],
     "preferred_professors": [
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_allen"
     ],
     "enrollment_cap": 20,
@@ -721,7 +721,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_avenali"
     ],
     "enrollment_cap": 20,
@@ -750,7 +750,7 @@
       "game_design"
     ],
     "preferred_professors": [
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_spencer"
     ],
     "enrollment_cap": 20,
@@ -807,7 +807,7 @@
       "narrative"
     ],
     "preferred_professors": [
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_spencer"
     ],
     "enrollment_cap": 20,
@@ -882,7 +882,7 @@
       "interactive_design"
     ],
     "preferred_professors": [
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_spencer"
     ],
     "enrollment_cap": 20,
@@ -913,7 +913,7 @@
       "game_systems"
     ],
     "preferred_professors": [
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_spencer"
     ],
     "enrollment_cap": 20,
@@ -940,7 +940,7 @@
     "preferred_professors": [
       "prof_spencer",
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 21,
@@ -966,7 +966,7 @@
       "materials"
     ],
     "preferred_professors": [
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_avenali"
     ],
     "enrollment_cap": 20,
@@ -995,7 +995,7 @@
       "interactive_design"
     ],
     "preferred_professors": [
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_spencer"
     ],
     "enrollment_cap": 20,
@@ -1044,7 +1044,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_avenali"
     ],
     "enrollment_cap": 20,
@@ -1093,7 +1093,7 @@
     ],
     "preferred_professors": [
       "prof_spencer",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 27,
@@ -1124,7 +1124,7 @@
       "production"
     ],
     "preferred_professors": [
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_allen"
     ],
     "enrollment_cap": 20,
@@ -1154,7 +1154,7 @@
       "programming"
     ],
     "preferred_professors": [
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 29,
@@ -1185,7 +1185,7 @@
     "preferred_professors": [
       "prof_avenali",
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 30,
@@ -1216,7 +1216,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 31,
@@ -1264,7 +1264,7 @@
       "game_development"
     ],
     "preferred_professors": [
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_allen"
     ],
     "enrollment_cap": 20,
@@ -1294,7 +1294,7 @@
       "scripting"
     ],
     "preferred_professors": [
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_allen"
     ],
     "enrollment_cap": 20,
@@ -1336,7 +1336,7 @@
     ],
     "preferred_professors": [
       "prof_dodson",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_spencer"
     ],
     "enrollment_cap": 16,
@@ -1379,7 +1379,7 @@
     "preferred_professors": [
       "prof_dodson",
       "prof_spencer",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 16,
     "teaching_order": 38,
@@ -1402,7 +1402,7 @@
     ],
     "preferred_professors": [
       "prof_dodson",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_spencer"
     ],
     "enrollment_cap": 16,
@@ -1427,7 +1427,7 @@
     ],
     "preferred_professors": [
       "prof_dodson",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_allen"
     ],
     "enrollment_cap": 16,
@@ -1451,7 +1451,7 @@
     ],
     "preferred_professors": [
       "prof_dodson",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_spencer"
     ],
     "enrollment_cap": 16,
@@ -1474,7 +1474,7 @@
     ],
     "preferred_professors": [
       "prof_dodson",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_spencer"
     ],
     "enrollment_cap": 16,
@@ -1504,7 +1504,7 @@
       "prof_dodson",
       "prof_avenali",
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 16,
     "teaching_order": 43,
@@ -1531,7 +1531,7 @@
     ],
     "preferred_professors": [
       "prof_dodson",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_avenali"
     ],
     "enrollment_cap": 16,
@@ -1560,7 +1560,7 @@
     "preferred_professors": [
       "prof_dodson",
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 16,
     "teaching_order": 45,
@@ -1586,7 +1586,7 @@
     "preferred_professors": [
       "prof_dodson",
       "prof_spencer",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 16,
     "teaching_order": 46,
@@ -1614,7 +1614,7 @@
     ],
     "preferred_professors": [
       "prof_dodson",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_allen"
     ],
     "enrollment_cap": 16,
@@ -1642,7 +1642,7 @@
     ],
     "preferred_professors": [
       "prof_dodson",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_allen"
     ],
     "enrollment_cap": 16,
@@ -1667,7 +1667,7 @@
     ],
     "preferred_professors": [
       "prof_dodson",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_allen"
     ],
     "enrollment_cap": 16,
@@ -1867,7 +1867,7 @@
     ],
     "preferred_professors": [
       "prof_dodson",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_spencer"
     ],
     "enrollment_cap": 16,
@@ -1891,7 +1891,7 @@
     "preferred_professors": [
       "prof_dodson",
       "prof_spencer",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 16,
     "teaching_order": 51,
@@ -1912,7 +1912,7 @@
     ],
     "preferred_professors": [
       "prof_dodson",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_spencer"
     ],
     "enrollment_cap": 16,
@@ -1938,7 +1938,7 @@
     "preferred_professors": [
       "prof_dodson",
       "prof_spencer",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 16,
     "teaching_order": 53,
@@ -1960,7 +1960,7 @@
     "preferred_professors": [
       "prof_dodson",
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 16,
     "teaching_order": 54,
@@ -1989,7 +1989,7 @@
     "preferred_professors": [
       "prof_dodson",
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 16,
     "teaching_order": 55,
@@ -2015,7 +2015,7 @@
     ],
     "preferred_professors": [
       "prof_dodson",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_spencer"
     ],
     "enrollment_cap": 16,
@@ -2090,7 +2090,7 @@
     "preferred_professors": [
       "prof_dodson",
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 16,
     "teaching_order": 59,
@@ -2176,7 +2176,7 @@
     "preferred_professors": [
       "prof_dodson",
       "prof_spencer",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 16,
     "teaching_order": 63,
@@ -2569,7 +2569,7 @@
     "preferred_professors": [
       "prof_avenali",
       "prof_maloney",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 68,
@@ -2705,7 +2705,7 @@
     "preferred_professors": [
       "prof_dodson",
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 20,
     "teaching_order": 73,
@@ -2756,7 +2756,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_dodson"
     ],
     "enrollment_cap": 20,
@@ -2782,7 +2782,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_avenali"
     ],
     "enrollment_cap": 20,
@@ -2860,7 +2860,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_dodson"
     ],
     "enrollment_cap": 20,
@@ -2891,7 +2891,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_avenali"
     ],
     "enrollment_cap": 20,
@@ -2967,7 +2967,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_dodson"
     ],
     "enrollment_cap": 20,
@@ -3089,7 +3089,7 @@
     "preferred_professors": [
       "prof_dodson",
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 16,
     "teaching_order": 88,
@@ -3135,7 +3135,7 @@
     "preferred_professors": [
       "prof_maloney",
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 16,
     "teaching_order": 90,
@@ -3226,7 +3226,7 @@
       "production"
     ],
     "preferred_professors": [
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_dodson",
       "prof_allen"
     ],
@@ -3288,7 +3288,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_dodson"
     ],
     "enrollment_cap": 16,
@@ -3402,7 +3402,7 @@
     "preferred_professors": [
       "prof_maloney",
       "prof_allen",
-      "prof_lindsay"
+      "prof_lindsey"
     ],
     "enrollment_cap": 16,
     "teaching_order": 101,
@@ -3451,7 +3451,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_dodson"
     ],
     "enrollment_cap": 16,
@@ -3477,7 +3477,7 @@
     ],
     "preferred_professors": [
       "prof_allen",
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_dodson"
     ],
     "enrollment_cap": 16,
@@ -3533,7 +3533,7 @@
       "motion_design"
     ],
     "preferred_professors": [
-      "prof_lindsay",
+      "prof_lindsey",
       "prof_dodson",
       "prof_avenali"
     ],
