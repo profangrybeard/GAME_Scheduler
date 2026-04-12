@@ -1071,7 +1071,23 @@ else:
                                 _is_locked = a["cs_key"] in locked_set
                                 _lock_icon = "🔒 " if _is_locked else ""
                                 _lock_class = "locked" if _is_locked else ""
-                                st.markdown(f'<div class="cal-course {_lock_class}" style="border-left-color:{_aff_color};"><div class="cal-cid"><span class="dept-dot" style="background:{_dot};"></span>{_lock_icon}{a["catalog_id"]}</div><div class="cal-cname">{a["course_name"]}</div><div class="cal-detail">{a["prof_name"]} · {_room_short}</div></div>', unsafe_allow_html=True)
+                                _aff_labels = {0: "Picked", 1: "Good fit", 2: "Available"}
+                                _aff_label = _aff_labels.get(_aff, "—")
+                                _tp = a.get("time_pref", "unknown")
+                                _tp_colors = {"preferred": ACCENT_GREEN, "acceptable": ACCENT_AMBER, "not_preferred": ACCENT_RED}
+                                _tp_short = {"preferred": "Pref time", "acceptable": "OK time", "not_preferred": "Off hours"}
+                                _tp_color = _tp_colors.get(_tp, TXT_MUTED)
+                                _tp_label = _tp_short.get(_tp, "—")
+                                st.markdown(
+                                    f'<div class="cal-course {_lock_class}" style="border-left-color:{_aff_color};">'
+                                    f'<div class="cal-cid"><span class="dept-dot" style="background:{_dot};"></span>{_lock_icon}{a["catalog_id"]}</div>'
+                                    f'<div class="cal-cname">{a["course_name"]}</div>'
+                                    f'<div class="cal-detail">{a["prof_name"]} · {_room_short}'
+                                    f' · <span style="color:{_aff_color};">{_aff_label}</span>'
+                                    f' · <span style="color:{_tp_color};">{_tp_label}</span></div>'
+                                    f'</div>',
+                                    unsafe_allow_html=True,
+                                )
                                 # Lock/Unlock + Edit popover
                                 _btn1, _btn2 = st.columns(2)
                                 with _btn1:
@@ -1110,7 +1126,18 @@ else:
                                                     offerings[_edit_idx]["override_preferred_professors"] = None
                                                 else:
                                                     offerings[_edit_idx]["override_preferred_professors"] = [_ep_new_prof]
-                                            st.caption("Full editing on Courses tab")
+                                            _ep_room_opts = config.VALID_ROOM_TYPES
+                                            _ep_cur_room = _eo.get("override_room_type") or catalog_lookup.get(a["catalog_id"], {}).get("required_room_type", "standard")
+                                            if _ep_cur_room not in _ep_room_opts:
+                                                _ep_cur_room = "standard"
+                                            _ep_new_room = st.selectbox("Room Type", _ep_room_opts, format_func=lambda x: x.replace("_", " ").title(), index=_ep_room_opts.index(_ep_cur_room), key=f"ep_room_{a['cs_key']}_{dg}_{ts}")
+                                            offerings[_edit_idx]["override_room_type"] = _ep_new_room
+                                            if st.button("Drop Course", key=f"ep_drop_{a['cs_key']}_{dg}_{ts}", use_container_width=True):
+                                                active_project["offerings"].pop(_edit_idx)
+                                                st.session_state["locked_assignments"] = [la for la in st.session_state["locked_assignments"] if la["cs_key"] != a["cs_key"]]
+                                                st.session_state["solver_results"] = None
+                                                add_log("DROP", f"Dropped {a['catalog_id']} from grid")
+                                                st.rerun()
                             n_here = len(solved_here)
                             cap_color = ACCENT_AMBER if n_here >= total_rooms else TXT_MUTED
                             st.markdown(f'<div style="font-size:0.6rem; color:{cap_color}; text-align:right; padding:1px 4px;">{n_here}/{total_rooms}</div>', unsafe_allow_html=True)
@@ -1157,14 +1184,30 @@ else:
                 pri_colors = {"must_have": ACCENT_RED, "should_have": ACCENT_AMBER, "could_have": TXT_MUTED, "nice_to_have": TXT_MUTED}
                 st.markdown(f'<div style="margin-top:8px; font-size:0.75rem; color:{ACCENT_AMBER}; font-weight:600;">Dropped ({len(unsched)})</div>', unsafe_allow_html=True)
 
+                _solver_data = mode_data.get("data", {})
                 for u in unsched_sorted:
                     _cid = u["catalog_id"]; _course = catalog_lookup.get(_cid, {}); _name = _course.get("name", _cid)
                     _dept = _course.get("department", "game"); _dot = DEPT_DOT.get(_dept, "#666")
                     _pri = u["priority"]; _pri_label = PRIORITY_LABELS.get(_pri, _pri); _pri_color = pri_colors.get(_pri, TXT_MUTED)
                     _room_type = _course.get("required_room_type", "any").replace("_", " ")
 
+                    # Compute drop reason from solver data
+                    _cs_key = u.get("cs_key", "")
+                    _ep = _solver_data.get("eligible_profs", {}).get(_cs_key, [])
+                    _er = _solver_data.get("eligible_rooms", {}).get(_cs_key, [])
+                    if not _ep:
+                        _drop_reason = "No eligible professor"
+                    elif not _er:
+                        _drop_reason = "No compatible room"
+                    elif _pri in ("could_have", "nice_to_have"):
+                        _drop_reason = "Lower priority — solver fit higher-ranked courses first"
+                    elif _pri == "should_have":
+                        _drop_reason = "Couldn't fit — slots or professors fully committed"
+                    else:
+                        _drop_reason = "Constraint conflict — all slot/prof/room combos blocked"
+
                     uc1, uc2, uc3 = st.columns([4, 1.5, 1])
-                    with uc1: st.markdown(f'<div style="font-size:0.72rem; padding:3px 0;"><span class="dept-dot" style="background:{_dot};"></span><span style="color:{TXT_ACCENT}; font-weight:600;">{_cid}</span> <span style="color:{TXT_SECONDARY};">{_name}</span></div>', unsafe_allow_html=True)
+                    with uc1: st.markdown(f'<div style="font-size:0.72rem; padding:3px 0;"><span class="dept-dot" style="background:{_dot};"></span><span style="color:{TXT_ACCENT}; font-weight:600;">{_cid}</span> <span style="color:{TXT_SECONDARY};">{_name}</span><br/><span style="font-size:0.65rem; color:{TXT_MUTED};">{_drop_reason}</span></div>', unsafe_allow_html=True)
                     with uc2: st.markdown(f'<div style="font-size:0.65rem; padding:5px 0;"><span style="color:{_pri_color}; font-weight:600;">{_pri_label}</span> <span style="color:{TXT_MUTED};">&middot; {_room_type}</span></div>', unsafe_allow_html=True)
                     with uc3:
                         if st.button("Lock", key=f"force_lock_{_cid}_{u.get('section_idx',0)}", use_container_width=True):
