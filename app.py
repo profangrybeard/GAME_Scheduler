@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "2.5.3"
+APP_VERSION = "2.5.4"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -1091,8 +1091,15 @@ else:
                 if _lock:
                     _badges += f'<span class="badge badge-lock-gold">🔒 {DG_LABELS[_lock["day_group"]]} {_lock["time_slot"]}</span>'
 
-                _lock_indicator = f"  `🔒 {DG_LABELS[_lock['day_group']]} {_lock['time_slot']}`" if _lock else ""
-                _expander_label = f"{cid}  {course.get('name', cid)}{_lock_indicator}"
+                # Build always-visible status pills for the expander label
+                _prof_code_for_label = _prof_initials(_prof_display) if _prof_list else "Auto"
+                _label_parts = [f"`{_pri_label}`", f"`{_prof_code_for_label}`"]
+                if _sec_count > 1:
+                    _label_parts.append(f"`{_sec_count} sec`")
+                if _lock:
+                    _label_parts.append(f"`🔒 {DG_LABELS[_lock['day_group']]} {_lock['time_slot']}`")
+                _label_suffix = "  " + "  ".join(_label_parts)
+                _expander_label = f"{cid}  {course.get('name', cid)}{_label_suffix}"
                 _should_expand = (_auto_expand_idx == idx)
                 with st.expander(_expander_label, expanded=_should_expand):
                     st.markdown(f'<div class="badge-row">{_badges}</div>', unsafe_allow_html=True)
