@@ -1091,32 +1091,23 @@ else:
                                 # Lock/Unlock + Edit popover
                                 _btn1, _btn2 = st.columns(2)
                                 with _btn1:
-                                    _lock_label = "🔓 Unlock" if _is_locked else "Lock"
-                                    _lock_type = "primary" if _is_locked else "secondary"
-                                    if st.button(_lock_label, key=f"lock_{a['cs_key']}_{dg}_{ts}", use_container_width=True, type=_lock_type):
-                                        if _is_locked:
+                                    if _is_locked:
+                                        if st.button("🔓 Unlock", key=f"lock_{a['cs_key']}_{dg}_{ts}", use_container_width=True, type="primary"):
                                             st.session_state["locked_assignments"] = [la for la in st.session_state["locked_assignments"] if la["cs_key"] != a["cs_key"]]
-                                            # Also clear offering-level lock
                                             for _oi, _oo in enumerate(offerings):
                                                 if _oo["catalog_id"] == a["catalog_id"] and _oo.get("locked"):
                                                     offerings[_oi]["locked"] = None
                                             add_log("UNLOCK", f"Unlocked {a['catalog_id']}")
-                                        else:
-                                            # Use user's professor override if set, otherwise solver's choice
-                                            _lock_offering = next((o for o in offerings if o["catalog_id"] == a["catalog_id"]), None)
-                                            _lock_prof = a["prof_id"]
-                                            if _lock_offering:
-                                                _override = _lock_offering.get("override_preferred_professors")
-                                                if _override:
-                                                    _lock_prof = _override[0]
+                                            st.rerun()
+                                    else:
+                                        if st.button("Lock", key=f"lock_{a['cs_key']}_{dg}_{ts}", use_container_width=True):
                                             st.session_state["locked_assignments"].append({
-                                                "cs_key": a["cs_key"], "prof_id": _lock_prof,
+                                                "cs_key": a["cs_key"], "prof_id": a["prof_id"],
                                                 "room_id": a["room_id"], "day_group": a["day_group"],
                                                 "time_slot": a["time_slot"],
                                             })
-                                            _lock_prof_name = prof_labels.get(_lock_prof, _lock_prof)
-                                            add_log("LOCK", f"Locked {a['catalog_id']} → {DG_LABELS[a['day_group']]} {a['time_slot']} ({_lock_prof_name})")
-                                        st.rerun()
+                                            add_log("LOCK", f"Locked {a['catalog_id']} → {DG_LABELS[a['day_group']]} {a['time_slot']} ({a['prof_name']})")
+                                            st.rerun()
                                 with _btn2:
                                     _edit_idx = next((i for i, o in enumerate(offerings) if o["catalog_id"] == a["catalog_id"]), None)
                                     if _edit_idx is not None:
@@ -1134,21 +1125,27 @@ else:
                                                     offerings[_edit_idx]["override_preferred_professors"] = None
                                                 else:
                                                     offerings[_edit_idx]["override_preferred_professors"] = [_ep_new_prof]
-                                                # Clear lock — user wants a different assignment, stale lock would override this
-                                                st.session_state["locked_assignments"] = [la for la in st.session_state["locked_assignments"] if la["cs_key"] != a["cs_key"]]
-                                                st.session_state["solver_results"] = None
                                             _ep_room_opts = config.VALID_ROOM_TYPES
                                             _ep_cur_room = _eo.get("override_room_type") or catalog_lookup.get(a["catalog_id"], {}).get("required_room_type", "standard")
                                             if _ep_cur_room not in _ep_room_opts:
                                                 _ep_cur_room = "standard"
                                             _ep_new_room = st.selectbox("Room Type", _ep_room_opts, format_func=lambda x: x.replace("_", " ").title(), index=_ep_room_opts.index(_ep_cur_room), key=f"ep_room_{a['cs_key']}_{dg}_{ts}")
-                                            if _ep_new_room != _ep_cur_room:
-                                                offerings[_edit_idx]["override_room_type"] = _ep_new_room
-                                                # Clear lock — room change makes stale lock invalid
+                                            offerings[_edit_idx]["override_room_type"] = _ep_new_room
+                                            # Lock button INSIDE the popover — reads selectbox values directly
+                                            _ep_lock_prof = _ep_new_prof if _ep_new_prof != "Auto-Draft" else a["prof_id"]
+                                            _ep_lock_label = "🔒 Lock with these settings" if not _is_locked else "🔒 Update lock"
+                                            if st.button(_ep_lock_label, key=f"ep_lock_{a['cs_key']}_{dg}_{ts}", use_container_width=True, type="primary"):
+                                                # Remove any existing lock for this section
                                                 st.session_state["locked_assignments"] = [la for la in st.session_state["locked_assignments"] if la["cs_key"] != a["cs_key"]]
-                                                st.session_state["solver_results"] = None
-                                            else:
-                                                offerings[_edit_idx]["override_room_type"] = _ep_new_room
+                                                # Create lock with the EXACT values from this popover
+                                                st.session_state["locked_assignments"].append({
+                                                    "cs_key": a["cs_key"], "prof_id": _ep_lock_prof,
+                                                    "room_id": a["room_id"], "day_group": a["day_group"],
+                                                    "time_slot": a["time_slot"],
+                                                })
+                                                _ep_lock_name = prof_labels.get(_ep_lock_prof, _ep_lock_prof)
+                                                add_log("LOCK", f"Locked {a['catalog_id']} → {DG_LABELS[a['day_group']]} {a['time_slot']} ({_ep_lock_name})")
+                                                st.rerun()
                                             if st.button("Drop Course", key=f"ep_drop_{a['cs_key']}_{dg}_{ts}", use_container_width=True):
                                                 active_project["offerings"].pop(_edit_idx)
                                                 st.session_state["locked_assignments"] = [la for la in st.session_state["locked_assignments"] if la["cs_key"] != a["cs_key"]]
