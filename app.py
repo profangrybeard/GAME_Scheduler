@@ -1102,12 +1102,20 @@ else:
                                                     offerings[_oi]["locked"] = None
                                             add_log("UNLOCK", f"Unlocked {a['catalog_id']}")
                                         else:
+                                            # Use user's professor override if set, otherwise solver's choice
+                                            _lock_offering = next((o for o in offerings if o["catalog_id"] == a["catalog_id"]), None)
+                                            _lock_prof = a["prof_id"]
+                                            if _lock_offering:
+                                                _override = _lock_offering.get("override_preferred_professors")
+                                                if _override:
+                                                    _lock_prof = _override[0]
                                             st.session_state["locked_assignments"].append({
-                                                "cs_key": a["cs_key"], "prof_id": a["prof_id"],
+                                                "cs_key": a["cs_key"], "prof_id": _lock_prof,
                                                 "room_id": a["room_id"], "day_group": a["day_group"],
                                                 "time_slot": a["time_slot"],
                                             })
-                                            add_log("LOCK", f"Locked {a['catalog_id']} → {DG_LABELS[a['day_group']]} {a['time_slot']}")
+                                            _lock_prof_name = prof_labels.get(_lock_prof, _lock_prof)
+                                            add_log("LOCK", f"Locked {a['catalog_id']} → {DG_LABELS[a['day_group']]} {a['time_slot']} ({_lock_prof_name})")
                                         st.rerun()
                                 with _btn2:
                                     _edit_idx = next((i for i, o in enumerate(offerings) if o["catalog_id"] == a["catalog_id"]), None)
