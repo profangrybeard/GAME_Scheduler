@@ -20,7 +20,7 @@ from pathlib import Path
 import streamlit as st
 
 # ─── Version ────────────────────────────────────────────────────────
-APP_VERSION = "2.6.0"
+APP_VERSION = "2.6.1"
 
 # ─── Session State Init ───────────────────────────────────────────────
 if "active_project" not in st.session_state:
@@ -1137,6 +1137,79 @@ else:
         _auto_expand_idx = st.session_state.get("expand_offering_idx")
 
         if offerings:
+            # Styles for the portrait that will be moved into each expander's summary via JS.
+            st.markdown(
+                """
+                <style>
+                /* Only Courses tab expanders get the portrait-reserved space. */
+                [data-testid="stExpander"] summary:has([data-course-portrait-marker]) {
+                    position: relative !important;
+                    padding-right: 72px !important;
+                    min-height: 72px;
+                }
+                .course-hdr-portrait, .course-hdr-initials, .course-hdr-auto {
+                    position: absolute;
+                    right: 14px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 48px;
+                    height: 62px;
+                    border-radius: 6px;
+                    z-index: 2;
+                    pointer-events: none;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-sizing: border-box;
+                }
+                .course-hdr-portrait { object-fit: cover; border: 1px solid rgba(255,255,255,0.08); }
+                .course-hdr-initials { color: #FFF; font-weight: 700; font-size: 1.1rem; letter-spacing: -0.02em; }
+                .course-hdr-auto { background: #222228; border: 1px dashed #2A2A30; color: #6B7280; }
+                </style>
+                """,
+                unsafe_allow_html=True,
+            )
+            # JS: after each rerun, move each portrait placeholder into its next-sibling expander's summary.
+            import streamlit.components.v1 as _crs
+            _crs.html(
+                """
+                <script>
+                (function() {
+                  const doc = window.parent.document;
+                  const moveOnce = () => {
+                    const orphans = doc.querySelectorAll('[data-course-portrait-marker]:not([data-cp-moved])');
+                    orphans.forEach(mk => {
+                      let el = mk.closest('[data-testid="stElementContainer"], [data-testid="element-container"]') || mk.parentElement;
+                      let sibling = el && el.nextElementSibling;
+                      while (sibling) {
+                        const summary = sibling.querySelector('[data-testid="stExpander"] summary');
+                        if (summary) {
+                          summary.appendChild(mk);
+                          mk.setAttribute('data-cp-moved', '1');
+                          break;
+                        }
+                        sibling = sibling.nextElementSibling;
+                      }
+                    });
+                  };
+                  moveOnce();
+                  // Watch for DOM changes and reapply — handles Streamlit reruns.
+                  if (window.parent.__gsPortraitObserver) {
+                    try { window.parent.__gsPortraitObserver.disconnect(); } catch(e) {}
+                  }
+                  let debounce = null;
+                  const obs = new MutationObserver(() => {
+                    clearTimeout(debounce);
+                    debounce = setTimeout(moveOnce, 40);
+                  });
+                  obs.observe(doc.body, { childList: true, subtree: true });
+                  window.parent.__gsPortraitObserver = obs;
+                })();
+                </script>
+                """,
+                height=0,
+            )
+            _course_cols = st.columns(2)
             for idx, o in enumerate(offerings):
                 cid = o["catalog_id"]
                 course = catalog_lookup.get(cid, {})
@@ -1174,87 +1247,109 @@ else:
                 _label_suffix = "  " + "  ".join(_label_parts)
                 _expander_label = f"{cid}  {course.get('name', cid)}{_label_suffix}"
                 _should_expand = (_auto_expand_idx == idx)
-                with st.expander(_expander_label, expanded=_should_expand):
-                    # Portrait right-justified + badges left
-                    _exp_portrait = prof_avatar_html(_prof_id_for_badge, _prof_display, size=56)
-                    st.markdown(
-                        f'<div style="display:flex;align-items:flex-start;gap:12px;">'
-                        f'<div class="badge-row" style="flex:1;">{_badges}</div>'
-                        f'{_exp_portrait}'
-                        f'</div>',
-                        unsafe_allow_html=True,
+                # Build the portrait overlay HTML for the expander header (moved in via JS)
+                if not _prof_id_for_badge:
+                    _hdr_portrait_html = (
+                        '<div class="course-hdr-auto" data-course-portrait-marker>'
+                        '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+                        'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+                        '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></div>'
                     )
-
-                    # Row 1: Day/Time (primary action)
-                    lock = o.get("locked")
-                    if lock:
-                        lt1, lt2 = st.columns([3, 1])
-                        with lt1:
-                            dg_opts = list(DG_LABELS.keys())
-                            dg_val = st.selectbox("Days", dg_opts, format_func=lambda x: DG_LABELS[x], index=dg_opts.index(lock["day_group"]), key=f"board_dg_{idx}")
-                            ts_val = st.selectbox("Time", config.TIME_SLOTS, index=config.TIME_SLOTS.index(lock["time_slot"]), key=f"board_ts_{idx}")
-                            active_project["offerings"][idx]["locked"] = {"day_group": dg_val, "time_slot": ts_val}
-                        with lt2:
-                            st.markdown(f'<div style="height:20px;"></div>', unsafe_allow_html=True)
-                            if st.button("Unlock", key=f"unlock_{idx}", use_container_width=True):
-                                active_project["offerings"][idx]["locked"] = None
-                                add_log("UNLOCK", f"Unlocked {cid}")
-                                st.rerun()
+                else:
+                    _hdr_portrait_path = _prof_portrait_path(_prof_id_for_badge)
+                    if _hdr_portrait_path:
+                        _hdr_data_url = _portrait_data_url(str(_hdr_portrait_path), _hdr_portrait_path.stat().st_mtime)
+                        _hdr_portrait_html = f'<img class="course-hdr-portrait" data-course-portrait-marker src="{_hdr_data_url}" alt="{_prof_display}" />'
                     else:
-                        is_placing = st.session_state.get("placing_offering_idx") == idx
-                        btn_label = "Cancel" if is_placing else "Lock to Slot"
-                        if st.button(btn_label, key=f"place_btn_{idx}", use_container_width=True):
-                            if is_placing:
-                                st.session_state["placing_offering_idx"] = None
-                            else:
-                                st.session_state["placing_offering_idx"] = idx
-                                st.session_state["_placing_just_started"] = True
-                                # Clear solver results so Schedule tab shows slot-picking grid
-                                if "solver_results" in st.session_state:
-                                    del st.session_state["solver_results"]
+                        _hdr_bg = PROF_COLORS.get(_prof_id_for_badge, "#6B7280")
+                        _hdr_initials = _prof_initials(_prof_display)
+                        _hdr_portrait_html = f'<div class="course-hdr-initials" data-course-portrait-marker style="background:{_hdr_bg};">{_hdr_initials}</div>'
+
+                _target_col = _course_cols[idx % 2]
+                with _target_col:
+                    st.markdown('<div class="course-card-col">', unsafe_allow_html=True)
+                    st.markdown(_hdr_portrait_html, unsafe_allow_html=True)
+                    with st.expander(_expander_label, expanded=_should_expand):
+                        # Inside body: show larger portrait prominently on the right
+                        _exp_portrait = prof_avatar_html(_prof_id_for_badge, _prof_display, size=72)
+                        st.markdown(
+                            f'<div style="display:flex;align-items:flex-start;gap:12px;">'
+                            f'<div class="badge-row" style="flex:1;">{_badges}</div>'
+                            f'{_exp_portrait}'
+                            f'</div>',
+                            unsafe_allow_html=True,
+                        )
+
+                        # Row 1: Day/Time (primary action)
+                        lock = o.get("locked")
+                        if lock:
+                            lt1, lt2 = st.columns([3, 1])
+                            with lt1:
+                                dg_opts = list(DG_LABELS.keys())
+                                dg_val = st.selectbox("Days", dg_opts, format_func=lambda x: DG_LABELS[x], index=dg_opts.index(lock["day_group"]), key=f"board_dg_{idx}")
+                                ts_val = st.selectbox("Time", config.TIME_SLOTS, index=config.TIME_SLOTS.index(lock["time_slot"]), key=f"board_ts_{idx}")
+                                active_project["offerings"][idx]["locked"] = {"day_group": dg_val, "time_slot": ts_val}
+                            with lt2:
+                                st.markdown(f'<div style="height:20px;"></div>', unsafe_allow_html=True)
+                                if st.button("Unlock", key=f"unlock_{idx}", use_container_width=True):
+                                    active_project["offerings"][idx]["locked"] = None
+                                    add_log("UNLOCK", f"Unlocked {cid}")
+                                    st.rerun()
+                        else:
+                            is_placing = st.session_state.get("placing_offering_idx") == idx
+                            btn_label = "Cancel" if is_placing else "Lock to Slot"
+                            if st.button(btn_label, key=f"place_btn_{idx}", use_container_width=True):
+                                if is_placing:
+                                    st.session_state["placing_offering_idx"] = None
+                                else:
+                                    st.session_state["placing_offering_idx"] = idx
+                                    st.session_state["_placing_just_started"] = True
+                                    # Clear solver results so Schedule tab shows slot-picking grid
+                                    if "solver_results" in st.session_state:
+                                        del st.session_state["solver_results"]
+                                st.rerun()
+
+                        # Row 2: Professor + Room
+                        p1, p2 = st.columns(2)
+                        with p1:
+                            current_prof_list = o.get("override_preferred_professors")
+                            current_prof = current_prof_list[0] if current_prof_list else "Auto-Draft"
+                            if current_prof not in prof_options:
+                                current_prof = "Auto-Draft"
+                            new_prof = st.selectbox("Professor", prof_options, format_func=lambda x: prof_labels[x], index=prof_options.index(current_prof), key=f"board_prof_{idx}")
+                            if new_prof != current_prof:
+                                if new_prof == "Auto-Draft":
+                                    active_project["offerings"][idx]["override_preferred_professors"] = None
+                                    add_log("AUTO", f"Reverted {cid} to Auto-Draft")
+                                else:
+                                    active_project["offerings"][idx]["override_preferred_professors"] = [new_prof]
+                                    add_log("ASSIGN", f"Assigned {prof_labels[new_prof]} to {cid}")
+                                st.rerun()
+                        with p2:
+                            room_opts = config.VALID_ROOM_TYPES
+                            current_room = o.get("override_room_type") or course.get("required_room_type", "standard")
+                            if current_room not in room_opts:
+                                current_room = "standard"
+                            new_room = st.selectbox("Room Type", room_opts, format_func=lambda x: x.replace("_", " ").title(), index=room_opts.index(current_room), key=f"board_room_{idx}")
+                            active_project["offerings"][idx]["override_room_type"] = new_room
+
+                        # Row 3: Priority + Sections
+                        s1, s2 = st.columns(2)
+                        with s1:
+                            new_pri = st.selectbox("Priority", list(PRIORITY_LABELS.keys()), format_func=lambda x: PRIORITY_LABELS[x], index=list(PRIORITY_LABELS.keys()).index(o.get("priority", "must_have")), key=f"board_pri_{idx}")
+                            active_project["offerings"][idx]["priority"] = new_pri
+                        with s2:
+                            new_sec = st.number_input("Sections", min_value=1, max_value=4, value=o.get("sections", 1), key=f"board_sec_{idx}")
+                            active_project["offerings"][idx]["sections"] = new_sec
+
+                        # Row 3: Notes + Remove
+                        notes = st.text_area("Notes", value=o.get("notes") or "", key=f"board_notes_{idx}", height=60)
+                        active_project["offerings"][idx]["notes"] = notes if notes else None
+
+                        if st.button("Remove from Draft", key=f"board_rm_{idx}", use_container_width=True):
+                            active_project["offerings"].pop(idx)
+                            add_log("DROP", f"Removed {cid}")
                             st.rerun()
-
-                    # Row 2: Professor + Room
-                    p1, p2 = st.columns(2)
-                    with p1:
-                        current_prof_list = o.get("override_preferred_professors")
-                        current_prof = current_prof_list[0] if current_prof_list else "Auto-Draft"
-                        if current_prof not in prof_options:
-                            current_prof = "Auto-Draft"
-                        new_prof = st.selectbox("Professor", prof_options, format_func=lambda x: prof_labels[x], index=prof_options.index(current_prof), key=f"board_prof_{idx}")
-                        if new_prof != current_prof:
-                            if new_prof == "Auto-Draft":
-                                active_project["offerings"][idx]["override_preferred_professors"] = None
-                                add_log("AUTO", f"Reverted {cid} to Auto-Draft")
-                            else:
-                                active_project["offerings"][idx]["override_preferred_professors"] = [new_prof]
-                                add_log("ASSIGN", f"Assigned {prof_labels[new_prof]} to {cid}")
-                            st.rerun()
-                    with p2:
-                        room_opts = config.VALID_ROOM_TYPES
-                        current_room = o.get("override_room_type") or course.get("required_room_type", "standard")
-                        if current_room not in room_opts:
-                            current_room = "standard"
-                        new_room = st.selectbox("Room Type", room_opts, format_func=lambda x: x.replace("_", " ").title(), index=room_opts.index(current_room), key=f"board_room_{idx}")
-                        active_project["offerings"][idx]["override_room_type"] = new_room
-
-                    # Row 3: Priority + Sections
-                    s1, s2 = st.columns(2)
-                    with s1:
-                        new_pri = st.selectbox("Priority", list(PRIORITY_LABELS.keys()), format_func=lambda x: PRIORITY_LABELS[x], index=list(PRIORITY_LABELS.keys()).index(o.get("priority", "must_have")), key=f"board_pri_{idx}")
-                        active_project["offerings"][idx]["priority"] = new_pri
-                    with s2:
-                        new_sec = st.number_input("Sections", min_value=1, max_value=4, value=o.get("sections", 1), key=f"board_sec_{idx}")
-                        active_project["offerings"][idx]["sections"] = new_sec
-
-                    # Row 3: Notes + Remove
-                    notes = st.text_area("Notes", value=o.get("notes") or "", key=f"board_notes_{idx}", height=60)
-                    active_project["offerings"][idx]["notes"] = notes if notes else None
-
-                    if st.button("Remove from Draft", key=f"board_rm_{idx}", use_container_width=True):
-                        active_project["offerings"].pop(idx)
-                        add_log("DROP", f"Removed {cid}")
-                        st.rerun()
 
         else:
             st.markdown(f'<div style="text-align:center; color:{TXT_MUTED}; padding:3rem; font-size:0.85rem;">No courses yet. Use the <b>Catalog</b> tab to add courses.</div>', unsafe_allow_html=True)
