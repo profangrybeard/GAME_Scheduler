@@ -1,13 +1,24 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
+import {
+  downloadBlob,
+  pingApi,
+  postExport,
+  postSolve,
+  responseAssignmentToAssignment,
+  type SolveModeResult,
+  type SolveRequestBody,
+} from "./api"
 import { CatalogueDrawer } from "./components/CatalogueDrawer"
 import { Class } from "./components/Class"
 import { PortraitContext } from "./components/PortraitContext"
 import { ProfessorCard } from "./components/ProfessorCard"
 import { QuarterSchedule } from "./components/QuarterSchedule"
+import { RoomCard } from "./components/RoomCard"
 import { Roster } from "./components/Roster"
+import { VersionBadge } from "./components/VersionBadge"
 import { loadInitialState } from "./data"
 import { useTheme } from "./hooks/useTheme"
-import type { Offering, Professor, SchedulerState, Slot, SolveMode } from "./types"
+import type { Assignment, Offering, Professor, Room, SchedulerState, Slot, SolveMode } from "./types"
 import "./App.css"
 
 /**
@@ -25,6 +36,7 @@ import "./App.css"
 
 const PORTRAIT_STORAGE_KEY = "portrait-overrides"
 const PROF_EDITS_STORAGE_KEY = "professor-edits"
+const ROOM_EDITS_STORAGE_KEY = "room-edits"
 
 type ActivePanel = "roster" | "schedule" | "detail"
 
@@ -48,10 +60,22 @@ function saveProfEdits(edits: Record<string, Partial<Professor>>) {
   try { localStorage.setItem(PROF_EDITS_STORAGE_KEY, JSON.stringify(edits)) } catch { /* full */ }
 }
 
-function applyProfEdits(
-  base: Record<string, Professor>,
-  edits: Record<string, Partial<Professor>>,
-): Record<string, Professor> {
+function loadRoomEdits(): Record<string, Partial<Room>> {
+  try {
+    const raw = localStorage.getItem(ROOM_EDITS_STORAGE_KEY)
+    if (raw) return JSON.parse(raw) as Record<string, Partial<Room>>
+  } catch { /* corrupted */ }
+  return {}
+}
+
+function saveRoomEdits(edits: Record<string, Partial<Room>>) {
+  try { localStorage.setItem(ROOM_EDITS_STORAGE_KEY, JSON.stringify(edits)) } catch { /* full */ }
+}
+
+function applyEdits<T>(
+  base: Record<string, T>,
+  edits: Record<string, Partial<T>>,
+): Record<string, T> {
   const result = { ...base }
   for (const [id, patch] of Object.entries(edits)) {
     if (result[id]) result[id] = { ...result[id], ...patch }
@@ -62,14 +86,28 @@ function applyProfEdits(
 function App() {
   const [state, setState] = useState<SchedulerState>(() => {
     const base = loadInitialState()
-    const edits = loadProfEdits()
-    return { ...base, professors: applyProfEdits(base.professors, edits) }
+    const profEdits = loadProfEdits()
+    const roomEdits = loadRoomEdits()
+    return {
+      ...base,
+      professors: applyEdits(base.professors, profEdits),
+      rooms: applyEdits(base.rooms, roomEdits),
+    }
   })
-  const [, setProfEdits] = useState<Record<string, Partial<Professor>>>(loadProfEdits)
+  const [profEdits, setProfEdits] = useState<Record<string, Partial<Professor>>>(loadProfEdits)
+  const [roomEdits, setRoomEdits] = useState<Record<string, Partial<Room>>>(loadRoomEdits)
   const { theme, resolved, cycle: cycleTheme } = useTheme()
   const [catalogueOpen, setCatalogueOpen] = useState(false)
   const [selectedProfId, setSelectedProfId] = useState<string | null>(null)
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
   const [portraits, setPortraits] = useState<Record<string, string>>(loadPortraits)
+
+  // ── Solver / API state ─────────────────────────────────────────
+  const [apiAvailable, setApiAvailable] = useState<boolean | null>(null)
+  const [solveError, setSolveError] = useState<string | null>(null)
+  // Cache of all three solve modes from the last /api/solve, so flipping the
+  // solveMode chip re-applies without re-running the solver.
+  const modeResultsRef = useRef<Record<string, SolveModeResult> | null>(null)
 
   // ── Responsive UI state ──────────────────────────────────────────
   const [activePanel, setActivePanel] = useState<ActivePanel>("schedule")
@@ -86,11 +124,22 @@ function App() {
   const selectOffering = useCallback((id: string | null) => {
     setState(s => ({ ...s, selectedOfferingId: id }))
     setSelectedProfId(null)
+    setSelectedRoomId(null)
     if (id) setActivePanel("detail")
   }, [])
 
   const selectProfessor = useCallback((id: string | null) => {
     setSelectedProfId(id)
+    setSelectedRoomId(null)
+    if (id) {
+      setState(s => ({ ...s, selectedOfferingId: null }))
+      setActivePanel("detail")
+    }
+  }, [])
+
+  const selectRoom = useCallback((id: string | null) => {
+    setSelectedRoomId(id)
+    setSelectedProfId(null)
     if (id) {
       setState(s => ({ ...s, selectedOfferingId: null }))
       setActivePanel("detail")
@@ -113,7 +162,6 @@ function App() {
         assigned_prof_id: null,
         assigned_room_id: null,
         pinned: null,
-        locked: null,
         assignment: null,
       }
       return {
@@ -164,49 +212,104 @@ function App() {
     [],
   )
 
+  const updateRoom = useCallback(
+    (room_id: string, changes: Partial<Room>) => {
+      setState(s => ({
+        ...s,
+        rooms: {
+          ...s.rooms,
+          [room_id]: { ...s.rooms[room_id], ...changes },
+        },
+      }))
+      setRoomEdits(prev => {
+        const next = { ...prev, [room_id]: { ...prev[room_id], ...changes } }
+        saveRoomEdits(next)
+        return next
+      })
+    },
+    [],
+  )
+
   const pinToSlot = useCallback((catalog_id: string, slot: Slot | null) => {
     setState(s => ({
       ...s,
       offerings: s.offerings.map(o =>
-        o.catalog_id === catalog_id
-          ? {
-              ...o,
-              pinned: slot,
-              locked:
-                slot && o.locked && sameSlot(o.locked, slot) ? o.locked : null,
-            }
-          : o,
+        o.catalog_id === catalog_id ? { ...o, pinned: slot } : o,
       ),
     }))
     setPlacingId(null)
   }, [])
 
-  const toggleLock = useCallback((catalog_id: string) => {
-    setState(s => ({
-      ...s,
-      offerings: s.offerings.map(o => {
-        if (o.catalog_id !== catalog_id) return o
-        if (o.locked) return { ...o, locked: null }
-        const target = o.pinned ?? o.assignment?.slot ?? null
-        return target ? { ...o, locked: target } : o
-      }),
-    }))
-  }, [])
+  /** Apply a mode's assignments to the offerings list. Assignments not present
+   *  in the mode clear `offering.assignment` — the user sees only the current
+   *  mode's schedule, not a stale one. */
+  const applyModeAssignments = useCallback(
+    (mode: SolveModeResult | undefined) => {
+      if (!mode) return
+      const byCatalog: Record<string, Assignment> = {}
+      for (const a of mode.assignments) {
+        byCatalog[a.catalog_id] = responseAssignmentToAssignment(a)
+      }
+      setState(s => ({
+        ...s,
+        offerings: s.offerings.map(o => ({
+          ...o,
+          assignment: byCatalog[o.catalog_id] ?? null,
+        })),
+      }))
+    },
+    [],
+  )
 
-  const setSolveMode = useCallback((mode: SolveMode) => {
-    setState(s => ({ ...s, solveMode: mode }))
-  }, [])
+  const setSolveMode = useCallback(
+    (mode: SolveMode) => {
+      setState(s => ({ ...s, solveMode: mode }))
+      // Re-apply from the cached solve result so flipping modes doesn't require
+      // a new round-trip. If we haven't solved yet, there's nothing to apply.
+      const cached = modeResultsRef.current?.[mode]
+      if (cached) applyModeAssignments(cached)
+    },
+    [applyModeAssignments],
+  )
 
-  const requestSolve = useCallback(() => {
+  const buildSolveRequest = useCallback((): SolveRequestBody => ({
+    quarter:            state.quarter,
+    year:               state.year,
+    solveMode:          state.solveMode,
+    offerings:          state.offerings,
+    professorOverrides: profEdits,
+    roomOverrides:      roomEdits,
+  }), [state.quarter, state.year, state.solveMode, state.offerings, profEdits, roomEdits])
+
+  const requestSolve = useCallback(async () => {
+    setSolveError(null)
     setState(s => ({ ...s, solveStatus: "running" }))
-    setTimeout(() => {
+    try {
+      const res = await postSolve(buildSolveRequest())
+      const byMode: Record<string, SolveModeResult> = {}
+      for (const m of res.modes) byMode[m.mode] = m
+      modeResultsRef.current = byMode
+      applyModeAssignments(byMode[state.solveMode] ?? res.modes[0])
       setState(s => ({ ...s, solveStatus: "done" }))
-    }, 400)
-  }, [])
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      console.error("[solve] error:", msg)
+      setSolveError(msg)
+      setState(s => ({ ...s, solveStatus: "error" }))
+    }
+  }, [buildSolveRequest, applyModeAssignments, state.solveMode])
 
-  const requestExport = useCallback(() => {
-    console.info("[stub] requestExport — wire to backend")
-  }, [])
+  const requestExport = useCallback(async () => {
+    setSolveError(null)
+    try {
+      const { blob, filename } = await postExport(buildSolveRequest())
+      downloadBlob(blob, filename)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      console.error("[export] error:", msg)
+      setSolveError(msg)
+    }
+  }, [buildSolveRequest])
 
   // ── Placement mode (tap-to-place alternative to DnD) ────────────
 
@@ -242,10 +345,22 @@ function App() {
     return () => mq.removeEventListener("change", handler)
   }, [])
 
+  // Probe the solver backend on mount. Short timeout so the GH Pages preview
+  // doesn't feel laggy when nothing is listening.
+  useEffect(() => {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 2000)
+    pingApi(controller.signal).then(ok => {
+      setApiAvailable(ok)
+    }).catch(() => setApiAvailable(false))
+    return () => { clearTimeout(timer); controller.abort() }
+  }, [])
+
   // ── Render ─────────────────────────────────────────────────────────
 
   const offeringCount = state.offerings.length
   const selectedProf = selectedProfId ? state.professors[selectedProfId] : null
+  const selectedRoom = selectedRoomId ? state.rooms[selectedRoomId] : null
   const placingOffering = placingId
     ? state.offerings.find(o => o.catalog_id === placingId)
     : null
@@ -258,13 +373,18 @@ function App() {
       offerings={state.offerings}
       catalog={state.catalog}
       professors={state.professors}
+      rooms={state.rooms}
       selectedOfferingId={state.selectedOfferingId}
+      selectedProfId={selectedProfId}
+      selectedRoomId={selectedRoomId}
       placingId={placingId}
       onSelect={selectOffering}
       onSelectProfessor={selectProfessor}
+      onSelectRoom={selectRoom}
       onRemove={removeOffering}
       onOpenCatalogue={openCatalogue}
       onStartPlacing={startPlacing}
+      onUnpinToRoster={id => pinToSlot(id, null)}
     />
   )
 
@@ -278,6 +398,8 @@ function App() {
       solveStatus={state.solveStatus}
       solveMode={state.solveMode}
       placingId={placingId}
+      apiAvailable={apiAvailable}
+      solveError={solveError}
       onSelect={selectOffering}
       onSelectProfessor={selectProfessor}
       onAdd={addOffering}
@@ -286,10 +408,17 @@ function App() {
       onSolve={requestSolve}
       onExport={requestExport}
       onStartPlacing={startPlacing}
+      onDismissError={() => setSolveError(null)}
     />
   )
 
-  const detailPanel = selectedProf ? (
+  const detailPanel = selectedRoom ? (
+    <RoomCard
+      room={selectedRoom}
+      onUpdate={updateRoom}
+      onClose={() => setSelectedRoomId(null)}
+    />
+  ) : selectedProf ? (
     <ProfessorCard
       professor={selectedProf}
       onUpdate={updateProfessor}
@@ -305,7 +434,6 @@ function App() {
       professors={state.professors}
       rooms={state.rooms}
       onUpdate={updateOffering}
-      onToggleLock={toggleLock}
       onRemove={removeOffering}
       onSelectProfessor={selectProfessor}
     />
@@ -343,16 +471,19 @@ function App() {
             {state.quarter} {state.year} · {offeringCount} offerings ·{" "}
             {state.solveMode}
           </span>
-          <button
-            type="button"
-            className="theme-toggle"
-            onClick={cycleTheme}
-            title={`Theme: ${theme} (${resolved})`}
-            aria-label={`Switch theme, currently ${theme}`}
-          >
-            {resolved === "dark" ? "\u263E" : "\u2600"}
-            {theme === "system" && <span className="theme-toggle__auto">A</span>}
-          </button>
+          <div className="scheduler__topbar-right">
+            <VersionBadge />
+            <button
+              type="button"
+              className="theme-toggle"
+              onClick={cycleTheme}
+              title={`Theme: ${theme} (${resolved})`}
+              aria-label={`Switch theme, currently ${theme}`}
+            >
+              {resolved === "dark" ? "\u263E" : "\u2600"}
+              {theme === "system" && <span className="theme-toggle__auto">A</span>}
+            </button>
+          </div>
         </header>
         <main className="scheduler__canvas" data-active={activePanel}>
           {rosterPanel}
@@ -424,10 +555,6 @@ function App() {
       </div>
     </PortraitContext.Provider>
   )
-}
-
-function sameSlot(a: Slot, b: Slot): boolean {
-  return a.day_group === b.day_group && a.time_slot === b.time_slot
 }
 
 export default App

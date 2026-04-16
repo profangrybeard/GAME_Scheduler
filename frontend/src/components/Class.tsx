@@ -24,7 +24,7 @@ import { ProfAvatar } from "./ProfAvatar"
  * ──────────────────────────────────────────────────────────────────
  *
  * Reads  (props):  the currently selected offering + reference data
- * Writes (events): updateOffering, toggleLock, removeOffering
+ * Writes (events): updateOffering, removeOffering
  */
 
 const PRIORITY_OPTIONS: ReadonlyArray<{ key: Priority; label: string }> = [
@@ -42,7 +42,6 @@ export interface ClassProps {
   professors: Record<string, Professor>
   rooms: Record<string, Room>
   onUpdate: (catalog_id: string, changes: Partial<Offering>) => void
-  onToggleLock: (catalog_id: string) => void
   onRemove: (catalog_id: string) => void
   onSelectProfessor: (id: string | null) => void
 }
@@ -284,14 +283,6 @@ export function Class(props: ClassProps) {
         </section>
 
         <section className="class__footer">
-          <button
-            type="button"
-            className="class__lock"
-            disabled={!offering.pinned && !offering.assignment}
-            onClick={() => props.onToggleLock(offering.catalog_id)}
-          >
-            {offering.locked ? "🔒 Unlock slot" : "🔓 Lock slot"}
-          </button>
           <button
             type="button"
             className="class__remove"

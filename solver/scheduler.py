@@ -133,7 +133,15 @@ def _time_label(prof: dict, ts: str) -> str:
 # Main entry point
 # ---------------------------------------------------------------------------
 
-def run_schedule(quarter: str, locked: list | None = None, pinned: list | None = None) -> dict:
+def run_schedule(
+    quarter: str,
+    locked: list | None = None,
+    pinned: list | None = None,
+    *,
+    offerings_override: dict | None = None,
+    professors_override: dict[str, dict] | None = None,
+    rooms_override: dict[str, dict] | None = None,
+) -> dict:
     """Run 3 CP-SAT solves (one per mode) for the given quarter.
 
     Parameters
@@ -142,27 +150,43 @@ def run_schedule(quarter: str, locked: list | None = None, pinned: list | None =
         Optional list of assignment dicts (cs_key, prof_id, room_id, day_group,
         time_slot) that are pinned as hard constraints in every mode solve.
         Used by the lock-and-tweak re-generate flow.
+    pinned : list | None
+        Slot-only hints. Section 0 of each catalog_id is typically pinned
+        from the React workspace when the user drags a card onto the grid.
+    offerings_override, professors_override, rooms_override
+        See build_model. When the React workspace calls this via the HTTP
+        API, all three are supplied so the solver operates on the user's
+        in-memory state without mutating canonical JSON on disk.
 
     Returns
     -------
     dict with keys:
         quarter  — str
-        year     — int (from quarterly_offerings.json)
+        year     — int (from offerings_override or quarterly_offerings.json)
         modes    — list of 3 result dicts
     """
     import json
     from pathlib import Path
 
-    offerings_doc = json.loads(
-        (Path(__file__).resolve().parent.parent / "data" / "quarterly_offerings.json")
-        .read_text(encoding="utf-8")
-    )
+    if offerings_override is not None:
+        offerings_doc = offerings_override
+    else:
+        offerings_doc = json.loads(
+            (Path(__file__).resolve().parent.parent / "data" / "quarterly_offerings.json")
+            .read_text(encoding="utf-8")
+        )
     year = offerings_doc.get("year", 2026)
 
     mode_results = []
     for mode in MODE_WEIGHTS:
         print(f"\n[{mode}] Building model ...")
-        model, data = build_model(quarter, mode, locked=locked, pinned=pinned)
+        model, data = build_model(
+            quarter, mode,
+            locked=locked, pinned=pinned,
+            offerings_override=offerings_override,
+            professors_override=professors_override,
+            rooms_override=rooms_override,
+        )
 
         print(f"[{mode}] Applying constraints ...")
         apply_hard_constraints(model, data)
