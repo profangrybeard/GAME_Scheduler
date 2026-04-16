@@ -9,15 +9,22 @@
 FROM node:20-alpine AS frontend-build
 WORKDIR /app
 
+# git is required by vite.config.ts `gitShortSha()` — the VersionBadge
+# bakes the short SHA into the bundle at build time so every deployed
+# build flags its own commit. Node Alpine doesn't include git by default.
+RUN apk add --no-cache git
+
 # Install JS deps first (cached when frontend/package*.json hasn't changed).
 COPY frontend/package.json frontend/package-lock.json ./frontend/
 RUN cd frontend && npm ci --no-audit --no-fund
 
 # Copy the rest of the frontend source + the canonical data/ dir (Vite reads
 # JSON from `../../data/*` at build time via resolveJsonModule).
+# Also bring in .git/ so `git rev-parse` inside vite.config.ts works.
 COPY frontend/ ./frontend/
 COPY data/course_catalog.json data/professors.json data/rooms.json data/quarterly_offerings.default.json ./data/
 COPY data/portraits/ ./data/portraits/
+COPY .git/ ./.git/
 
 # Production build. We deliberately do NOT set GITHUB_PAGES so Vite uses
 # base='/', which is what we need when FastAPI serves the bundle at the root.

@@ -1,11 +1,13 @@
 # Keep the docker context small + deterministic.
 
-# Git + editor
-.git/
+# Editor / IDE state (not needed in build)
 .gitignore
 .gitattributes
 .vscode/
 .idea/
+# Note: .git/ is intentionally NOT excluded — the Vite build reads the
+# short SHA via `git rev-parse` so the VersionBadge shows the deployed
+# commit. See frontend/vite.config.ts.
 
 # Claude / planning artifacts
 .claude/
