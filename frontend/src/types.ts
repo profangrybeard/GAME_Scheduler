@@ -79,6 +79,9 @@ export interface Room {
   display_count: number
   capacity: number
   notes?: string
+  /** Per-quarter availability. `undefined` means available (default).
+   *  Set to `false` when a room is offline for the quarter. */
+  available?: boolean
 }
 
 // ─── Mutable working state ────────────────────────────────────────
@@ -95,15 +98,14 @@ export interface Assignment {
 }
 
 /**
- * The 5-state lifecycle of an offering:
+ * The 4-state lifecycle of an offering:
  *   1. Catalogue         — in the catalog, not yet offered (no Offering row)
  *   2. Offering (unkit)  — added to offerings, prof/room = AUTO, no slot
  *   3. Kitted            — prof and/or room assigned, no slot yet
- *   4. Placed (unlocked) — pinned to a slot; solver may move it
- *   5. Locked            — pinned AND locked; solver cannot move it
+ *   4. Placed            — pinned to a slot (drag always allowed)
  *
- * `pinned` and `locked` are both Slot | null. Both set means "locked to X".
- * Only `pinned` set means "suggested X, solver may override".
+ * When the solver wires up, a placed offering is a hint; we'll layer any
+ * hard-constraint mechanism on top then (see Record of Resistance).
  */
 export interface Offering {
   catalog_id: string
@@ -118,9 +120,8 @@ export interface Offering {
   assigned_prof_id: string | null // null = AUTO
   assigned_room_id: string | null // null = AUTO
 
-  // Board writes these
-  pinned: Slot | null // soft — solver may move
-  locked: Slot | null // hard — solver must keep here
+  // Board writes this
+  pinned: Slot | null
 
   // Solver writes this
   assignment: Assignment | null
@@ -154,11 +155,9 @@ export interface SchedulerState {
 export type OfferingState =
   | "offering" // in offerings, prof+room AUTO, no slot
   | "kitted"   // prof and/or room assigned, no slot
-  | "placed"   // pinned/assigned to a slot, unlocked
-  | "locked"   // locked to a slot
+  | "placed"   // pinned/assigned to a slot
 
 export function classifyOffering(o: Offering): OfferingState {
-  if (o.locked) return "locked"
   if (o.pinned || o.assignment) return "placed"
   if (o.assigned_prof_id || o.assigned_room_id) return "kitted"
   return "offering"
@@ -172,7 +171,6 @@ export interface SchedulerActions {
   removeOffering: (catalog_id: string) => void
   updateOffering: (catalog_id: string, changes: Partial<Offering>) => void
   pinToSlot: (catalog_id: string, slot: Slot | null) => void
-  toggleLock: (catalog_id: string) => void
   setSolveMode: (mode: SolveMode) => void
   requestSolve: () => void
   requestExport: () => void

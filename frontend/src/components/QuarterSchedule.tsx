@@ -25,7 +25,6 @@ import { ProfAvatar } from "./ProfAvatar"
  *   • Drag a catalogue row, a placed card, or a dock card into any cell to
  *     pin it there
  *   • Drag a placed card into the dock to unpin
- *   • Locked cards are not draggable (unlock via Class panel first)
  */
 
 const TIME_SLOTS: readonly TimeSlot[] = [
@@ -48,11 +47,10 @@ const SOLVE_MODE_OPTIONS: ReadonlyArray<{ key: SolveMode; label: string }> = [
 
 const DND_MIME = "application/x-offering"
 
-/** effectiveSlot — assignment beats pinned beats locked. */
+/** effectiveSlot — assignment (solver output) beats pinned (user placement). */
 function effectiveSlot(o: Offering): Slot | null {
   if (o.assignment) return o.assignment.slot
   if (o.pinned) return o.pinned
-  if (o.locked) return o.locked
   return null
 }
 
@@ -65,6 +63,10 @@ export interface QuarterScheduleProps {
   solveStatus: SolveStatus
   solveMode: SolveMode
   placingId: string | null
+  /** null while probing, true if /api/health replied, false if unreachable. */
+  apiAvailable: boolean | null
+  /** Error message from the last solve / export, if any. */
+  solveError: string | null
   onSelect: (id: string | null) => void
   onSelectProfessor: (id: string | null) => void
   onAdd: (catalog_id: string) => void
@@ -73,6 +75,7 @@ export interface QuarterScheduleProps {
   onSolve: () => void
   onExport: () => void
   onStartPlacing: (id: string) => void
+  onDismissError: () => void
 }
 
 export function QuarterSchedule(props: QuarterScheduleProps) {
@@ -80,9 +83,20 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [visibleDayGroup, setVisibleDayGroup] = useState<DayGroup>(1)
 
-  const canGenerate =
-    props.offerings.length > 0 && props.solveStatus !== "running"
-  const canExport = props.solveStatus === "done"
+  const isSolving = props.solveStatus === "running"
+  const apiReady = props.apiAvailable === true
+  const canGenerate = apiReady && props.offerings.length > 0 && !isSolving
+  const canExport = apiReady && props.solveStatus === "done" && !isSolving
+  const generateTitle =
+    props.apiAvailable === false
+      ? "Solver requires the local launcher (run ./launch_workspace.sh)"
+      : props.apiAvailable === null
+        ? "Checking solver backend..."
+        : props.offerings.length === 0
+          ? "Add offerings first"
+          : isSolving
+            ? "Solving..."
+            : "Generate schedule"
 
   const placedByCell = useMemo(() => {
     const placed = new Map<string, Offering[]>()
@@ -128,7 +142,6 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
     const room = roomId ? props.rooms[roomId] : null
     const dept = course?.department ?? "game"
     const isSelected = props.selectedOfferingId === o.catalog_id
-    const isLocked = !!o.locked
     const isDragging = draggingId === o.catalog_id
     const isPlacing = props.placingId === o.catalog_id
 
@@ -136,25 +149,20 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
       <button
         key={o.catalog_id}
         type="button"
-        draggable={!isLocked}
+        draggable
         className={
           "schedule-card dept--" +
           dept +
           (isSelected ? " schedule-card--selected" : "") +
-          (isLocked ? " schedule-card--locked" : "") +
           (isDragging ? " schedule-card--dragging" : "") +
           (isPlacing ? " schedule-card--placing" : "")
         }
         onClick={e => {
           e.stopPropagation()
           props.onSelect(o.catalog_id)
-          if (!isLocked) props.onStartPlacing(o.catalog_id)
+          props.onStartPlacing(o.catalog_id)
         }}
         onDragStart={e => {
-          if (isLocked) {
-            e.preventDefault()
-            return
-          }
           e.dataTransfer.setData(DND_MIME, o.catalog_id)
           e.dataTransfer.setData("text/plain", o.catalog_id)
           e.dataTransfer.effectAllowed = "move"
@@ -186,11 +194,6 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
         <span className="schedule-card__room">
           {room ? room.name.split("–")[0].trim().replace("Room ", "") : "—"}
         </span>
-        {isLocked && (
-          <span className="schedule-card__lock" aria-label="locked">
-            🔒
-          </span>
-        )}
       </button>
     )
   }
@@ -217,15 +220,37 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
             ))}
           </div>
           <div className="panel__actions">
-            <button disabled={!canGenerate} onClick={props.onSolve}>
-              Generate
+            <button
+              disabled={!canGenerate}
+              onClick={props.onSolve}
+              title={generateTitle}
+            >
+              {isSolving ? "Solving…" : "Generate"}
             </button>
-            <button disabled={!canExport} onClick={props.onExport}>
+            <button
+              disabled={!canExport}
+              onClick={props.onExport}
+              title={apiReady ? "Download Excel" : generateTitle}
+            >
               Export
             </button>
           </div>
         </div>
       </header>
+
+      {props.solveError && (
+        <div className="schedule__error" role="alert">
+          <span className="schedule__error-text">{props.solveError}</span>
+          <button
+            type="button"
+            className="schedule__error-dismiss"
+            onClick={props.onDismissError}
+            aria-label="Dismiss error"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       <div className="schedule__day-toggle" role="tablist" aria-label="Day group">
         {DAY_GROUPS.map(g => (
@@ -278,17 +303,26 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
                   props.selectedOfferingId !== null &&
                   !cards.some(c => c.catalog_id === props.selectedOfferingId)
                 const isHidden = g.key !== visibleDayGroup // only hidden on portrait via CSS
+                // Density: 1-2 → column; 3-4 → 2-col grid; 5+ → 2-col + compact cards.
+                const densityClass =
+                  cards.length >= 5
+                    ? " schedule-grid__cell--grid schedule-grid__cell--dense"
+                    : cards.length >= 3
+                      ? " schedule-grid__cell--grid"
+                      : ""
                 return (
                   <div
                     key={`c-${g.key}-${ts}`}
                     className={
                       "schedule-grid__cell" +
+                      densityClass +
                       (isDropTarget ? " schedule-grid__cell--over" : "") +
                       (isHidden ? " schedule-grid__cell--hidden" : "")
                     }
                     role="gridcell"
                     data-day-group={g.key}
                     data-time-slot={ts}
+                    data-count={cards.length}
                     onClick={() => {
                       if (props.placingId) {
                         props.onPinToSlot(props.placingId, slot)

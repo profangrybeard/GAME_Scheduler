@@ -1,17 +1,18 @@
-import { useMemo } from "react"
-import type { Course, Offering, Professor } from "../types"
+import { useMemo, useState } from "react"
+import type { Course, Offering, Professor, Room } from "../types"
 import { classifyOffering } from "../types"
 import { ProfAvatar } from "./ProfAvatar"
 
 /**
- * The ROSTER panel — unplaced offerings.
+ * The ROSTER panel — browsable index of everything the scheduler touches.
  *
- * Shows offerings that aren't yet placed on the schedule grid. Once an
- * offering is pinned or locked to a time slot, it disappears from here
- * and lives on the grid. Empty roster = everything scheduled.
+ * Three tabs:
+ *   - Offerings: unplaced courses (drag to grid)
+ *   - Profs:     all professors (click to edit availability in detail panel)
+ *   - Rooms:     all rooms      (click to edit availability in detail panel)
  *
- * Reads  (props):  offerings, catalog, professors, selectedOfferingId
- * Writes (events): onSelect, onRemove, onOpenCatalogue
+ * Tab is local UI state. Selection lives in App.tsx (single source of truth).
+ * Only the Offerings tab participates in drag-and-drop.
  */
 
 const DND_MIME = "application/x-offering"
@@ -23,26 +24,37 @@ const PRIORITY_ORDER: Record<string, number> = {
   nice_to_have: 3,
 }
 
+type RosterTab = "offerings" | "profs" | "rooms"
+
 export interface RosterProps {
   offerings: Offering[]
   catalog: Record<string, Course>
   professors: Record<string, Professor>
+  rooms: Record<string, Room>
   selectedOfferingId: string | null
+  selectedProfId: string | null
+  selectedRoomId: string | null
   placingId: string | null
   onSelect: (id: string | null) => void
   onSelectProfessor: (id: string | null) => void
+  onSelectRoom: (id: string | null) => void
   onRemove: (catalog_id: string) => void
   onOpenCatalogue: () => void
   onStartPlacing: (id: string) => void
+  /** Called when a schedule card is dropped onto the offerings list —
+   *  unpins it back to the unplaced roster. */
+  onUnpinToRoster: (catalog_id: string) => void
 }
 
 /** An offering is "placed" if it has a slot on the grid. */
 function isPlaced(o: Offering): boolean {
-  return !!(o.pinned || o.locked || o.assignment)
+  return !!(o.pinned || o.assignment)
 }
 
 export function Roster(props: RosterProps) {
-  const sorted = useMemo(() => {
+  const [tab, setTab] = useState<RosterTab>("offerings")
+
+  const unplaced = useMemo(() => {
     return props.offerings
       .filter(o => !isPlaced(o))
       .sort((a, b) => {
@@ -53,119 +65,384 @@ export function Roster(props: RosterProps) {
       })
   }, [props.offerings])
 
+  const profList = useMemo(() => {
+    return Object.values(props.professors).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    )
+  }, [props.professors])
+
+  const roomList = useMemo(() => {
+    return Object.values(props.rooms).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    )
+  }, [props.rooms])
+
+  const count =
+    tab === "offerings"
+      ? `${unplaced.length} / ${props.offerings.length}`
+      : tab === "profs"
+        ? `${profList.length}`
+        : `${roomList.length}`
+
   return (
     <aside className="panel panel--roster" aria-label="Roster">
       <header className="panel__header">
         <h2 className="panel__title">Roster</h2>
-        <span className="panel__count">{sorted.length} / {props.offerings.length}</span>
-        <button
-          type="button"
-          className="roster__add-btn"
-          onClick={props.onOpenCatalogue}
-          title="Add courses from catalogue"
-        >
-          + Add
-        </button>
+        <span className="panel__count">{count}</span>
+        {tab === "offerings" && (
+          <button
+            type="button"
+            className="roster__add-btn"
+            onClick={props.onOpenCatalogue}
+            title="Add courses from catalogue"
+          >
+            + Add
+          </button>
+        )}
       </header>
 
-      <div className="panel__body roster__list">
-        {sorted.length === 0 && (
-          <p className="placeholder placeholder--empty">
-            {props.offerings.length === 0
-              ? <>No offerings yet.<br />Click <strong>+ Add</strong> to pick courses.</>
+      <div className="roster__tabs" role="tablist" aria-label="Roster view">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "offerings"}
+          className={
+            "roster__tab" + (tab === "offerings" ? " roster__tab--active" : "")
+          }
+          onClick={() => setTab("offerings")}
+        >
+          Offerings
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "profs"}
+          className={
+            "roster__tab" + (tab === "profs" ? " roster__tab--active" : "")
+          }
+          onClick={() => setTab("profs")}
+        >
+          Profs
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "rooms"}
+          className={
+            "roster__tab" + (tab === "rooms" ? " roster__tab--active" : "")
+          }
+          onClick={() => setTab("rooms")}
+        >
+          Rooms
+        </button>
+      </div>
+
+      {tab === "offerings" && (
+        <OfferingsList
+          unplaced={unplaced}
+          totalCount={props.offerings.length}
+          catalog={props.catalog}
+          professors={props.professors}
+          selectedOfferingId={props.selectedOfferingId}
+          placingId={props.placingId}
+          onSelect={props.onSelect}
+          onSelectProfessor={props.onSelectProfessor}
+          onRemove={props.onRemove}
+          onStartPlacing={props.onStartPlacing}
+          onUnpinToRoster={props.onUnpinToRoster}
+        />
+      )}
+
+      {tab === "profs" && (
+        <ProfsList
+          profs={profList}
+          selectedProfId={props.selectedProfId}
+          onSelect={props.onSelectProfessor}
+        />
+      )}
+
+      {tab === "rooms" && (
+        <RoomsList
+          rooms={roomList}
+          selectedRoomId={props.selectedRoomId}
+          onSelect={props.onSelectRoom}
+        />
+      )}
+    </aside>
+  )
+}
+
+// ─── Offerings tab (previous behavior, unchanged) ──────────────────
+
+interface OfferingsListProps {
+  unplaced: Offering[]
+  totalCount: number
+  catalog: Record<string, Course>
+  professors: Record<string, Professor>
+  selectedOfferingId: string | null
+  placingId: string | null
+  onSelect: (id: string | null) => void
+  onSelectProfessor: (id: string | null) => void
+  onRemove: (catalog_id: string) => void
+  onStartPlacing: (id: string) => void
+  onUnpinToRoster: (catalog_id: string) => void
+}
+
+function OfferingsList(props: OfferingsListProps) {
+  const [isDragOver, setIsDragOver] = useState(false)
+
+  const handleDragOver = (e: React.DragEvent) => {
+    // Accept the drop only if the dragged data is an offering.
+    if (!e.dataTransfer.types.includes(DND_MIME) &&
+        !e.dataTransfer.types.includes("text/plain")) return
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+    if (!isDragOver) setIsDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only clear when leaving the list, not when crossing between children.
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return
+    setIsDragOver(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    const catId =
+      e.dataTransfer.getData(DND_MIME) || e.dataTransfer.getData("text/plain")
+    if (catId) props.onUnpinToRoster(catId)
+  }
+
+  return (
+    <div
+      className={
+        "panel__body roster__list" +
+        (isDragOver ? " roster__list--drag-over" : "")
+      }
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {props.unplaced.length === 0 && (
+        <p className="placeholder placeholder--empty">
+          {props.totalCount === 0
+            ? <>No offerings yet.<br />Click <strong>+ Add</strong> to pick courses.</>
+            : isDragOver
+              ? "Drop here to unpin"
               : "All placed — nice work."}
-          </p>
-        )}
-        {sorted.map(offering => {
-          const course = props.catalog[offering.catalog_id]
-          if (!course) return null
+        </p>
+      )}
+      {props.unplaced.map(offering => {
+        const course = props.catalog[offering.catalog_id]
+        if (!course) return null
 
-          const state = classifyOffering(offering)
-          const prof = offering.assigned_prof_id
-            ? props.professors[offering.assigned_prof_id]
-            : null
-          const isSelected = props.selectedOfferingId === offering.catalog_id
-          const isLocked = state === "locked"
-          const isPlacing = props.placingId === offering.catalog_id
+        const state = classifyOffering(offering)
+        const prof = offering.assigned_prof_id
+          ? props.professors[offering.assigned_prof_id]
+          : null
+        const isSelected = props.selectedOfferingId === offering.catalog_id
+        const isPlacing = props.placingId === offering.catalog_id
 
-          return (
-            <div
-              key={offering.catalog_id}
-              role="button"
-              tabIndex={0}
-              draggable={!isLocked}
-              className={
-                "roster-card" +
-                ` dept--${course.department}` +
-                (isSelected ? " roster-card--selected" : "") +
-                (isLocked ? " roster-card--locked" : "") +
-                (isPlacing ? " roster-card--placing" : "")
-              }
-              onClick={() => {
+        return (
+          <div
+            key={offering.catalog_id}
+            role="button"
+            tabIndex={0}
+            draggable
+            className={
+              "roster-card" +
+              ` dept--${course.department}` +
+              (isSelected ? " roster-card--selected" : "") +
+              (isPlacing ? " roster-card--placing" : "")
+            }
+            onClick={() => {
+              props.onSelect(offering.catalog_id)
+              props.onStartPlacing(offering.catalog_id)
+            }}
+            onKeyDown={e => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
                 props.onSelect(offering.catalog_id)
-                if (!isLocked) props.onStartPlacing(offering.catalog_id)
-              }}
-              onKeyDown={e => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault()
-                  props.onSelect(offering.catalog_id)
+              }
+            }}
+            onDragStart={e => {
+              e.dataTransfer.setData(DND_MIME, offering.catalog_id)
+              e.dataTransfer.setData("text/plain", offering.catalog_id)
+              e.dataTransfer.effectAllowed = "move"
+            }}
+          >
+            <span
+              className="roster-card__avatar-hit"
+              role="button"
+              tabIndex={-1}
+              onClick={e => {
+                e.stopPropagation()
+                if (offering.assigned_prof_id) {
+                  props.onSelectProfessor(offering.assigned_prof_id)
                 }
-              }}
-              onDragStart={e => {
-                if (isLocked) {
-                  e.preventDefault()
-                  return
-                }
-                e.dataTransfer.setData(DND_MIME, offering.catalog_id)
-                e.dataTransfer.setData("text/plain", offering.catalog_id)
-                e.dataTransfer.effectAllowed = "move"
               }}
             >
-              <span
-                className="roster-card__avatar-hit"
-                role="button"
-                tabIndex={-1}
-                onClick={e => {
-                  e.stopPropagation()
-                  if (offering.assigned_prof_id) {
-                    props.onSelectProfessor(offering.assigned_prof_id)
-                  }
-                }}
-              >
-                <ProfAvatar
-                  profId={offering.assigned_prof_id}
-                  name={prof?.name}
-                  size={32}
-                  className="roster-card__avatar"
-                />
-              </span>
-              <span className="roster-card__course">
-                <span className="roster-card__id">{course.id}</span>
-                {" "}
-                <span className="roster-card__name">{course.name}</span>
-              </span>
-              <span className="roster-card__prof">
-                {prof ? prof.name.split(" ").pop() : "AUTO"}
-              </span>
-              <span
-                className={`roster-card__status roster-card__status--${state}`}
-                title={state}
+              <ProfAvatar
+                profId={offering.assigned_prof_id}
+                name={prof?.name}
+                size={32}
+                className="roster-card__avatar"
               />
-              <span
-                className="roster-card__remove"
-                role="button"
-                aria-label={`Remove ${course.id} from offerings`}
-                onClick={e => {
-                  e.stopPropagation()
-                  props.onRemove(offering.catalog_id)
-                }}
-              >
-                ×
+            </span>
+            <span className="roster-card__course">
+              <span className="roster-card__id">{course.id}</span>
+              {" "}
+              <span className="roster-card__name">{course.name}</span>
+            </span>
+            <span className="roster-card__prof">
+              {prof ? prof.name.split(" ").pop() : "AUTO"}
+            </span>
+            <span
+              className={`roster-card__status roster-card__status--${state}`}
+              title={state}
+            />
+            <span
+              className="roster-card__remove"
+              role="button"
+              aria-label={`Remove ${course.id} from offerings`}
+              onClick={e => {
+                e.stopPropagation()
+                props.onRemove(offering.catalog_id)
+              }}
+            >
+              ×
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Profs tab ─────────────────────────────────────────────────────
+
+interface ProfsListProps {
+  profs: Professor[]
+  selectedProfId: string | null
+  onSelect: (id: string | null) => void
+}
+
+function ProfsList(props: ProfsListProps) {
+  return (
+    <div className="panel__body roster__list">
+      {props.profs.length === 0 && (
+        <p className="placeholder placeholder--empty">No professors loaded.</p>
+      )}
+      {props.profs.map(p => {
+        const isSelected = props.selectedProfId === p.id
+        return (
+          <div
+            key={p.id}
+            role="button"
+            tabIndex={0}
+            className={
+              "roster-card roster-card--person" +
+              (isSelected ? " roster-card--selected" : "")
+            }
+            onClick={() => props.onSelect(p.id)}
+            onKeyDown={e => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                props.onSelect(p.id)
+              }
+            }}
+          >
+            <span className="roster-card__avatar-hit">
+              <ProfAvatar
+                profId={p.id}
+                name={p.name}
+                size={32}
+                className="roster-card__avatar"
+              />
+            </span>
+            <span className="roster-card__course">
+              <span className="roster-card__name roster-card__name--primary">
+                {p.name}
               </span>
-            </div>
-          )
-        })}
-      </div>
-    </aside>
+              <span className="roster-card__sub">
+                {p.is_chair ? "Chair · " : ""}
+                {p.home_department.toUpperCase()} · max {p.max_classes}
+              </span>
+            </span>
+            <span
+              className="roster-card__quarters"
+              title={`Available: ${p.available_quarters.join(", ") || "none"}`}
+            >
+              {p.available_quarters
+                .slice()
+                .sort()
+                .map(q => q.charAt(0).toUpperCase())
+                .join("")}
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Rooms tab ─────────────────────────────────────────────────────
+
+interface RoomsListProps {
+  rooms: Room[]
+  selectedRoomId: string | null
+  onSelect: (id: string | null) => void
+}
+
+function RoomsList(props: RoomsListProps) {
+  return (
+    <div className="panel__body roster__list">
+      {props.rooms.length === 0 && (
+        <p className="placeholder placeholder--empty">No rooms loaded.</p>
+      )}
+      {props.rooms.map(r => {
+        const isSelected = props.selectedRoomId === r.id
+        const isOffline = r.available === false
+        return (
+          <div
+            key={r.id}
+            role="button"
+            tabIndex={0}
+            className={
+              "roster-card roster-card--room" +
+              (isSelected ? " roster-card--selected" : "") +
+              (isOffline ? " roster-card--offline" : "")
+            }
+            onClick={() => props.onSelect(r.id)}
+            onKeyDown={e => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                props.onSelect(r.id)
+              }
+            }}
+          >
+            <span className="roster-card__icon" aria-hidden="true">▦</span>
+            <span className="roster-card__course">
+              <span className="roster-card__name roster-card__name--primary">
+                {r.name}
+              </span>
+              <span className="roster-card__sub">
+                {r.station_count}×{r.station_type.toUpperCase()} · cap {r.capacity}
+              </span>
+            </span>
+            <span
+              className={
+                "roster-card__dot" +
+                (isOffline
+                  ? " roster-card__dot--offline"
+                  : " roster-card__dot--available")
+              }
+              title={isOffline ? "Offline for this quarter" : "Available"}
+            />
+          </div>
+        )
+      })}
+    </div>
   )
 }

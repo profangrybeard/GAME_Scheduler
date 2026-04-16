@@ -37,7 +37,7 @@ const rawOfferingsDoc = offeringsJson as unknown as {
   offerings: Array<
     Omit<Offering, "assigned_prof_id" | "assigned_room_id" | "pinned" | "assignment"> & {
       pinned?: Slot | null
-      locked?: Slot | null
+      locked?: Slot | null // legacy — folded into `pinned` on load (see below)
     }
   >
 }
@@ -103,8 +103,9 @@ export function loadInitialState(): SchedulerState {
     notes: raw.notes ?? null,
     assigned_prof_id: null,
     assigned_room_id: null,
-    pinned: raw.pinned ?? null,
-    locked: raw.locked ?? null,
+    // Legacy `locked` slot collapses into `pinned` — they were the same
+    // information post-solver-collapse. See Record of Resistance.
+    pinned: raw.pinned ?? raw.locked ?? null,
     assignment: null,
   }))
 

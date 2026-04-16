@@ -94,7 +94,16 @@ def _eligible_rooms(course: dict, rooms: list[dict]) -> list[str]:
 # Main entry point
 # ---------------------------------------------------------------------------
 
-def build_model(quarter: str, mode: str = "balanced", locked: list | None = None, pinned: list | None = None) -> tuple:
+def build_model(
+    quarter: str,
+    mode: str = "balanced",
+    locked: list | None = None,
+    pinned: list | None = None,
+    *,
+    offerings_override: dict | None = None,
+    professors_override: dict[str, dict] | None = None,
+    rooms_override: dict[str, dict] | None = None,
+) -> tuple:
     """Load quarterly offerings and catalog, expand sections, build CP-SAT model.
 
     Parameters
@@ -112,6 +121,18 @@ def build_model(quarter: str, mode: str = "balanced", locked: list | None = None
         Optional list of dicts (each with cs_key, day_group, time_slot) that
         constrain a section to a specific time slot while letting the solver
         choose professor and room.
+    offerings_override : dict | None
+        When set, skip reading data/quarterly_offerings.json and use this
+        dict (shaped like the file). Used by the React workspace so the
+        canonical file is never mutated by interactive solves.
+    professors_override : dict[str, dict] | None
+        Per-professor shallow patch keyed by prof id (e.g. quarterly
+        availability edits). Applied on top of data/professors.json.
+    rooms_override : dict[str, dict] | None
+        Per-room shallow patch keyed by room id (e.g. `available: false`
+        to exclude the room this quarter). Applied on top of data/rooms.json.
+        Rooms with `available: false` after merge are filtered out before
+        eligibility runs.
 
     Returns
     -------
@@ -123,11 +144,28 @@ def build_model(quarter: str, mode: str = "balanced", locked: list | None = None
     if quarter not in VALID_QUARTERS:
         raise ValueError(f"Invalid quarter {quarter!r}. Choose from {VALID_QUARTERS}")
 
-    # --- Load all data files ---
-    offerings_doc = _load(BASE / "data" / "quarterly_offerings.json")
+    # --- Load all data files (or accept in-memory overrides) ---
+    offerings_doc = offerings_override if offerings_override is not None \
+                    else _load(BASE / "data" / "quarterly_offerings.json")
     catalog_raw   = _load(BASE / "data" / "course_catalog.json")
     professors    = _load(BASE / "data" / "professors.json")
     rooms         = _load(BASE / "data" / "rooms.json")
+
+    # --- Apply React workspace overrides (prof availability, room offline) ---
+    if professors_override:
+        professors = [
+            {**p, **professors_override[p["id"]]} if p["id"] in professors_override else p
+            for p in professors
+        ]
+    if rooms_override:
+        merged_rooms = []
+        for r in rooms:
+            patch = rooms_override.get(r["id"])
+            merged = {**r, **patch} if patch else r
+            if merged.get("available") is False:
+                continue  # room is offline this quarter — solver never sees it
+            merged_rooms.append(merged)
+        rooms = merged_rooms
 
     if offerings_doc["quarter"] != quarter:
         raise ValueError(

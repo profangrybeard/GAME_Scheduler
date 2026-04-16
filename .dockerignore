@@ -1,0 +1,60 @@
+# Keep the docker context small + deterministic.
+
+# Git + editor
+.git/
+.gitignore
+.gitattributes
+.vscode/
+.idea/
+
+# Claude / planning artifacts
+.claude/
+
+# Python build artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+output/
+
+# Node artifacts (rebuilt inside the image)
+frontend/node_modules/
+frontend/dist/
+
+# Per-user state
+data/quarterly_offerings.json
+.env
+.env.*
+*.xlsx
+
+# Tests and docs — not needed in the runtime image
+tests/
+docs/
+MILESTONES.md
+README.md
+GAME_Scheduler_PRD.docx
+eric_schedule_audit.md
+
+# Launchers (not needed in the container)
+launch.sh
+launch_workspace.sh
+run.bat
+run_workspace.bat
+
+# Streamlit UI (deployed separately if at all — see DEPLOY.md)
+app.py
+app_v2.2_legacy.py
+main.py
+ingest/
+schemas/
+templates/
+
+# One-off scripts
+demo*.js
+test_flow.js
+verify.js
+zoom.js
+inspect.js

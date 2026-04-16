@@ -1,0 +1,35 @@
+# Fly.io deployment config for the GAME Scheduler.
+#
+# One service, one process, serves both /api/* and the React static bundle.
+# Auto-stops after idle to keep costs near $0 for bursty quarterly use.
+#
+# First-time setup: see DEPLOY.md. After that, `flyctl deploy` (or the
+# GitHub Action on push to main) picks this up.
+
+app = "scad-class-scheduler"     # matches the app name reserved on fly.io
+primary_region = "atl"           # Atlanta — closest major region to SCAD Savannah
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  # Any runtime env vars go here. Secrets use `fly secrets set` instead.
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"    # stop (not suspend) — cheaper when idle
+  auto_start_machines = true
+  min_machines_running = 0        # scale to zero; Cloudflare Access in front means
+                                  # first-request latency is hidden behind the auth page
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/api/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"               # tight but works for ortools; bump to 1gb if solver OOMs
