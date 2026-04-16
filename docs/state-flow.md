@@ -35,10 +35,9 @@ flowchart TB
         A3["removeOffering(catalog_id)"]
         A4["updateOffering(id, patch)"]
         A5["pinToSlot(id, slot)"]
-        A6["toggleLock(id)"]
-        A7["setSolveMode(mode)"]
-        A8["requestSolve()"]
-        A9["requestExport()"]
+        A6["setSolveMode(mode)"]
+        A7["requestSolve()"]
+        A8["requestExport()"]
     end
 
     ST -- "props" --> BR
@@ -50,14 +49,13 @@ flowchart TB
     BR -- "onRemove" --> A3
 
     KS -- "onUpdate" --> A4
-    KS -- "onToggleLock" --> A6
     KS -- "onRemove" --> A3
 
     BO -- "onSelect" --> A1
     BO -- "onPinToSlot" --> A5
-    BO -- "onSetSolveMode" --> A7
-    BO -- "onSolve" --> A8
-    BO -- "onExport" --> A9
+    BO -- "onSetSolveMode" --> A6
+    BO -- "onSolve" --> A7
+    BO -- "onExport" --> A8
 
     A1 --> ST
     A2 --> ST
@@ -67,7 +65,6 @@ flowchart TB
     A6 --> ST
     A7 --> ST
     A8 --> ST
-    A9 --> ST
 ```
 
 ## Rules this diagram enforces
@@ -98,7 +95,7 @@ authorial controls — which would break the three-panel constraint. Instead,
 Class is a writing Detail View:
 
 - It still obeys **single source of truth**: it never holds domain state, it
-  only dispatches `updateOffering`, `toggleLock`, `removeOffering`.
+  only dispatches `updateOffering`, `removeOffering`.
 - It still obeys **events up**: every change round-trips to `App.tsx` before
   any panel re-renders.
 - It still obeys **props down**: every field shown is read from props.
@@ -107,19 +104,24 @@ What gets bent: the spec's "Detail View only reads" constraint. What stays
 intact: the whole point of the lifted-state pattern, which is that state has
 exactly one home.
 
-## 5-state offering lifecycle
+## 4-state offering lifecycle
 
-Each offering passes through five states. The state is derived from its
+Each offering passes through four states. The state is derived from its
 current fields — no state machine field, just `classifyOffering()` in
-`Class.tsx`:
+`types.ts`:
 
-| State      | `assigned_prof_id` / `assigned_room_id` | `pinned` / `assignment` | `locked` |
-|------------|------------------------------------------|--------------------------|----------|
-| Catalogue  | (not in offerings)                        | —                        | —        |
-| Offering   | both `null`                               | both `null`              | `null`   |
-| Kitted     | at least one set                          | both `null`              | `null`   |
-| Placed     | any                                       | at least one set         | `null`   |
-| Locked     | any                                       | any                      | set      |
+| State      | `assigned_prof_id` / `assigned_room_id` | `pinned` / `assignment` |
+|------------|------------------------------------------|--------------------------|
+| Catalogue  | (not in offerings)                       | —                        |
+| Offering   | both `null`                              | both `null`              |
+| Kitted     | at least one set                         | both `null`              |
+| Placed     | any                                      | at least one set         |
+
+Earlier drafts had a separate `Locked` state (both `pinned` and a `locked`
+slot set). We collapsed it — `pinned` alone now carries the placement and
+drag is always allowed. If the solver eventually needs a hard-constraint
+distinction, we can re-introduce it as a boolean flag rather than a
+duplicate slot.
 
 ## Verification checklist
 
@@ -129,6 +131,5 @@ current fields — no state machine field, just `classifyOffering()` in
       Board card's prof name changes)
 - [ ] Clicking an empty cell on the Board with a selection pins that
       offering to the slot — the state badge in Class flips to `placed`
-- [ ] Clicking "Lock slot" in Class with a placed offering flips state
-      to `locked` and the Board card shows 🔒
+- [ ] Dragging a placed card back onto the Roster list unpins it
 - [ ] No field of `SchedulerState` is duplicated anywhere in component state

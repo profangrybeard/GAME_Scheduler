@@ -1,299 +1,207 @@
 # SCAD GAME Department Course Scheduler
 
-A constraint-solving web app that builds quarterly course schedules for SCAD's Game department. Give it a list of courses to offer — it produces three optimized draft schedules, viewable in a browser and exportable to Excel.
+A constraint-solving web app that builds quarterly course schedules for
+SCAD's Game department. Drag courses onto a weekly grid, hit **Generate**,
+and an OR-Tools CP-SAT solver returns three optimized draft schedules —
+exportable to Excel.
+
+**Hosted for faculty:** `https://scad-class-scheduler.fly.dev` (gated by
+Cloudflare Access once DNS is wired — see [DEPLOY.md](DEPLOY.md)).
 
 ---
 
-## What It Does
+## Two surfaces, one solver
 
-The scheduler combines a **Streamlit web interface** with an **OR-Tools CP-SAT constraint solver** to automate the most tedious part of quarterly planning. You pick courses from the catalog (or paste them in from a spreadsheet), set faculty preferences, and the solver generates three schedule options optimized for different priorities — all without double-booking professors, mismatching room types, or blowing past teaching load limits.
+The project ships two user interfaces that both talk to the same
+OR-Tools CP-SAT solver in [`solver/`](solver/):
+
+### 1. React workspace (primary, hosted)
+
+A three-panel drag-and-drop workspace for quarterly scheduling. This is
+what faculty use via the hosted URL.
+
+| Panel | What it does |
+|-------|--------------|
+| **Roster** (left) | Offerings / Profs / Rooms tabs. Click any row to edit availability and preferences in the detail panel. |
+| **Quarter Schedule** (center) | 2×4 weekly grid (MW / TTh × 8am/11am/2pm/5pm). Drag courses onto cells; drag back to the roster to unpin. Click **Generate** to run the solver. |
+| **Class / ProfessorCard / RoomCard** (right) | Editor for whichever row is currently selected. |
+
+Served as a static React bundle by the FastAPI container. API lives at
+`/api/*`, UI at `/`, same origin.
+
+### 2. Streamlit UI (legacy, parallel)
+
+The original Streamlit app at [`app.py`](app.py) still works. It uses the
+same solver and templates; kept alive for Tim's own day-to-day scheduling
+until the React workspace reaches feature parity on the admin side
+(templates, paste-import, etc.).
+
+Run locally with `./launch.sh` (Mac) or `run.bat` (Windows).
 
 ---
 
-## Features
+## Architecture at a glance
 
-- **Template system** — save and reload quarterly offering sets; includes Eric Allen's fall/winter/spring templates
-- **Faculty preference editor** — set per-professor time preferences and max load directly in the UI
-- **Faculty availability dots** — sidebar shows red/green status per professor reflecting current overrides
-- **Three optimization modes** — `affinity_first`, `time_pref_first`, `balanced`
-- **Lock-and-tweak** — lock satisfied assignments after a solve, then re-run to fill remaining slots
-- **Weekly calendar view** — visual grid of the generated schedule before export
-- **Quick Add** — one-click addition of SCAD Serve and Pro courses
-- **Paste import** — paste a tab-separated course list from Google Sheets or Excel to bulk-add courses
-- **Start from full catalog** — one-click load of all 141 catalog courses as a starting point
-- **Excel export** — color-coded 4-sheet workbook (Summary + one sheet per schedule option)
+```mermaid
+flowchart LR
+    subgraph Browser
+        RW[React workspace<br/>frontend/]
+    end
+
+    subgraph "Fly.io container (prod)"
+        API[FastAPI<br/>api/server.py]
+        SC[Solver<br/>solver/]
+        EX[Excel export<br/>export/]
+        API --> SC
+        API --> EX
+    end
+
+    subgraph "Local dev (./launch_workspace.sh)"
+        VITE[Vite dev server<br/>:5174]
+        UV[uvicorn<br/>:8765]
+    end
+
+    subgraph "Legacy Streamlit (./launch.sh)"
+        ST[app.py<br/>:8501]
+        ST --> SC
+        ST --> EX
+    end
+
+    subgraph Data
+        DJ[data/*.json]
+    end
+
+    RW -- "/api/*" --> API
+    VITE -- "/api proxy" --> UV
+    UV -.same code.- API
+    SC --> DJ
+```
+
+**Data flow for a Generate click (hosted):** React posts the current state
+(offerings + prof/room overrides) to `/api/solve` → FastAPI translates via
+[`api/adapter.py`](api/adapter.py) → OR-Tools runs 3 modes → results stream
+back → React applies the assignments for the currently-selected mode.
+Canonical JSON on disk is never mutated by solves.
 
 ---
 
-## Rooms
+## Rooms & Faculty
 
 Seven real SCAD rooms in Ivy Hall:
 
 | Room | Type | Stations | Displays | Capacity | Notes |
-|---|---|---|---|---|---|
-| 263 | PC Lab | 20 PCs | 2 | 20 | Standard game lab |
-| 261 | PC Lab | 20 PCs | 2 | 20 | Standard game lab |
-| 260 | Mac Lab | 20 Macs | 1 | 20 | Design / motion media |
-| 259 | PC Lab | 20 PCs | 1 | 20 | PC design lab |
-| 258 | Lecture/Flex | teacher station | 1 | 24 | Lecture, discussion, Zoom |
-| 257 | Lecture/Flex | teacher station | 1 | 24 | Lecture, discussion, Zoom |
-| 156 | Large Game Lab | 10 PCs | 1 | 20 | Senior / thesis studio |
+|------|------|----------|----------|----------|-------|
+| 263  | PC Lab          | 20 PCs | 2 | 20 | Standard game lab |
+| 261  | PC Lab          | 20 PCs | 2 | 20 | Standard game lab |
+| 260  | Mac Lab         | 20 Macs | 1 | 20 | Design / motion media |
+| 259  | PC Lab          | 20 PCs | 1 | 20 | PC design lab |
+| 258  | Lecture/Flex    | teacher station | 1 | 24 | Lecture, discussion, Zoom |
+| 257  | Lecture/Flex    | teacher station | 1 | 24 | Lecture, discussion, Zoom |
+| 156  | Large Game Lab  | 10 PCs | 1 | 20 | Senior / thesis studio |
+
+Seven professors, each configured with available quarters, max teaching
+load (chair: 2, standard: 4, overload cap: 5), time preferences, and
+specialization tags that drive affinity matching.
 
 ---
 
-## Faculty
+## Solver constraints
 
-Seven professors, each configured with:
-- **Available quarters** (sabbatical / leave support)
-- **Max teaching load** (chair: 2 courses, standard: 4, overload cap: 5)
-- **Time preferences** (morning, afternoon, or no preference)
-- **Teaching departments** and **specialization tags** that drive affinity matching
-
----
-
-## Solver Constraints
-
-### Hard constraints (violations = infeasible)
+### Hard (violations = infeasible)
 - Each course section gets exactly one assignment
 - No professor teaches two courses at the same time
 - No room hosts two courses at the same time
 - Professor total load stays within `max_classes`
 - `must_have` sections are always scheduled
 - Multi-section courses use non-overlapping time slots
+- Rooms marked `available: false` this quarter are skipped
 
-### Soft constraints (violations = penalty score)
+### Soft (violations = penalty score)
 | Objective | What it penalizes |
-|---|---|
-| Affinity mismatch | Professor's specialization tags don't align with the course |
-| Time preference | Assignment falls outside the professor's preferred time window |
-| Overload | Professor exceeds standard load (still legal, but penalized) |
-| Dropped sections | `should_have` and `could_have` sections that couldn't be placed |
+|-----------|-------------------|
+| Affinity mismatch | Prof's specialization tags don't align with the course |
+| Time preference | Assignment outside prof's preferred time window |
+| Overload | Prof exceeds standard load (still legal, but penalized) |
+| Dropped sections | `should_have` / `could_have` sections that couldn't be placed |
+
+Three optimization modes weight these differently — `affinity_first`,
+`time_pref_first`, `balanced` — all three run per click so you can compare.
 
 ---
 
-## User Workflow
-
-```mermaid
-flowchart TD
-    A([Home Screen]) --> B{Start fresh\nor load template?}
-    B -- Load template --> C[Select saved template]
-    B -- Start fresh --> D[Browse course catalog]
-    C --> E[Course selection list]
-    D --> E
-    E --> F[Quick Add SCAD Serve / Pro courses]
-    E --> G[Paste import from spreadsheet]
-    F --> H[Faculty Preferences editor]
-    G --> H
-    H --> I{Choose optimization mode}
-    I -- affinity_first --> J[Run CP-SAT solver]
-    I -- time_pref_first --> J
-    I -- balanced --> J
-    J --> K[Weekly calendar view]
-    K --> L[Export to Excel]
-    K --> M[Save as template]
-```
-
----
-
-## Data Flow
-
-```mermaid
-flowchart LR
-    subgraph Data
-        CC[course_catalog.json]
-        PJ[professors.json]
-        RJ[rooms.json]
-        QO[quarterly_offerings.json]
-    end
-
-    subgraph Solver
-        MB[model_builder.py\nCP-SAT variables]
-        CN[constraints.py\n12 hard rules]
-        OB[objectives.py\nweighted penalties]
-        SC[scheduler.py\n3-mode runner]
-    end
-
-    subgraph UI
-        AP[app.py\nStreamlit]
-    end
-
-    subgraph Output
-        XL[Excel workbook\n4 sheets]
-    end
-
-    CC --> MB
-    PJ --> MB
-    RJ --> MB
-    QO --> MB
-    MB --> CN
-    CN --> OB
-    OB --> SC
-    SC --> AP
-    AP --> XL
-```
-
----
-
-## Setup
+## Running locally
 
 ### Prerequisites
+- Python 3.12+ and pip
+- Node.js 20+ and npm (for the React workspace)
 
-- Python 3.10 or newer
-- pip (included with Python)
-
-### Install
-
+### One-shot install
 ```bash
-git clone <repo-url>
+git clone https://github.com/profangrybeard/GAME_Scheduler.git
 cd GAME_Scheduler
 pip install -r requirements.txt
+(cd frontend && npm ci)
 ```
 
-### Run
-
+### Dev loop — React workspace + FastAPI (primary)
 ```bash
-# Windows
-run.bat
-
-# Mac / Linux / any terminal
-streamlit run app.py
+./launch_workspace.sh          # Mac/Linux
+run_workspace.bat              # Windows
 ```
+Opens `http://localhost:5174`. Vite hot-reloads the React workspace;
+uvicorn hosts the solver at `127.0.0.1:8765`; Vite proxies `/api/*` so
+the dev and prod URL paths match.
 
-The app opens at `http://localhost:8501`.
+### Dev loop — Legacy Streamlit
+```bash
+./launch.sh                     # Mac/Linux
+run.bat                         # Windows
+```
+Opens `http://localhost:8501`.
 
 ### CLI mode (batch / headless)
-
 ```bash
 python main.py --quarter fall
-# or offline (skips live catalog scrape):
-python main.py --quarter fall --offline
+python main.py --quarter fall --offline    # skips live catalog scrape
 ```
 
----
-
-## File Structure
-
-```
-GAME_Scheduler/
-├── app.py                      Streamlit web interface (primary entry point)
-├── main.py                     CLI entry point for headless / batch runs
-├── config.py                   Constants: time slots, penalty weights, room compat, tags
-├── requirements.txt            Python dependencies
-├── run.bat                     Windows one-click launcher
-│
-├── data/
-│   ├── quarterly_offerings.json   EDIT THIS each quarter — courses to schedule
-│   ├── course_catalog.json        Full course catalog (auto-generated by scraper)
-│   ├── professors.json            Faculty profiles, availability, time preferences
-│   └── rooms.json                 Room inventory with capacities and equipment types
-│
-├── schemas/                    JSON validation schemas
-│   ├── course_catalog.schema.json
-│   ├── professor.schema.json
-│   ├── quarterly_offering.schema.json
-│   └── room.schema.json
-│
-├── solver/
-│   ├── model_builder.py        Loads data, creates CP-SAT model and decision variables
-│   ├── constraints.py          Hard constraints HC1–HC12
-│   ├── objectives.py           Weighted penalty objective SO1–SO5
-│   └── scheduler.py            Runs solver in 3 modes, extracts and returns results
-│
-├── ingest/
-│   ├── catalog_scraper.py      Fetches courses from catalog.scad.edu (with fallback)
-│   ├── catalog_defaults.py     Infers room types, specialization tags, prof preferences
-│   └── validate.py             Schema + cross-reference validation before each solve
-│
-├── export/
-│   └── excel_writer.py         Writes the 4-sheet color-coded Excel workbook
-│
-└── templates/                  Saved quarterly offering sets (JSON)
-    ├── fall_typical.json
-    ├── grad_focused.json
-    ├── summer_light.json
-    ├── full_catalog_preview.json
-    ├── eric_fall.json          Eric Allen's fall schedule (faculty baked in)
-    ├── eric_winter.json        Eric Allen's winter schedule (faculty baked in)
-    └── eric_spring.json        Eric Allen's spring schedule (faculty baked in)
-```
-
----
-
-## Optimization Modes
-
-| Mode | Affinity weight | Time pref weight | Overload weight |
-|---|---|---|---|
-| `affinity_first` | 10 | 1 | 2 |
-| `time_pref_first` | 1 | 10 | 2 |
-| `balanced` | 5 | 5 | 3 |
-
-**Affinity** measures how well a professor's specialization tags match the course's required tags. A lower penalty score means a better match.
-
----
-
-## Reading the Excel Output
-
-| Sheet | Contents |
-|---|---|
-| Summary | All three modes side-by-side: status, penalty score, courses placed, unscheduled |
-| Affinity First | Full schedule optimized for professor-course fit |
-| Time Pref First | Full schedule optimized for professor time preferences |
-| Balanced | Even weighting across both objectives |
-
-**Color coding:**
-- Blue rows — Game department courses
-- Purple rows — Motion Media department courses
-- Green rows — AI department courses
-- Yellow Affinity cell — professor is in the preferred list for this course
-- Orange Time Pref cell — assignment is outside the professor's preferred hours
-
----
-
-## Current Status
-
-### v2.2 — Phase 2 — Streamlit UI (active)
-
-**Done:**
-- Full Streamlit web interface (`app.py`)
-- Template save/load system
-- Faculty preference editor in the UI
-- Weekly calendar view of results
-- Quick Add for SCAD Serve and Pro courses
-- Paste import from spreadsheets
-- All three optimization modes wired to the UI
-- Excel export from the web interface
-- 141-course catalog (GAME, MOME, ITGM, AI, IXDS, IACT, DIGI, ADBR departments)
-- Lock-and-tweak post-solve editing
-- Faculty availability dots (red/green) in sidebar
-- Eric Allen quarterly templates (fall/winter/spring) with faculty baked in
-- Schedule audit report (`eric_schedule_audit.md`) — 45 matched, 12 missing vs catalog
-
-**Up next:**
-- Side-by-side comparison view of all three schedule options
-- Drag-and-drop manual overrides on the calendar
-- PDF export option
-- Multi-quarter planning view
-
----
-
-## Troubleshooting
-
-**Validation errors before solving**
-
+### Tests
 ```bash
-python -m ingest.validate
+python -m pytest tests/                     # solver + API adapter tests
+(cd frontend && npm run build && npm run lint)
 ```
 
-Common causes: typo in a `catalog_id`, professor ID that doesn't exist in `professors.json`, or a quarter mismatch between `quarterly_offerings.json` and the `--quarter` flag.
+---
 
-**INFEASIBLE status**
+## Deployment
 
-The solver couldn't place one or more `must_have` sections. Check that the course has at least one eligible professor available that quarter, and that the required room type exists in `rooms.json`.
+See [DEPLOY.md](DEPLOY.md). TL;DR:
 
-**Scraper fallback**
+- `git push origin main` triggers
+  [`.github/workflows/fly.yml`](.github/workflows/fly.yml), which runs
+  `flyctl deploy --remote-only`
+- ~60–90 s later the new version is live at
+  `https://scad-class-scheduler.fly.dev`
+- The version badge in the top-right shows the deployed commit's SHA
 
-If the live scrape of `catalog.scad.edu` fails, the tool uses the built-in 2025–2026 catalog automatically. Add `--offline` to always skip the scrape.
+---
 
-**Excel file won't write**
+## Documentation
 
-Close the file in Excel before re-running. The writer overwrites the file on each run.
+- **[DEPLOY.md](DEPLOY.md)** — Fly.io + Cloudflare Access runbook
+- **[docs/state-flow.md](docs/state-flow.md)** — React state ownership, panel mapping, offering lifecycle
+- **[CLAUDE.md](CLAUDE.md)** — project rules (responsive breakpoints, frontend/backend boundary)
+- **[MILESTONES.md](MILESTONES.md)** — historical milestone log
+
+---
+
+## Contributing
+
+This is a solo-maintained project with occasional Claude-assisted sessions.
+Pull requests welcome, but practically, the audience is small enough that
+opening an issue to discuss before implementing is usually faster.
+
+All PRs run:
+- **frontend-ci.yml** — `tsc --build`, Vite build, ESLint
+- **python-ci.yml** — pytest
+- **fly.yml** — deploys on merge to main (only runs when `FLY_API_TOKEN` secret is set)

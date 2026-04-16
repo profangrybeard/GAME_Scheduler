@@ -1,85 +1,97 @@
 # Deploying GAME Scheduler
 
 The React workspace + FastAPI solver deploys as one Docker container to
-[Fly.io](https://fly.io), gated by Cloudflare Access so only `@scad.edu`
-users can reach it.
+[Fly.io](https://fly.io), gated (once wired up) by Cloudflare Access so only
+`@scad.edu` users can reach it.
 
-**Who does what:**
+## How deploys actually happen
 
 | Player | Role |
 |--------|------|
-| **Your PC** | One-time setup only: install flyctl, sign in, install Fly's GitHub App on the repo. After that, your PC is done. |
-| **GitHub** | Source of truth for code. Fly's GitHub App watches `main` and triggers a deploy on every push. |
-| **Fly.io** | Builds the Docker image on its remote builder, runs the container. Auto-stops when idle. |
-| **Cloudflare** | Sits in front of Fly, enforces "must be signed in with a `@scad.edu` Google account" before any request reaches the app. |
+| **GitHub** | Source of truth. `git push origin main` triggers [`.github/workflows/fly.yml`](.github/workflows/fly.yml). |
+| **GitHub Actions** | Runs `flyctl deploy --remote-only` using the `FLY_API_TOKEN` repo secret. |
+| **Fly.io remote builder** | Builds the Docker image defined in [`Dockerfile`](Dockerfile), uploads to the Fly registry. |
+| **Fly.io Machines** | Runs the container per [`fly.toml`](fly.toml). Auto-stops when idle; wakes on request. |
+| **Cloudflare Access** *(optional, see §Cloudflare)* | Gates the hosted URL with Google SSO + `@scad.edu` policy. |
 
-**For local development** (you, Tim), keep using `./launch_workspace.sh` —
-the hosted build is for Eric and other reviewers, not your daily work.
+**Deploys are automatic.** Merge to main → ~60–90 seconds later the new
+version is live. The [version badge](frontend/src/components/VersionBadge.tsx)
+in the top-right shows the deployed commit's short SHA so you can see at a
+glance which build is serving.
 
-**Hosted app URL:** `https://scad-class-scheduler.fly.dev` (raw, behind
-Cloudflare Access the moment DNS is wired up).
+**For local development** (you, Tim), keep using
+[`./launch_workspace.sh`](launch_workspace.sh) (or `run_workspace.bat` on
+Windows) — the hosted build is for Eric and other reviewers, not your daily
+iteration loop.
+
+**Hosted URL:** `https://scad-class-scheduler.fly.dev`
 
 ---
 
-## One-time setup
+## One-time setup (~15 min, already done for this repo)
 
-### 1. Sign up for Fly.io with your `@scad.edu` email
+If you're re-doing this from scratch (e.g. forking the project, or the
+existing setup breaks):
+
+### 1. Fly.io account — `@scad.edu` email
 
 Use **email signup**, not the GitHub / Google OAuth buttons — the account
-travels with SCAD rather than any one person's personal login. Fly will ask
-for a credit card (anti-abuse; typical monthly cost for this app is under $2).
+travels with SCAD rather than any one person's personal login. Fly asks for
+a credit card (anti-abuse; typical monthly cost under $2 with auto-stop).
 
-### 2. Install flyctl locally
+### 2. Install flyctl and reserve the app name
 
 ```powershell
-# Windows (PowerShell):
+# Windows (PowerShell)
 iwr https://fly.io/install.ps1 -useb | iex
 ```
-
 ```bash
-# Mac/Linux:
+# Mac/Linux
 curl -L https://fly.io/install.sh | sh
 ```
 
-### 3. Connect the GitHub repo to Fly
+```bash
+fly auth login                                     # browser-based, uses your @scad.edu account
+fly apps create scad-class-scheduler               # reserves the name on Fly's namespace
+```
 
-This happens inside the Fly dashboard:
+If `scad-class-scheduler` is taken globally, pick a variant and update the
+`app = "..."` line in [`fly.toml`](fly.toml) to match.
 
-1. Dashboard → **Launch an App** → **Launch an App from GitHub**.
-2. Select `profangrybeard/GAME_Scheduler`.
-3. Fly's wizard detects the repo; it will scaffold some generic config
-   files onto a new branch (`flyio-new-files`) as a "helpful" starting point.
-   **Ignore / do not merge that branch** — our real `Dockerfile` and
-   `fly.toml` already live on `main`.
-4. The first auto-deploy will likely be incorrect (built from Fly's
-   generic scaffold, not our real code). That's expected; the next push
-   to `main` with our real config overrides it.
+### 3. Generate the deploy token and paste it into GitHub
 
-### 4. Push to main to trigger a real deploy
+```bash
+fly tokens create deploy -x 999999h -a scad-class-scheduler
+# copy the "FlyV1 fm2_..." string
+```
 
-Once `Dockerfile`, `fly.toml`, and `.dockerignore` are on `main`:
+In GitHub → repo **Settings** → **Secrets and variables** → **Actions** →
+**New repository secret**:
+
+- **Name:** `FLY_API_TOKEN`
+- **Value:** paste the token
+
+### 4. Push to main
 
 ```bash
 git push origin main
 ```
 
-Fly's GitHub App sees the push, pulls `main`, builds using our actual
-Dockerfile on its remote builder, and deploys. Takes ~3–4 minutes the
-first time (ortools is a chonky install). When it finishes, visit
-`https://scad-class-scheduler.fly.dev` and verify:
+The Fly Deploy workflow kicks off automatically; watch progress in the
+Actions tab. First real build takes ~3–4 min (ortools is chonky); subsequent
+builds are ~60 s thanks to Fly's layer cache.
 
-- React workspace loads at `/`
-- `/api/health` returns `{"ok": true, ...}`
+**That's it.** Your PC is done. All future deploys are `git push = live`.
 
 ---
 
-## Cloudflare Access (auth gate) — SCAD Google Workspace SSO
+## Cloudflare Access — SCAD Google Workspace SSO
 
 Fly gives you `https://scad-class-scheduler.fly.dev`, which is public. We
 put Cloudflare Access in front so only `@scad.edu` users can reach it.
-SCAD runs on Google Workspace, so the cleanest UX is:
+SCAD runs on Google Workspace, so the flow is:
 
-> Eric opens the link → "Sign in with Google" → his already-signed-in SCAD
+> Eric opens the link → "Sign in with Google" → already-signed-in SCAD
 > account verifies in one click → he's in.
 
 No inbox-hunting for a one-time code, no extra password to remember.
@@ -98,47 +110,34 @@ No inbox-hunting for a one-time code, no extra password to remember.
    - Cloudflare Dashboard → **Zero Trust** → **Settings** → **Authentication**
      → **Login methods** → **Add new** → **Google**.
    - Cloudflare shows instructions for creating an OAuth client in Google
-     Cloud Console. Follow them — you'll end up pasting a Client ID + Client
-     Secret back into Cloudflare.
-   - Test: Cloudflare's "Test" button runs a signup flow to verify the
-     integration works.
+     Cloud Console. Follow them — paste the Client ID + Client Secret back
+     into Cloudflare.
 
 3. **Create an access application**:
-   - Cloudflare Dashboard → **Zero Trust** → **Access** → **Applications** →
-     **Add an application** → **Self-hosted**.
+   - **Zero Trust** → **Access** → **Applications** → **Add application** →
+     **Self-hosted**.
    - Application name: `GAME Scheduler`.
    - Session duration: 24 hours.
    - Subdomain + domain: e.g. `scheduler.yourdomain.xyz`.
-   - Path: leave blank (protects the whole app).
    - **Identity providers**: check **Google**. Uncheck "One-time PIN" so
-     everyone is forced through Google SSO — this keeps the @scad.edu
-     filter airtight.
+     everyone goes through Google SSO — keeps the @scad.edu filter airtight.
 
 4. **Add a policy**:
    - Name: `SCAD faculty`.
    - Action: `Allow`.
    - Include → **Emails ending in** → `@scad.edu`.
-   - Because Google is the IdP, Cloudflare reads the verified email from
-     Google's OAuth response — users can't spoof the domain.
 
 5. **Point DNS at Fly.io**:
-   - Cloudflare Dashboard → **DNS** → **Records** → **Add record**.
-   - Type: `CNAME`, Name: `scheduler` (or whatever subdomain you picked).
-   - Target: `scad-class-scheduler.fly.dev`.
-   - Proxy status: **Proxied** (orange cloud) — routes traffic through
-     Cloudflare so Access can intercept.
+   - **DNS** → **Records** → **Add record**.
+   - Type: `CNAME`, Name: `scheduler`, Target: `scad-class-scheduler.fly.dev`.
+   - Proxy status: **Proxied** (orange cloud).
 
 6. **Tell Fly about the custom domain**:
    - Fly Dashboard → your app → **Certificates** → **Add certificate** →
-     enter `scheduler.yourdomain.xyz` → **Add**. Fly issues a Let's Encrypt
-     cert automatically (takes a minute or two).
+     enter `scheduler.yourdomain.xyz`. Fly auto-issues a Let's Encrypt cert.
 
-7. **Test it**:
-   - Open `https://scheduler.yourdomain.xyz` in an incognito window.
-   - Cloudflare shows a "Sign in with Google" button.
-   - Click it → Google prompts for an account → pick your `@scad.edu` one →
-     you're in.
-   - Try with a non-SCAD Google account → "Access denied".
+7. **Test** in an incognito window: click the link → Google SSO → `@scad.edu` →
+   in. A non-SCAD Google account sees "Access denied".
 
 ---
 
@@ -146,25 +145,31 @@ No inbox-hunting for a one-time code, no extra password to remember.
 
 | Task | How |
 |------|-----|
-| Deploy new code | `git push origin main`. Fly's GitHub App handles the rest. |
+| Deploy new code | `git push origin main`. Workflow handles the rest. |
 | Read production logs | `fly logs -a scad-class-scheduler` (CLI) or Fly dashboard |
-| Roll back | Revert the commit on `main`, push. Fly redeploys the previous state. |
-| Scale memory if solver OOMs | Fly dashboard → your app → **Scale** → memory → 1024 MB |
-| Revoke an allowed user | Cloudflare Zero Trust → Access → Policies → remove email |
-| See who used the app | Cloudflare Zero Trust → Access → Logs |
+| Roll back | `git revert <sha> && git push`. Deploys the prior state. |
+| Scale memory if solver OOMs | `fly scale memory 1024 -a scad-class-scheduler` |
+| Rotate the deploy token | Generate a new one, update the `FLY_API_TOKEN` GitHub secret. Revoke the old one with `fly tokens revoke <id>`. |
+| See who used the hosted app | Cloudflare Zero Trust → Access → Logs |
 
 ## What NOT to do
 
-- **Don't merge the `flyio-new-files` branch / PR.** Fly auto-generated it
-  as a scaffold template before our real config existed on main. Merging it
-  would replace our actual Dockerfile + fly.toml. Close the PR, then
-  delete the branch once our deploy is working.
-- **Don't `fly secrets set` anything sensitive if it's not needed** — there
-  are no app secrets today. If you add (e.g.) a Supabase key later, use
-  `fly secrets set KEY=value -a scad-class-scheduler`, **never** put it in
-  `fly.toml` (that file is committed).
+- **Don't `fly deploy` from your PC** — it bypasses CI, potentially shipping
+  uncommitted code, and confuses the "push to main = deploy" mental model.
+  The workflow is the deploy authority.
+- **Don't put secrets in `fly.toml`** — it's committed to the repo. Use
+  `fly secrets set KEY=value -a scad-class-scheduler` for anything sensitive.
 - **Don't commit `data/quarterly_offerings.json`** — it's gitignored and
-  per-user.
-- **Don't disable the Cloudflare Access policy "to test something real
-  quick"** without putting it back. The app is a free-CPU target for anyone
-  who finds the URL while it's open.
+  per-user state.
+- **Don't disable the Cloudflare Access policy "to test real quick"** — the
+  solver is a free-CPU target for anyone who finds the URL while it's open.
+
+## Related
+
+- [`launch_workspace.sh`](launch_workspace.sh) / [`run_workspace.bat`](run_workspace.bat)
+  — local dev (Vite + uvicorn together)
+- [`.github/workflows/fly.yml`](.github/workflows/fly.yml) — the deploy workflow
+- [`.github/workflows/frontend-ci.yml`](.github/workflows/frontend-ci.yml) —
+  frontend typecheck / build / lint on every PR
+- [`.github/workflows/python-ci.yml`](.github/workflows/python-ci.yml) —
+  pytest on every PR
