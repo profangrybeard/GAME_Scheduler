@@ -1,0 +1,307 @@
+import { Fragment, useMemo, useState } from "react"
+import type {
+  Course,
+  DayGroup,
+  Offering,
+  Professor,
+  Room,
+  Slot,
+  SolveMode,
+  SolveStatus,
+  TimeSlot,
+} from "../types"
+import { ProfAvatar } from "./ProfAvatar"
+
+/**
+ * The CONTROLLER panel — Quarter Schedule.
+ *
+ * Responsibility: the weekly grid. 2 day groups (MW, TTh) × 4 time slots
+ * (8, 11, 2, 5). Placed offerings render in their cell. Unplaced offerings
+ * sit in a dock below the grid.
+ *
+ * Interactions:
+ *   • Click a card to select it (Class panel updates)
+ *   • Click an empty cell with a selection to pin
+ *   • Drag a catalogue row, a placed card, or a dock card into any cell to
+ *     pin it there
+ *   • Drag a placed card into the dock to unpin
+ *   • Locked cards are not draggable (unlock via Class panel first)
+ */
+
+const TIME_SLOTS: readonly TimeSlot[] = [
+  "8:00AM",
+  "11:00AM",
+  "2:00PM",
+  "5:00PM",
+] as const
+
+const DAY_GROUPS: ReadonlyArray<{ key: DayGroup; label: string }> = [
+  { key: 1, label: "MW" },
+  { key: 2, label: "TTh" },
+] as const
+
+const SOLVE_MODE_OPTIONS: ReadonlyArray<{ key: SolveMode; label: string }> = [
+  { key: "affinity_first", label: "Affinity" },
+  { key: "time_pref_first", label: "Time Pref" },
+  { key: "balanced", label: "Balanced" },
+]
+
+const DND_MIME = "application/x-offering"
+
+/** effectiveSlot — assignment beats pinned beats locked. */
+function effectiveSlot(o: Offering): Slot | null {
+  if (o.assignment) return o.assignment.slot
+  if (o.pinned) return o.pinned
+  if (o.locked) return o.locked
+  return null
+}
+
+export interface QuarterScheduleProps {
+  offerings: Offering[]
+  selectedOfferingId: string | null
+  catalog: Record<string, Course>
+  professors: Record<string, Professor>
+  rooms: Record<string, Room>
+  solveStatus: SolveStatus
+  solveMode: SolveMode
+  onSelect: (id: string | null) => void
+  onAdd: (catalog_id: string) => void
+  onPinToSlot: (catalog_id: string, slot: Slot | null) => void
+  onSetSolveMode: (mode: SolveMode) => void
+  onSolve: () => void
+  onExport: () => void
+}
+
+export function QuarterSchedule(props: QuarterScheduleProps) {
+  const [dragOverKey, setDragOverKey] = useState<string | null>(null)
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+
+  const canGenerate =
+    props.offerings.length > 0 && props.solveStatus !== "running"
+  const canExport = props.solveStatus === "done"
+
+  const { placedByCell, unplaced } = useMemo(() => {
+    const placed = new Map<string, Offering[]>()
+    const dock: Offering[] = []
+    for (const o of props.offerings) {
+      const slot = effectiveSlot(o)
+      if (!slot) {
+        dock.push(o)
+        continue
+      }
+      const key = `${slot.day_group}|${slot.time_slot}`
+      const bucket = placed.get(key) ?? []
+      bucket.push(o)
+      placed.set(key, bucket)
+    }
+    return { placedByCell: placed, unplaced: dock }
+  }, [props.offerings])
+
+  const handleDrop = (
+    e: React.DragEvent,
+    target: { kind: "cell"; slot: Slot } | { kind: "dock" },
+  ) => {
+    e.preventDefault()
+    setDragOverKey(null)
+    setDraggingId(null)
+    const catId =
+      e.dataTransfer.getData(DND_MIME) || e.dataTransfer.getData("text/plain")
+    if (!catId) return
+    const isOffering = props.offerings.some(o => o.catalog_id === catId)
+    if (!isOffering) {
+      // Dragging a catalogue course that isn't in offerings yet: add first.
+      props.onAdd(catId)
+    }
+    if (target.kind === "cell") {
+      props.onPinToSlot(catId, target.slot)
+    } else {
+      props.onPinToSlot(catId, null)
+    }
+    props.onSelect(catId)
+  }
+
+  const renderCard = (o: Offering) => {
+    const course = props.catalog[o.catalog_id]
+    const profId = o.assignment?.prof_id ?? o.assigned_prof_id
+    const roomId = o.assignment?.room_id ?? o.assigned_room_id
+    const prof = profId ? props.professors[profId] : null
+    const room = roomId ? props.rooms[roomId] : null
+    const dept = course?.department ?? "game"
+    const isSelected = props.selectedOfferingId === o.catalog_id
+    const isLocked = !!o.locked
+    const isDragging = draggingId === o.catalog_id
+
+    return (
+      <button
+        key={o.catalog_id}
+        type="button"
+        draggable={!isLocked}
+        className={
+          "schedule-card dept--" +
+          dept +
+          (isSelected ? " schedule-card--selected" : "") +
+          (isLocked ? " schedule-card--locked" : "") +
+          (isDragging ? " schedule-card--dragging" : "")
+        }
+        onClick={e => {
+          e.stopPropagation()
+          props.onSelect(o.catalog_id)
+        }}
+        onDragStart={e => {
+          if (isLocked) {
+            e.preventDefault()
+            return
+          }
+          e.dataTransfer.setData(DND_MIME, o.catalog_id)
+          e.dataTransfer.setData("text/plain", o.catalog_id)
+          e.dataTransfer.effectAllowed = "move"
+          setDraggingId(o.catalog_id)
+          props.onSelect(o.catalog_id)
+        }}
+        onDragEnd={() => setDraggingId(null)}
+      >
+        <ProfAvatar
+          profId={profId}
+          name={prof?.name}
+          size={24}
+          className="schedule-card__avatar"
+        />
+        <span className="schedule-card__id">{o.catalog_id}</span>
+        <span className="schedule-card__prof">
+          {prof ? prof.name.split(" ").slice(-1)[0] : "AUTO"}
+        </span>
+        <span className="schedule-card__room">
+          {room ? room.name.split("–")[0].trim().replace("Room ", "") : "—"}
+        </span>
+        {isLocked && (
+          <span className="schedule-card__lock" aria-label="locked">
+            🔒
+          </span>
+        )}
+      </button>
+    )
+  }
+
+  return (
+    <section className="panel panel--schedule" aria-label="Quarter Schedule">
+      <header className="panel__header">
+        <h2 className="panel__title">Quarter Schedule</h2>
+        <div className="schedule__toolbar">
+          <div className="schedule__mode" role="tablist" aria-label="Solve mode">
+            {SOLVE_MODE_OPTIONS.map(opt => (
+              <button
+                key={opt.key}
+                role="tab"
+                aria-selected={props.solveMode === opt.key}
+                className={
+                  "chip" +
+                  (props.solveMode === opt.key ? " chip--active" : "")
+                }
+                onClick={() => props.onSetSolveMode(opt.key)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <div className="panel__actions">
+            <button disabled={!canGenerate} onClick={props.onSolve}>
+              Generate
+            </button>
+            <button disabled={!canExport} onClick={props.onExport}>
+              Export
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="panel__body schedule-body">
+        <div className="schedule-grid" role="grid">
+          <div className="schedule-grid__corner" aria-hidden="true" />
+          {DAY_GROUPS.map(g => (
+            <div
+              key={`h-${g.key}`}
+              className="schedule-grid__day-header"
+              role="columnheader"
+            >
+              {g.label}
+            </div>
+          ))}
+          {TIME_SLOTS.map(ts => (
+            <Fragment key={ts}>
+              <div className="schedule-grid__time-header" role="rowheader">
+                {ts}
+              </div>
+              {DAY_GROUPS.map(g => {
+                const cellKey = `${g.key}|${ts}`
+                const cards = placedByCell.get(cellKey) ?? []
+                const slot: Slot = { day_group: g.key, time_slot: ts }
+                const isDropTarget = dragOverKey === cellKey
+                const canPinClick =
+                  props.selectedOfferingId !== null &&
+                  !cards.some(c => c.catalog_id === props.selectedOfferingId)
+                return (
+                  <div
+                    key={`c-${g.key}-${ts}`}
+                    className={
+                      "schedule-grid__cell" +
+                      (isDropTarget ? " schedule-grid__cell--over" : "")
+                    }
+                    role="gridcell"
+                    data-day-group={g.key}
+                    data-time-slot={ts}
+                    onClick={() => {
+                      if (canPinClick && props.selectedOfferingId) {
+                        props.onPinToSlot(props.selectedOfferingId, slot)
+                      }
+                    }}
+                    onDragOver={e => {
+                      e.preventDefault()
+                      e.dataTransfer.dropEffect = "move"
+                      if (dragOverKey !== cellKey) setDragOverKey(cellKey)
+                    }}
+                    onDragLeave={() => {
+                      if (dragOverKey === cellKey) setDragOverKey(null)
+                    }}
+                    onDrop={e => handleDrop(e, { kind: "cell", slot })}
+                  >
+                    {cards.map(renderCard)}
+                  </div>
+                )
+              })}
+            </Fragment>
+          ))}
+        </div>
+
+        <div
+          className={
+            "schedule-dock" +
+            (dragOverKey === "dock" ? " schedule-dock--over" : "")
+          }
+          aria-label="Unplaced offerings"
+          onDragOver={e => {
+            e.preventDefault()
+            e.dataTransfer.dropEffect = "move"
+            if (dragOverKey !== "dock") setDragOverKey("dock")
+          }}
+          onDragLeave={() => {
+            if (dragOverKey === "dock") setDragOverKey(null)
+          }}
+          onDrop={e => handleDrop(e, { kind: "dock" })}
+        >
+          <div className="schedule-dock__label">
+            Unplaced · {unplaced.length}
+          </div>
+          <div className="schedule-dock__cards">
+            {unplaced.length === 0 ? (
+              <span className="schedule-dock__empty">
+                Drop here to unpin
+              </span>
+            ) : (
+              unplaced.map(renderCard)
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
