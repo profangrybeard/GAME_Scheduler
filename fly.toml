@@ -32,4 +32,4 @@ primary_region = "atl"           # Atlanta — closest major region to SCAD Sava
 
 [[vm]]
   size = "shared-cpu-1x"
-  memory = "512mb"               # tight but works for ortools; bump to 1gb if solver OOMs
+  memory = "1gb"                 # headroom for ortools + bursty real-use; ~$6/mo with auto-stop
