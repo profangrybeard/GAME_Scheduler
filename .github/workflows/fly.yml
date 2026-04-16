@@ -1,0 +1,43 @@
+name: Fly Deploy
+
+# Deploys the React + FastAPI stack to Fly.io on every push to main.
+# Fly's GitHub App integration (installed via "Launch from GitHub") does
+# NOT auto-deploy by itself — it only triggers the initial launch. This
+# workflow is the ongoing deploy path. Builds happen on Fly's remote
+# builder, so this runner just orchestrates.
+#
+# Requires repo secret: FLY_API_TOKEN
+#   Generate with:  fly tokens create deploy -x 999999h -a scad-class-scheduler
+#   Add at:         Settings → Secrets and variables → Actions → New secret
+
+on:
+  push:
+    branches:
+      - main
+
+  # Lets you kick a deploy manually from the Actions tab.
+  workflow_dispatch:
+
+concurrency:
+  group: fly-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy app
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Fetch full history so the in-container `git rev-parse --short
+          # HEAD` (see vite.config.ts + Dockerfile) resolves a real SHA
+          # instead of falling through to "unknown".
+          fetch-depth: 0
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to Fly.io
+        run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
