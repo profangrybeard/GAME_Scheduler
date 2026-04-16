@@ -149,6 +149,21 @@ export interface SchedulerState {
   year: number
 }
 
+// ─── Offering classification (shared by Roster + Class) ──────────
+
+export type OfferingState =
+  | "offering" // in offerings, prof+room AUTO, no slot
+  | "kitted"   // prof and/or room assigned, no slot
+  | "placed"   // pinned/assigned to a slot, unlocked
+  | "locked"   // locked to a slot
+
+export function classifyOffering(o: Offering): OfferingState {
+  if (o.locked) return "locked"
+  if (o.pinned || o.assignment) return "placed"
+  if (o.assigned_prof_id || o.assigned_room_id) return "kitted"
+  return "offering"
+}
+
 // ─── Actions (events-up) ──────────────────────────────────────────
 
 export interface SchedulerActions {

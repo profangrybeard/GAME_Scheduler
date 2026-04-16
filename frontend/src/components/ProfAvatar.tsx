@@ -1,13 +1,17 @@
+import { useContext } from "react"
 import { PORTRAIT_BY_PROF_ID, PROF_COLORS, profInitials } from "../data"
+import { PortraitContext } from "./PortraitContext"
 
 /**
  * Professor avatar — renders in priority order:
- *   1. Uploaded portrait at data/portraits/<prof_id>.<ext> (via import.meta.glob)
- *   2. Colored initials circle (PROF_COLORS[prof_id])
- *   3. Neutral silhouette (AUTO / no prof assigned)
+ *   1. User-uploaded portrait override (data URL from localStorage)
+ *   2. On-disk portrait at data/portraits/<prof_id>.<ext> (via import.meta.glob)
+ *   3. Colored initials circle (PROF_COLORS[prof_id])
+ *   4. Neutral silhouette (AUTO / no prof assigned)
  *
- * Size default 28px. On The Quarter Schedule cards we use 20px; in Class
- * panel hero we use 56px.
+ * Portrait overrides come from PortraitContext (set by App.tsx). Context
+ * lives in ./PortraitContext so this file only exports components
+ * (satisfies react-refresh/only-export-components).
  */
 
 export interface ProfAvatarProps {
@@ -25,6 +29,8 @@ export function ProfAvatar({
   className = "",
   title,
 }: ProfAvatarProps) {
+  // Hook must be called unconditionally at the top — no branches before it.
+  const overrides = useContext(PortraitContext)
   const label = title ?? name ?? profId ?? "AUTO"
   const style = { width: size, height: size }
 
@@ -55,7 +61,7 @@ export function ProfAvatar({
     )
   }
 
-  const portraitUrl = PORTRAIT_BY_PROF_ID[profId]
+  const portraitUrl = overrides[profId] ?? PORTRAIT_BY_PROF_ID[profId]
   if (portraitUrl) {
     return (
       <img

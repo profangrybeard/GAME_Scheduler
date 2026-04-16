@@ -6,6 +6,7 @@ import type {
   Professor,
   Room,
 } from "../types"
+import { classifyOffering } from "../types"
 import { ProfAvatar } from "./ProfAvatar"
 
 /**
@@ -33,18 +34,6 @@ const PRIORITY_OPTIONS: ReadonlyArray<{ key: Priority; label: string }> = [
   { key: "nice_to_have", label: "Nice" },
 ]
 
-type OfferingState =
-  | "offering" // in offerings, prof+room AUTO, no slot
-  | "kitted"   // prof and/or room assigned, no slot
-  | "placed"   // pinned/assigned to a slot, unlocked
-  | "locked"   // locked to a slot
-
-function classifyOffering(o: Offering): OfferingState {
-  if (o.locked) return "locked"
-  if (o.pinned || o.assignment) return "placed"
-  if (o.assigned_prof_id || o.assigned_room_id) return "kitted"
-  return "offering"
-}
 
 export interface ClassProps {
   selectedOfferingId: string | null
@@ -55,6 +44,7 @@ export interface ClassProps {
   onUpdate: (catalog_id: string, changes: Partial<Offering>) => void
   onToggleLock: (catalog_id: string) => void
   onRemove: (catalog_id: string) => void
+  onSelectProfessor: (id: string | null) => void
 }
 
 export function Class(props: ClassProps) {
@@ -126,7 +116,23 @@ export function Class(props: ClassProps) {
             <span className="class__credits">{course.credits} cr</span>
           </div>
           <h3 className="class__name">{course.name}</h3>
-          <div className="class__prof-lockup">
+          <div
+            className={
+              "class__prof-lockup" +
+              (assignedProf ? " class__prof-lockup--clickable" : "")
+            }
+            role={assignedProf ? "button" : undefined}
+            tabIndex={assignedProf ? 0 : undefined}
+            onClick={() => {
+              if (assignedProf) props.onSelectProfessor(assignedProf.id)
+            }}
+            onKeyDown={e => {
+              if (assignedProf && (e.key === "Enter" || e.key === " ")) {
+                e.preventDefault()
+                props.onSelectProfessor(assignedProf.id)
+              }
+            }}
+          >
             <ProfAvatar
               profId={offering.assigned_prof_id}
               name={assignedProf?.name}

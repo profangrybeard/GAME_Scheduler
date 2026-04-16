@@ -35,12 +35,46 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ─── Theme toggle ─────────────────────────────────────────────── */
+
+.theme-toggle {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 1rem;
+  width: var(--hit-min);
+  height: var(--hit-min);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  position: relative;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  color: var(--text);
+  border-color: var(--text-faint);
+}
+
+.theme-toggle__auto {
+  position: absolute;
+  bottom: 1px;
+  right: 2px;
+  font-size: 0.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
+}
+
 /* ─── Three-panel canvas ────────────────────────────────────────── */
 
 .scheduler__canvas {
   flex: 1;
   display: grid;
-  grid-template-columns: 320px 1fr 360px;
+  grid-template-columns: 280px 1fr 340px;
   gap: 1px;
   background: var(--border);
   overflow: hidden;
@@ -156,7 +190,7 @@
 .chip--active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #0f1012;
+  color: var(--accent-on);
 }
 
 /* ─── Department color tokens ───────────────────────────────────── */
@@ -171,13 +205,13 @@
   border: 1px solid transparent;
 }
 
-.dept--game         { color: #fcd34d; border-color: #78641f; background: rgba(252, 211, 77, 0.08); }
-.dept--motion_media { color: #f472b6; border-color: #7a2d55; background: rgba(244, 114, 182, 0.08); }
-.dept--ai           { color: #818cf8; border-color: #3c3f80; background: rgba(129, 140, 248, 0.08); }
-.dept--ixds         { color: #5eead4; border-color: #226660; background: rgba(94, 234, 212, 0.08); }
-.dept--iact         { color: #fb923c; border-color: #77401a; background: rgba(251, 146, 60, 0.08); }
-.dept--digi         { color: #a3e635; border-color: #48661b; background: rgba(163, 230, 53, 0.08); }
-.dept--adbr         { color: #f87171; border-color: #7a2c2c; background: rgba(248, 113, 113, 0.08); }
+.dept--game         { color: var(--dept-game);  border-color: var(--dept-game-border);  background: var(--dept-game-bg); }
+.dept--motion_media { color: var(--dept-mome);  border-color: var(--dept-mome-border);  background: var(--dept-mome-bg); }
+.dept--ai           { color: var(--dept-ai);    border-color: var(--dept-ai-border);    background: var(--dept-ai-bg); }
+.dept--ixds         { color: var(--dept-ixds);  border-color: var(--dept-ixds-border);  background: var(--dept-ixds-bg); }
+.dept--iact         { color: var(--dept-iact);  border-color: var(--dept-iact-border);  background: var(--dept-iact-bg); }
+.dept--digi         { color: var(--dept-digi);  border-color: var(--dept-digi-border);  background: var(--dept-digi-bg); }
+.dept--adbr         { color: var(--dept-adbr);  border-color: var(--dept-adbr-border);  background: var(--dept-adbr-bg); }
 
 /* ─── Professor avatar ──────────────────────────────────────────── */
 
@@ -192,7 +226,7 @@
   color: #fff;
   font-weight: 700;
   letter-spacing: -0.02em;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
 }
 
 .avatar--auto {
@@ -301,7 +335,7 @@
 
 .catalogue-row__remove:hover {
   color: var(--danger);
-  background: rgba(248, 113, 113, 0.1);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
 }
 
 /* ─── Class panel ───────────────────────────────────────────────── */
@@ -318,8 +352,8 @@
 
 .class__state--offering { color: var(--text-muted); border-color: var(--border); }
 .class__state--kitted   { color: var(--accent);     border-color: var(--accent); }
-.class__state--placed   { color: var(--warn);       border-color: rgba(251, 191, 36, 0.5); }
-.class__state--locked   { color: var(--success);    border-color: rgba(52, 211, 153, 0.5); }
+.class__state--placed   { color: var(--warn);       border-color: color-mix(in srgb, var(--warn) 50%, transparent); }
+.class__state--locked   { color: var(--success);    border-color: color-mix(in srgb, var(--success) 50%, transparent); }
 
 .class__body {
   display: flex;
@@ -442,7 +476,7 @@
 
 .class__seg--active {
   background: var(--accent);
-  color: #0f1012;
+  color: var(--accent-on);
   font-weight: 600;
 }
 
@@ -453,8 +487,8 @@
 }
 
 .class__stepper button {
-  width: 28px;
-  height: 28px;
+  width: var(--hit-min);
+  height: var(--hit-min);
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text);
@@ -613,7 +647,7 @@
 }
 
 .schedule-grid__cell--over {
-  background: rgba(129, 140, 248, 0.12);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
   box-shadow: inset 0 0 0 2px var(--accent);
 }
 
@@ -643,7 +677,7 @@
 .schedule-card:active                          { cursor: grabbing; }
 .schedule-card:hover                           { background: var(--surface-hover); }
 .schedule-card--dragging                       { opacity: 0.4; }
-.schedule-card--locked                         { cursor: not-allowed; background: rgba(52, 211, 153, 0.06); }
+.schedule-card--locked                         { cursor: not-allowed; background: color-mix(in srgb, var(--success) 6%, transparent); }
 
 .schedule-card--selected {
   border-color: var(--accent);
@@ -700,7 +734,7 @@
 }
 
 .schedule-dock--over {
-  background: rgba(129, 140, 248, 0.10);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
   box-shadow: inset 0 0 0 2px var(--accent);
 }
 
@@ -728,4 +762,739 @@
 .schedule-dock .schedule-card {
   flex: 0 0 auto;
   min-width: 160px;
+}
+
+/* ─── Schedule unpin strip (replaces the full dock) ────────────── */
+
+.schedule-unpin-strip {
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  padding: 6px var(--space-md);
+  flex-shrink: 0;
+  text-align: center;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.schedule-unpin-strip__label {
+  font-size: 0.68rem;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.4;
+}
+
+.schedule-unpin-strip--over {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.schedule-unpin-strip--over .schedule-unpin-strip__label {
+  color: var(--accent);
+  opacity: 1;
+}
+
+/* ─── Roster panel ─────────────────────────────────────────────── */
+
+.roster__add-btn {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.roster__add-btn:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border-color: var(--accent);
+}
+
+.roster__list {
+  padding: var(--space-sm) 0;
+}
+
+/* Roster card — "captain" pattern: portrait leads, course + prof follow */
+
+.roster-card {
+  display: grid;
+  grid-template-columns: 32px 1fr auto auto;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "avatar course  status remove"
+    "avatar prof    .      .";
+  gap: 1px 8px;
+  align-items: center;
+  padding: 6px var(--space-lg) 6px var(--space-md);
+  border-left: 3px solid transparent;
+  cursor: grab;
+  transition: background 0.1s ease;
+}
+
+.roster-card:active { cursor: grabbing; }
+
+.roster-card:hover,
+.roster-card:focus-visible {
+  background: var(--surface);
+  outline: none;
+}
+
+.roster-card--selected {
+  background: var(--surface-hover);
+  border-left-color: var(--accent) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.roster-card--locked { cursor: not-allowed; }
+
+/* Dept-colored left border */
+.roster-card.dept--game         { border-left-color: #fcd34d; }
+.roster-card.dept--motion_media { border-left-color: #f472b6; }
+.roster-card.dept--ai           { border-left-color: #818cf8; }
+.roster-card.dept--ixds         { border-left-color: #5eead4; }
+.roster-card.dept--iact         { border-left-color: #fb923c; }
+.roster-card.dept--digi         { border-left-color: #a3e635; }
+.roster-card.dept--adbr         { border-left-color: #f87171; }
+
+.roster-card__avatar { grid-area: avatar; align-self: center; }
+
+.roster-card__course {
+  grid-area: course;
+  font-size: 0.78rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.roster-card__id {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.roster-card__name {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.roster-card__prof {
+  grid-area: prof;
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.roster-card__status {
+  grid-area: status;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.roster-card__status--offering { background: var(--text-faint); opacity: 0.4; }
+.roster-card__status--kitted   { background: var(--accent); }
+.roster-card__status--placed   { background: var(--warn); }
+.roster-card__status--locked   { background: var(--success); }
+
+.roster-card__remove {
+  grid-area: remove;
+  color: var(--text-faint);
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.roster-card:hover .roster-card__remove { opacity: 1; }
+
+.roster-card__remove:hover {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+
+/* ─── Catalogue drawer (slide-out overlay) ─────────────────────── */
+
+.catalogue-drawer__scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  z-index: 99;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.catalogue-drawer__scrim--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.catalogue-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 380px;
+  z-index: 100;
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.catalogue-drawer--open {
+  transform: translateX(0);
+}
+
+.catalogue-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border);
+  min-height: 48px;
+  flex-shrink: 0;
+}
+
+.catalogue-drawer__title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.catalogue-drawer__close {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 1rem;
+  width: var(--hit-min);
+  height: var(--hit-min);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+
+.catalogue-drawer__close:hover {
+  color: var(--text);
+  border-color: var(--text-faint);
+}
+
+/* The Catalogue inside the drawer should fill remaining space */
+.catalogue-drawer .panel--catalogue {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ─── Avatar hit targets (clickable wrappers) ──────────────────── */
+
+.roster-card__avatar-hit,
+.schedule-card__avatar-hit {
+  grid-area: avatar;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: opacity 0.12s ease;
+}
+
+.roster-card__avatar-hit:hover,
+.schedule-card__avatar-hit:hover {
+  opacity: 0.8;
+}
+
+.class__prof-lockup--clickable {
+  cursor: pointer;
+  transition: border-color 0.12s ease;
+}
+
+.class__prof-lockup--clickable:hover {
+  border-color: var(--accent);
+}
+
+/* ─── Professor card (player card) ─────────────────────────────── */
+
+.prof-card__back {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+
+.prof-card__back:hover {
+  color: var(--text);
+  border-color: var(--text-faint);
+}
+
+.prof-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.prof-card__hero {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--border);
+}
+
+.prof-card__avatar {
+  flex-shrink: 0;
+}
+
+.prof-card__identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.prof-card__name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.prof-card__role {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.prof-card__degree {
+  font-size: 0.68rem;
+  color: var(--text-faint);
+}
+
+.prof-card__quarters {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.prof-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.prof-card__spec {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  padding: 2px 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.prof-card__portrait-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.prof-card__upload-btn,
+.prof-card__remove-portrait {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease;
+}
+
+.prof-card__upload-btn:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.prof-card__remove-portrait:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.prof-card__file-input {
+  display: none;
+}
+
+/* ─── Bottom tab bar (mobile portrait) ──────────────────────────── */
+
+.bottom-tabs {
+  display: none;
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.bottom-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 10px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  min-height: var(--hit-min);
+  border-top: 2px solid transparent;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+
+.bottom-tab__icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.bottom-tab--active {
+  color: var(--accent);
+  border-top-color: var(--accent);
+}
+
+/* ─── Hamburger (landscape) ─────────────────────────────────────── */
+
+.topbar-hamburger {
+  display: none;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: var(--hit-min);
+  height: var(--hit-min);
+  border-radius: var(--radius-sm);
+  font-size: 1.1rem;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.topbar-hamburger:hover {
+  color: var(--text);
+  border-color: var(--text-faint);
+}
+
+/* ─── Day-group toggle (portrait schedule) ──────────────────────── */
+
+.schedule__day-toggle {
+  display: none;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--border);
+  gap: var(--space-sm);
+  background: var(--surface);
+}
+
+.schedule__day-toggle .chip {
+  flex: 1;
+  font-size: 0.82rem;
+  padding: 8px;
+  min-height: var(--hit-min);
+}
+
+/* ─── Placement mode banner (tap-to-place) ──────────────────────── */
+
+.placement-banner {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-bottom: 1px solid var(--accent);
+  color: var(--text);
+  font-size: 0.82rem;
+}
+
+.placement-banner--visible { display: flex; }
+
+.placement-banner__cancel {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.placement-banner__cancel:hover {
+  background: var(--accent);
+  color: var(--accent-on);
+}
+
+/* Placing state on cards — "lifted" visual */
+.roster-card--placing,
+.schedule-card--placing {
+  background: var(--surface-hover) !important;
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25), 0 0 0 2px var(--accent);
+  z-index: 2;
+}
+
+/* Pulse the drop-target cells while placing */
+@keyframes cell-pulse {
+  0%, 100% { box-shadow: inset 0 0 0 2px var(--accent); }
+  50%      { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent); }
+}
+
+.schedule-grid--placing .schedule-grid__cell {
+  animation: cell-pulse 1.5s ease infinite;
+}
+
+.schedule-grid--placing .schedule-unpin-strip {
+  animation: cell-pulse 1.5s ease infinite;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+/* ─── Touch: always-visible remove, no hover-only UI ────────────── */
+
+@media (hover: none) {
+  .roster-card__remove { opacity: 1; }
+}
+
+/* ─── Landscape breakpoint (768-1023px) ─────────────────────────── */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .scheduler__canvas {
+    grid-template-columns: 1fr 280px;
+  }
+
+  .scheduler__canvas > .panel--roster {
+    display: none;
+  }
+
+  .topbar-hamburger { display: inline-flex; }
+
+  .scheduler__context {
+    font-size: 0.68rem;
+  }
+
+  /* Compact schedule */
+  .schedule-grid {
+    grid-template-columns: 56px 1fr 1fr;
+  }
+
+  .schedule-grid__time-header {
+    padding: var(--space-sm) 6px;
+    font-size: 0.68rem;
+  }
+
+  /* Hide room row on cards */
+  .schedule-card {
+    grid-template-areas:
+      "avatar id prof lock"
+      "avatar id prof lock";
+  }
+
+  .schedule-card__room { display: none; }
+
+  /* Roster-as-drawer when hamburger opens it */
+  .roster-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(320px, 85vw);
+    z-index: 100;
+    background: var(--bg);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .roster-drawer--open { transform: translateX(0); }
+
+  .roster-drawer .panel--roster {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .roster-drawer__scrim {
+    position: fixed;
+    inset: 0;
+    background: var(--scrim);
+    z-index: 99;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .roster-drawer__scrim--visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* ─── Portrait breakpoint (< 768px) ─────────────────────────────── */
+
+@media (max-width: 767px) {
+  .scheduler__canvas {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: unset;
+    gap: 0;
+  }
+
+  /* Roster drawer is landscape-only; hide completely on portrait */
+  .roster-drawer,
+  .roster-drawer__scrim { display: none !important; }
+
+  /* Portrait: only the active panel (per data-active on .scheduler__canvas) is visible */
+  .scheduler__canvas[data-active="roster"] .panel--schedule,
+  .scheduler__canvas[data-active="roster"] .panel--class,
+  .scheduler__canvas[data-active="roster"] .panel--prof-card { display: none; }
+
+  .scheduler__canvas[data-active="schedule"] .panel--roster,
+  .scheduler__canvas[data-active="schedule"] .panel--class,
+  .scheduler__canvas[data-active="schedule"] .panel--prof-card { display: none; }
+
+  .scheduler__canvas[data-active="detail"] .panel--roster,
+  .scheduler__canvas[data-active="detail"] .panel--schedule { display: none; }
+
+  /* The visible panel fills available space */
+  .scheduler__canvas > .panel,
+  .scheduler__canvas > aside {
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Hamburger not needed on portrait — tab bar handles navigation */
+  .topbar-hamburger { display: none; }
+
+  .scheduler__title { font-size: 0.95rem; }
+  .scheduler__context { display: none; }
+
+  .bottom-tabs { display: flex; }
+
+  /* Schedule grid: single day column with toggle */
+  .panel--schedule .schedule__day-toggle { display: flex; }
+
+  .schedule-grid {
+    grid-template-columns: 60px 1fr;
+    min-height: unset;
+  }
+
+  /* Hide the second day column in portrait — React renders only active day */
+  .schedule-grid__day-header--hidden,
+  .schedule-grid__cell--hidden {
+    display: none !important;
+  }
+
+  .schedule-grid__cell {
+    min-height: 80px;
+  }
+
+  .schedule-grid__time-header {
+    padding: 6px;
+    font-size: 0.72rem;
+  }
+
+  /* Compact schedule cards on portrait */
+  .schedule-card {
+    grid-template-columns: auto auto 1fr auto;
+    grid-template-areas:
+      "avatar id prof lock"
+      "avatar id prof lock";
+    padding: 8px;
+  }
+
+  .schedule-card__room { display: none; }
+
+  .schedule-card__id,
+  .schedule-card__prof {
+    font-size: 0.85rem;
+  }
+
+  /* Roster cards: larger touch rows */
+  .roster-card {
+    min-height: 48px;
+    padding: 10px var(--space-md);
+  }
+
+  .roster-card__id,
+  .roster-card__name { font-size: 0.85rem; }
+
+  .roster-card__prof { font-size: 0.78rem; }
+
+  /* Class panel inputs: full-bleed */
+  .class__seg { padding: 10px 8px; }
+
+  /* Catalogue drawer full-screen on phone */
+  .catalogue-drawer {
+    width: 100vw;
+    border-right: none;
+  }
+
+  /* Toolbar in schedule panel header: stack */
+  .schedule__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-sm);
+    width: 100%;
+  }
+
+  .panel--schedule .panel__header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  /* Chips slightly larger */
+  .chip {
+    min-height: 36px;
+    padding: 6px 12px;
+  }
+
+  /* Unpin strip: taller */
+  .schedule-unpin-strip {
+    padding: 12px var(--space-md);
+  }
+
+  .schedule-unpin-strip__label {
+    font-size: 0.78rem;
+  }
+
+  /* Panel titles slightly larger */
+  .panel__title { font-size: 0.78rem; }
 }
