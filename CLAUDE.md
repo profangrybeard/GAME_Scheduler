@@ -52,11 +52,19 @@ overflow.
 
 ## Distribution Model
 
-This app is **not hosted**. Users clone the repo and run locally:
+**Primary distribution is local** — users clone the repo and run it to get the
+full experience (solver included):
 - Mac: `./launch.sh`
 - Windows: `run.bat`
 
 Launchers handle venv creation, dependency installation, and `streamlit run`.
+
+**Preview-only deployment** at https://profangrybeard.github.io/GAME_Scheduler/
+via GitHub Pages on every push to `main`. The hosted preview is the React
+workspace only — no Python solver, no Excel export. Portrait uploads and
+professor edits persist per-browser via `localStorage` (not shared across
+visitors). Use the hosted URL for demos and sharing; use the local launchers
+for real scheduling work.
 
 ## Tech Stack
 
