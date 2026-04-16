@@ -1289,6 +1289,49 @@
   .roster-card__remove { opacity: 1; }
 }
 
+/* ─── Roster drawer — landscape-only ────────────────────────────── */
+/* Position fixed + transform hides it off-screen at all breakpoints by
+   default. Only the landscape media query's .--open class pulls it in.
+   Portrait kills it with display:none (drawer is landscape-only). */
+
+.roster-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(320px, 85vw);
+  z-index: 100;
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.roster-drawer--open { transform: translateX(0); }
+
+.roster-drawer .panel--roster {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.roster-drawer__scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  z-index: 99;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.roster-drawer__scrim--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 /* ─── Landscape breakpoint (768-1023px) ─────────────────────────── */
 
 @media (min-width: 768px) and (max-width: 1023px) {
@@ -1325,44 +1368,7 @@
 
   .schedule-card__room { display: none; }
 
-  /* Roster-as-drawer when hamburger opens it */
-  .roster-drawer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: min(320px, 85vw);
-    z-index: 100;
-    background: var(--bg);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    transform: translateX(-100%);
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .roster-drawer--open { transform: translateX(0); }
-
-  .roster-drawer .panel--roster {
-    display: flex;
-    flex: 1;
-    min-height: 0;
-  }
-
-  .roster-drawer__scrim {
-    position: fixed;
-    inset: 0;
-    background: var(--scrim);
-    z-index: 99;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-  }
-
-  .roster-drawer__scrim--visible {
-    opacity: 1;
-    pointer-events: auto;
-  }
+  /* Drawer + scrim styles defined at the top of the file. Nothing to add here. */
 }
 
 /* ─── Portrait breakpoint (< 768px) ─────────────────────────────── */
