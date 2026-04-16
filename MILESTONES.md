@@ -145,6 +145,90 @@ Score: affinity_first=145, time_pref_first=15, balanced=75.
 
 ---
 
+## M8 — React Workspace First Playable (Rev 3.0.0, AI 201 Session 8)
+
+**Big direction shift:** Streamlit-only → hybrid Streamlit shell + React workspace.
+Panel mapping chose **Option Y** (scheduler's natural flow, not the rubric's default):
+
+| Rubric role  | Panel              | Responsibility                                          |
+|--------------|--------------------|---------------------------------------------------------|
+| Browser      | **Catalogue**      | Pick a course from the full catalog (141 entries)       |
+| Detail View* | **Class**          | Assign prof/room/priority/sections/notes — *writes*     |
+| Controller   | **Quarter Schedule** | 2×4 weekly grid + dock; place, generate, export       |
+
+\* Class deliberately bends the "Detail View reads only" rubric rule. See `docs/state-flow.md` → "Record of Resistance".
+
+**What was built:**
+- `frontend/` — Vite 8 + React 19 + TypeScript scaffold, port **5174** (`strictPort: true`). 5173 is squatted by a legacy repo-root `frontend/` that expects a Python backend — do not collide.
+- Three panel components:
+  - [`Catalogue.tsx`](frontend/src/components/Catalogue.tsx) — Browser: search + 8 dept chips, draggable rows
+  - [`Class.tsx`](frontend/src/components/Class.tsx) — Detail (writes): priority segmented, sections stepper, prof/room selects with AUTO, notes, lock/unlock, remove
+  - [`QuarterSchedule.tsx`](frontend/src/components/QuarterSchedule.tsx) — Controller: 2×4 grid, unplaced dock, HTML5 DnD source & target, solve mode chips, Generate/Export
+- [`ProfAvatar.tsx`](frontend/src/components/ProfAvatar.tsx) — 3-tier fallback: portrait → initials circle → AUTO silhouette SVG
+- Real data from `data/*.json` via [`data.ts`](frontend/src/data.ts) — 141 catalog courses, 7 professors, 7 rooms, 16 default offerings, GAME_120 locked at TTh/2:00PM
+- Portraits auto-enumerated via Vite `import.meta.glob('../../data/portraits/*.{png,jpg,jpeg,webp}', { eager: true })` — empty dir falls through to initials circle
+- `PROF_COLORS` mirrors the Streamlit `app.py` palette exactly (same 7 hex codes)
+- Single source of truth in [`App.tsx`](frontend/src/App.tsx) with 9 memoized callbacks. `pinToSlot` clears `locked` when moving to a different slot (`sameSlot()` helper).
+- JSON-accurate shapes in [`types.ts`](frontend/src/types.ts): `teaching_departments`, `display_count`, `station_type`, split `pinned` (soft) vs `locked` (hard)
+- HTML5 drag-and-drop (no library): `application/x-offering` MIME + `text/plain` fallback, locked cards REFUSE drag (`e.preventDefault()` in `onDragStart`), drag-over visual via `.schedule-grid__cell--over`
+- [`App.css`](frontend/src/App.css) — 3-panel grid (320px / 1fr / 360px), 7 dept color tokens, chip/segmented/stepper primitives, schedule card with dept-colored left stripe
+- [`docs/state-flow.md`](docs/state-flow.md) — Mermaid diagram, Record of Resistance, 5-state lifecycle table, verification checklist (satisfies AI 201 P2 rubric 10pt item)
+- `.claude/launch.json` — new `"vite"` config: `runtimeExecutable: "npm"`, `runtimeArgs: ["run","dev","--prefix","frontend"]`, port 5174
+- [CLAUDE.md](CLAUDE.md) updated: lifted "no frontend framework" rule, added Frontend/Backend Boundary section
+- `frontend/vite.config.ts` — `server.fs.allow: ['..']` so Vite can serve `../../data/*.json`; `frontend/tsconfig.app.json` — `"resolveJsonModule": true`
+- `.gitignore` scoped root-level exclusions so `frontend/package.json` is trackable
+- **Deleted legacy scaffolding:** `OfferingsBrowser.tsx`, `CourseInspector.tsx`, `KitStation.tsx`, `TheBoard.tsx` — all replaced by the three panels above
+
+**How to verify (resume steps):**
+```bash
+# 1. Get back to the worktree
+cd C:\SCAD\Projects\GAME_Scheduler\.claude\worktrees\confident-grothendieck
+git checkout claude/confident-grothendieck        # already there
+
+# 2. Install deps (if node_modules missing)
+cd frontend && npm install
+
+# 3. Start dev server — use launch.json, not raw bash
+#    preview_start(name="vite")  →  http://localhost:5174
+#    (5173 is the legacy frontend at repo root — do NOT use)
+
+# 4. Expect in the browser:
+#    Topbar:      "GAME Scheduler · Fall 2026 · 16 offerings · balanced"
+#    Left:        CATALOGUE — 141 rows, search + 8 dept chips
+#    Middle:      QUARTER SCHEDULE — 2×4 grid (MW/TTh × 8/11/2/5), dock
+#                 GAME_120 card locked at TTh / 2:00 PM with 🔒
+#    Right:       CLASS — "No offering selected" placeholder
+
+# 5. Smoke-test DnD:
+#    • Drag a CATALOGUE row onto a grid cell → row gets added + pinned
+#    • Drag a placed card to a different cell → moves
+#    • Drag a placed card into the dock → unpins
+#    • Try to drag the locked GAME_120 card → cursor = not-allowed, refuses
+#    • Click GAME_120 → CLASS populates, click "🔒 Unlock slot" → 🔒 goes away
+
+# 6. Type-check + build
+cd frontend && npm run build          # expect 0 TS errors
+```
+
+**Session cadence (AI 201 Project 2):**
+- Session 8 (Wed 4/15): **this milestone** — first playable with real data, DnD, portraits, Option Y panel names.
+- Session 9 (Mon 4/20): Streamlit ↔ React bridge via `streamlit-component-lib`; wire `requestSolve` / `requestExport` to Python backend.
+- Session 10 (Wed 4/22): Polish and professor/room quarterly availability editing (see memory: project_open_design_question.md — awaiting Tim's choice between A/B/C).
+- Session 11 (Mon 4/27): Juice pass — tokens, motion, typography.
+- Session 12 (Wed 4/29): Studio crit + deliverable due.
+
+**Status:** COMPLETE (scaffolded + first playable). Code is not committed yet — `frontend/` and `docs/` remain untracked pending review.
+
+**Follow-ups (M9 roadmap):**
+- Commit the `frontend/` + `docs/` scaffold
+- Wire Streamlit ↔ React bridge (streamlit-component-lib)
+- Replace `requestSolve` stub (400ms setTimeout) with real Python solver invocation
+- Replace `requestExport` stub (console.info) with Excel download
+- Build the quarterly availability editor (location TBD — see project_open_design_question.md)
+- Upload actual portrait files to `data/portraits/`
+
+---
+
 ## M7 — Interactive Calendar & Stability (Rev 1.4.5)
 
 **What was built:**

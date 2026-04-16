@@ -1,0 +1,134 @@
+# GAME Scheduler — State Flow
+
+Mermaid diagram showing where state lives and how the three panels
+communicate. Satisfies the AI 201 Project 2 rubric requirement (10 pts).
+
+## Panel mapping (Option Y — scheduler's natural flow)
+
+The Reactive Sandbox brief names three roles: **Browser**, **Detail View**,
+and **Controller**. This app maps them to the scheduler's real workflow:
+
+| Rubric role      | Panel         | What it does                              |
+|------------------|---------------|-------------------------------------------|
+| Browser          | **Catalogue** | Pick a course from the full catalog       |
+| Detail View*     | **Class** | Assign prof, room, priority, notes — *writes* |
+| Controller       | **Quarter Schedule** | Place offerings onto the week, generate, export |
+
+\*See the Record of Resistance section below — this is where we bend the rubric,
+deliberately.
+
+```mermaid
+flowchart TB
+    subgraph App["App.tsx — single source of truth"]
+        ST[("SchedulerState<br/><br/>selectedOfferingId<br/>offerings[]<br/>catalog{}<br/>professors{}<br/>rooms{}<br/>solveStatus<br/>solveMode<br/>quarter / year")]
+    end
+
+    subgraph Panels["Three panels receive state as props"]
+        BR["Catalogue<br/><i>Browser</i>"]
+        KS["Class<br/><i>Detail (writes)</i>"]
+        BO["Quarter Schedule<br/><i>Controller</i>"]
+    end
+
+    subgraph Actions["Events flow up via callbacks"]
+        A1["selectOffering(id)"]
+        A2["addOffering(catalog_id)"]
+        A3["removeOffering(catalog_id)"]
+        A4["updateOffering(id, patch)"]
+        A5["pinToSlot(id, slot)"]
+        A6["toggleLock(id)"]
+        A7["setSolveMode(mode)"]
+        A8["requestSolve()"]
+        A9["requestExport()"]
+    end
+
+    ST -- "props" --> BR
+    ST -- "props" --> KS
+    ST -- "props" --> BO
+
+    BR -- "onSelect" --> A1
+    BR -- "onAdd" --> A2
+    BR -- "onRemove" --> A3
+
+    KS -- "onUpdate" --> A4
+    KS -- "onToggleLock" --> A6
+    KS -- "onRemove" --> A3
+
+    BO -- "onSelect" --> A1
+    BO -- "onPinToSlot" --> A5
+    BO -- "onSetSolveMode" --> A7
+    BO -- "onSolve" --> A8
+    BO -- "onExport" --> A9
+
+    A1 --> ST
+    A2 --> ST
+    A3 --> ST
+    A4 --> ST
+    A5 --> ST
+    A6 --> ST
+    A7 --> ST
+    A8 --> ST
+    A9 --> ST
+```
+
+## Rules this diagram enforces
+
+1. **Single source of truth.** Exactly one `SchedulerState` object exists. It
+   lives in `App.tsx`. Panels receive pieces of it as props. No panel holds
+   its own copy of any domain field. (Local UI state like a filter search box
+   stays inside the panel — that's not part of SchedulerState.)
+
+2. **Props down.** Data flows one-way from `App` into panels. Panels never
+   read from siblings — they only read from props.
+
+3. **Events up.** User actions inside a panel invoke callbacks. The callbacks
+   are defined in `App.tsx` and mutate state there. The mutation triggers
+   React's render cycle, which updates all three panels with the new props.
+
+## Record of Resistance — Class writes
+
+The rubric describes the Detail View as read-only. The scheduler's natural
+workflow is three steps, and the middle one is *authorial*, not inspectorial:
+
+```
+Catalogue (pick)  →  Class (assign prof/room/priority)  →  Quarter Schedule (place)
+```
+
+If the Class only read, the scheduler would need a fourth panel for
+authorial controls — which would break the three-panel constraint. Instead,
+Class is a writing Detail View:
+
+- It still obeys **single source of truth**: it never holds domain state, it
+  only dispatches `updateOffering`, `toggleLock`, `removeOffering`.
+- It still obeys **events up**: every change round-trips to `App.tsx` before
+  any panel re-renders.
+- It still obeys **props down**: every field shown is read from props.
+
+What gets bent: the spec's "Detail View only reads" constraint. What stays
+intact: the whole point of the lifted-state pattern, which is that state has
+exactly one home.
+
+## 5-state offering lifecycle
+
+Each offering passes through five states. The state is derived from its
+current fields — no state machine field, just `classifyOffering()` in
+`Class.tsx`:
+
+| State      | `assigned_prof_id` / `assigned_room_id` | `pinned` / `assignment` | `locked` |
+|------------|------------------------------------------|--------------------------|----------|
+| Catalogue  | (not in offerings)                        | —                        | —        |
+| Offering   | both `null`                               | both `null`              | `null`   |
+| Kitted     | at least one set                          | both `null`              | `null`   |
+| Placed     | any                                       | at least one set         | `null`   |
+| Locked     | any                                       | any                      | set      |
+
+## Verification checklist
+
+- [ ] Clicking a row in the Catalogue adds it to offerings AND selects it —
+      Class populates with the picked course
+- [ ] Changing priority/prof/room in Class updates SchedulerState (the
+      Board card's prof name changes)
+- [ ] Clicking an empty cell on the Board with a selection pins that
+      offering to the slot — the state badge in Class flips to `placed`
+- [ ] Clicking "Lock slot" in Class with a placed offering flips state
+      to `locked` and the Board card shows 🔒
+- [ ] No field of `SchedulerState` is duplicated anywhere in component state
