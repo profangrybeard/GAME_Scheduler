@@ -145,6 +145,229 @@ Score: affinity_first=145, time_pref_first=15, balanced=75.
 
 ---
 
+## M9 — Roster Pivot, Theme System, Professor Card, Responsive Layout (Rev 3.1.0)
+
+**Big shift in panel semantics.** The M8 "Option Y" mapping put the Catalogue (141
+courses) as the permanent left panel. User feedback via a sports analogy
+reframed it: the Catalogue is the *bench*, Classes are the *active team*,
+Professors are *team captains*, Detail is the *rulebook*. The left panel
+became a new **Roster** showing only the offerings selected for the quarter.
+Everything below built on that pivot.
+
+### What was built
+
+**Roster + Catalogue Drawer**
+- New [Roster.tsx](frontend/src/components/Roster.tsx) — the permanent left panel
+  showing active offerings. 32px professor "captain" avatar leads each card;
+  course ID + truncated name on row 1, prof last name on row 2, status dot
+  (offering / kitted / placed / locked), dept-colored 3px left border.
+- Roster filters to **unplaced only** — placed offerings live on the grid, so
+  the Roster becomes the "to-be-scheduled" pile. Empty roster = winning. Header
+  shows `unplaced / total` (e.g. `14 / 16`).
+- New [CatalogueDrawer.tsx](frontend/src/components/CatalogueDrawer.tsx) — thin
+  slide-out wrapper around the existing `Catalogue.tsx`. Always mounted (preserves
+  search + dept filter between opens), transforms from `translateX(-100%)` to
+  `translateX(0)`. Closes via scrim click, Escape, or `×`. `Catalogue.tsx`
+  unchanged — it's embedded inside the drawer wrapper.
+- Unplaced dock in QuarterSchedule replaced by a thin "Drop to unpin" strip
+  (40px) that stays as a DnD drop target but reclaims ~32% of vertical space.
+
+**Dark / Light Theme System**
+- Dual palette via CSS custom properties in [index.css](frontend/src/index.css).
+  `:root` is the dark default; `:root[data-theme="light"]` overrides. 7 dept
+  colors have per-theme variants (e.g. `--dept-game: #fcd34d` dark → `#b45309`
+  light). New tokens: `--accent-on` (text on accent backgrounds), `--scrim`.
+- New [useTheme.ts](frontend/src/hooks/useTheme.ts) hook. Reads `prefers-color-scheme`
+  for system default, allows manual override via localStorage (`theme` key),
+  cycles `system → light → dark`. Applies `data-theme` to `<html>` eagerly at
+  module load to avoid FOUC.
+- Topbar toggle button (sun/moon icon, small "A" badge when in system mode).
+- All 11 hardcoded rgba/hex values in App.css replaced with variables or
+  `color-mix(in srgb, var(--accent) 12%, transparent)` for alpha tints.
+
+**Contextual Professor Card**
+- The right detail panel is now bi-contextual: `Class` (course rules) when an
+  offering is selected, `ProfessorCard` (player card) when a professor is
+  selected. Mutually exclusive — `selectedProfId` in App.tsx is local UI state
+  (not in SchedulerState).
+- New [ProfessorCard.tsx](frontend/src/components/ProfessorCard.tsx) — lean,
+  edit-focused. 64px avatar hero, time-preference segmented control,
+  max-classes stepper, quarter availability chips, notes textarea, portrait
+  upload. Read-only noise (specializations, teaching depts, masters info)
+  stripped per user feedback.
+- Professor avatars are clickable everywhere: Roster cards, Class panel
+  lockup, schedule grid cards. The lockup has a `--clickable` variant that
+  only activates when a prof is assigned.
+- `updateProfessor` callback mutates `SchedulerState.professors` (needed for
+  solver) AND persists to `localStorage` under `professor-edits` key.
+  On app load, stored edits merge over the base `professors.json`.
+
+**Portrait Upload**
+- User-uploaded portraits stored as data URLs in localStorage under
+  `portrait-overrides` key. No filesystem write (no backend).
+- New `PortraitContext` in [ProfAvatar.tsx](frontend/src/components/ProfAvatar.tsx).
+  Fallback chain extended: user override → Vite glob from `data/portraits/` →
+  colored initials → AUTO silhouette.
+- File input → `FileReader.readAsDataURL` → context + localStorage update.
+  Instant propagation to every avatar via context.
+
+**Responsive Layout — 3 Breakpoints**
+- CLAUDE.md Rule 1 ("No Mobile, No Tablet") **removed**. Rules rewritten for
+  three breakpoints.
+- **Desktop (≥1024px):** unchanged 3-panel grid `280px 1fr 340px`.
+- **Landscape (768-1023px):** grid collapses to `1fr 280px`. Roster becomes
+  a left slide-drawer opened via hamburger button in topbar. Schedule cards
+  compact (room row hidden). Time-label column shrinks `72px → 56px`.
+- **Portrait (<768px):** single-panel at a time via `data-active` attribute
+  on `<main>`. Bottom tab bar (Roster / Schedule / Detail) — 60px tall,
+  safe-area aware (`env(safe-area-inset-bottom)`). Schedule grid shows ONE
+  day column (MW or TTh) with segmented toggle; `48px 1fr` grid.
+- New `--hit-min` CSS token: `36px` desktop, `44px` mobile. Applied to theme
+  toggle, steppers, drawer close, chips.
+- `@media (hover: none)` makes the Roster remove `×` always visible — critical
+  for touch users who can't hover.
+- Font base bumps `14px → 16px` on mobile; all rem sizes scale automatically.
+
+**Tap-to-Place (touch DnD alternative)**
+- New `placingId` state in App.tsx. Coexists with existing HTML5 DnD (touch
+  never fires drag events, so no feature detection needed).
+- Tap a card (roster / placed / grid) → selects AND enters placement mode. Card
+  visually lifts (scale + shadow + accent border). Placement banner appears at
+  top of viewport: "Tap a cell to place GAME_220, or tap the unpin strip to
+  remove." with Cancel button.
+- Tap a cell → pins and clears `placingId`.
+- Tap the unpin strip → unpins.
+- Tap the same card again → cancels placement mode (banner disappears).
+- Grid cells pulse (animation) when in placement mode to indicate drop targets.
+
+### Record of Resistance
+
+1. **Rubric bend, extended.** M8 flagged that Class "Detail writes, not just reads"
+   bends the AI 201 rubric. M9 pushes the bend further — the detail panel is now
+   *bi-contextual*, also editing professors. The architectural rule
+   (single source of truth, props down, events up) still holds: ProfessorCard
+   and Class both dispatch callbacks to App.tsx; neither holds local copies of
+   domain state.
+2. **CLAUDE.md Rule 1 rewritten.** The old rule said "no mobile, no tablet ever."
+   Breaking it was deliberate — React lets us do responsive cleanly, unlike
+   Streamlit. Rewrite preserves the spirit (desktop is primary) while adding
+   three explicit breakpoints. Schedule grid is still king at every breakpoint.
+3. **Localstorage over filesystem for persistence.** Professor edits and portrait
+   uploads save to `localStorage`, not to `data/professors.json` or
+   `data/portraits/`. The app has no backend; writing to disk would require one.
+   This is "local config" in the literal sense — per-browser, not per-repo.
+4. **Roster shows unplaced only, not all offerings.** The original plan had
+   Roster show all 16 offerings. User feedback: placed ones live on the grid,
+   so showing them in the Roster too is redundant. Empty roster is the
+   winning state.
+5. **Selection model is asymmetric.** `selectedOfferingId` lives in
+   SchedulerState (solver input); `selectedProfId` is local App.tsx state (UI
+   only). Justification: `selectedOfferingId` drives which card is drop-target
+   selected on the grid (solver-ish); `selectedProfId` is purely which detail
+   panel to render.
+6. **Tap-to-place, not touch-DnD polyfill.** Rather than add a heavy dnd-kit
+   dependency, we implemented a simple tap-then-tap flow. Coexists with HTML5
+   DnD because touch never fires drag events. Two different interaction models
+   for two different input modes.
+
+### How to verify
+
+```bash
+# 1. From the worktree root
+cd C:\SCAD\Projects\GAME_Scheduler\.claude\worktrees\infallible-pare
+
+# 2. Install deps if needed
+cd frontend && npm install
+
+# 3. Type-check
+npx tsc -b     # expect: 0 errors
+
+# 4. Start dev server
+#    preview_start(name="vite") or: npm run dev
+#    → http://localhost:5174
+```
+
+**Desktop (≥1024px, e.g. 1440×900):**
+- Topbar: "GAME Scheduler · FALL 2026 · 16 OFFERINGS · BALANCED" + theme toggle
+- Left: Roster panel showing unplaced offerings (expect `14 / 16` after adding
+  a prof-assignment + placement to GAME_120, which is locked at TTh 2:00PM)
+- Center: Schedule grid, 4 time slots × 2 day groups, "Drop to unpin" strip
+- Right: Class detail panel (empty state or selected course)
+- Click `+ Add` on roster → Catalogue drawer slides in from left with scrim
+- Click any course → added to offerings, appears in Roster, Class panel populates
+- Click the professor lockup in Class → Detail panel flips to ProfessorCard
+
+**Theme toggle:**
+- Click sun/moon button in topbar → cycles `system → light → dark`
+- Light mode: warm neutral `#f5f5f7` background, dept colors darker for contrast
+- Reload page → chosen theme persists via localStorage
+- macOS theme change when in "system" mode → app tracks automatically
+
+**Professor editing:**
+- Click any prof avatar (Roster card, Class hero, schedule grid card) → Professor
+  card renders in detail panel
+- Edit time preference / max classes / quarter chips / notes → changes
+  immediately reflected
+- Reload page → edits persist (localStorage `professor-edits` key)
+- Portrait upload → FileReader → data URL stored in localStorage
+  (`portrait-overrides` key) → avatar updates everywhere
+
+**Landscape (768-1023px, e.g. 900×600):**
+- Roster panel hidden; hamburger button appears in topbar
+- Click hamburger → Roster slides in from left as drawer with scrim
+- Schedule grid shows both MW and TTh columns, time labels at 56px
+- Detail panel at 280px on right
+
+**Portrait (<768px, e.g. 375×812):**
+- Single panel at a time, bottom tab bar at 60px tall shows Roster / Schedule / Detail
+- Topbar: "GAME Scheduler" + theme toggle only (context + hamburger hidden)
+- Schedule tab: MW / TTh segmented toggle above grid; single day column visible
+- Tap a Roster card → placement banner appears, auto-switches to Detail tab
+  with Class populated
+- Switch to Schedule tab → cells pulse (animation) as drop targets
+- Tap a cell → card lands, banner clears
+- Selecting an offering from any panel auto-switches activePanel to "detail"
+
+**Touch (`hover: none`):**
+- Roster `×` button always visible (not hover-gated)
+- All buttons have ≥44px hit area via `--hit-min` token
+
+### Files changed / created
+
+**Created:**
+- `frontend/src/components/Roster.tsx`
+- `frontend/src/components/CatalogueDrawer.tsx`
+- `frontend/src/components/ProfessorCard.tsx`
+- `frontend/src/hooks/useTheme.ts`
+- `.github/workflows/frontend-ci.yml` (this milestone adds CI)
+
+**Modified:**
+- `CLAUDE.md` — responsive rules rewritten
+- `frontend/src/App.tsx` — selection state, catalogue drawer, theme, prof panel,
+  portraits, activePanel, placingId, bottom tabs, roster drawer
+- `frontend/src/App.css` — ~300 lines added (roster, drawer, prof card, tabs,
+  3 media queries, placement mode)
+- `frontend/src/index.css` — dual palette, `--hit-min`, mobile font-size
+- `frontend/src/types.ts` — `classifyOffering` + `OfferingState` extracted
+- `frontend/src/components/ProfAvatar.tsx` — `PortraitContext`
+- `frontend/src/components/Class.tsx` — clickable prof lockup, imports shared `classifyOffering`
+- `frontend/src/components/QuarterSchedule.tsx` — unplaced dock → unpin strip,
+  day-group toggle, placement handling, clickable avatars
+
+**Unchanged:** `Catalogue.tsx`, `data.ts`, `tokens.ts`
+
+### Follow-ups (M10 roadmap)
+
+- Streamlit ↔ React bridge via `streamlit-component-lib`
+- Real `requestSolve` → Python solver invocation
+- Real `requestExport` → Excel download
+- Export / import professor edits + portraits (currently local-only per-browser)
+- Persist offering placements across sessions (currently reset on reload)
+
+**Status:** COMPLETE
+
+---
+
 ## M8 — React Workspace First Playable (Rev 3.0.0, AI 201 Session 8)
 
 **Big direction shift:** Streamlit-only → hybrid Streamlit shell + React workspace.

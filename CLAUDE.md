@@ -2,56 +2,53 @@
 
 ## Responsive Design Rules
 
-This app is optimized for a **single target**: MacBook Pro 15" running in a browser.
+The React workspace is **responsive across three breakpoints**. Desktop is the primary
+target (where real scheduling work happens), mobile is for reference and light editing.
 
-### Golden Target
+### Primary Target: Desktop
 
 | Spec | Value |
 |------|-------|
 | Effective resolution | **1440 x 900** (16:10, macOS default scaling) |
 | Usable viewport height | **~820px** (after browser chrome) |
-| Sidebar width | **~300px** (Streamlit default) |
-| Main content area | **~1140px** (sidebar open) |
-| Aspect ratio | **16:10** |
+| Layout | 3-panel grid: Roster 280px / Schedule 1fr / Detail 340px |
 
-### Rule 1: No Mobile, No Tablet
+### Breakpoints
 
-There is **no mobile layout and no tablet layout**. Screens below 1024px wide show a
-"designed for laptop" message instead of a broken layout. Do not add media queries for
-small screens. Do not add responsive font scaling or bottom navigation.
+| Range | Layout |
+|-------|--------|
+| **≥ 1024px** | 3-panel grid (primary target) |
+| **768-1023px** | Schedule + Detail visible, Roster becomes a left slide-drawer opened via hamburger |
+| **< 768px** | Single-column, bottom tab bar navigates between Roster / Schedule / Detail. Schedule grid shows one day group (MW or TTh) with a toggle. |
 
-### Rule 2: Two Modes Only
+Plus `@media (hover: none)` for touch-specific fixes (always-visible remove buttons, tap-to-place).
 
-**Full** (sidebar open) and **Focus** (sidebar collapsed). The main content does not
-reflow when the sidebar toggles — collapsing it gives bonus space, not a different layout.
+### Rule 1: Schedule Grid is King
 
-### Rule 3: Vertical Real Estate is Sacred
+The MW / TTh weekly grid is the most important view. On desktop/landscape it gets priority
+on space. On portrait it's accessible via the middle tab with a MW/TTh toggle — all 4 time
+slots visible per day.
 
-The usable viewport is ~820px tall. Maximum **60px for sticky headers/context bars**.
-The schedule grid must show all 4 time slots without scrolling when possible. Target
-visible grid area: at least **600px tall**.
+### Rule 2: Vertical Real Estate is Sacred (desktop)
 
-### Rule 4: Schedule Grid is King
+On desktop, usable viewport is ~820px tall. Maximum **60px for sticky headers/context bars**.
+The schedule grid must show all 4 time slots without scrolling.
 
-The MW / TTh weekly grid is the most important view. It gets priority on space. Course
-cards in the grid must be scannable at a glance — no truncation of course ID or professor
-name. Target card height: **~60-70px**, fitting 4 rows cleanly.
+### Rule 3: Touch-First Where It Matters
 
-### Rule 5: Sidebar is a Tool Drawer
+All interactive elements are **≥44px on mobile** (≥36px desktop) via the `--hit-min` token.
+The `roster-card__remove` button is always visible on `hover: none` devices (no hover-only UI).
 
-Sidebar stays at ~300px. It holds setup controls (roster, draft ticker, template save).
-The main content area is where real work happens.
+### Rule 4: Tap-to-Place Coexists with DnD
 
-### Rule 6: No Scroll Traps
+HTML5 drag-and-drop stays on desktop. On touch, tap a card to enter placement mode
+(banner appears), tap a cell to place. Both systems are always active — touch never fires
+drag events, so there's no feature detection needed.
 
-Each tab's content fits in a single scroll column. No nested scroll areas, no horizontal
-overflow. The Catalog and Courses lists can scroll vertically (expected), but the Schedule
-grid should aim for full visibility without scroll.
+### Rule 5: No Scroll Traps
 
-### Rule 7: No Breakpoint Soup
-
-Do not add media queries for arbitrary widths. The only breakpoint is the **min-width
-gate at 1024px** that shows the desktop-only message.
+Each panel's content fits in a single scroll column. No nested scroll areas, no horizontal
+overflow.
 
 ## Distribution Model
 

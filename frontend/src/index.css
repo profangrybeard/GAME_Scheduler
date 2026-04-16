@@ -1,7 +1,8 @@
 /* ─── Design tokens (CSS vars) ──────────────────────────────────── */
-/* Mirrors src/tokens.ts. Values are placeholders until Session 11. */
 
 :root {
+  /* ── Dark palette (default) ─────────────────────────────────── */
+
   /* Surface */
   --bg: #0f1012;
   --surface: #1a1b1f;
@@ -13,13 +14,40 @@
   --text-muted: #9ca3af;
   --text-faint: #6b7280;
 
-  /* Accent (one restrained editorial accent) */
+  /* Accent */
   --accent: #818cf8;
+  --accent-on: #0f1012;   /* text on accent backgrounds */
 
   /* Status */
   --success: #34d399;
   --warn: #fbbf24;
   --danger: #f87171;
+
+  /* Overlay */
+  --scrim: rgba(0, 0, 0, 0.5);
+
+  /* Department badge colors */
+  --dept-game: #fcd34d;
+  --dept-game-border: #78641f;
+  --dept-game-bg: rgba(252, 211, 77, 0.08);
+  --dept-mome: #f472b6;
+  --dept-mome-border: #7a2d55;
+  --dept-mome-bg: rgba(244, 114, 182, 0.08);
+  --dept-ai: #818cf8;
+  --dept-ai-border: #3c3f80;
+  --dept-ai-bg: rgba(129, 140, 248, 0.08);
+  --dept-ixds: #5eead4;
+  --dept-ixds-border: #226660;
+  --dept-ixds-bg: rgba(94, 234, 212, 0.08);
+  --dept-iact: #fb923c;
+  --dept-iact-border: #77401a;
+  --dept-iact-bg: rgba(251, 146, 60, 0.08);
+  --dept-digi: #a3e635;
+  --dept-digi-border: #48661b;
+  --dept-digi-bg: rgba(163, 230, 53, 0.08);
+  --dept-adbr: #f87171;
+  --dept-adbr-border: #7a2c2c;
+  --dept-adbr-bg: rgba(248, 113, 113, 0.08);
 
   /* Spacing */
   --space-xs: 4px;
@@ -38,7 +66,64 @@
     sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
+  /* Touch target minimum (bumps to 44px on mobile) */
+  --hit-min: 36px;
+
   color-scheme: dark;
+}
+
+@media (max-width: 1023px) {
+  :root { --hit-min: 44px; }
+}
+
+@media (max-width: 767px) {
+  body { font-size: 16px; }
+}
+
+/* ── Light palette ──────────────────────────────────────────────── */
+
+:root[data-theme="light"] {
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --surface-hover: #eeeef0;
+  --border: #d4d4d8;
+
+  --text: #1a1b1f;
+  --text-muted: #6b7280;
+  --text-faint: #9ca3af;
+
+  --accent: #6366f1;
+  --accent-on: #ffffff;
+
+  --success: #059669;
+  --warn: #d97706;
+  --danger: #dc2626;
+
+  --scrim: rgba(0, 0, 0, 0.3);
+
+  --dept-game: #b45309;
+  --dept-game-border: #fcd34d;
+  --dept-game-bg: rgba(180, 83, 9, 0.08);
+  --dept-mome: #be185d;
+  --dept-mome-border: #f472b6;
+  --dept-mome-bg: rgba(190, 24, 93, 0.08);
+  --dept-ai: #4f46e5;
+  --dept-ai-border: #818cf8;
+  --dept-ai-bg: rgba(79, 70, 229, 0.08);
+  --dept-ixds: #0d9488;
+  --dept-ixds-border: #5eead4;
+  --dept-ixds-bg: rgba(13, 148, 136, 0.08);
+  --dept-iact: #c2410c;
+  --dept-iact-border: #fb923c;
+  --dept-iact-bg: rgba(194, 65, 12, 0.08);
+  --dept-digi: #4d7c0f;
+  --dept-digi-border: #a3e635;
+  --dept-digi-bg: rgba(77, 124, 15, 0.08);
+  --dept-adbr: #dc2626;
+  --dept-adbr-border: #f87171;
+  --dept-adbr-bg: rgba(220, 38, 38, 0.08);
+
+  color-scheme: light;
 }
 
 /* ─── Reset ─────────────────────────────────────────────────────── */

@@ -64,37 +64,37 @@ export interface QuarterScheduleProps {
   rooms: Record<string, Room>
   solveStatus: SolveStatus
   solveMode: SolveMode
+  placingId: string | null
   onSelect: (id: string | null) => void
+  onSelectProfessor: (id: string | null) => void
   onAdd: (catalog_id: string) => void
   onPinToSlot: (catalog_id: string, slot: Slot | null) => void
   onSetSolveMode: (mode: SolveMode) => void
   onSolve: () => void
   onExport: () => void
+  onStartPlacing: (id: string) => void
 }
 
 export function QuarterSchedule(props: QuarterScheduleProps) {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null)
   const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [visibleDayGroup, setVisibleDayGroup] = useState<DayGroup>(1)
 
   const canGenerate =
     props.offerings.length > 0 && props.solveStatus !== "running"
   const canExport = props.solveStatus === "done"
 
-  const { placedByCell, unplaced } = useMemo(() => {
+  const placedByCell = useMemo(() => {
     const placed = new Map<string, Offering[]>()
-    const dock: Offering[] = []
     for (const o of props.offerings) {
       const slot = effectiveSlot(o)
-      if (!slot) {
-        dock.push(o)
-        continue
-      }
+      if (!slot) continue
       const key = `${slot.day_group}|${slot.time_slot}`
       const bucket = placed.get(key) ?? []
       bucket.push(o)
       placed.set(key, bucket)
     }
-    return { placedByCell: placed, unplaced: dock }
+    return placed
   }, [props.offerings])
 
   const handleDrop = (
@@ -130,6 +130,7 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
     const isSelected = props.selectedOfferingId === o.catalog_id
     const isLocked = !!o.locked
     const isDragging = draggingId === o.catalog_id
+    const isPlacing = props.placingId === o.catalog_id
 
     return (
       <button
@@ -141,11 +142,13 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
           dept +
           (isSelected ? " schedule-card--selected" : "") +
           (isLocked ? " schedule-card--locked" : "") +
-          (isDragging ? " schedule-card--dragging" : "")
+          (isDragging ? " schedule-card--dragging" : "") +
+          (isPlacing ? " schedule-card--placing" : "")
         }
         onClick={e => {
           e.stopPropagation()
           props.onSelect(o.catalog_id)
+          if (!isLocked) props.onStartPlacing(o.catalog_id)
         }}
         onDragStart={e => {
           if (isLocked) {
@@ -160,12 +163,22 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
         }}
         onDragEnd={() => setDraggingId(null)}
       >
-        <ProfAvatar
-          profId={profId}
-          name={prof?.name}
-          size={24}
-          className="schedule-card__avatar"
-        />
+        <span
+          className="schedule-card__avatar-hit"
+          role="button"
+          tabIndex={-1}
+          onClick={e => {
+            e.stopPropagation()
+            if (profId) props.onSelectProfessor(profId)
+          }}
+        >
+          <ProfAvatar
+            profId={profId}
+            name={prof?.name}
+            size={24}
+            className="schedule-card__avatar"
+          />
+        </span>
         <span className="schedule-card__id">{o.catalog_id}</span>
         <span className="schedule-card__prof">
           {prof ? prof.name.split(" ").slice(-1)[0] : "AUTO"}
@@ -214,13 +227,38 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
         </div>
       </header>
 
+      <div className="schedule__day-toggle" role="tablist" aria-label="Day group">
+        {DAY_GROUPS.map(g => (
+          <button
+            key={g.key}
+            type="button"
+            role="tab"
+            aria-selected={visibleDayGroup === g.key}
+            className={
+              "chip" + (visibleDayGroup === g.key ? " chip--active" : "")
+            }
+            onClick={() => setVisibleDayGroup(g.key)}
+          >
+            {g.label}
+          </button>
+        ))}
+      </div>
+
       <div className="panel__body schedule-body">
-        <div className="schedule-grid" role="grid">
+        <div
+          className={
+            "schedule-grid" + (props.placingId ? " schedule-grid--placing" : "")
+          }
+          role="grid"
+        >
           <div className="schedule-grid__corner" aria-hidden="true" />
           {DAY_GROUPS.map(g => (
             <div
               key={`h-${g.key}`}
-              className="schedule-grid__day-header"
+              className={
+                "schedule-grid__day-header" +
+                (g.key !== visibleDayGroup ? " schedule-grid__day-header--hidden" : "")
+              }
               role="columnheader"
             >
               {g.label}
@@ -239,18 +277,22 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
                 const canPinClick =
                   props.selectedOfferingId !== null &&
                   !cards.some(c => c.catalog_id === props.selectedOfferingId)
+                const isHidden = g.key !== visibleDayGroup // only hidden on portrait via CSS
                 return (
                   <div
                     key={`c-${g.key}-${ts}`}
                     className={
                       "schedule-grid__cell" +
-                      (isDropTarget ? " schedule-grid__cell--over" : "")
+                      (isDropTarget ? " schedule-grid__cell--over" : "") +
+                      (isHidden ? " schedule-grid__cell--hidden" : "")
                     }
                     role="gridcell"
                     data-day-group={g.key}
                     data-time-slot={ts}
                     onClick={() => {
-                      if (canPinClick && props.selectedOfferingId) {
+                      if (props.placingId) {
+                        props.onPinToSlot(props.placingId, slot)
+                      } else if (canPinClick && props.selectedOfferingId) {
                         props.onPinToSlot(props.selectedOfferingId, slot)
                       }
                     }}
@@ -272,12 +314,16 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
           ))}
         </div>
 
+        {/* Thin drop strip — drag a card here to unpin it from the grid */}
         <div
           className={
-            "schedule-dock" +
-            (dragOverKey === "dock" ? " schedule-dock--over" : "")
+            "schedule-unpin-strip" +
+            (dragOverKey === "dock" ? " schedule-unpin-strip--over" : "")
           }
-          aria-label="Unplaced offerings"
+          aria-label="Drop here to unpin"
+          onClick={() => {
+            if (props.placingId) props.onPinToSlot(props.placingId, null)
+          }}
           onDragOver={e => {
             e.preventDefault()
             e.dataTransfer.dropEffect = "move"
@@ -288,18 +334,9 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
           }}
           onDrop={e => handleDrop(e, { kind: "dock" })}
         >
-          <div className="schedule-dock__label">
-            Unplaced · {unplaced.length}
-          </div>
-          <div className="schedule-dock__cards">
-            {unplaced.length === 0 ? (
-              <span className="schedule-dock__empty">
-                Drop here to unpin
-              </span>
-            ) : (
-              unplaced.map(renderCard)
-            )}
-          </div>
+          <span className="schedule-unpin-strip__label">
+            {props.placingId ? "Tap to unpin" : "Drop to unpin"}
+          </span>
         </div>
       </div>
     </section>
