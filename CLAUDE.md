@@ -52,19 +52,26 @@ overflow.
 
 ## Distribution Model
 
-**Primary distribution is local** — users clone the repo and run it to get the
-full experience (solver included):
+Three surfaces, each with a distinct purpose:
+
+**1. Local (full stack)** — Tim's dev loop and any user who wants the complete
+experience (solver included):
 - Mac: `./launch.sh`
 - Windows: `run.bat`
 
 Launchers handle venv creation, dependency installation, and `streamlit run`.
 
-**Preview-only deployment** at https://profangrybeard.github.io/GAME_Scheduler/
-via GitHub Pages on every push to `main`. The hosted preview is the React
-workspace only — no Python solver, no Excel export. Portrait uploads and
-professor edits persist per-browser via `localStorage` (not shared across
-visitors). Use the hosted URL for demos and sharing; use the local launchers
-for real scheduling work.
+**2. Gated hosted (full stack)** — `https://scheduler.autocoursescheduler.com`.
+React workspace + FastAPI solver, one Docker container on Fly.io, auto-deploys
+on every push to `main`. Gated by Cloudflare Access with an `@scad.edu` policy;
+login is a one-time emailed PIN. This is what Eric and other SCAD reviewers
+actually use. See [`DEPLOY.md`](DEPLOY.md) for runbook.
+
+**3. Public preview (frontend-only)** — `https://profangrybeard.github.io/GAME_Scheduler/`
+via GitHub Pages on every push to `main`. React workspace only — no Python
+solver, no Excel export. Portrait uploads and professor edits persist per-browser
+via `localStorage`, not shared. Use for quick demos / UI links where Access gating
+would be friction.
 
 ## Tech Stack
 
