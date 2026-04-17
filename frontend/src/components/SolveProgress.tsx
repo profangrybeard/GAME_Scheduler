@@ -54,12 +54,15 @@ interface Props {
 export function SolveProgress(props: Props) {
   const { progress, isSolving, onDismiss } = props
 
-  // Tick once a second so running-mode elapsed counters stay live between
-  // CP-SAT solution events (which can be 5+ seconds apart on a hard problem).
-  const [, forceTick] = useState(0)
+  // `now` is driven by a 250ms interval while a solve is in flight. Using
+  // state (instead of calling performance.now() during render) keeps the
+  // component pure per React's rules-of-hooks lint. First update lands on
+  // the first interval tick — elapsed reads "0ms" for up to 250ms after
+  // the stream opens, which is imperceptible next to the 10–30s solve.
+  const [now, setNow] = useState<number>(() => performance.now())
   useEffect(() => {
     if (!progress || progress.endedAt !== null) return
-    const id = setInterval(() => forceTick(t => t + 1), 1000)
+    const id = setInterval(() => setNow(performance.now()), 250)
     return () => clearInterval(id)
   }, [progress, progress?.endedAt])
 
@@ -76,7 +79,7 @@ export function SolveProgress(props: Props) {
   const totalElapsedMs = progress.endedAt !== null && progress.startedAt !== null
     ? Math.max(0, progress.endedAt - progress.startedAt)
     : progress.startedAt !== null
-      ? Math.max(0, performance.now() - progress.startedAt)
+      ? Math.max(0, now - progress.startedAt)
       : 0
 
   // Preserve the canonical mode ordering so the cards don't jump around as
@@ -129,7 +132,7 @@ export function SolveProgress(props: Props) {
           const m = progress.modes[key]
           const liveElapsedMs =
             m.state === "running" && progress.startedAt !== null
-              ? Math.max(0, performance.now() - progress.startedAt)
+              ? Math.max(0, now - progress.startedAt)
               : m.elapsedMs
           return (
             <div

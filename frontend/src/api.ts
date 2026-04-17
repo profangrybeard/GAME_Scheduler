@@ -197,8 +197,11 @@ export async function postSolveStream(
         if (!event) continue
         onEvent(event)
         if (event.type === "solve_complete") {
-          const { type: _t, ...rest } = event
-          finalResult = rest as SolveResponse
+          finalResult = {
+            quarter: event.quarter,
+            year:    event.year,
+            modes:   event.modes,
+          }
         } else if (event.type === "error") {
           errorEvent = { message: event.message, kind: event.kind }
         }
