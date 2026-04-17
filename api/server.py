@@ -10,14 +10,11 @@ same-origin (no CORS needed in prod).
 
 Endpoints
 ---------
-POST /api/solve         — Run 3-mode CP-SAT solve (blocking). Legacy; kept
-                          for the Streamlit shell and smoke scripts until
-                          the React cutover to /api/solve/stream ships.
-POST /api/solve/stream  — Same solve, streamed as Server-Sent Events. Each
-                          CP-SAT intermediate solution emits a `solution_found`
-                          event so the UI shows real progress instead of a
-                          lying spinner. Final `solve_complete` event carries
-                          the same payload shape as the legacy endpoint.
+POST /api/solve/stream  — Run the 3-mode CP-SAT solve and stream progress as
+                          Server-Sent Events. Each improving CP-SAT solution
+                          emits a `solution_found` event; final `solve_complete`
+                          carries the full result payload. No blocking variant
+                          exists — the streaming endpoint IS the solve path.
 POST /api/export        — Write an Excel workbook from a prior solve's results.
 GET  /api/health        — Liveness check (React uses this to show availability).
 GET  /                  — React index.html (production only).
@@ -116,37 +113,6 @@ class ExportRequest(BaseModel):
 @app.get("/api/health")
 def health() -> dict:
     return {"ok": True, "service": "game-scheduler-api"}
-
-
-@app.post("/api/solve")
-def solve(req: SolveRequest) -> dict:
-    """Run the 3-mode solve for the given React state. Returns all three
-    mode results; React applies the one matching its current solveMode chip.
-    """
-    # Lazy import — keeps the `api` module importable for testing without
-    # ortools being installed.
-    from solver.scheduler import run_schedule
-
-    react_offerings = [o.model_dump() for o in req.offerings]
-
-    try:
-        results = run_schedule(
-            req.quarter,
-            pinned=react_pinned_to_solver(react_offerings),
-            offerings_override=react_offerings_to_doc(
-                react_offerings, req.quarter, req.year,
-            ),
-            professors_override=req.professorOverrides,
-            rooms_override=req.roomOverrides,
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-
-    return {
-        "quarter": results["quarter"],
-        "year":    results["year"],
-        "modes":   [solver_result_to_react_mode(m) for m in results["modes"]],
-    }
 
 
 # ---------------------------------------------------------------------------
