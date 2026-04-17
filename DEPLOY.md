@@ -1,13 +1,13 @@
 # Deploying GAME Scheduler
 
-> **Status (2026-04-16):**
-> - ✅ Hosted at **https://scad-class-scheduler.fly.dev** — React workspace + FastAPI, auto-deploys on every push to `main`.
-> - ⚠️ **Publicly reachable.** Cloudflare Access is planned but not wired — the solver is currently runnable by anyone with the URL.
-> - 🔒 Blocker: Cloudflare Registrar's email verification doesn't complete (likely SCAD email-security pre-fetches the one-time token). Domain `autocoursescheduler.xyz` is picked; Porkbun fallback is the recommended unstick. See [memory: `project_deployment.md`](~/.claude/projects/C--SCAD-Projects-GAME-Scheduler/memory/project_deployment.md) for paths A/B/C.
+> **Status (2026-04-17):**
+> - ✅ Hosted + gated at **https://scheduler.autocoursescheduler.com**.
+> - ✅ Cloudflare Access policy allows only `@scad.edu` emails. Login is via one-time PIN — users enter their email, receive a 6-digit code, paste it in. (Google SSO was attempted first but SCAD Workspace admin blocks third-party OAuth clients; see §Cloudflare Access for the full story.)
+> - ✅ Origin lives at `https://scad-class-scheduler.fly.dev`, proxied through Cloudflare with Full (strict) TLS. Direct Fly URL is still reachable but undocumented — Access-gated URL is the canonical entry point.
 
 The React workspace + FastAPI solver deploys as one Docker container to
-[Fly.io](https://fly.io), gated (once wired up) by Cloudflare Access so only
-`@scad.edu` users can reach it.
+[Fly.io](https://fly.io), gated by Cloudflare Access so only `@scad.edu`
+users can reach it.
 
 ## How deploys actually happen
 
@@ -17,7 +17,8 @@ The React workspace + FastAPI solver deploys as one Docker container to
 | **GitHub Actions** | Runs `flyctl deploy --remote-only` using the `FLY_API_TOKEN` repo secret. |
 | **Fly.io remote builder** | Builds the Docker image defined in [`Dockerfile`](Dockerfile), uploads to the Fly registry. |
 | **Fly.io Machines** | Runs the container per [`fly.toml`](fly.toml). Auto-stops when idle; wakes on request. |
-| **Cloudflare Access** *(optional, see §Cloudflare)* | Gates the hosted URL with Google SSO + `@scad.edu` policy. |
+| **Cloudflare proxy** | DNS proxy + edge TLS for `scheduler.autocoursescheduler.com`. Terminates client TLS, re-encrypts to Fly origin. |
+| **Cloudflare Access** | Gates the proxied URL with the `@scad.edu` policy. Unauthorized users never reach Fly. |
 
 **Deploys are automatic.** Merge to main → ~60–90 seconds later the new
 version is live. The [version badge](frontend/src/components/VersionBadge.tsx)
@@ -29,11 +30,11 @@ glance which build is serving.
 Windows) — the hosted build is for Eric and other reviewers, not your daily
 iteration loop.
 
-**Hosted URL:** `https://scad-class-scheduler.fly.dev`
+**Hosted URL:** `https://scheduler.autocoursescheduler.com`
 
 ---
 
-## One-time setup (~15 min, already done for this repo)
+## One-time setup (~30 min, already done for this repo)
 
 If you're re-doing this from scratch (e.g. forking the project, or the
 existing setup breaks):
@@ -42,7 +43,7 @@ existing setup breaks):
 
 Use **email signup**, not the GitHub / Google OAuth buttons — the account
 travels with SCAD rather than any one person's personal login. Fly asks for
-a credit card (anti-abuse; typical monthly cost under $2 with auto-stop).
+a credit card (anti-abuse; typical monthly cost under $5 with auto-stop).
 
 ### 2. Install flyctl and reserve the app name
 
@@ -86,63 +87,109 @@ The Fly Deploy workflow kicks off automatically; watch progress in the
 Actions tab. First real build takes ~3–4 min (ortools is chonky); subsequent
 builds are ~60 s thanks to Fly's layer cache.
 
-**That's it.** Your PC is done. All future deploys are `git push = live`.
+**That's it.** Your PC is done. All future code deploys are `git push = live`.
 
 ---
 
-## Cloudflare Access — SCAD Google Workspace SSO
+## Cloudflare Access — `@scad.edu` gate via one-time PIN
 
 Fly gives you `https://scad-class-scheduler.fly.dev`, which is public. We
-put Cloudflare Access in front so only `@scad.edu` users can reach it.
-SCAD runs on Google Workspace, so the flow is:
+put Cloudflare Access in front on a custom domain so only `@scad.edu` users
+can reach it.
 
-> Eric opens the link → "Sign in with Google" → already-signed-in SCAD
-> account verifies in one click → he's in.
+> Eric opens `https://scheduler.autocoursescheduler.com` → CF prompts for
+> his email → enters `eric@scad.edu` → receives a 6-digit code in his inbox
+> → pastes it in → he's in. Session lasts 24 hours per browser.
 
-No inbox-hunting for a one-time code, no extra password to remember.
+### Why PIN, not Google SSO
 
-**You need:**
-- A domain on Cloudflare (cheapest: buy a `.xyz` for ~$1/year on
-  Cloudflare Registrar; a SCAD subdomain would require SCAD IT involvement).
-- A free Cloudflare account.
+The original plan was Google SSO (click-to-login using the browser's
+existing `@scad.edu` Google session). SCAD's Google Workspace admin policy
+blocks third-party OAuth clients for faculty — any attempt to sign in to
+an app on `*.cloudflareaccess.com` returns `Error 400: access_not_configured`
+("Your institution's admin needs to review cloudflareaccess.com"). Filing a
+ticket with SCAD IT was not a realistic path. One-time PIN bypasses Google
+Workspace entirely — CF mails the code directly, plaintext 6-digit, which
+SCAD's email security won't pre-fetch or strip.
 
-**Steps:**
+### Prerequisites
 
-1. **Add the domain to Cloudflare** (follow the nameserver-change wizard if
-   it's a new domain).
+- A domain on Cloudflare (we use `autocoursescheduler.com`, bought via CF
+  Registrar for ~$10/year).
+- A free Cloudflare Zero Trust team (we use `scad-scheduler` →
+  `scad-scheduler.cloudflareaccess.com`).
 
-2. **Configure Google as an identity provider (one-time)**:
-   - Cloudflare Dashboard → **Zero Trust** → **Settings** → **Authentication**
-     → **Login methods** → **Add new** → **Google**.
-   - Cloudflare shows instructions for creating an OAuth client in Google
-     Cloud Console. Follow them — paste the Client ID + Client Secret back
-     into Cloudflare.
+### Steps
 
-3. **Create an access application**:
-   - **Zero Trust** → **Access** → **Applications** → **Add application** →
-     **Self-hosted**.
-   - Application name: `GAME Scheduler`.
-   - Session duration: 24 hours.
-   - Subdomain + domain: e.g. `scheduler.yourdomain.xyz`.
-   - **Identity providers**: check **Google**. Uncheck "One-time PIN" so
-     everyone goes through Google SSO — keeps the @scad.edu filter airtight.
+1. **Add the domain to Cloudflare** — either buy through CF Registrar
+   (no nameserver change needed) or buy elsewhere and paste CF's nameservers
+   into your registrar. If buying through CF Registrar from a SCAD email,
+   expect the verification email to be pre-fetched by SCAD's link scanner
+   (consumes the token before you can click it). Workaround: right-click
+   the verify link in Gmail → **Copy link address** → paste into Chrome's
+   address bar. Do not click.
 
-4. **Add a policy**:
-   - Name: `SCAD faculty`.
-   - Action: `Allow`.
-   - Include → **Emails ending in** → `@scad.edu`.
+2. **Create a Zero Trust team** — Cloudflare dash → **Zero Trust** → follow
+   the onboarding. Free plan covers up to 50 users. Your team name becomes
+   `<team>.cloudflareaccess.com`.
 
-5. **Point DNS at Fly.io**:
-   - **DNS** → **Records** → **Add record**.
-   - Type: `CNAME`, Name: `scheduler`, Target: `scad-class-scheduler.fly.dev`.
-   - Proxy status: **Proxied** (orange cloud).
+3. **Create the Access application:**
+   - Zero Trust dash → **Access controls → Applications → Add an application**.
+   - Type: **Self-hosted and private**.
+   - **Destinations → Public hostnames:** subdomain `scheduler`, domain
+     `autocoursescheduler.com`, path blank.
+   - **Access policies → Create new policy:**
+     - Name: `SCAD faculty`
+     - Action: `Allow`
+     - Include → **Emails ending in** → `@scad.edu`
+   - **Authentication:**
+     - Uncheck "Accept all available identity providers"
+     - "Select available identity providers" → choose **One-time PIN**
+     - Flip **"Apply instant authentication"** to **On** (skips the
+       login-method-picker since PIN is the only option)
+   - **Details:** Name = `SCAD Course Scheduler`, Session Duration = `24 hours`.
+   - Create.
 
-6. **Tell Fly about the custom domain**:
-   - Fly Dashboard → your app → **Certificates** → **Add certificate** →
-     enter `scheduler.yourdomain.xyz`. Fly auto-issues a Let's Encrypt cert.
+4. **DNS — add three records to `autocoursescheduler.com`:**
 
-7. **Test** in an incognito window: click the link → Google SSO → `@scad.edu` →
-   in. A non-SCAD Google account sees "Access denied".
+   | Type | Name | Target | Proxy |
+   |------|------|--------|-------|
+   | `CNAME` | `scheduler` | `scad-class-scheduler.fly.dev` | **Proxied (orange cloud)** |
+   | `CNAME` | `_acme-challenge.scheduler` | `scheduler.autocoursescheduler.com.<app-id>.flydns.net` | **DNS only (grey cloud)** |
+   | `TXT` | `_fly-ownership.scheduler` | `app-<app-id>` | n/a |
+
+   The second + third records let Fly verify the cert via DNS-01 instead of
+   HTTP-01 (which is blocked by CF Access intercepting the `/.well-known/`
+   path). Run `flyctl certs setup scheduler.autocoursescheduler.com -a scad-class-scheduler`
+   to get the exact `<app-id>` values for the two verification records.
+
+5. **Issue the Fly cert:**
+   ```bash
+   flyctl certs add scheduler.autocoursescheduler.com -a scad-class-scheduler
+   # wait ~60s for DNS propagation, then:
+   flyctl certs check scheduler.autocoursescheduler.com -a scad-class-scheduler
+   # should report Status = Issued
+   ```
+
+6. **Harden CF → origin TLS:**
+   - `autocoursescheduler.com` → **SSL/TLS → Configuration** → Encryption
+     Mode → **Full (strict)**. Do this *after* `flyctl certs check` reports
+     Issued; flipping to strict before the cert is live returns 526 errors.
+
+7. **Test** in an incognito window:
+   - `https://scheduler.autocoursescheduler.com` → PIN prompt → enter
+     `tlindsey@scad.edu` → code arrives in inbox → paste → workspace loads.
+   - Negative test: enter a non-SCAD email (e.g. personal Gmail) — CF should
+     silently not send a code. User never sees "denied," they just get no
+     code. That's the policy working correctly.
+
+### Known UX quirk — Brave Private Browsing
+
+Some privacy-focused browsers (Brave in Private mode is the confirmed case)
+pre-fetch email links to test them for tracking, which burns one-shot auth
+tokens. Effect: user enters a correct code but CF says "already used."
+Workaround: click "Resend code," use the new one. Chrome Incognito and
+Firefox Private Browsing don't exhibit this.
 
 ---
 
@@ -155,7 +202,8 @@ No inbox-hunting for a one-time code, no extra password to remember.
 | Roll back | `git revert <sha> && git push`. Deploys the prior state. |
 | Scale memory if solver OOMs | `fly scale memory 1024 -a scad-class-scheduler` |
 | Rotate the deploy token | Generate a new one, update the `FLY_API_TOKEN` GitHub secret. Revoke the old one with `fly tokens revoke <id>`. |
-| See who used the hosted app | Cloudflare Zero Trust → Access → Logs |
+| See who used the hosted app | Cloudflare Zero Trust → **Insights → Logs → Access** |
+| Add an allowed user outside `@scad.edu` | Zero Trust → Access → Applications → `SCAD Course Scheduler` → Policies → edit — add another Include rule (e.g. `Emails → specific-email@gmail.com`). |
 
 ## What NOT to do
 
@@ -168,6 +216,9 @@ No inbox-hunting for a one-time code, no extra password to remember.
   per-user state.
 - **Don't disable the Cloudflare Access policy "to test real quick"** — the
   solver is a free-CPU target for anyone who finds the URL while it's open.
+- **Don't flip SSL/TLS to Full (strict) while the Fly cert is still
+  provisioning** — you'll get 526 errors until the cert finishes. Wait for
+  `flyctl certs check` to report `Status = Issued` first.
 
 ## Related
 
