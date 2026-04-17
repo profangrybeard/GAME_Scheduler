@@ -69,19 +69,6 @@ export async function pingApi(signal?: AbortSignal): Promise<boolean> {
   }
 }
 
-export async function postSolve(body: SolveRequestBody): Promise<SolveResponse> {
-  const res = await fetch("/api/solve", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) {
-    const detail = await res.text()
-    throw new Error(`solve failed (${res.status}): ${detail.slice(0, 200)}`)
-  }
-  return (await res.json()) as SolveResponse
-}
-
 // ---------------------------------------------------------------------------
 // Streaming solve (SSE)
 // ---------------------------------------------------------------------------

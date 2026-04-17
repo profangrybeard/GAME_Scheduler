@@ -78,10 +78,12 @@ flowchart LR
 ```
 
 **Data flow for a Generate click (hosted):** React posts the current state
-(offerings + prof/room overrides) to `/api/solve` → FastAPI translates via
-[`api/adapter.py`](api/adapter.py) → OR-Tools runs 3 modes → results stream
-back → React applies the assignments for the currently-selected mode.
-Canonical JSON on disk is never mutated by solves.
+(offerings + prof/room overrides) to `/api/solve/stream` → FastAPI translates
+via [`api/adapter.py`](api/adapter.py) → OR-Tools runs 3 modes, emitting a
+`solution_found` event on every improving CP-SAT solution → events stream
+back as Server-Sent Events and render live in the workspace's progress
+panel → React applies the final assignments for the currently-selected
+mode. Canonical JSON on disk is never mutated by solves.
 
 ---
 

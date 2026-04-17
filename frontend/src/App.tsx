@@ -106,8 +106,8 @@ function App() {
   // ── Solver / API state ─────────────────────────────────────────
   const [apiAvailable, setApiAvailable] = useState<boolean | null>(null)
   const [solveError, setSolveError] = useState<string | null>(null)
-  // Cache of all three solve modes from the last /api/solve, so flipping the
-  // solveMode chip re-applies without re-running the solver.
+  // Cache of all three solve modes from the last /api/solve/stream, so
+  // flipping the solveMode chip re-applies without re-running the solver.
   const modeResultsRef = useRef<Record<string, SolveModeResult> | null>(null)
 
   // Live per-mode progress during a streaming solve. Starts null between
