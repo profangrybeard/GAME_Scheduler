@@ -125,11 +125,22 @@ duplicate slot.
 
 ## Verification checklist
 
-- [ ] Clicking a row in the Catalogue adds it to offerings AND selects it —
+- [x] Clicking a row in the Catalogue adds it to offerings AND selects it —
       Class populates with the picked course
-- [ ] Changing priority/prof/room in Class updates SchedulerState (the
+- [x] Changing priority/prof/room in Class updates SchedulerState (the
       Board card's prof name changes)
-- [ ] Clicking an empty cell on the Board with a selection pins that
+- [x] Clicking an empty cell on the Board with a selection pins that
       offering to the slot — the state badge in Class flips to `placed`
-- [ ] Dragging a placed card back onto the Roster list unpins it
-- [ ] No field of `SchedulerState` is duplicated anywhere in component state
+- [x] Dragging a placed card back onto the Roster list unpins it
+- [x] No field of `SchedulerState` is duplicated anywhere in component state
+
+## Verification log
+
+Append one row every time the checklist is run (manual walkthrough or
+automated). Use ✅ for pass, ❌ for fail. If a check fails, add a short
+note and open a fix before the next release.
+
+| Date       | Build    | #1 | #2 | #3 | #4 | #5 | Method | Notes |
+|------------|----------|----|----|----|----|----|--------|-------|
+| 2026-04-17 | c05547b  | ✅ | ✅ | ✅ | ✅ | ✅ | Manual on hosted (`scheduler.autocoursescheduler.com`) via Claude in Chrome | First recorded pass. #5 verified via `rg useState frontend/src/components/` — all 7 matches are local UI state (query, dept, dragOverKey, draggingId, visibleDayGroup, tab, isDragOver). |
+
