@@ -7,10 +7,12 @@ import type {
   Room,
   Slot,
   SolveMode,
+  SolveProgressState,
   SolveStatus,
   TimeSlot,
 } from "../types"
 import { ProfAvatar } from "./ProfAvatar"
+import { SolveProgress } from "./SolveProgress"
 
 /**
  * The CONTROLLER panel — Quarter Schedule.
@@ -67,6 +69,8 @@ export interface QuarterScheduleProps {
   apiAvailable: boolean | null
   /** Error message from the last solve / export, if any. */
   solveError: string | null
+  /** Live per-mode progress during a streaming solve. null between solves. */
+  solveProgress: SolveProgressState | null
   onSelect: (id: string | null) => void
   onSelectProfessor: (id: string | null) => void
   onAdd: (catalog_id: string) => void
@@ -76,6 +80,7 @@ export interface QuarterScheduleProps {
   onExport: () => void
   onStartPlacing: (id: string) => void
   onDismissError: () => void
+  onDismissProgress: () => void
 }
 
 export function QuarterSchedule(props: QuarterScheduleProps) {
@@ -251,6 +256,12 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
           </button>
         </div>
       )}
+
+      <SolveProgress
+        progress={props.solveProgress}
+        isSolving={isSolving}
+        onDismiss={props.onDismissProgress}
+      />
 
       <div className="schedule__day-toggle" role="tablist" aria-label="Day group">
         {DAY_GROUPS.map(g => (
