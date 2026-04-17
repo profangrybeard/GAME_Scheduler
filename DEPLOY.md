@@ -1,5 +1,10 @@
 # Deploying GAME Scheduler
 
+> **Status (2026-04-16):**
+> - ✅ Hosted at **https://scad-class-scheduler.fly.dev** — React workspace + FastAPI, auto-deploys on every push to `main`.
+> - ⚠️ **Publicly reachable.** Cloudflare Access is planned but not wired — the solver is currently runnable by anyone with the URL.
+> - 🔒 Blocker: Cloudflare Registrar's email verification doesn't complete (likely SCAD email-security pre-fetches the one-time token). Domain `autocoursescheduler.xyz` is picked; Porkbun fallback is the recommended unstick. See [memory: `project_deployment.md`](~/.claude/projects/C--SCAD-Projects-GAME-Scheduler/memory/project_deployment.md) for paths A/B/C.
+
 The React workspace + FastAPI solver deploys as one Docker container to
 [Fly.io](https://fly.io), gated (once wired up) by Cloudflare Access so only
 `@scad.edu` users can reach it.
