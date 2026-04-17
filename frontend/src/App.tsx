@@ -3,8 +3,9 @@ import {
   downloadBlob,
   pingApi,
   postExport,
-  postSolve,
+  postSolveStream,
   responseAssignmentToAssignment,
+  type SolveEvent,
   type SolveModeResult,
   type SolveRequestBody,
 } from "./api"
@@ -18,7 +19,7 @@ import { Roster } from "./components/Roster"
 import { VersionBadge } from "./components/VersionBadge"
 import { loadInitialState } from "./data"
 import { useTheme } from "./hooks/useTheme"
-import type { Assignment, Offering, Professor, Room, SchedulerState, Slot, SolveMode } from "./types"
+import type { Assignment, Offering, Professor, Room, SchedulerState, Slot, SolveMode, SolveModeProgress, SolveProgressState } from "./types"
 import "./App.css"
 
 /**
@@ -108,6 +109,11 @@ function App() {
   // Cache of all three solve modes from the last /api/solve, so flipping the
   // solveMode chip re-applies without re-running the solver.
   const modeResultsRef = useRef<Record<string, SolveModeResult> | null>(null)
+
+  // Live per-mode progress during a streaming solve. Starts null between
+  // solves. Populated by postSolveStream via the onEvent callback.
+  const [solveProgress, setSolveProgress] = useState<SolveProgressState | null>(null)
+  const solveAbortRef = useRef<AbortController | null>(null)
 
   // ── Responsive UI state ──────────────────────────────────────────
   const [activePanel, setActivePanel] = useState<ActivePanel>("schedule")
@@ -281,23 +287,128 @@ function App() {
     roomOverrides:      roomEdits,
   }), [state.quarter, state.year, state.solveMode, state.offerings, profEdits, roomEdits])
 
+  /** Reduce one SSE event into the SolveProgressState. Pure, so we can run
+   *  it inside setSolveProgress's callback without stale-closure bugs. */
+  const applyProgressEvent = useCallback(
+    (prev: SolveProgressState | null, event: SolveEvent): SolveProgressState => {
+      const base: SolveProgressState = prev ?? {
+        startedAt:    performance.now(),
+        endedAt:      null,
+        totalModes:   null,
+        modes:        {},
+        errorMessage: null,
+      }
+
+      const patchMode = (
+        key: string,
+        patch: Partial<SolveModeProgress>,
+      ): SolveProgressState => {
+        const existing: SolveModeProgress = base.modes[key] ?? {
+          mode:             key,
+          state:            "waiting",
+          index:            null,
+          solutionsFound:   0,
+          bestObjective:    null,
+          bestBound:        null,
+          nPlaced:          null,
+          nTotal:           null,
+          elapsedMs:        null,
+          status:           null,
+          unscheduledCount: null,
+        }
+        return { ...base, modes: { ...base.modes, [key]: { ...existing, ...patch } } }
+      }
+
+      switch (event.type) {
+        case "solve_started":
+          return { ...base, startedAt: performance.now() }
+
+        case "mode_started":
+          return patchMode(event.mode, {
+            state: "running",
+            index: event.index,
+          })
+
+        case "solution_found":
+          return patchMode(event.mode, {
+            solutionsFound: event.solution_index,
+            bestObjective:  event.objective,
+            bestBound:      event.best_bound,
+            nPlaced:        event.n_placed,
+            nTotal:         event.n_total,
+            elapsedMs:      event.elapsed_ms,
+          })
+
+        case "mode_complete":
+          return patchMode(event.mode, {
+            state:            "done",
+            status:           event.status,
+            bestObjective:    event.objective,
+            nPlaced:          event.n_placed,
+            nTotal:           event.n_total,
+            elapsedMs:        event.elapsed_ms,
+            unscheduledCount: event.unscheduled_count,
+          })
+
+        case "solve_complete":
+          return { ...base, endedAt: performance.now() }
+
+        case "error":
+          return { ...base, endedAt: performance.now(), errorMessage: event.message }
+      }
+      return base
+    },
+    [],
+  )
+
   const requestSolve = useCallback(async () => {
+    // Cancel any in-flight solve if the user re-presses. Don't await — the
+    // stream reader will throw AbortError which we swallow below.
+    solveAbortRef.current?.abort()
+    const controller = new AbortController()
+    solveAbortRef.current = controller
+
     setSolveError(null)
     setState(s => ({ ...s, solveStatus: "running" }))
+    setSolveProgress({
+      startedAt:    performance.now(),
+      endedAt:      null,
+      totalModes:   null,
+      modes:        {},
+      errorMessage: null,
+    })
+
     try {
-      const res = await postSolve(buildSolveRequest())
+      const res = await postSolveStream(
+        buildSolveRequest(),
+        (event) => {
+          setSolveProgress(prev => {
+            const next = applyProgressEvent(prev, event)
+            // Lift `totalModes` onto state when mode_started first reports it.
+            if (event.type === "mode_started" && next.totalModes === null) {
+              return { ...next, totalModes: event.total }
+            }
+            return next
+          })
+        },
+        controller.signal,
+      )
       const byMode: Record<string, SolveModeResult> = {}
       for (const m of res.modes) byMode[m.mode] = m
       modeResultsRef.current = byMode
       applyModeAssignments(byMode[state.solveMode] ?? res.modes[0])
       setState(s => ({ ...s, solveStatus: "done" }))
     } catch (e) {
+      if ((e as { name?: string }).name === "AbortError") return
       const msg = e instanceof Error ? e.message : String(e)
       console.error("[solve] error:", msg)
       setSolveError(msg)
       setState(s => ({ ...s, solveStatus: "error" }))
+      setSolveProgress(prev =>
+        prev ? { ...prev, endedAt: performance.now(), errorMessage: msg } : prev,
+      )
     }
-  }, [buildSolveRequest, applyModeAssignments, state.solveMode])
+  }, [buildSolveRequest, applyModeAssignments, applyProgressEvent, state.solveMode])
 
   const requestExport = useCallback(async () => {
     setSolveError(null)
@@ -400,6 +511,7 @@ function App() {
       placingId={placingId}
       apiAvailable={apiAvailable}
       solveError={solveError}
+      solveProgress={solveProgress}
       onSelect={selectOffering}
       onSelectProfessor={selectProfessor}
       onAdd={addOffering}
@@ -409,6 +521,7 @@ function App() {
       onExport={requestExport}
       onStartPlacing={startPlacing}
       onDismissError={() => setSolveError(null)}
+      onDismissProgress={() => setSolveProgress(null)}
     />
   )
 

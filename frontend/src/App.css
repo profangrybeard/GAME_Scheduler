@@ -1739,3 +1739,182 @@
   /* Panel titles slightly larger */
   .panel__title { font-size: 0.78rem; }
 }
+
+/* ========================================================================
+ * SolveProgress — live per-mode feedback during streaming solve.
+ * Sits under the QuarterSchedule header; auto-dismissable once complete.
+ * ====================================================================== */
+
+.solve-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: 10px var(--space-md);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  font-size: 0.78rem;
+}
+
+.solve-progress--error {
+  background: color-mix(in srgb, var(--danger) 10%, var(--surface));
+  border-bottom-color: color-mix(in srgb, var(--danger) 50%, var(--border));
+}
+
+.solve-progress--done {
+  background: color-mix(in srgb, var(--success) 8%, var(--surface));
+  border-bottom-color: color-mix(in srgb, var(--success) 40%, var(--border));
+}
+
+.solve-progress__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.solve-progress__title {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.solve-progress--running .solve-progress__title::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: solve-pulse 1s ease-in-out infinite;
+  vertical-align: middle;
+}
+
+@keyframes solve-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.9); }
+  50%      { opacity: 1;    transform: scale(1.15); }
+}
+
+.solve-progress__elapsed {
+  margin-left: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.solve-progress__dismiss {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 2px 6px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.solve-progress__dismiss:hover { color: var(--text); background: var(--surface-hover); }
+
+.solve-progress__error-message {
+  color: var(--danger);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  word-break: break-word;
+}
+
+.solve-progress__modes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-sm);
+}
+
+.solve-progress__mode {
+  padding: var(--space-sm) 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.solve-progress__mode--running {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.solve-progress__mode--done {
+  border-color: color-mix(in srgb, var(--success) 40%, var(--border));
+}
+
+.solve-progress__mode-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.solve-progress__mode-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.solve-progress__pill {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--surface-hover);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.solve-progress__pill--running {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+
+.solve-progress__pill--done {
+  background: color-mix(in srgb, var(--success) 18%, transparent);
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 40%, var(--border));
+}
+
+.solve-progress__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.solve-progress__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.solve-progress__metric-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.solve-progress__metric-value {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.solve-progress__metric-value--numeric {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 767px) {
+  /* On portrait, stack metrics vertically so they don't squash */
+  .solve-progress__metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+}

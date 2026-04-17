@@ -31,6 +31,32 @@ export type Department =
   | "adbr"
 export type SolveMode = "affinity_first" | "time_pref_first" | "balanced"
 export type SolveStatus = "idle" | "running" | "done" | "error"
+
+/** Live progress for one mode during streaming solve. Populated from SSE
+ *  events; `null` fields mean "not yet reported". */
+export interface SolveModeProgress {
+  mode: string
+  state: "waiting" | "running" | "done"
+  index: number | null      // 1-based ordering of modes in this solve
+  solutionsFound: number
+  bestObjective: number | null
+  bestBound: number | null
+  nPlaced: number | null
+  nTotal: number | null
+  elapsedMs: number | null  // total mode elapsed when done
+  status: string | null     // 'optimal' / 'feasible' / 'infeasible' / ...
+  unscheduledCount: number | null
+}
+
+/** Aggregate progress state for an in-flight or recently-completed solve.
+ *  Held in App.tsx; passed down to the progress panel. */
+export interface SolveProgressState {
+  startedAt: number | null  // performance.now() when the stream opened
+  endedAt: number | null    // performance.now() when solve_complete/error fired
+  totalModes: number | null
+  modes: Record<string, SolveModeProgress>
+  errorMessage: string | null
+}
 export type TimePref = "morning" | "afternoon" | "afternoon_evening"
 
 // ─── Reference data (immutable once loaded) ───────────────────────

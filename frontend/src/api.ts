@@ -82,6 +82,143 @@ export async function postSolve(body: SolveRequestBody): Promise<SolveResponse> 
   return (await res.json()) as SolveResponse
 }
 
+// ---------------------------------------------------------------------------
+// Streaming solve (SSE)
+// ---------------------------------------------------------------------------
+
+/** One event from the solver's progress stream. Discriminated on `type`. */
+export type SolveEvent =
+  | {
+      type: "solve_started"
+      quarter: string
+      year: number
+      n_offerings: number
+    }
+  | {
+      type: "mode_started"
+      mode: SolveMode | string
+      index: number
+      total: number
+    }
+  | {
+      type: "solution_found"
+      mode: SolveMode | string
+      objective: number
+      best_bound: number
+      n_placed: number
+      n_total: number
+      elapsed_ms: number
+      solution_index: number
+    }
+  | {
+      type: "mode_complete"
+      mode: SolveMode | string
+      status: string
+      objective: number | null
+      n_placed: number
+      n_total: number
+      elapsed_ms: number
+      unscheduled_count: number
+    }
+  | ({ type: "solve_complete" } & SolveResponse)
+  | {
+      type: "error"
+      message: string
+      kind: "invalid_input" | "solver_error"
+    }
+
+/**
+ * Stream a solve from /api/solve/stream, invoking `onEvent` for every frame
+ * as it arrives. Returns the final SolveResponse on `solve_complete` or
+ * throws on `error` / transport failure.
+ *
+ * We consume the SSE framing ourselves because EventSource doesn't support
+ * POST bodies and the solver request is too large for a query string.
+ * The parser is tolerant of mid-chunk splits — SSE frames are separated by
+ * a blank line, so we buffer until we see `\n\n`.
+ */
+export async function postSolveStream(
+  body: SolveRequestBody,
+  onEvent: (event: SolveEvent) => void,
+  signal?: AbortSignal,
+): Promise<SolveResponse> {
+  const res = await fetch("/api/solve/stream", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept":       "text/event-stream",
+    },
+    body:   JSON.stringify(body),
+    signal,
+  })
+  if (!res.ok) {
+    const detail = await res.text()
+    throw new Error(`solve stream failed (${res.status}): ${detail.slice(0, 200)}`)
+  }
+  if (!res.body) {
+    throw new Error("solve stream failed: response had no body")
+  }
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder("utf-8")
+  let buffer = ""
+  let finalResult: SolveResponse | null = null
+  let errorEvent: { message: string; kind: string } | null = null
+
+  const parseFrame = (frame: string): SolveEvent | null => {
+    if (!frame || frame.startsWith(":")) return null // heartbeat / comment
+    let dataStr: string | null = null
+    for (const line of frame.split("\n")) {
+      if (line.startsWith("data:")) {
+        dataStr = line.slice(5).trim()
+      }
+    }
+    if (dataStr === null) return null
+    try {
+      return JSON.parse(dataStr) as SolveEvent
+    } catch {
+      return null
+    }
+  }
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+
+      // SSE frames are delimited by a blank line. Anything after the last
+      // \n\n stays in the buffer until the next chunk completes it.
+      let sepIdx: number
+      while ((sepIdx = buffer.indexOf("\n\n")) !== -1) {
+        const frame = buffer.slice(0, sepIdx)
+        buffer = buffer.slice(sepIdx + 2)
+        const event = parseFrame(frame)
+        if (!event) continue
+        onEvent(event)
+        if (event.type === "solve_complete") {
+          const { type: _t, ...rest } = event
+          finalResult = rest as SolveResponse
+        } else if (event.type === "error") {
+          errorEvent = { message: event.message, kind: event.kind }
+        }
+      }
+    }
+  } finally {
+    try { reader.releaseLock() } catch { /* already released */ }
+  }
+
+  if (errorEvent) {
+    const err = new Error(errorEvent.message) as Error & { kind?: string }
+    err.kind = errorEvent.kind
+    throw err
+  }
+  if (!finalResult) {
+    throw new Error("solve stream ended without solve_complete")
+  }
+  return finalResult
+}
+
 export async function postExport(
   body: SolveRequestBody,
 ): Promise<{ blob: Blob; filename: string }> {

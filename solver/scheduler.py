@@ -12,7 +12,22 @@ Each mode dict contains:
     schedule    — list of assignment dicts (one per placed course-section)
     unscheduled — list of dicts for sections that could not be placed
     data        — the full data dict from build_model (needed by excel_writer)
+
+Progress streaming (optional)
+-----------------------------
+Pass ``progress_callback=fn`` to receive live events during the solve:
+
+    mode_started    {mode, index, total}
+    solution_found  {mode, objective, best_bound, n_placed, n_total, elapsed_ms, solution_index}
+    mode_complete   {mode, status, objective, n_placed, n_total, elapsed_ms, unscheduled_count}
+
+The callback is invoked from whatever thread CP-SAT runs on — keep it
+fast and thread-safe (typical consumer: push onto a ``queue.Queue`` that
+the SSE handler drains). Omit the arg entirely for pre-streaming behavior.
 """
+
+import time
+from typing import Callable
 
 from ortools.sat.python import cp_model
 
@@ -23,6 +38,58 @@ from solver.objectives import build_objective, _affinity_level, _time_pref_penal
 
 
 _SOLVER_TIME_LIMIT = 10.0   # seconds per mode
+
+ProgressCallback = Callable[[dict], None]
+
+
+class _SolutionProgressCallback(cp_model.CpSolverSolutionCallback):
+    """Fires on every improving solution CP-SAT finds. Extracts objective,
+    bound, and sections-placed count and forwards a `solution_found` event
+    to the caller-supplied progress callback.
+
+    Counting placed sections on every solution is O(|assignments|) — cheap
+    compared to the search work that produced the solution, so we pay it
+    gladly in exchange for honest progress numbers in the UI.
+    """
+
+    def __init__(
+        self,
+        mode: str,
+        data: dict,
+        progress_cb: ProgressCallback,
+        started_at: float,
+    ) -> None:
+        super().__init__()
+        self._mode = mode
+        self._data = data
+        self._cb = progress_cb
+        self._started_at = started_at
+        self._solutions = 0
+
+    def on_solution_callback(self) -> None:
+        self._solutions += 1
+
+        placed_keys: set[str] = set()
+        for (cs_key, _prof, _room, _dg, _ts), var in self._data["assignments"].items():
+            if cs_key in placed_keys:
+                continue
+            if self.Value(var) == 1:
+                placed_keys.add(cs_key)
+
+        try:
+            self._cb({
+                "type":           "solution_found",
+                "mode":           self._mode,
+                "objective":      int(self.ObjectiveValue()),
+                "best_bound":     int(self.BestObjectiveBound()),
+                "n_placed":       len(placed_keys),
+                "n_total":        len(self._data["course_sections"]),
+                "elapsed_ms":     int((time.time() - self._started_at) * 1000),
+                "solution_index": self._solutions,
+            })
+        except Exception:
+            # Never let a consumer crash take down the solver mid-solve.
+            pass
 
 _STATUS_NAMES = {
     cp_model.OPTIMAL:       "optimal",
@@ -141,6 +208,7 @@ def run_schedule(
     offerings_override: dict | None = None,
     professors_override: dict[str, dict] | None = None,
     rooms_override: dict[str, dict] | None = None,
+    progress_callback: ProgressCallback | None = None,
 ) -> dict:
     """Run 3 CP-SAT solves (one per mode) for the given quarter.
 
@@ -177,8 +245,17 @@ def run_schedule(
         )
     year = offerings_doc.get("year", 2026)
 
+    mode_list = list(MODE_WEIGHTS)
     mode_results = []
-    for mode in MODE_WEIGHTS:
+    for i, mode in enumerate(mode_list, start=1):
+        if progress_callback:
+            progress_callback({
+                "type":  "mode_started",
+                "mode":  mode,
+                "index": i,
+                "total": len(mode_list),
+            })
+
         print(f"\n[{mode}] Building model ...")
         model, data = build_model(
             quarter, mode,
@@ -199,7 +276,15 @@ def run_schedule(
         solver.parameters.num_search_workers  = 0   # use all CPU cores
 
         print(f"[{mode}] Solving ...")
-        raw_status = solver.Solve(model)
+        started_at = time.time()
+
+        if progress_callback:
+            cb = _SolutionProgressCallback(mode, data, progress_callback, started_at)
+            raw_status = solver.Solve(model, cb)
+        else:
+            raw_status = solver.Solve(model)
+
+        elapsed_ms = int((time.time() - started_at) * 1000)
         status_name = _STATUS_NAMES.get(raw_status, "unknown")
 
         result = _extract_result(solver, raw_status, data)
@@ -214,5 +299,17 @@ def run_schedule(
             for u in result["unscheduled"]:
                 flag = " *** MUST-HAVE UNSCHEDULED ***" if u["priority"] == "must_have" else ""
                 print(f"  Unscheduled: {u['cs_key']} ({u['priority']}){flag}")
+
+        if progress_callback:
+            progress_callback({
+                "type":              "mode_complete",
+                "mode":              mode,
+                "status":            status_name,
+                "objective":         obj,
+                "n_placed":          n_sched,
+                "n_total":           n_total,
+                "elapsed_ms":        elapsed_ms,
+                "unscheduled_count": len(result["unscheduled"]),
+            })
 
     return {"quarter": quarter, "year": year, "modes": mode_results}

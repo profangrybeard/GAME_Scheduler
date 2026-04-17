@@ -10,29 +10,33 @@ same-origin (no CORS needed in prod).
 
 Endpoints
 ---------
-POST /api/solve    — Run 3-mode CP-SAT solve with React's current state.
-POST /api/export   — Write an Excel workbook from a prior solve's results.
-GET  /api/health   — Liveness check (React uses this to show availability).
-GET  /             — React index.html (production only).
-GET  /{anything}   — SPA fallback to index.html, or 404 if /api/*.
-
-Not wired
----------
-- No streaming / progress events. Solve is synchronous; client sees a spinner.
-- No persistence back to disk. React's localStorage remains the source of
-  truth for user edits; the solver reads a snapshot per request.
+POST /api/solve         — Run 3-mode CP-SAT solve (blocking). Legacy; kept
+                          for the Streamlit shell and smoke scripts until
+                          the React cutover to /api/solve/stream ships.
+POST /api/solve/stream  — Same solve, streamed as Server-Sent Events. Each
+                          CP-SAT intermediate solution emits a `solution_found`
+                          event so the UI shows real progress instead of a
+                          lying spinner. Final `solve_complete` event carries
+                          the same payload shape as the legacy endpoint.
+POST /api/export        — Write an Excel workbook from a prior solve's results.
+GET  /api/health        — Liveness check (React uses this to show availability).
+GET  /                  — React index.html (production only).
+GET  /{anything}        — SPA fallback to index.html, or 404 if /api/*.
 """
 
 from __future__ import annotations
 
+import asyncio
+import json
 import os
+import queue
 import tempfile
 from datetime import datetime
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -143,6 +147,139 @@ def solve(req: SolveRequest) -> dict:
         "year":    results["year"],
         "modes":   [solver_result_to_react_mode(m) for m in results["modes"]],
     }
+
+
+# ---------------------------------------------------------------------------
+# SSE streaming solve
+# ---------------------------------------------------------------------------
+
+# Heartbeat cadence. Cloudflare closes idle proxied HTTP connections around
+# 100s; a comment frame every 15s keeps the stream alive through CF Access
+# and any reverse proxy we sit behind. Comments start with ':' and are
+# ignored by EventSource / our fetch-stream consumer.
+_SSE_HEARTBEAT_SECONDS = 15.0
+
+# Sentinel that the solver-thread pushes onto the event queue when done.
+# A distinct object reference so we don't collide with any legitimate event.
+_STREAM_END = object()
+
+
+def _sse_frame(event_type: str, payload: dict) -> str:
+    """Format a single SSE frame. `event:` lets the client dispatch by type
+    without parsing the JSON first; `data:` carries the payload."""
+    return f"event: {event_type}\ndata: {json.dumps(payload)}\n\n"
+
+
+@app.post("/api/solve/stream")
+async def solve_stream(req: SolveRequest) -> StreamingResponse:
+    """Stream solver progress as Server-Sent Events.
+
+    Event sequence:
+        solve_started   once, before the first mode runs
+        mode_started    once per mode (3x)
+        solution_found  zero or more per mode — one per improving CP-SAT solution
+        mode_complete   once per mode
+        solve_complete  once, terminal, carries the full result payload
+        error           once, terminal, on any unhandled solver exception
+
+    Transport: POST so the large request body fits (EventSource is GET-only).
+    Client consumes via fetch() + ReadableStream.
+    """
+    from solver.scheduler import run_schedule
+
+    react_offerings = [o.model_dump() for o in req.offerings]
+
+    # queue.Queue is thread-safe and unbounded: solver pushes from its
+    # worker thread, async generator drains from the event loop.
+    event_queue: queue.Queue = queue.Queue()
+
+    def progress_cb(event: dict) -> None:
+        event_queue.put(event)
+
+    def run_solver_in_thread() -> None:
+        """Body that runs inside asyncio's default thread pool executor.
+        Produces either a `solve_complete` or `error` event, then the sentinel
+        to signal the drainer to finish."""
+        try:
+            results = run_schedule(
+                req.quarter,
+                pinned=react_pinned_to_solver(react_offerings),
+                offerings_override=react_offerings_to_doc(
+                    react_offerings, req.quarter, req.year,
+                ),
+                professors_override=req.professorOverrides,
+                rooms_override=req.roomOverrides,
+                progress_callback=progress_cb,
+            )
+            event_queue.put({
+                "type": "solve_complete",
+                "quarter": results["quarter"],
+                "year":    results["year"],
+                "modes":   [solver_result_to_react_mode(m) for m in results["modes"]],
+            })
+        except ValueError as e:
+            event_queue.put({"type": "error", "message": str(e), "kind": "invalid_input"})
+        except Exception as e:  # noqa: BLE001 — solver crashes must not kill the app
+            event_queue.put({"type": "error", "message": str(e), "kind": "solver_error"})
+        finally:
+            event_queue.put(_STREAM_END)
+
+    # Sentinel-returning wrapper so the executor thread unblocks on its
+    # own when no event arrives. Doing the timeout here rather than via
+    # asyncio.wait_for avoids orphan queue.get() calls pinning executor
+    # threads after a heartbeat tick.
+    def _next_event_or_heartbeat():
+        try:
+            return event_queue.get(timeout=_SSE_HEARTBEAT_SECONDS)
+        except queue.Empty:
+            return None
+
+    async def event_generator():
+        loop = asyncio.get_running_loop()
+        solver_task = loop.run_in_executor(None, run_solver_in_thread)
+
+        # Open the stream with a handshake the client can latch onto.
+        yield _sse_frame("solve_started", {
+            "quarter": req.quarter,
+            "year":    req.year,
+            "n_offerings": len(react_offerings),
+        })
+
+        try:
+            while True:
+                event = await loop.run_in_executor(None, _next_event_or_heartbeat)
+
+                if event is None:
+                    yield ": heartbeat\n\n"
+                    continue
+
+                if event is _STREAM_END:
+                    break
+
+                event_type = event.get("type", "message")
+                yield _sse_frame(event_type, event)
+        finally:
+            # Make sure the solver thread has actually returned before we
+            # tear down the response — otherwise an exception inside it
+            # can leak silently.
+            try:
+                await solver_task
+            except Exception:  # noqa: BLE001 — already surfaced via 'error' event
+                pass
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            # Disable proxy buffering so events flush immediately, not in
+            # whatever chunk size the proxy prefers. Nginx honors this via
+            # X-Accel-Buffering; CF/Fly both respect Cache-Control: no-cache
+            # and Connection: keep-alive for streaming responses.
+            "Cache-Control":     "no-cache, no-transform",
+            "X-Accel-Buffering": "no",
+            "Connection":        "keep-alive",
+        },
+    )
 
 
 @app.post("/api/export")
