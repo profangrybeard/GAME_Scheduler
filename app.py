@@ -514,6 +514,48 @@ def load_rooms():
     with open(PROJECT_ROOT / "data" / "rooms.json") as f:
         return json.load(f)
 
+@st.cache_data(show_spinner="Generating Excel…")
+def _build_excel_bytes(_results: dict, sig: str) -> tuple[bytes, str]:
+    # Underscore on `_results` skips Streamlit's hasher (deep dict is slow).
+    # `sig` is the real cache key — see _export_signature for what it captures.
+    # The hidden _state sheet lets the export be re-uploaded later as a draft;
+    # composing it here means a single cache entry covers both the XLSX bytes
+    # and the embedded roundtrip state.
+    import tempfile, datetime as _dt
+    try:
+        with open(PROJECT_ROOT / "data" / "quarterly_offerings.json") as f:
+            live = json.load(f)
+    except FileNotFoundError:
+        live = {"quarter": None, "year": None, "offerings": []}
+    draft_state = {
+        "schema_version": 1,
+        "exported_at": _dt.datetime.now().isoformat(timespec="seconds"),
+        "quarter": live.get("quarter"),
+        "year": live.get("year"),
+        "offerings": live.get("offerings", []),
+        "locked_assignments": st.session_state.get("locked_assignments", []),
+        "solver_mode": st.session_state.get("solver_mode", "balanced"),
+    }
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        excel_path = write_excel(_results, tmp_dir, draft_state=draft_state)
+        return excel_path.read_bytes(), excel_path.name
+
+
+def _export_signature(results) -> str:
+    """Cache-key signature for _build_excel_bytes — captures everything that
+    affects the XLSX bytes (solver-results identity + the disk/session inputs
+    that shape the embedded draft state). Without the lock + mtime parts,
+    locking a slot between solve and export would serve a stale XLSX."""
+    import hashlib
+    try:
+        ofs_mtime = (PROJECT_ROOT / "data" / "quarterly_offerings.json").stat().st_mtime_ns
+    except FileNotFoundError:
+        ofs_mtime = 0
+    locks_str = json.dumps(st.session_state.get("locked_assignments", []), sort_keys=True)
+    locks_hash = hashlib.md5(locks_str.encode()).hexdigest()[:12]
+    mode = st.session_state.get("solver_mode", "balanced")
+    return f"{id(results)}-{ofs_mtime}-{locks_hash}-{mode}"
+
 def load_templates():
     tmpl_dir = PROJECT_ROOT / "templates"
     tmpl_dir.mkdir(exist_ok=True)
@@ -1381,11 +1423,17 @@ else:
                 if st.button("Balanced", use_container_width=True, type="primary" if current_mode == "balanced" else "secondary"):
                     st.session_state["solver_mode"] = "balanced"; st.rerun()
             with gc_exp:
-                import tempfile
-                with tempfile.TemporaryDirectory() as tmp_dir:
-                    excel_path = write_excel(solver_results, tmp_dir)
-                    with open(excel_path, "rb") as ef:
-                        st.download_button("Export Excel", ef, file_name=excel_path.name, mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+                xlsx_bytes, xlsx_name = _build_excel_bytes(
+                    solver_results, _export_signature(solver_results)
+                )
+                st.download_button(
+                    "Export Excel",
+                    xlsx_bytes,
+                    file_name=xlsx_name,
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True,
+                    on_click=lambda: st.toast("Excel downloaded"),
+                )
 
             # Lock All / Unlock All buttons
             _la_c1, _la_c2, _la_spacer = st.columns([1, 1, 5])

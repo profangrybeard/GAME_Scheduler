@@ -21,12 +21,46 @@ Visual conventions
 
 from pathlib import Path
 from datetime import date
+import json
 
 import openpyxl
+from openpyxl.comments import Comment
 from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 from config import TIME_SLOTS, DAY_GROUPS
+
+
+# ---------------------------------------------------------------------------
+# Roundtrip state-sheet protocol — see _write_state_sheet for details.
+# ---------------------------------------------------------------------------
+STATE_SHEET_NAME    = "_state"
+STATE_MARKER        = "GAME_SCHEDULER_STATE_V1"
+STATE_SCHEMA_VERSION = 1
+# Excel's hard cell limit is 32,767 chars; chunk well under that.
+_STATE_CHUNK_SIZE   = 30_000
+_COMMENT_AUTHOR     = "GAME Scheduler"
+
+# Hover-tooltip copy for the Summary sheet's mode comparison columns.
+# Keys are 1-based column numbers matching the _header_row layout.
+_SUMMARY_COMMENTS = {
+    3: ("Penalty Score",
+        "Total penalty for soft preferences missed: professor-course "
+        "affinity, time-of-day fit, day-of-week balance. Lower is better. "
+        "Hard rules (no double-booking, room capacity) are enforced "
+        "absolutely and don't add to this score."),
+    4: ("Placed",
+        "How many class sections the solver fit into a time slot, out of "
+        "all it tried. Anything less than full means some sections couldn't "
+        "fit — see Unscheduled."),
+    5: ("Unscheduled",
+        "Sections the solver couldn't place anywhere. Listed at the bottom "
+        "of each mode sheet so you can see which classes need attention."),
+    6: ("Must-Have Met",
+        "How many high-priority (must-have) sections were successfully "
+        "placed. Anything less than full is a red flag — the solver "
+        "couldn't honor a class you marked critical."),
+}
 
 
 # ---------------------------------------------------------------------------
@@ -132,6 +166,10 @@ def _write_summary(ws, results: dict) -> None:
 
     r += 1
     _header_row(ws, r, ["Mode", "Status", "Penalty Score", "Placed", "Unscheduled", "Must-Have Met"])
+    # Hover comments on the four metric columns — teaches what each number means
+    # for readers who didn't run the solve themselves.
+    for col, (_label, text) in _SUMMARY_COMMENTS.items():
+        ws.cell(row=r, column=col).comment = Comment(text, _COMMENT_AUTHOR)
 
     for res in modes:
         r += 1
@@ -313,11 +351,44 @@ def _write_schedule_sheet(ws, result: dict) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Hidden roundtrip-state sheet
+# ---------------------------------------------------------------------------
+
+def _write_state_sheet(ws, draft_state: dict) -> None:
+    """Embed the user's draft state (offerings, locks, mode) so the export
+    can be re-opened later as a working draft, not just a static report.
+
+    Layout
+    ------
+      A1            : marker string ``GAME_SCHEDULER_STATE_V1`` — readers
+                      use this to verify the sheet is the format they expect
+      A2 .. A(N+1)  : the JSON payload, split into chunks of <=30,000 chars
+                      so it survives Excel's 32,767-char single-cell limit
+
+    The sheet is hidden so chairs viewing the file in Excel/Sheets don't see
+    a wall of JSON next to the human-readable schedule.
+    """
+    ws.title = STATE_SHEET_NAME
+    ws.sheet_state = "hidden"
+    ws["A1"] = STATE_MARKER
+    payload = json.dumps(draft_state, separators=(",", ":"), default=str)
+    if not payload:
+        return
+    for i, start in enumerate(range(0, len(payload), _STATE_CHUNK_SIZE)):
+        ws.cell(row=2 + i, column=1, value=payload[start:start + _STATE_CHUNK_SIZE])
+
+
+# ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
 
-def write_excel(results: dict, output_dir: Path) -> Path:
-    """Write the 4-sheet workbook and return the file path."""
+def write_excel(results: dict, output_dir: Path, draft_state: dict | None = None) -> Path:
+    """Write the workbook and return the file path.
+
+    If ``draft_state`` is provided, a hidden ``_state`` sheet is appended
+    carrying the user's working state (offerings, locks, mode, etc.) so
+    the file can be re-uploaded later to resume editing.
+    """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -336,6 +407,11 @@ def write_excel(results: dict, output_dir: Path) -> Path:
     for res in results["modes"]:
         ws = wb.create_sheet()
         _write_schedule_sheet(ws, res)
+
+    # Sheet 5 (hidden): roundtrip draft state — only when caller provides it
+    if draft_state is not None:
+        ws_state = wb.create_sheet()
+        _write_state_sheet(ws_state, draft_state)
 
     wb.save(path)
     return path
