@@ -52,6 +52,15 @@ if not _offerings_live.exists() and _offerings_default.exists():
 import config
 from solver.scheduler import run_schedule
 from export.excel_writer import write_excel
+from export.excel_reader import (
+    MalformedState,
+    MarkerMismatch,
+    MissingStateSheet,
+    SchemaVersionUnsupported,
+    StateReadError,
+    read_draft_state,
+    validate_against_local_data,
+)
 
 # ─── Design Tokens ──────────────────────────────────────────────────
 BG_BASE     = "#111113"
@@ -586,6 +595,60 @@ def save_offerings(quarter, year, offerings_list):
         json.dump(data, f, indent=2)
     return data
 
+
+# ─── XLSX reload helpers (Slice 3) ───────────────────────────────────
+def _show_xlsx_read_error(e: StateReadError) -> None:
+    """Render targeted user copy for each typed reader exception."""
+    if isinstance(e, MissingStateSheet):
+        st.error(
+            "This Excel was exported before draft-reload was supported, "
+            "or isn't a Scheduler export."
+        )
+    elif isinstance(e, MarkerMismatch):
+        st.error("This Excel doesn't look like a GAME Scheduler export.")
+    elif isinstance(e, SchemaVersionUnsupported):
+        st.error(
+            f"This Excel was exported by a newer Scheduler "
+            f"(state v{e.found}, this build supports v{e.supported}). "
+            f"Update the app and try again."
+        )
+    elif isinstance(e, MalformedState):
+        st.error(f"Draft state is corrupted: {e}")
+    else:
+        st.error(f"Could not read Excel: {e}")
+
+
+def _hydrate_from_draft_state(state: dict, source_filename: str, warnings: list[str]) -> None:
+    """Apply parsed + validated draft state to session and disk.
+
+    After this call, the next rerun lands in the workspace with the loaded
+    draft. solver_results is cleared — user clicks Generate to repopulate
+    the calendar (we don't store solver outputs in the XLSX, just inputs).
+    """
+    quarter = state["quarter"]
+    year    = int(state["year"])
+    offerings = state["offerings"]
+
+    st.session_state["active_project"] = {
+        "quarter": quarter,
+        "year": year,
+        "offerings": offerings,
+        "prof_overrides": {},
+    }
+    st.session_state["locked_assignments"] = state.get("locked_assignments", [])
+    st.session_state["solver_mode"] = state.get("solver_mode", "balanced")
+
+    # Stale solver results would render an out-of-date calendar.
+    for k in ("solver_results", "results", "welcome_order"):
+        st.session_state.pop(k, None)
+
+    # React workspace's initial-state load reads the on-disk JSON; persist now.
+    save_offerings(quarter, year, offerings)
+
+    st.session_state["reload_warnings"] = warnings
+    st.session_state["reload_source"]   = source_filename
+    add_log("RELOAD", f"Loaded draft from {source_filename}")
+
 def apply_professor_overrides(profs, overrides, quarter):
     """Apply template professor overrides to the live professors.json."""
     if not overrides:
@@ -739,6 +802,31 @@ if active_project is None:
                 del st.session_state["results"]
             st.rerun()
 
+    # ── Resume from Excel ────────────────────────────────────────────
+    st.markdown(f'<div class="section-label">Resume from Excel</div>', unsafe_allow_html=True)
+    welcome_xlsx = st.file_uploader(
+        "Upload a previously exported schedule (.xlsx) to continue editing where you left off.",
+        type=["xlsx"],
+        key="welcome_xlsx_upload",
+    )
+    if welcome_xlsx is not None:
+        # file_id changes per upload; gate processing so a rerun doesn't re-run.
+        fid = welcome_xlsx.file_id
+        if st.session_state.get("_welcome_xlsx_processed_id") != fid:
+            st.session_state["_welcome_xlsx_processed_id"] = fid
+            try:
+                _state = read_draft_state(welcome_xlsx.read())
+                _cleaned, _warnings = validate_against_local_data(
+                    _state,
+                    catalog_ids={c["id"] for c in catalog},
+                    prof_ids={p["id"] for p in profs},
+                    room_ids={r["id"] for r in rooms},
+                )
+                _hydrate_from_draft_state(_cleaned, welcome_xlsx.name, _warnings)
+                st.rerun()
+            except StateReadError as _e:
+                _show_xlsx_read_error(_e)
+
     # ── Start from Template ──────────────────────────────────────────
     st.markdown(f'<div class="section-label">Start from Template</div>', unsafe_allow_html=True)
     show_welcome(new_quarter)
@@ -776,6 +864,50 @@ else:
                     save_template(tmpl_name or f"{quarter}_{year}", active_project["offerings"], active_project.get("prof_overrides"), quarter)
                     st.success("Saved")
                 else: st.warning("Empty")
+
+        # Reload from Excel — confirms before replacing the active draft
+        with st.expander("Reload from Excel"):
+            sb_xlsx = st.file_uploader(
+                "Replace this draft with one from an exported .xlsx.",
+                type=["xlsx"],
+                key="sidebar_xlsx_upload",
+            )
+            if sb_xlsx is not None:
+                _sb_fid = sb_xlsx.file_id
+                if st.session_state.get("_sidebar_xlsx_processed_id") != _sb_fid:
+                    st.session_state["_sidebar_xlsx_processed_id"] = _sb_fid
+                    try:
+                        _sb_state = read_draft_state(sb_xlsx.read())
+                        # Stash for confirmation step — don't hydrate yet.
+                        st.session_state["_sidebar_xlsx_pending_state"] = _sb_state
+                        st.session_state["_sidebar_xlsx_pending_name"]  = sb_xlsx.name
+                    except StateReadError as _sb_e:
+                        _show_xlsx_read_error(_sb_e)
+                        st.session_state.pop("_sidebar_xlsx_pending_state", None)
+                        st.session_state.pop("_sidebar_xlsx_pending_name", None)
+
+            _pending = st.session_state.get("_sidebar_xlsx_pending_state")
+            if _pending:
+                _pending_name = st.session_state.get("_sidebar_xlsx_pending_name", "uploaded file")
+                st.warning(f"Replace **{quarter.title()} {year}** draft with `{_pending_name}`?")
+                _cb1, _cb2 = st.columns(2)
+                with _cb1:
+                    if st.button("Replace", type="primary", key="sb_xlsx_confirm", use_container_width=True):
+                        _cleaned_sb, _warn_sb = validate_against_local_data(
+                            _pending,
+                            catalog_ids={c["id"] for c in catalog},
+                            prof_ids={p["id"] for p in profs},
+                            room_ids={r["id"] for r in rooms},
+                        )
+                        _hydrate_from_draft_state(_cleaned_sb, _pending_name, _warn_sb)
+                        st.session_state.pop("_sidebar_xlsx_pending_state", None)
+                        st.session_state.pop("_sidebar_xlsx_pending_name", None)
+                        st.rerun()
+                with _cb2:
+                    if st.button("Cancel", key="sb_xlsx_cancel", use_container_width=True):
+                        st.session_state.pop("_sidebar_xlsx_pending_state", None)
+                        st.session_state.pop("_sidebar_xlsx_pending_name", None)
+                        st.rerun()
 
         # Metrics strip
         offerings_sb = active_project["offerings"]
@@ -889,6 +1021,22 @@ else:
                     )
             else:
                 st.caption("No activity yet.")
+
+    # ── Reload warnings (top of workspace, after a Resume from Excel) ─
+    _reload_warnings = st.session_state.get("reload_warnings")
+    if _reload_warnings:
+        for _w in _reload_warnings:
+            st.warning(_w)
+        _reload_src = st.session_state.get("reload_source")
+        _dc1, _dc2 = st.columns([6, 1])
+        with _dc1:
+            if _reload_src:
+                st.caption(f"Loaded from `{_reload_src}`")
+        with _dc2:
+            if st.button("Dismiss", key="dismiss_reload_warnings", use_container_width=True):
+                st.session_state.pop("reload_warnings", None)
+                st.session_state.pop("reload_source", None)
+                st.rerun()
 
     # ── Data setup (shared by calendar + draft cards) ─────────────
     offerings = active_project["offerings"]
