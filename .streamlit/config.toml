@@ -1,5 +1,8 @@
 [server]
 folderWatchBlacklist = ["data", "templates", "solver", "export"]
+# Schedule XLSX exports are <100KB; cap is just defensive headroom.
+# (Default Streamlit cap is 200MB which surfaced as confusing UI text.)
+maxUploadSize = 5
 
 [theme]
 primaryColor="#818CF8"

@@ -52,6 +52,15 @@ if not _offerings_live.exists() and _offerings_default.exists():
 import config
 from solver.scheduler import run_schedule
 from export.excel_writer import write_excel
+from export.excel_reader import (
+    MalformedState,
+    MarkerMismatch,
+    MissingStateSheet,
+    SchemaVersionUnsupported,
+    StateReadError,
+    read_draft_state,
+    validate_against_local_data,
+)
 
 # ─── Design Tokens ──────────────────────────────────────────────────
 BG_BASE     = "#111113"
@@ -179,6 +188,11 @@ CSS_TEMPLATE = """
     [data-testid="stAppDeployButton"] {{ display: none !important; }}
     [data-testid="stMainMenu"] {{ display: none !important; }}
     [data-testid="stSidebarCollapseButton"] {{ visibility: visible !important; }}
+
+    /* Hide Streamlit's stock "200MB per file • XLSX" hint — our own labels
+       already say what the uploader accepts, and the size limit is meaningless
+       for tiny schedule exports. */
+    [data-testid="stFileUploaderDropzoneInstructions"] {{ display: none !important; }}
 
     section[data-testid="stSidebar"] {{
         background: {BG_SIDEBAR};
@@ -514,6 +528,74 @@ def load_rooms():
     with open(PROJECT_ROOT / "data" / "rooms.json") as f:
         return json.load(f)
 
+def _strip_unserializable_results(results):
+    """JSON-safe copy of solver_results for embedding in the hidden _state sheet.
+
+    The solver's per-mode `data` field carries CP-SAT decision-variable
+    objects and tuple-keyed lookup indexes (`vars_by_cs_dg_ts`,
+    `vars_by_prof_dg_ts`, …) that aren't JSON-encodable. Drop the whole
+    `data` dict per mode — the visible-sheet writer still receives the
+    full results via its first arg, and the post-reload export path
+    is defensive about missing `data` (see _write_summary).
+    """
+    if not results:
+        return results
+    return {
+        **results,
+        "modes": [
+            {k: v for k, v in m.items() if k != "data"}
+            for m in results.get("modes", [])
+        ],
+    }
+
+
+@st.cache_data(show_spinner="Generating Excel…")
+def _build_excel_bytes(_results: dict, sig: str) -> tuple[bytes, str]:
+    # Underscore on `_results` skips Streamlit's hasher (deep dict is slow).
+    # `sig` is the real cache key — see _export_signature for what it captures.
+    # The hidden _state sheet lets the export be re-uploaded later as a draft;
+    # composing it here means a single cache entry covers both the XLSX bytes
+    # and the embedded roundtrip state.
+    import tempfile, datetime as _dt
+    try:
+        with open(PROJECT_ROOT / "data" / "quarterly_offerings.json") as f:
+            live = json.load(f)
+    except FileNotFoundError:
+        live = {"quarter": None, "year": None, "offerings": []}
+    draft_state = {
+        "schema_version": 1,
+        "exported_at": _dt.datetime.now().isoformat(timespec="seconds"),
+        "quarter": live.get("quarter"),
+        "year": live.get("year"),
+        "offerings": live.get("offerings", []),
+        "locked_assignments": st.session_state.get("locked_assignments", []),
+        "solver_mode": st.session_state.get("solver_mode", "balanced"),
+        # Include the last solver output so reload lands on a populated
+        # calendar instead of forcing an immediate re-solve. Optional in
+        # the schema — readers tolerate its absence (Slice 2 era files).
+        # Strip the per-mode `data` field — CP-SAT artifacts aren't JSON.
+        "solver_results": _strip_unserializable_results(_results),
+    }
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        excel_path = write_excel(_results, tmp_dir, draft_state=draft_state)
+        return excel_path.read_bytes(), excel_path.name
+
+
+def _export_signature(results) -> str:
+    """Cache-key signature for _build_excel_bytes — captures everything that
+    affects the XLSX bytes (solver-results identity + the disk/session inputs
+    that shape the embedded draft state). Without the lock + mtime parts,
+    locking a slot between solve and export would serve a stale XLSX."""
+    import hashlib
+    try:
+        ofs_mtime = (PROJECT_ROOT / "data" / "quarterly_offerings.json").stat().st_mtime_ns
+    except FileNotFoundError:
+        ofs_mtime = 0
+    locks_str = json.dumps(st.session_state.get("locked_assignments", []), sort_keys=True)
+    locks_hash = hashlib.md5(locks_str.encode()).hexdigest()[:12]
+    mode = st.session_state.get("solver_mode", "balanced")
+    return f"{id(results)}-{ofs_mtime}-{locks_hash}-{mode}"
+
 def load_templates():
     tmpl_dir = PROJECT_ROOT / "templates"
     tmpl_dir.mkdir(exist_ok=True)
@@ -543,6 +625,70 @@ def save_offerings(quarter, year, offerings_list):
     with open(PROJECT_ROOT / "data" / "quarterly_offerings.json", "w") as f:
         json.dump(data, f, indent=2)
     return data
+
+
+# ─── XLSX reload helpers (Slice 3) ───────────────────────────────────
+def _show_xlsx_read_error(e: StateReadError) -> None:
+    """Render targeted user copy for each typed reader exception."""
+    if isinstance(e, MissingStateSheet):
+        st.error(
+            "This Excel was exported before draft-reload was supported, "
+            "or isn't a Scheduler export."
+        )
+    elif isinstance(e, MarkerMismatch):
+        st.error("This Excel doesn't look like a GAME Scheduler export.")
+    elif isinstance(e, SchemaVersionUnsupported):
+        st.error(
+            f"This Excel was exported by a newer Scheduler "
+            f"(state v{e.found}, this build supports v{e.supported}). "
+            f"Update the app and try again."
+        )
+    elif isinstance(e, MalformedState):
+        st.error(f"Draft state is corrupted: {e}")
+    else:
+        st.error(f"Could not read Excel: {e}")
+
+
+def _hydrate_from_draft_state(state: dict, source_filename: str, warnings: list[str]) -> None:
+    """Apply parsed + validated draft state to session and disk.
+
+    After this call, the next rerun lands in the workspace with the loaded
+    draft. solver_results is cleared — user clicks Generate to repopulate
+    the calendar (we don't store solver outputs in the XLSX, just inputs).
+    """
+    quarter = state["quarter"]
+    year    = int(state["year"])
+    offerings = state["offerings"]
+
+    st.session_state["active_project"] = {
+        "quarter": quarter,
+        "year": year,
+        "offerings": offerings,
+        "prof_overrides": {},
+    }
+    st.session_state["locked_assignments"] = state.get("locked_assignments", [])
+    st.session_state["solver_mode"] = state.get("solver_mode", "balanced")
+
+    # Drop transient UI/state that would otherwise leak between drafts.
+    for k in ("results", "welcome_order", "placing_offering_idx"):
+        st.session_state.pop(k, None)
+
+    # Restore the last computed schedule so the calendar populates immediately —
+    # but only if reference validation didn't drop anything. Any drops would
+    # orphan schedule entries against offerings/profs/rooms we just removed,
+    # so clear results and let the user re-solve from a clean slate.
+    embedded_results = state.get("solver_results")
+    if embedded_results and not warnings:
+        st.session_state["solver_results"] = embedded_results
+    else:
+        st.session_state.pop("solver_results", None)
+
+    # React workspace's initial-state load reads the on-disk JSON; persist now.
+    save_offerings(quarter, year, offerings)
+
+    st.session_state["reload_warnings"] = warnings
+    st.session_state["reload_source"]   = source_filename
+    add_log("RELOAD", f"Loaded draft from {source_filename}")
 
 def apply_professor_overrides(profs, overrides, quarter):
     """Apply template professor overrides to the live professors.json."""
@@ -697,6 +843,31 @@ if active_project is None:
                 del st.session_state["results"]
             st.rerun()
 
+    # ── Resume from Excel ────────────────────────────────────────────
+    st.markdown(f'<div class="section-label">Resume from Excel</div>', unsafe_allow_html=True)
+    welcome_xlsx = st.file_uploader(
+        "Upload a previously exported schedule (.xlsx) to continue editing where you left off.",
+        type=["xlsx"],
+        key="welcome_xlsx_upload",
+    )
+    if welcome_xlsx is not None:
+        # file_id changes per upload; gate processing so a rerun doesn't re-run.
+        fid = welcome_xlsx.file_id
+        if st.session_state.get("_welcome_xlsx_processed_id") != fid:
+            st.session_state["_welcome_xlsx_processed_id"] = fid
+            try:
+                _state = read_draft_state(welcome_xlsx.read())
+                _cleaned, _warnings = validate_against_local_data(
+                    _state,
+                    catalog_ids={c["id"] for c in catalog},
+                    prof_ids={p["id"] for p in profs},
+                    room_ids={r["id"] for r in rooms},
+                )
+                _hydrate_from_draft_state(_cleaned, welcome_xlsx.name, _warnings)
+                st.rerun()
+            except StateReadError as _e:
+                _show_xlsx_read_error(_e)
+
     # ── Start from Template ──────────────────────────────────────────
     st.markdown(f'<div class="section-label">Start from Template</div>', unsafe_allow_html=True)
     show_welcome(new_quarter)
@@ -734,6 +905,50 @@ else:
                     save_template(tmpl_name or f"{quarter}_{year}", active_project["offerings"], active_project.get("prof_overrides"), quarter)
                     st.success("Saved")
                 else: st.warning("Empty")
+
+        # Reload from Excel — confirms before replacing the active draft
+        with st.expander("Reload from Excel"):
+            sb_xlsx = st.file_uploader(
+                "Replace this draft with one from an exported .xlsx.",
+                type=["xlsx"],
+                key="sidebar_xlsx_upload",
+            )
+            if sb_xlsx is not None:
+                _sb_fid = sb_xlsx.file_id
+                if st.session_state.get("_sidebar_xlsx_processed_id") != _sb_fid:
+                    st.session_state["_sidebar_xlsx_processed_id"] = _sb_fid
+                    try:
+                        _sb_state = read_draft_state(sb_xlsx.read())
+                        # Stash for confirmation step — don't hydrate yet.
+                        st.session_state["_sidebar_xlsx_pending_state"] = _sb_state
+                        st.session_state["_sidebar_xlsx_pending_name"]  = sb_xlsx.name
+                    except StateReadError as _sb_e:
+                        _show_xlsx_read_error(_sb_e)
+                        st.session_state.pop("_sidebar_xlsx_pending_state", None)
+                        st.session_state.pop("_sidebar_xlsx_pending_name", None)
+
+            _pending = st.session_state.get("_sidebar_xlsx_pending_state")
+            if _pending:
+                _pending_name = st.session_state.get("_sidebar_xlsx_pending_name", "uploaded file")
+                st.warning(f"Replace **{quarter.title()} {year}** draft with `{_pending_name}`?")
+                _cb1, _cb2 = st.columns(2)
+                with _cb1:
+                    if st.button("Replace", type="primary", key="sb_xlsx_confirm", use_container_width=True):
+                        _cleaned_sb, _warn_sb = validate_against_local_data(
+                            _pending,
+                            catalog_ids={c["id"] for c in catalog},
+                            prof_ids={p["id"] for p in profs},
+                            room_ids={r["id"] for r in rooms},
+                        )
+                        _hydrate_from_draft_state(_cleaned_sb, _pending_name, _warn_sb)
+                        st.session_state.pop("_sidebar_xlsx_pending_state", None)
+                        st.session_state.pop("_sidebar_xlsx_pending_name", None)
+                        st.rerun()
+                with _cb2:
+                    if st.button("Cancel", key="sb_xlsx_cancel", use_container_width=True):
+                        st.session_state.pop("_sidebar_xlsx_pending_state", None)
+                        st.session_state.pop("_sidebar_xlsx_pending_name", None)
+                        st.rerun()
 
         # Metrics strip
         offerings_sb = active_project["offerings"]
@@ -847,6 +1062,22 @@ else:
                     )
             else:
                 st.caption("No activity yet.")
+
+    # ── Reload warnings (top of workspace, after a Resume from Excel) ─
+    _reload_warnings = st.session_state.get("reload_warnings")
+    if _reload_warnings:
+        for _w in _reload_warnings:
+            st.warning(_w)
+        _reload_src = st.session_state.get("reload_source")
+        _dc1, _dc2 = st.columns([6, 1])
+        with _dc1:
+            if _reload_src:
+                st.caption(f"Loaded from `{_reload_src}`")
+        with _dc2:
+            if st.button("Dismiss", key="dismiss_reload_warnings", use_container_width=True):
+                st.session_state.pop("reload_warnings", None)
+                st.session_state.pop("reload_source", None)
+                st.rerun()
 
     # ── Data setup (shared by calendar + draft cards) ─────────────
     offerings = active_project["offerings"]
@@ -1381,11 +1612,17 @@ else:
                 if st.button("Balanced", use_container_width=True, type="primary" if current_mode == "balanced" else "secondary"):
                     st.session_state["solver_mode"] = "balanced"; st.rerun()
             with gc_exp:
-                import tempfile
-                with tempfile.TemporaryDirectory() as tmp_dir:
-                    excel_path = write_excel(solver_results, tmp_dir)
-                    with open(excel_path, "rb") as ef:
-                        st.download_button("Export Excel", ef, file_name=excel_path.name, mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+                xlsx_bytes, xlsx_name = _build_excel_bytes(
+                    solver_results, _export_signature(solver_results)
+                )
+                st.download_button(
+                    "Export Excel",
+                    xlsx_bytes,
+                    file_name=xlsx_name,
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True,
+                    on_click=lambda: st.toast("Excel downloaded"),
+                )
 
             # Lock All / Unlock All buttons
             _la_c1, _la_c2, _la_spacer = st.columns([1, 1, 5])

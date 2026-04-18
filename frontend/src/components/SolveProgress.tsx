@@ -149,7 +149,10 @@ export function SolveProgress(props: Props) {
                 </span>
               </div>
               <div className="solve-progress__metrics">
-                <span className="solve-progress__metric">
+                <span
+                  className="solve-progress__metric"
+                  title="How many class sections the solver fit into a time slot, out of all it tried. Anything less than full means some sections couldn't fit — see the Unscheduled list in the exported Excel."
+                >
                   <span className="solve-progress__metric-label">Placed</span>
                   <span className="solve-progress__metric-value">
                     {m.nPlaced !== null && m.nTotal !== null
@@ -157,13 +160,19 @@ export function SolveProgress(props: Props) {
                       : "—"}
                   </span>
                 </span>
-                <span className="solve-progress__metric">
+                <span
+                  className="solve-progress__metric"
+                  title="Total penalty for soft preferences missed: professor-course affinity, time-of-day fit, day-of-week balance. Lower is better. Hard rules (no double-booking, room capacity) are enforced absolutely and don't add to this score."
+                >
                   <span className="solve-progress__metric-label">Score</span>
                   <span className="solve-progress__metric-value solve-progress__metric-value--numeric">
                     {m.bestObjective !== null ? m.bestObjective : "—"}
                   </span>
                 </span>
-                <span className="solve-progress__metric">
+                <span
+                  className="solve-progress__metric"
+                  title="Each time the solver finds a better arrangement than its previous best, this ticks up. The number you see at the end is the one displayed on the board — earlier ones were stepping stones."
+                >
                   <span className="solve-progress__metric-label">Solutions</span>
                   <span className="solve-progress__metric-value solve-progress__metric-value--numeric">
                     {m.solutionsFound}
