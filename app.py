@@ -528,6 +528,27 @@ def load_rooms():
     with open(PROJECT_ROOT / "data" / "rooms.json") as f:
         return json.load(f)
 
+def _strip_unserializable_results(results):
+    """JSON-safe copy of solver_results for embedding in the hidden _state sheet.
+
+    The solver's per-mode `data` field carries CP-SAT decision-variable
+    objects and tuple-keyed lookup indexes (`vars_by_cs_dg_ts`,
+    `vars_by_prof_dg_ts`, …) that aren't JSON-encodable. Drop the whole
+    `data` dict per mode — the visible-sheet writer still receives the
+    full results via its first arg, and the post-reload export path
+    is defensive about missing `data` (see _write_summary).
+    """
+    if not results:
+        return results
+    return {
+        **results,
+        "modes": [
+            {k: v for k, v in m.items() if k != "data"}
+            for m in results.get("modes", [])
+        ],
+    }
+
+
 @st.cache_data(show_spinner="Generating Excel…")
 def _build_excel_bytes(_results: dict, sig: str) -> tuple[bytes, str]:
     # Underscore on `_results` skips Streamlit's hasher (deep dict is slow).
@@ -552,7 +573,8 @@ def _build_excel_bytes(_results: dict, sig: str) -> tuple[bytes, str]:
         # Include the last solver output so reload lands on a populated
         # calendar instead of forcing an immediate re-solve. Optional in
         # the schema — readers tolerate its absence (Slice 2 era files).
-        "solver_results": _results,
+        # Strip the per-mode `data` field — CP-SAT artifacts aren't JSON.
+        "solver_results": _strip_unserializable_results(_results),
     }
     with tempfile.TemporaryDirectory() as tmp_dir:
         excel_path = write_excel(_results, tmp_dir, draft_state=draft_state)

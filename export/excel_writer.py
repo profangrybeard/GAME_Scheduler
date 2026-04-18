@@ -175,10 +175,15 @@ def _write_summary(ws, results: dict) -> None:
         r += 1
         n_placed  = len(res["schedule"])
         n_total   = n_placed + len(res["unscheduled"])
-        n_must_unmet = sum(1 for u in res["unscheduled"] if u["priority"] == "must_have")
-        n_must    = sum(1 for cs_key in ([a["cs_key"] for a in res["schedule"]] +
-                                          [u["cs_key"] for u in res["unscheduled"]])
-                       if res["data"]["priority_by_cs_key"].get(cs_key) == "must_have")
+        # Derive Must-Have Met from per-entry priorities (each schedule and
+        # unscheduled item carries its own priority). No dependency on the
+        # solver's `data` lookup table — that field gets stripped when
+        # solver_results is embedded in the hidden _state sheet.
+        n_must_unmet = sum(1 for u in res["unscheduled"] if u.get("priority") == "must_have")
+        n_must = sum(
+            1 for e in (res["schedule"] + res["unscheduled"])
+            if e.get("priority") == "must_have"
+        )
         must_met  = f"{n_must - n_must_unmet}/{n_must}"
 
         mode_label = res["mode"].replace("_", " ").title()
@@ -196,12 +201,20 @@ def _write_summary(ws, results: dict) -> None:
             cell.alignment = CENTER
             cell.border    = THIN_BORDER
 
-    # Quarter overview
+    # Quarter overview — only renders when a mode carries the solver's
+    # course_sections lookup. After a reload-without-resolve the embedded
+    # solver_results has its `data` stripped (CP-SAT artifacts don't survive
+    # JSON), so this block degrades gracefully rather than crashing.
     r += 2
-    any_data = next((m for m in modes if m["schedule"]), None)
+    any_data = next(
+        (m for m in modes
+         if m["schedule"]
+         and isinstance(m.get("data"), dict)
+         and m["data"].get("course_sections")),
+        None,
+    )
     if any_data:
-        data = any_data["data"]
-        sections = data["course_sections"]
+        sections = any_data["data"]["course_sections"]
         from collections import Counter
         priority_counts = Counter(cs["offering"]["priority"] for cs in sections)
         dept_counts     = Counter(cs["course"]["department"] for cs in sections)

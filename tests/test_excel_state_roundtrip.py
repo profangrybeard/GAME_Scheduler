@@ -143,3 +143,75 @@ def test_summary_sheet_has_metric_column_comments(tmp_path: Path) -> None:
         cell = ws.cell(row=5, column=col)
         assert cell.comment is not None, f"col {col} ({cell.value}) missing comment"
         assert len(cell.comment.text) > 30, f"col {col} comment looks too short"
+
+
+def _full_assignment(cs_key: str, catalog_id: str, priority: str) -> dict:
+    """All the fields _write_schedule_sheet expects per assignment row."""
+    return {
+        "cs_key": cs_key, "catalog_id": catalog_id, "section_idx": 0,
+        "course_name": catalog_id, "department": "game", "is_graduate": False,
+        "priority": priority, "affinity_level": 1, "time_pref": "preferred",
+        "prof_id": "p_001", "prof_name": "Smith",
+        "room_id": "r_101", "room_name": "Lab 101",
+        "day_group": 1, "time_slot": "8:00 AM",
+    }
+
+
+def test_summary_must_have_met_works_without_data_field(tmp_path: Path) -> None:
+    """After a reload-without-resolve, mode dicts have no `data` field
+    (CP-SAT artifacts were stripped on export). The Must-Have Met column
+    must still compute from per-entry priority, not crash with KeyError."""
+    results_no_data = {
+        "quarter": "fall",
+        "year": 2026,
+        "modes": [
+            {
+                "mode": "balanced",
+                "status": "optimal",
+                "objective": 0,
+                "schedule": [
+                    _full_assignment("A__0", "ITGM-A", "must_have"),
+                    _full_assignment("B__0", "ITGM-B", "should_have"),
+                ],
+                "unscheduled": [
+                    {"cs_key": "C__0", "priority": "must_have"},
+                ],
+                # No "data" key at all — exactly what survives a reload roundtrip
+            }
+        ],
+    }
+    path = write_excel(results_no_data, tmp_path)
+    wb = openpyxl.load_workbook(path)
+    ws = wb["Summary"]
+    # Mode comparison row 6, col 6 = Must-Have Met.
+    # 2 must-haves total (1 placed, 1 unscheduled) → "1/2".
+    assert ws.cell(row=6, column=6).value == "1/2"
+
+
+def test_summary_quarter_overview_skipped_when_data_missing(tmp_path: Path) -> None:
+    """Quarter Overview block uses solver `data["course_sections"]`. After
+    reload-without-resolve that's gone — block must skip silently rather
+    than crash. Other summary sections (mode comparison, legend) still render."""
+    results_no_data = {
+        "quarter": "fall",
+        "year": 2026,
+        "modes": [
+            {
+                "mode": "balanced",
+                "status": "optimal",
+                "objective": 0,
+                "schedule": [_full_assignment("A__0", "ITGM-A", "must_have")],
+                "unscheduled": [],
+            }
+        ],
+    }
+    path = write_excel(results_no_data, tmp_path)
+    wb = openpyxl.load_workbook(path)
+    ws = wb["Summary"]
+    # Scan the whole Summary sheet — "QUARTER OVERVIEW" section header
+    # must not appear when data is missing. "COLOUR LEGEND" still should.
+    all_text = " ".join(
+        str(c.value) for row in ws.iter_rows() for c in row if c.value
+    )
+    assert "QUARTER OVERVIEW" not in all_text
+    assert "COLOUR LEGEND" in all_text
