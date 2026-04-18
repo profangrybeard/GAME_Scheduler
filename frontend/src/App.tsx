@@ -243,11 +243,17 @@ function App() {
     [],
   )
 
+  // User DnD always overrides solver output. Clearing `assignment` alongside
+  // `pinned` is what actually makes the card move (or leave) visually — the
+  // calendar's effectiveSlot is `assignment ?? pinned`, so a stale assignment
+  // would silently win and the drop would look like it did nothing.
   const pinToSlot = useCallback((catalog_id: string, slot: Slot | null) => {
     setState(s => ({
       ...s,
       offerings: s.offerings.map(o =>
-        o.catalog_id === catalog_id ? { ...o, pinned: slot } : o,
+        o.catalog_id === catalog_id
+          ? { ...o, pinned: slot, assignment: null }
+          : o,
       ),
     }))
     setPlacingId(null)
