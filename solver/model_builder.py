@@ -105,6 +105,7 @@ def build_model(
     *,
     offerings_override: dict | None = None,
     professors_override: dict[str, dict] | None = None,
+    professors: list[dict] | None = None,
     rooms_override: dict[str, dict] | None = None,
     rooms: list[dict] | None = None,
 ) -> tuple:
@@ -130,8 +131,12 @@ def build_model(
         dict (shaped like the file). Used by the React workspace so the
         canonical file is never mutated by interactive solves.
     professors_override : dict[str, dict] | None
-        Per-professor shallow patch keyed by prof id (e.g. quarterly
-        availability edits). Applied on top of data/professors.json.
+        Legacy per-professor shallow patch keyed by prof id. Used by unit
+        tests and any caller not yet switched to Path B. Ignored when
+        `professors` is supplied.
+    professors : list[dict] | None
+        Full-list override (Path B). When supplied, replaces the disk-loaded
+        professors entirely — the user's faculty deck IS the list.
     rooms_override : dict[str, dict] | None
         Legacy per-room shallow patch path. Used by unit tests and any caller
         not yet switched to Path B. Ignored when `rooms` is supplied.
@@ -154,14 +159,19 @@ def build_model(
     offerings_doc = offerings_override if offerings_override is not None \
                     else _load(BASE / "data" / "quarterly_offerings.json")
     catalog_raw   = _load(BASE / "data" / "course_catalog.json")
-    professors    = _load(BASE / "data" / "professors.json")
 
-    # --- Apply React workspace overrides (prof availability, room offline) ---
-    if professors_override:
-        professors = [
-            {**p, **professors_override[p["id"]]} if p["id"] in professors_override else p
-            for p in professors
-        ]
+    # Professors resolution — Path B (full list) wins over legacy
+    # professors_override. If `professors` is None, fall back to disk +
+    # optional patch-style override.
+    if professors is not None:
+        professors = list(professors)
+    else:
+        professors = _load(BASE / "data" / "professors.json")
+        if professors_override:
+            professors = [
+                {**p, **professors_override[p["id"]]} if p["id"] in professors_override else p
+                for p in professors
+            ]
 
     # Rooms resolution — Path B (full list) wins over legacy rooms_override.
     # If `rooms` is None, fall back to disk + optional patch-style override.

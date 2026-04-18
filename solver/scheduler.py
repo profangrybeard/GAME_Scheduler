@@ -207,6 +207,7 @@ def run_schedule(
     *,
     offerings_override: dict | None = None,
     professors_override: dict[str, dict] | None = None,
+    professors: list[dict] | None = None,
     rooms_override: dict[str, dict] | None = None,
     rooms: list[dict] | None = None,
     progress_callback: ProgressCallback | None = None,
@@ -263,6 +264,7 @@ def run_schedule(
             locked=locked, pinned=pinned,
             offerings_override=offerings_override,
             professors_override=professors_override,
+            professors=professors,
             rooms_override=rooms_override,
             rooms=rooms,
         )

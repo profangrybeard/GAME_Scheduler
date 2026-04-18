@@ -1362,9 +1362,9 @@
   border-color: var(--accent);
 }
 
-/* Sibling to roster__add-btn in the Rooms tab — destructive tone. Loses the
-   margin-left:auto so both buttons cluster on the right together. */
-.roster__flush-btn {
+/* Sibling to roster__add-btn in Rooms / Profs tab — destructive tone. Loses
+   the margin-left:auto so both buttons cluster on the right together. */
+.roster__clear-all-btn {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text-faint);
@@ -1377,13 +1377,13 @@
   transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 }
 
-.roster__flush-btn:hover:not(:disabled) {
+.roster__clear-all-btn:hover:not(:disabled) {
   background: color-mix(in srgb, #c0392b 12%, transparent);
   border-color: #c0392b;
   color: #c0392b;
 }
 
-.roster__flush-btn:disabled {
+.roster__clear-all-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
@@ -1620,6 +1620,33 @@
 }
 
 .room-card__delete:hover {
+  background: #c0392b;
+  color: #fff;
+}
+
+/* Danger zone at the bottom of the professor editor. Same shape as
+   room-card__danger — keep the two in sync when tweaking. */
+.prof-card__danger {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border);
+}
+
+.prof-card__delete {
+  width: 100%;
+  background: transparent;
+  border: 1px solid #c0392b;
+  color: #c0392b;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.prof-card__delete:hover {
   background: #c0392b;
   color: #fff;
 }

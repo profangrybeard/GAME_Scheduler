@@ -23,6 +23,8 @@ const QUARTERS = ["fall", "winter", "spring", "summer"] as const
 export interface ProfessorCardProps {
   professor: Professor
   onUpdate: (prof_id: string, changes: Partial<Professor>) => void
+  /** Remove this professor from the dept's roster. Confirmed in UI. */
+  onDelete: (prof_id: string) => void
   onPortraitChange: (prof_id: string, dataUrl: string | null) => void
   portraitUrl: string | null
   onClose: () => void
@@ -61,6 +63,14 @@ export function ProfessorCard(props: ProfessorCardProps) {
     e.target.value = ""
   }
 
+  const handleDelete = () => {
+    if (!window.confirm(
+      `Remove ${p.name || "this professor"} from the roster?\n\n` +
+      `This only affects your browser until you Commit to disk.`
+    )) return
+    props.onDelete(p.id)
+  }
+
   return (
     <aside className="panel panel--prof-card" aria-label="Professor">
       <header className="panel__header">
@@ -79,9 +89,78 @@ export function ProfessorCard(props: ProfessorCardProps) {
         <section className="prof-card__hero">
           <ProfAvatar profId={p.id} name={p.name} size={64} className="prof-card__avatar" />
           <div className="prof-card__identity">
-            <h3 className="prof-card__name">{p.name}</h3>
+            <h3 className="prof-card__name">{p.name || "Unnamed professor"}</h3>
             <span className="prof-card__role">{profRoleText(p)}</span>
           </div>
+        </section>
+
+        <section className="class__section">
+          <label className="class__label" htmlFor={`prof-name-${p.id}`}>Name</label>
+          <input
+            id={`prof-name-${p.id}`}
+            type="text"
+            className="class__input"
+            value={p.name}
+            placeholder="Full name"
+            onChange={e => props.onUpdate(p.id, { name: e.target.value })}
+          />
+        </section>
+
+        <section className="class__section">
+          <label className="class__label">Home Department</label>
+          <div className="prof-card__chairs">
+            {SCHOOL_ORDER.map(d => {
+              const active = p.home_department === d
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  className={"chip" + (active ? " chip--active" : "")}
+                  onClick={() => {
+                    // Changing home dept also ensures it's in teaching_departments
+                    // (HC7 — a prof can't be in a home dept they can't teach in).
+                    const teaching = p.teaching_departments.includes(d)
+                      ? p.teaching_departments
+                      : [...p.teaching_departments, d]
+                    props.onUpdate(p.id, {
+                      home_department: d,
+                      teaching_departments: teaching,
+                    })
+                  }}
+                >
+                  {SCHOOL_LABELS[d]}
+                </button>
+              )
+            })}
+          </div>
+        </section>
+
+        <section className="class__section">
+          <label className="class__label">Teaches In</label>
+          <div className="prof-card__chairs">
+            {SCHOOL_ORDER.map(d => {
+              const active = p.teaching_departments.includes(d)
+              const isHome = p.home_department === d
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  className={"chip" + (active ? " chip--active" : "")}
+                  disabled={isHome}
+                  title={isHome ? "Can't remove the home department" : undefined}
+                  onClick={() => {
+                    const next = active
+                      ? p.teaching_departments.filter(x => x !== d)
+                      : [...p.teaching_departments, d]
+                    props.onUpdate(p.id, { teaching_departments: next })
+                  }}
+                >
+                  {SCHOOL_LABELS[d]}
+                </button>
+              )
+            })}
+          </div>
+          <p className="class__hint">Home dept always included.</p>
         </section>
 
         <section className="class__section">
@@ -263,6 +342,16 @@ export function ProfessorCard(props: ProfessorCardProps) {
             className="prof-card__file-input"
             onChange={handlePortraitPick}
           />
+        </section>
+
+        <section className="prof-card__danger">
+          <button
+            type="button"
+            className="prof-card__delete"
+            onClick={handleDelete}
+          >
+            Delete this professor
+          </button>
         </section>
       </div>
     </aside>

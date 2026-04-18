@@ -129,9 +129,10 @@ class SolveRequest(BaseModel):
     year: int
     solveMode: str = Field("balanced")
     offerings: list[OfferingModel]
-    professorOverrides: dict[str, dict] = Field(default_factory=dict)
-    # Full rooms deck, Path B (not patches). The frontend keeps the whole list
-    # in localStorage; solver uses it verbatim instead of merging onto disk.
+    # Full professors + rooms decks, Path B (not patches). The frontend keeps
+    # the whole lists in localStorage; solver uses them verbatim instead of
+    # merging onto disk. Each chair's deck IS the truth.
+    professors: list[dict] = Field(default_factory=list)
     rooms: list[dict] = Field(default_factory=list)
 
 
@@ -141,7 +142,7 @@ class ExportRequest(BaseModel):
     # Carried into the embedded _state so reload restores the user's mode pick.
     solveMode: str = Field("balanced")
     offerings: list[OfferingModel]
-    professorOverrides: dict[str, dict] = Field(default_factory=dict)
+    professors: list[dict] = Field(default_factory=list)
     rooms: list[dict] = Field(default_factory=list)
 
 
@@ -212,7 +213,7 @@ async def solve_stream(req: SolveRequest) -> StreamingResponse:
                 offerings_override=react_offerings_to_doc(
                     react_offerings, req.quarter, req.year,
                 ),
-                professors_override=req.professorOverrides,
+                professors=req.professors,
                 rooms=req.rooms,
                 progress_callback=progress_cb,
             )
@@ -309,7 +310,7 @@ def export(req: ExportRequest) -> Response:
             offerings_override=react_offerings_to_doc(
                 react_offerings, req.quarter, req.year,
             ),
-            professors_override=req.professorOverrides,
+            professors=req.professors,
             rooms=req.rooms,
         )
     except ValueError as e:
@@ -328,7 +329,7 @@ def export(req: ExportRequest) -> Response:
         "year":               req.year,
         "solver_mode":        req.solveMode,
         "offerings":          react_offerings,
-        "professor_overrides": req.professorOverrides,
+        "professors":         req.professors,
         "rooms":              req.rooms,
         "solver_results":     _embedded_solver_results(results),
     }
@@ -388,7 +389,7 @@ async def export_stream(req: ExportRequest) -> StreamingResponse:
                 offerings_override=react_offerings_to_doc(
                     react_offerings, req.quarter, req.year,
                 ),
-                professors_override=req.professorOverrides,
+                professors=req.professors,
                 rooms=req.rooms,
                 progress_callback=progress_cb,
             )
@@ -409,7 +410,7 @@ async def export_stream(req: ExportRequest) -> StreamingResponse:
                 "year":               req.year,
                 "solver_mode":        req.solveMode,
                 "offerings":          react_offerings,
-                "professor_overrides": req.professorOverrides,
+                "professors":         req.professors,
                 "rooms":              req.rooms,
                 "solver_results":     _embedded_solver_results(results),
             }
@@ -594,12 +595,12 @@ _PORTRAIT_EXTS = ("png", "jpg", "jpeg", "webp")
 class CommitRequest(BaseModel):
     """Snapshot the workspace mails home when the user hits "Commit to source".
 
-    Professors and portraits are still overlay patches (add/modify only —
-    the overlay has no "remove" verb for now). Rooms are Path B: the full
-    deck replaces data/rooms.json wholesale, so adds AND removes both land.
-    Pass an empty list to flush.
+    Professors and rooms are both Path B: the full decks replace
+    data/professors.json and data/rooms.json wholesale, so adds AND removes
+    both land. Pass an empty list to clear all. Portraits are still an
+    additive overlay (no "remove" verb for now — absence = "no change").
     """
-    profEdits: dict[str, dict] = Field(default_factory=dict)
+    professors: list[dict] = Field(default_factory=list)
     rooms: list[dict] = Field(default_factory=list)
     # Values are full data URLs (data:image/png;base64,...). Removals aren't
     # represented — the frontend deletes the key on remove, so absence means
@@ -631,25 +632,36 @@ def commit_overlay(req: CommitRequest) -> dict:
         "warnings": [],
     }
 
-    if req.profEdits:
+    # Professors: full-list replacement. The frontend IS the source of truth
+    # for the dept's faculty deck, so data/professors.json gets rewritten
+    # wholesale. Empty list = clear all. Validate minimal shape so a malformed
+    # payload can't nuke the file with garbage.
+    if req.professors is not None:
         prof_path = BASE / "data" / "professors.json"
-        profs = json.loads(prof_path.read_text(encoding="utf-8"))
-        prof_map = {p["id"]: p for p in profs}
-        for prof_id, patch in req.profEdits.items():
-            target = prof_map.get(prof_id)
-            if target is None:
-                summary["warnings"].append(f"Unknown prof_id: {prof_id}")
+        cleaned_profs: list[dict] = []
+        seen_prof_ids: set[str] = set()
+        for i, p in enumerate(req.professors):
+            if not isinstance(p, dict):
+                summary["warnings"].append(f"Prof index {i} is not an object — skipped")
                 continue
-            target.update(patch)
-            summary["professorsUpdated"] += 1
+            pid = p.get("id")
+            if not isinstance(pid, str) or not pid:
+                summary["warnings"].append(f"Prof index {i} missing id — skipped")
+                continue
+            if pid in seen_prof_ids:
+                summary["warnings"].append(f"Duplicate prof id {pid} — skipped")
+                continue
+            seen_prof_ids.add(pid)
+            cleaned_profs.append(p)
         prof_path.write_text(
-            json.dumps(profs, indent=2, ensure_ascii=False) + "\n",
+            json.dumps(cleaned_profs, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
+        summary["professorsUpdated"] = len(cleaned_profs)
 
     # Rooms: full-list replacement. The frontend IS the source of truth for
     # the dept's deck, so data/rooms.json gets rewritten wholesale. Empty
-    # list = flush. We still validate minimal shape so a malformed payload
+    # list = clear all. We still validate minimal shape so a malformed payload
     # can't nuke the file with garbage.
     if req.rooms is not None:
         room_path = BASE / "data" / "rooms.json"
