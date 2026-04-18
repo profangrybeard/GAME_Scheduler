@@ -139,17 +139,27 @@ def test_export_embedded_state_carries_react_shape_fields(client, fake_run_sched
     assert state["offerings"][1]["pinned"] == {"day_group": 1, "time_slot": "8:00 AM"}
 
 
-def test_export_strips_cp_sat_artifacts_from_solver_results(client, fake_run_schedule):
-    """The fake solver returns a `data` field with tuple keys (CP-SAT vars).
-    Without stripping, json.dumps in _write_state_sheet would raise TypeError.
-    Reaching this assertion at all proves the strip happened."""
+def test_export_embeds_react_shape_solver_results(client, fake_run_schedule):
+    """Embedded modes must be in React shape (`assignments`, no `schedule`/`data`).
+    The frontend reload reducer iterates `mode.assignments` directly — if the
+    embedded modes carried the solver-native `schedule` field instead, reload
+    would throw `assignments is not iterable`. Same shape as /api/solve/stream
+    so React reads one shape everywhere.
+
+    Also serves as the strip test: solver_result_to_react_mode drops `data`
+    (CP-SAT decision vars + tuple-keyed indexes that aren't JSON-encodable);
+    reaching this assertion at all proves the strip happened."""
     res = client.post("/api/export", json=_minimal_export_body())
     state = read_draft_state(res.content)
     embedded_results = state["solver_results"]
     assert embedded_results is not None
     for mode in embedded_results["modes"]:
+        assert "assignments" in mode, \
+            "embedded modes must use React shape (`assignments`, not `schedule`)"
+        assert "schedule" not in mode, \
+            "raw solver `schedule` field must not leak into embedded modes"
         assert "data" not in mode, \
-            "per-mode `data` must be stripped before embedding (CP-SAT artifacts)"
+            "per-mode `data` must be stripped (CP-SAT artifacts)"
 
 
 def test_export_400_on_bad_quarter(client, monkeypatch):

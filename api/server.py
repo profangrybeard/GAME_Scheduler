@@ -50,6 +50,30 @@ from api.adapter import (
     solver_result_to_react_mode,
 )
 
+
+def _embedded_solver_results(results: dict | None) -> dict | None:
+    """Reshape solver_results for embedding in the hidden _state sheet.
+
+    Two responsibilities folded into one:
+      1. Strip the per-mode `data` field — CP-SAT decision vars + tuple-keyed
+         indexes aren't JSON-encodable.
+      2. Convert each mode to React shape (schedule → assignments) so the
+         frontend's reload reducer can consume it without a separate adapter.
+         The streaming /api/solve/stream endpoint applies the same conversion;
+         keeping the embedded format identical means React reads one shape
+         everywhere.
+
+    The visible-sheet writer (excel_writer.write_excel) still receives the
+    full, untransformed results via its first arg — only this embedded copy
+    is reshaped.
+    """
+    if not results:
+        return results
+    return {
+        **results,
+        "modes": [solver_result_to_react_mode(m) for m in results.get("modes", [])],
+    }
+
 BASE = Path(__file__).resolve().parent.parent
 
 app = FastAPI(title="GAME Scheduler API", version="0.1.0")
@@ -255,25 +279,6 @@ async def solve_stream(req: SolveRequest) -> StreamingResponse:
     )
 
 
-def _strip_unserializable_results(results: dict | None) -> dict | None:
-    """JSON-safe copy of solver_results for embedding in the hidden _state sheet.
-
-    The solver's per-mode `data` field carries CP-SAT decision vars and
-    tuple-keyed lookup indexes that aren't JSON-encodable. Drop the whole
-    `data` dict per mode — the visible-sheet writer still receives the
-    full results via its first arg.
-    """
-    if not results:
-        return results
-    return {
-        **results,
-        "modes": [
-            {k: v for k, v in m.items() if k != "data"}
-            for m in results.get("modes", [])
-        ],
-    }
-
-
 @app.post("/api/export")
 def export(req: ExportRequest) -> Response:
     """Run the solver and write an Excel workbook. Returns the .xlsx file as
@@ -317,7 +322,7 @@ def export(req: ExportRequest) -> Response:
         "offerings":          react_offerings,
         "professor_overrides": req.professorOverrides,
         "room_overrides":     req.roomOverrides,
-        "solver_results":     _strip_unserializable_results(results),
+        "solver_results":     _embedded_solver_results(results),
     }
 
     with tempfile.TemporaryDirectory() as tmp:
