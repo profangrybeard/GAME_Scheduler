@@ -189,6 +189,11 @@ CSS_TEMPLATE = """
     [data-testid="stMainMenu"] {{ display: none !important; }}
     [data-testid="stSidebarCollapseButton"] {{ visibility: visible !important; }}
 
+    /* Hide Streamlit's stock "200MB per file • XLSX" hint — our own labels
+       already say what the uploader accepts, and the size limit is meaningless
+       for tiny schedule exports. */
+    [data-testid="stFileUploaderDropzoneInstructions"] {{ display: none !important; }}
+
     section[data-testid="stSidebar"] {{
         background: {BG_SIDEBAR};
         border-right: 1px solid {BORDER};
