@@ -116,9 +116,11 @@ export function SolveProgress(props: Props) {
               ? "Export complete"
               : progress.phase === "writing"
                 ? "Writing Excel…"
-                : anyRunning
-                  ? "Solving…"
-                  : "Solve complete"}
+                : progress.phase === "solving"
+                  ? "Building xlsx…"
+                  : anyRunning
+                    ? "Solving…"
+                    : "Solve complete"}
         </span>
         <span className="solve-progress__elapsed">
           {formatSeconds(Math.round(totalElapsedMs))}
