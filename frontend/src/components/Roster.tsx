@@ -37,9 +37,13 @@ export interface RosterProps {
   /** Called when a schedule card is dropped onto the offerings list —
    *  unpins it back to the unplaced roster. */
   onUnpinToRoster: (catalog_id: string) => void
+  /** Create a fresh professor with sensible defaults and open for editing. */
+  onAddProfessor: () => void
+  /** Clear the entire professors list — dept starts from zero. Confirmed in UI. */
+  onClearProfessors: () => void
   /** Create a fresh room with sensible defaults and open it for editing. */
   onAddRoom: () => void
-  /** Flush the entire rooms list — dept starts from zero. Confirmed in UI. */
+  /** Clear the entire rooms list — dept starts from zero. Confirmed in UI. */
   onClearRooms: () => void
 }
 
@@ -80,11 +84,23 @@ export function Roster(props: RosterProps) {
     const n = roomList.length
     if (n === 0) return
     if (!window.confirm(
-      `Flush all ${n} room${n === 1 ? "" : "s"}?\n\n` +
+      `Clear all ${n} room${n === 1 ? "" : "s"}?\n\n` +
       `Your dept's list will start empty. Add rooms one at a time to build ` +
       `your deck. This only affects your browser until you Commit to disk.`
     )) return
     props.onClearRooms()
+  }
+
+  const handleClearProfs = () => {
+    const n = profList.length
+    if (n === 0) return
+    if (!window.confirm(
+      `Clear all ${n} professor${n === 1 ? "" : "s"}?\n\n` +
+      `Your dept's faculty list will start empty. Add professors one at a ` +
+      `time to build your roster. This only affects your browser until you ` +
+      `Commit to disk.`
+    )) return
+    props.onClearProfessors()
   }
 
   return (
@@ -102,6 +118,27 @@ export function Roster(props: RosterProps) {
             + Add
           </button>
         )}
+        {tab === "profs" && (
+          <>
+            <button
+              type="button"
+              className="roster__add-btn"
+              onClick={props.onAddProfessor}
+              title="Add a new professor to your dept's roster"
+            >
+              + Add
+            </button>
+            <button
+              type="button"
+              className="roster__clear-all-btn"
+              onClick={handleClearProfs}
+              disabled={profList.length === 0}
+              title="Remove every professor and start from scratch"
+            >
+              Clear All
+            </button>
+          </>
+        )}
         {tab === "rooms" && (
           <>
             <button
@@ -114,12 +151,12 @@ export function Roster(props: RosterProps) {
             </button>
             <button
               type="button"
-              className="roster__flush-btn"
+              className="roster__clear-all-btn"
               onClick={handleClearRooms}
               disabled={roomList.length === 0}
               title="Remove every room and start from scratch"
             >
-              Flush
+              Clear All
             </button>
           </>
         )}
@@ -356,7 +393,9 @@ function ProfsList(props: ProfsListProps) {
   return (
     <div className="panel__body roster__list">
       {props.profs.length === 0 && (
-        <p className="placeholder placeholder--empty">No professors loaded.</p>
+        <p className="placeholder placeholder--empty">
+          No professors yet.<br />Click <strong>+ Add</strong> to build your roster.
+        </p>
       )}
       {props.profs.map(p => {
         const isSelected = props.selectedProfId === p.id

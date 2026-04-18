@@ -39,7 +39,8 @@ export interface SolveRequestBody {
   year: number
   solveMode: SolveMode
   offerings: Offering[]
-  professorOverrides: Record<string, Partial<Professor>>
+  /** Full professors list — replaces server baseline entirely (Path B). */
+  professors: Professor[]
   /** Full rooms list — replaces server baseline entirely (Path B). */
   rooms: Room[]
 }
@@ -78,7 +79,8 @@ export async function pingApi(signal?: AbortSignal): Promise<boolean> {
 // ---------------------------------------------------------------------------
 
 export interface CommitSnapshot {
-  profEdits: Record<string, Partial<Professor>>
+  /** Full professors list — backend rewrites data/professors.json wholesale (Path B). */
+  professors: Professor[]
   /** Full rooms list — backend rewrites data/rooms.json wholesale (Path B). */
   rooms: Room[]
   portraits: Record<string, string>
@@ -381,6 +383,9 @@ export interface DraftState {
   solver_mode: SolveMode
   offerings: Offering[]
   solver_results?: SolveResponse
+  /** Path B: full profs deck from the exporting workspace. Older exports
+   *  may carry `professor_overrides` instead; neither is applied yet on reload. */
+  professors?: Professor[]
   professor_overrides?: Record<string, Partial<Professor>>
   /** Path B: full rooms deck from the exporting workspace. Older exports
    *  may carry `room_overrides` instead; neither is applied yet on reload. */

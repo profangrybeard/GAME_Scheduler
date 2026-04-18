@@ -33,7 +33,7 @@ def _minimal_solve_body() -> dict:
         "year": 2026,
         "solveMode": "balanced",
         "offerings": [],
-        "professorOverrides": {},
+        "professors": [],
         "rooms": [],
     }
 
@@ -260,12 +260,12 @@ def test_stream_real_solver_emits_solutions(client):
     ]
 
     body = {
-        "quarter": doc.get("quarter", "fall"),
-        "year":    doc.get("year", 2026),
-        "solveMode": "balanced",
-        "offerings": offerings,
-        "professorOverrides": {},
-        "rooms":             rooms_doc,
+        "quarter":    doc.get("quarter", "fall"),
+        "year":       doc.get("year", 2026),
+        "solveMode":  "balanced",
+        "offerings":  offerings,
+        "professors": [],
+        "rooms":      rooms_doc,
     }
 
     with client.stream("POST", "/api/solve/stream", json=body, timeout=60) as r:

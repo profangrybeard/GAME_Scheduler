@@ -59,7 +59,7 @@ def _minimal_export_body(*, solve_mode: str = "balanced") -> dict:
                 "pinned": {"day_group": 1, "time_slot": "8:00 AM"},
             },
         ],
-        "professorOverrides": {},
+        "professors": [],
         "rooms": [],
     }
 

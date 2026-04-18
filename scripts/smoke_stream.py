@@ -19,11 +19,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT = ROOT / "data" / "quarterly_offerings.default.json"
+PROFS = ROOT / "data" / "professors.json"
 ROOMS = ROOT / "data" / "rooms.json"
 
 
 def build_request_body() -> dict:
     doc = json.loads(DEFAULT.read_text(encoding="utf-8"))
+    professors = json.loads(PROFS.read_text(encoding="utf-8"))
     rooms = json.loads(ROOMS.read_text(encoding="utf-8"))
     offerings = [
         {
@@ -42,12 +44,12 @@ def build_request_body() -> dict:
         for o in doc.get("offerings", [])[:8]
     ]
     return {
-        "quarter": doc.get("quarter", "fall"),
-        "year":    doc.get("year", 2026),
-        "solveMode": "balanced",
-        "offerings": offerings,
-        "professorOverrides": {},
-        "rooms":              rooms,
+        "quarter":    doc.get("quarter", "fall"),
+        "year":       doc.get("year", 2026),
+        "solveMode":  "balanced",
+        "offerings":  offerings,
+        "professors": professors,
+        "rooms":      rooms,
     }
 
 
