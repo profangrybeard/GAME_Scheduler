@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   downloadBlob,
   parseDraftState,
@@ -39,6 +39,19 @@ import "./App.css"
 const PORTRAIT_STORAGE_KEY = "portrait-overrides"
 const PROF_EDITS_STORAGE_KEY = "professor-edits"
 const ROOM_EDITS_STORAGE_KEY = "room-edits"
+
+const SCHOOL_ORDER: ReadonlyArray<import("./types").Department> = [
+  "game", "motion_media", "ai", "ixds", "iact", "digi", "adbr",
+]
+const SCHOOL_LABELS: Record<import("./types").Department, string> = {
+  game: "GAME",
+  motion_media: "MOME",
+  ai: "AI",
+  ixds: "IXDS",
+  iact: "IACT",
+  digi: "DIGI",
+  adbr: "ADBR",
+}
 
 type ActivePanel = "roster" | "schedule" | "detail"
 
@@ -479,6 +492,27 @@ function App() {
     fileInputRef.current?.click()
   }, [])
 
+  const loadExample = useCallback(async () => {
+    try {
+      // Vite serves `public/*` from the root, so this works for dev, preview,
+      // and GitHub Pages (same-origin fetch, no /api involved).
+      const base = import.meta.env.BASE_URL || "/"
+      const res = await fetch(`${base}example-schedule.xlsx`)
+      if (!res.ok) throw new Error(`example file missing (${res.status})`)
+      const blob = await res.blob()
+      const file = new File([blob], "example-schedule.xlsx", {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      })
+      await handleReloadFile(file)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      setReloadError(msg)
+    }
+  // handleReloadFile is declared below; it only depends on stable callbacks,
+  // so exhaustive-deps flags the order but won't actually re-bind.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleReloadFile = useCallback(async (file: File) => {
     setReloadError(null)
     setReloadWarnings(null)
@@ -597,6 +631,13 @@ function App() {
   // ── Render ─────────────────────────────────────────────────────────
 
   const offeringCount = state.offerings.length
+  const loadedSchools = useMemo(() => {
+    const depts = new Set<string>()
+    for (const course of Object.values(state.catalog)) {
+      depts.add(course.department)
+    }
+    return SCHOOL_ORDER.filter(d => depts.has(d)).map(d => SCHOOL_LABELS[d])
+  }, [state.catalog])
   const selectedProf = selectedProfId ? state.professors[selectedProfId] : null
   const selectedRoom = selectedRoomId ? state.rooms[selectedRoomId] : null
   const placingOffering = placingId
@@ -645,7 +686,6 @@ function App() {
       onPinToSlot={pinToSlot}
       onSetSolveMode={setSolveMode}
       onSolve={requestSolve}
-      onExport={requestExport}
       onStartPlacing={startPlacing}
       onDismissError={() => setSolveError(null)}
       onDismissProgress={() => setSolveProgress(null)}
@@ -682,6 +722,39 @@ function App() {
   return (
     <PortraitContext.Provider value={portraits}>
       <div className="scheduler">
+        <aside className="resume-rail" aria-label="Resume from an exported schedule">
+          <button
+            type="button"
+            className="resume-rail__btn"
+            onClick={triggerReloadPicker}
+            title="Pick a previously exported schedule to resume editing"
+          >
+            <span className="resume-rail__mark" aria-hidden="true">🐝</span>
+            <span className="resume-rail__label">Resume from Excel</span>
+          </button>
+          {/* Hidden native file input — reset .value so picking the same
+              file twice still fires onChange (browsers de-dupe by default). */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) handleReloadFile(f)
+              e.target.value = ""
+            }}
+          />
+          <button
+            type="button"
+            className="resume-rail__example"
+            onClick={loadExample}
+            title="Load the bundled example-schedule.xlsx"
+          >
+            <span className="resume-rail__example-label">Try the example</span>
+          </button>
+        </aside>
+        <div className="scheduler__body">
         {placingOffering && placingCourse && (
           <div className="placement-banner placement-banner--visible">
             <span>
@@ -735,50 +808,44 @@ function App() {
           </div>
         )}
         <header className="scheduler__topbar">
-          <button
-            type="button"
-            className="topbar-hamburger"
-            onClick={openRosterDrawer}
-            aria-label="Open roster"
-          >
-            ☰
-          </button>
-          <h1 className="scheduler__title">
-            <span className="scheduler__bee" aria-hidden="true">🐝</span>
-            {" "}GAME Scheduler
-          </h1>
+          <div className="scheduler__topbar-left">
+            <button
+              type="button"
+              className="topbar-hamburger"
+              onClick={openRosterDrawer}
+              aria-label="Open roster"
+            >
+              ☰
+            </button>
+            <h1 className="scheduler__title">
+              SCAD Course Planner for Faculty
+              {loadedSchools.length > 0 && (
+                <span className="scheduler__schools">
+                  {loadedSchools.join(" · ")}
+                </span>
+              )}
+            </h1>
+          </div>
           <span className="scheduler__context">
             {state.quarter} {state.year} · {offeringCount} offerings ·{" "}
             {state.solveMode}
           </span>
           <div className="scheduler__topbar-right">
-            <span
-              className="topbar-tech"
-              title="Constraint solver (Google OR-Tools CP-SAT). Runs locally — no cloud AI, no data leaves your machine."
-            >
-              OR-Tools · offline
-            </span>
             <button
               type="button"
-              className="topbar-btn"
-              onClick={triggerReloadPicker}
-              title="Resume from a previously exported Excel file"
+              className="topbar-btn topbar-btn--export"
+              onClick={requestExport}
+              disabled={!(apiAvailable === true && state.solveStatus === "done")}
+              title={
+                apiAvailable !== true
+                  ? "Solver requires the local launcher"
+                  : state.solveStatus === "done"
+                    ? "Download schedule as Excel"
+                    : "Generate a schedule first"
+              }
             >
-              Resume from Excel
+              Export
             </button>
-            {/* Hidden native file input. Reset .value so picking the same
-                file twice still triggers onChange (browsers de-dupe by default). */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              style={{ display: "none" }}
-              onChange={(e) => {
-                const f = e.target.files?.[0]
-                if (f) handleReloadFile(f)
-                e.target.value = ""
-              }}
-            />
             <VersionBadge />
             <button
               type="button"
@@ -831,6 +898,7 @@ function App() {
             Detail
           </button>
         </nav>
+        </div>
 
         {/* Landscape roster drawer — CSS toggles visibility on 768-1023px */}
         <div

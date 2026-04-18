@@ -6,6 +6,7 @@ __pycache__/
 .venv/
 .claude/
 *.xlsx
+!frontend/public/example-schedule.xlsx
 node_modules/
 /package.json
 /package-lock.json

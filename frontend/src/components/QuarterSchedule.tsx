@@ -71,7 +71,6 @@ export interface QuarterScheduleProps {
   onPinToSlot: (catalog_id: string, slot: Slot | null) => void
   onSetSolveMode: (mode: SolveMode) => void
   onSolve: () => void
-  onExport: () => void
   onStartPlacing: (id: string) => void
   onDismissError: () => void
   onDismissProgress: () => void
@@ -85,7 +84,6 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
   const isSolving = props.solveStatus === "running"
   const apiReady = props.apiAvailable === true
   const canGenerate = apiReady && props.offerings.length > 0 && !isSolving
-  const canExport = apiReady && props.solveStatus === "done" && !isSolving
   const generateTitle =
     props.apiAvailable === false
       ? "Solver requires the local launcher (run ./launch_workspace.sh)"
@@ -213,13 +211,22 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
             >
               {isSolving ? "Solving…" : "Generate"}
             </button>
-            <button
-              disabled={!canExport}
-              onClick={props.onExport}
-              title={apiReady ? "Download Excel" : generateTitle}
+            <a
+              className="solver-badge"
+              href="https://developers.google.com/optimization/cp/cp_solver"
+              target="_blank"
+              rel="noopener noreferrer"
+              title={
+                "Generate runs Google OR-Tools CP-SAT locally — a constraint" +
+                " solver, not AI. It enumerates schedules that respect every" +
+                " rule (rooms, professors, time slots) and picks the best fit." +
+                " Click to learn more."
+              }
+              aria-label="Learn about the OR-Tools constraint solver"
             >
-              Export
-            </button>
+              <span className="solver-badge__icon" aria-hidden="true">ⓘ</span>
+              <span className="solver-badge__label">OR-Tools</span>
+            </a>
           </div>
         </div>
       </header>
