@@ -18,6 +18,12 @@ POST /api/solve/stream  — Run the 3-mode CP-SAT solve and stream progress as
 POST /api/export        — Write an Excel workbook from a prior solve's results.
                           The file embeds a hidden _state sheet so it can be
                           re-uploaded later via /api/state/parse.
+POST /api/export/stream — Same as /api/export but streams progress via SSE.
+                          Reuses the React workspace's SolveProgress panel
+                          (same event vocabulary as /api/solve/stream) plus
+                          two new events: `xlsx_writing` and `export_complete`
+                          (carries the .xlsx as base64 — client decodes and
+                          triggers a browser download).
 POST /api/state/parse   — Read a previously exported XLSX, return the embedded
                           draft state (offerings + locks + mode + last solver
                           output) for the React workspace to hydrate from.
@@ -335,6 +341,140 @@ def export(req: ExportRequest) -> Response:
         content=content,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# ---------------------------------------------------------------------------
+# SSE streaming export — same shape as /api/solve/stream so React can reuse
+# the SolveProgress panel for the Generate AND the Export user flow.
+# ---------------------------------------------------------------------------
+
+@app.post("/api/export/stream")
+async def export_stream(req: ExportRequest) -> StreamingResponse:
+    """Stream a re-solve + XLSX build as Server-Sent Events.
+
+    Event sequence (extends /api/solve/stream with two new terminal events):
+        solve_started   once, before the first mode runs
+        mode_started    once per mode (3x)
+        solution_found  zero or more per mode — one per improving CP-SAT solution
+        mode_complete   once per mode
+        solve_complete  once, carries the full result payload
+        xlsx_writing    once, after solve_complete, while we serialize the workbook
+        export_complete once, terminal — carries `filename` + `xlsx_base64`
+                        (the .xlsx bytes; client decodes and triggers download)
+        error           once, terminal, on any unhandled exception
+
+    Heavy duplication of /api/solve/stream's plumbing is intentional —
+    extracting a shared helper would couple two endpoints whose event
+    vocabularies will likely diverge over time.
+    """
+    from solver.scheduler import run_schedule
+    from export.excel_writer import write_excel
+    import base64 as _b64
+
+    react_offerings = [o.model_dump() for o in req.offerings]
+    event_queue: queue.Queue = queue.Queue()
+
+    def progress_cb(event: dict) -> None:
+        event_queue.put(event)
+
+    def run_solver_and_write_in_thread() -> None:
+        try:
+            results = run_schedule(
+                req.quarter,
+                pinned=react_pinned_to_solver(react_offerings),
+                offerings_override=react_offerings_to_doc(
+                    react_offerings, req.quarter, req.year,
+                ),
+                professors_override=req.professorOverrides,
+                rooms_override=req.roomOverrides,
+                progress_callback=progress_cb,
+            )
+            event_queue.put({
+                "type":    "solve_complete",
+                "quarter": results["quarter"],
+                "year":    results["year"],
+                "modes":   [solver_result_to_react_mode(m) for m in results["modes"]],
+            })
+
+            # Same draft_state composition as POST /api/export so reload of an
+            # SSE-exported file produces an identical result.
+            draft_state = {
+                "schema_version":     1,
+                "exported_at":        datetime.now().isoformat(timespec="seconds"),
+                "source":             "react",
+                "quarter":            req.quarter,
+                "year":               req.year,
+                "solver_mode":        req.solveMode,
+                "offerings":          react_offerings,
+                "professor_overrides": req.professorOverrides,
+                "room_overrides":     req.roomOverrides,
+                "solver_results":     _embedded_solver_results(results),
+            }
+
+            event_queue.put({"type": "xlsx_writing"})
+
+            with tempfile.TemporaryDirectory() as tmp:
+                xlsx_path = write_excel(results, Path(tmp), draft_state=draft_state)
+                content = xlsx_path.read_bytes()
+
+            filename = f"schedule_{req.quarter}_{req.year}_{datetime.now():%Y%m%d}.xlsx"
+            event_queue.put({
+                "type":        "export_complete",
+                "filename":    filename,
+                "size_bytes":  len(content),
+                # Base64 keeps the SSE frame text-safe. ~33% bloat on top of
+                # ~10-50KB schedule files = ~14-66KB frames. Single SSE frame
+                # is fine; revisit only if export sizes balloon.
+                "xlsx_base64": _b64.b64encode(content).decode("ascii"),
+            })
+        except ValueError as e:
+            event_queue.put({"type": "error", "message": str(e), "kind": "invalid_input"})
+        except Exception as e:  # noqa: BLE001 — must not kill the app
+            event_queue.put({"type": "error", "message": str(e), "kind": "export_error"})
+        finally:
+            event_queue.put(_STREAM_END)
+
+    def _next_event_or_heartbeat():
+        try:
+            return event_queue.get(timeout=_SSE_HEARTBEAT_SECONDS)
+        except queue.Empty:
+            return None
+
+    async def event_generator():
+        loop = asyncio.get_running_loop()
+        worker_task = loop.run_in_executor(None, run_solver_and_write_in_thread)
+
+        yield _sse_frame("solve_started", {
+            "quarter":     req.quarter,
+            "year":        req.year,
+            "n_offerings": len(react_offerings),
+        })
+
+        try:
+            while True:
+                event = await loop.run_in_executor(None, _next_event_or_heartbeat)
+                if event is None:
+                    yield ": heartbeat\n\n"
+                    continue
+                if event is _STREAM_END:
+                    break
+                event_type = event.get("type", "message")
+                yield _sse_frame(event_type, event)
+        finally:
+            try:
+                await worker_task
+            except Exception:  # noqa: BLE001 — already surfaced via 'error'
+                pass
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control":     "no-cache, no-transform",
+            "X-Accel-Buffering": "no",
+            "Connection":        "keep-alive",
+        },
     )
 
 
