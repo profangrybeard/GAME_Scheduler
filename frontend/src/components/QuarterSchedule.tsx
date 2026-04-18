@@ -41,12 +41,6 @@ const DAY_GROUPS: ReadonlyArray<{ key: DayGroup; label: string }> = [
   { key: 2, label: "TTh" },
 ] as const
 
-const SOLVE_MODE_OPTIONS: ReadonlyArray<{ key: SolveMode; label: string }> = [
-  { key: "affinity_first", label: "Affinity" },
-  { key: "time_pref_first", label: "Time Pref" },
-  { key: "balanced", label: "Balanced" },
-]
-
 const DND_MIME = "application/x-offering"
 
 /** effectiveSlot — assignment (solver output) beats pinned (user placement). */
@@ -208,22 +202,9 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
       <header className="panel__header">
         <h2 className="panel__title">Quarter Schedule</h2>
         <div className="schedule__toolbar">
-          <div className="schedule__mode" role="tablist" aria-label="Solve mode">
-            {SOLVE_MODE_OPTIONS.map(opt => (
-              <button
-                key={opt.key}
-                role="tab"
-                aria-selected={props.solveMode === opt.key}
-                className={
-                  "chip" +
-                  (props.solveMode === opt.key ? " chip--active" : "")
-                }
-                onClick={() => props.onSetSolveMode(opt.key)}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          {/* Mode selection moved to the SolveProgress mode cards — clicking
+              an Affinity/Time Pref/Balanced card flips the calendar to that
+              mode's cached results. The redundant chip row was removed. */}
           <div className="panel__actions">
             <button
               disabled={!canGenerate}
@@ -261,6 +242,8 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
         progress={props.solveProgress}
         isSolving={isSolving}
         onDismiss={props.onDismissProgress}
+        activeMode={props.solveMode}
+        onSelectMode={(mode) => props.onSetSolveMode(mode as typeof props.solveMode)}
       />
 
       <div className="schedule__day-toggle" role="tablist" aria-label="Day group">

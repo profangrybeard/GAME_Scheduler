@@ -1516,6 +1516,46 @@
   border-color: var(--text-faint);
 }
 
+/* ─── "OR-Tools · offline" tech badge ─────────────────────────────
+   Quietly defensive signifier: this is a constraint solver, not AI; runs
+   locally. Hover tooltip carries the longer copy. */
+.topbar-tech {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success) 35%, var(--border));
+  cursor: help;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ─── Bee emoji next to the title ─────────────────────────────────
+   Drop-shadow tuned per theme so the yellow doesn't glare on light or
+   wash out against dark. aria-hidden in markup — purely decorative. */
+.scheduler__bee {
+  display: inline-block;
+  font-size: 1.05em;
+  vertical-align: -0.05em;
+  transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+:root[data-theme="dark"] .scheduler__bee {
+  filter: drop-shadow(0 0 3px rgba(255, 200, 0, 0.35));
+}
+
+:root[data-theme="light"] .scheduler__bee {
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.18));
+}
+
+.scheduler__title:hover .scheduler__bee {
+  transform: rotate(-8deg);
+}
+
 /* ─── Reload-from-Excel result banner ───────────────────────────── */
 
 .reload-banner {
@@ -1924,6 +1964,35 @@
 
 .solve-progress__mode--done {
   border-color: color-mix(in srgb, var(--success) 40%, var(--border));
+}
+
+/* Selectable: post-solve, the card is now the way to flip the calendar
+   between modes (replaces the old chip row in the schedule toolbar). */
+.solve-progress__mode--selectable {
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  width: 100%;
+}
+
+.solve-progress__mode--selectable:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+}
+
+.solve-progress__mode--selectable:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.solve-progress__mode--active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.solve-progress__mode--active.solve-progress__mode--selectable:hover {
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
 }
 
 .solve-progress__mode-row {

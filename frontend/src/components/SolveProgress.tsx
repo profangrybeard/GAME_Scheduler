@@ -49,10 +49,16 @@ interface Props {
    *  even if no events have arrived yet (e.g., solve_started just fired). */
   isSolving: boolean
   onDismiss: () => void
+  /** Currently shown mode (highlights the corresponding card). */
+  activeMode?: string
+  /** Click on a `done` mode card flips the calendar to that mode's cached
+   *  schedule — same effect the now-removed Affinity/Time Pref/Balanced
+   *  chip buttons in QuarterSchedule used to have. */
+  onSelectMode?: (mode: string) => void
 }
 
 export function SolveProgress(props: Props) {
-  const { progress, isSolving, onDismiss } = props
+  const { progress, isSolving, onDismiss, activeMode, onSelectMode } = props
 
   // `now` is driven by a 250ms interval while a solve is in flight. Using
   // state (instead of calling performance.now() during render) keeps the
@@ -143,12 +149,18 @@ export function SolveProgress(props: Props) {
             m.state === "running" && progress.startedAt !== null
               ? Math.max(0, now - progress.startedAt)
               : m.elapsedMs
-          return (
-            <div
-              key={key}
-              className={`solve-progress__mode solve-progress__mode--${m.state}`}
-              data-mode={key}
-            >
+          // The card is clickable only when the mode finished AND a
+          // selection callback is wired. While solving, clicking would
+          // be a no-op (no cached result to flip to).
+          const isSelectable = m.state === "done" && !!onSelectMode
+          const isActive = activeMode === key
+          const className =
+            "solve-progress__mode" +
+            ` solve-progress__mode--${m.state}` +
+            (isActive ? " solve-progress__mode--active" : "") +
+            (isSelectable ? " solve-progress__mode--selectable" : "")
+          const cardContent = (
+            <>
               <div className="solve-progress__mode-row">
                 <span className="solve-progress__mode-name">
                   {MODE_LABELS[key] ?? key}
@@ -188,6 +200,29 @@ export function SolveProgress(props: Props) {
                   </span>
                 </span>
               </div>
+            </>
+          )
+          // Render as a real <button> when selectable so keyboard + screen-
+          // reader users get the same affordance as click. Otherwise plain div.
+          return isSelectable ? (
+            <button
+              key={key}
+              type="button"
+              className={className}
+              data-mode={key}
+              onClick={() => onSelectMode?.(key)}
+              aria-pressed={isActive}
+              title={
+                isActive
+                  ? `${MODE_LABELS[key] ?? key} — currently shown on the board`
+                  : `Show ${MODE_LABELS[key] ?? key} on the board`
+              }
+            >
+              {cardContent}
+            </button>
+          ) : (
+            <div key={key} className={className} data-mode={key}>
+              {cardContent}
             </div>
           )
         })}

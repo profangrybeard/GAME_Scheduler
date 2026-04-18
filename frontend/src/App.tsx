@@ -737,12 +737,21 @@ function App() {
           >
             ☰
           </button>
-          <h1 className="scheduler__title">GAME Scheduler</h1>
+          <h1 className="scheduler__title">
+            <span className="scheduler__bee" aria-hidden="true">🐝</span>
+            {" "}GAME Scheduler
+          </h1>
           <span className="scheduler__context">
             {state.quarter} {state.year} · {offeringCount} offerings ·{" "}
             {state.solveMode}
           </span>
           <div className="scheduler__topbar-right">
+            <span
+              className="topbar-tech"
+              title="Constraint solver (Google OR-Tools CP-SAT). Runs locally — no cloud AI, no data leaves your machine."
+            >
+              OR-Tools · offline
+            </span>
             <button
               type="button"
               className="topbar-btn"
