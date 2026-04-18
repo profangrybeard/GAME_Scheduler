@@ -41,7 +41,8 @@
       "ai_application",
       "ai_pipeline",
       "ai_design",
-      "ai_ideation"
+      "ai_ideation",
+      "robotics"
     ],
     "notes": "Associate chair of both ITGM and motion media since 2017. Co-author of Mastering Maya. Founding member of Daz Productions. IMAX character artist at Tandem Motion Picture Studios.",
     "available_quarters": [
@@ -81,8 +82,6 @@
       "cpp",
       "unreal_engine",
       "blueprint",
-      "unreal_engine_5",
-      "unreal_engine_4",
       "cryengine",
       "game_tech",
       "3d_modeling",

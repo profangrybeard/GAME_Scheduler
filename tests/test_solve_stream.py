@@ -34,7 +34,7 @@ def _minimal_solve_body() -> dict:
         "solveMode": "balanced",
         "offerings": [],
         "professorOverrides": {},
-        "roomOverrides": {},
+        "rooms": [],
     }
 
 
@@ -237,6 +237,10 @@ def test_stream_real_solver_emits_solutions(client):
 
     default = Path(__file__).resolve().parent.parent / "data" / "quarterly_offerings.default.json"
     doc = _json.loads(default.read_text(encoding="utf-8"))
+    rooms_doc = _json.loads(
+        (Path(__file__).resolve().parent.parent / "data" / "rooms.json")
+        .read_text(encoding="utf-8")
+    )
 
     offerings = [
         {
@@ -261,7 +265,7 @@ def test_stream_real_solver_emits_solutions(client):
         "solveMode": "balanced",
         "offerings": offerings,
         "professorOverrides": {},
-        "roomOverrides":      {},
+        "rooms":             rooms_doc,
     }
 
     with client.stream("POST", "/api/solve/stream", json=body, timeout=60) as r:

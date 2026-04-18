@@ -40,7 +40,8 @@ export interface SolveRequestBody {
   solveMode: SolveMode
   offerings: Offering[]
   professorOverrides: Record<string, Partial<Professor>>
-  roomOverrides: Record<string, Partial<Room>>
+  /** Full rooms list — replaces server baseline entirely (Path B). */
+  rooms: Room[]
 }
 
 /** Return a compact Assignment matching React's type shape. */
@@ -51,7 +52,10 @@ export function responseAssignmentToAssignment(
     prof_id: a.prof_id,
     room_id: a.room_id,
     slot: {
-      day_group: a.day_group === 1 || a.day_group === 2 ? a.day_group : 1,
+      day_group:
+        a.day_group === 1 || a.day_group === 2 || a.day_group === 3
+          ? a.day_group
+          : 1,
       time_slot: a.time_slot as Assignment["slot"]["time_slot"],
     },
   }
@@ -67,6 +71,39 @@ export async function pingApi(signal?: AbortSignal): Promise<boolean> {
   } catch {
     return false
   }
+}
+
+// ---------------------------------------------------------------------------
+// Commit overlay to source JSON (local stack only)
+// ---------------------------------------------------------------------------
+
+export interface CommitSnapshot {
+  profEdits: Record<string, Partial<Professor>>
+  /** Full rooms list — backend rewrites data/rooms.json wholesale (Path B). */
+  rooms: Room[]
+  portraits: Record<string, string>
+}
+
+export interface CommitResult {
+  professorsUpdated: number
+  roomsUpdated: number
+  portraitsWritten: number
+  warnings: string[]
+}
+
+/** POST the overlay to /api/commit. Throws on HTTP failure — caller surfaces
+ *  the error to the user. */
+export async function postCommit(snapshot: CommitSnapshot): Promise<CommitResult> {
+  const res = await fetch("/api/commit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(snapshot),
+  })
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "")
+    throw new Error(`Commit failed: ${res.status} ${detail || res.statusText}`)
+  }
+  return (await res.json()) as CommitResult
 }
 
 // ---------------------------------------------------------------------------
@@ -345,6 +382,9 @@ export interface DraftState {
   offerings: Offering[]
   solver_results?: SolveResponse
   professor_overrides?: Record<string, Partial<Professor>>
+  /** Path B: full rooms deck from the exporting workspace. Older exports
+   *  may carry `room_overrides` instead; neither is applied yet on reload. */
+  rooms?: Room[]
   room_overrides?: Record<string, Partial<Room>>
   exported_at?: string
 }

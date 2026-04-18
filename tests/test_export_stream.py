@@ -37,7 +37,7 @@ def _minimal_export_body() -> dict:
             {"catalog_id": "GAME_120", "priority": "must_have", "sections": 1},
         ],
         "professorOverrides": {},
-        "roomOverrides": {},
+        "rooms": [],
     }
 
 

@@ -187,7 +187,7 @@ export function SolveProgress(props: Props) {
                   className="solve-progress__metric"
                   title="Total penalty for soft preferences missed: professor-course affinity, time-of-day fit, day-of-week balance. Lower is better. Hard rules (no double-booking, room capacity) are enforced absolutely and don't add to this score."
                 >
-                  <span className="solve-progress__metric-label">Score</span>
+                  <span className="solve-progress__metric-label">Penalty</span>
                   <span className="solve-progress__metric-value solve-progress__metric-value--numeric">
                     {m.bestObjective !== null ? m.bestObjective : "—"}
                   </span>
@@ -196,7 +196,7 @@ export function SolveProgress(props: Props) {
                   className="solve-progress__metric"
                   title="Each time the solver finds a better arrangement than its previous best, this ticks up. The number you see at the end is the one displayed on the board — earlier ones were stepping stones."
                 >
-                  <span className="solve-progress__metric-label">Solutions</span>
+                  <span className="solve-progress__metric-label">Tries</span>
                   <span className="solve-progress__metric-value solve-progress__metric-value--numeric">
                     {m.solutionsFound}
                   </span>

@@ -1089,7 +1089,7 @@ else:
     catalog_lookup = {c["id"]: c for c in catalog}
     selected_ids = {o["catalog_id"] for o in offerings}
 
-    DG_LABELS = {1: "MW", 2: "TTh"}
+    DG_LABELS = {1: "MW", 2: "TTh", 3: "F"}
     locked_map = {}
     for _i, _o in enumerate(offerings):
         _lock = _o.get("locked")

@@ -15,7 +15,10 @@ Key: (cs_key, prof_id, room_id, dg, ts)
   cs_key  — "{catalog_id}__{section_index}", e.g. "GAME_256__0"
   prof_id — "prof_dodson"
   room_id — "room_101"
-  dg      — int key from DAY_GROUPS (1=MW, 2=TTh)
+  dg      — int key from DAY_GROUPS (1=MW, 2=TTh, 3=F). Friday is
+            opt-in: variables for dg=3 are only created for sections the
+            user has explicitly pinned or locked there. The solver never
+            auto-assigns to Friday.
   ts      — time slot string, e.g. "11:00AM"
 
 Structural filters applied at variable-creation time (no explicit constraints needed)
@@ -103,6 +106,7 @@ def build_model(
     offerings_override: dict | None = None,
     professors_override: dict[str, dict] | None = None,
     rooms_override: dict[str, dict] | None = None,
+    rooms: list[dict] | None = None,
 ) -> tuple:
     """Load quarterly offerings and catalog, expand sections, build CP-SAT model.
 
@@ -129,10 +133,12 @@ def build_model(
         Per-professor shallow patch keyed by prof id (e.g. quarterly
         availability edits). Applied on top of data/professors.json.
     rooms_override : dict[str, dict] | None
-        Per-room shallow patch keyed by room id (e.g. `available: false`
-        to exclude the room this quarter). Applied on top of data/rooms.json.
-        Rooms with `available: false` after merge are filtered out before
-        eligibility runs.
+        Legacy per-room shallow patch path. Used by unit tests and any caller
+        not yet switched to Path B. Ignored when `rooms` is supplied.
+    rooms : list[dict] | None
+        Full-list override (Path B). When supplied, replaces the disk-loaded
+        rooms entirely — the user's dept deck IS the list. Rooms with
+        `available: false` are still filtered before eligibility.
 
     Returns
     -------
@@ -149,7 +155,6 @@ def build_model(
                     else _load(BASE / "data" / "quarterly_offerings.json")
     catalog_raw   = _load(BASE / "data" / "course_catalog.json")
     professors    = _load(BASE / "data" / "professors.json")
-    rooms         = _load(BASE / "data" / "rooms.json")
 
     # --- Apply React workspace overrides (prof availability, room offline) ---
     if professors_override:
@@ -157,15 +162,21 @@ def build_model(
             {**p, **professors_override[p["id"]]} if p["id"] in professors_override else p
             for p in professors
         ]
-    if rooms_override:
+
+    # Rooms resolution — Path B (full list) wins over legacy rooms_override.
+    # If `rooms` is None, fall back to disk + optional patch-style override.
+    if rooms is not None:
+        merged_rooms = [r for r in rooms if r.get("available") is not False]
+    else:
+        disk_rooms = _load(BASE / "data" / "rooms.json")
         merged_rooms = []
-        for r in rooms:
-            patch = rooms_override.get(r["id"])
+        for r in disk_rooms:
+            patch = (rooms_override or {}).get(r["id"])
             merged = {**r, **patch} if patch else r
             if merged.get("available") is False:
-                continue  # room is offline this quarter — solver never sees it
+                continue
             merged_rooms.append(merged)
-        rooms = merged_rooms
+    rooms = merged_rooms
 
     if offerings_doc["quarter"] != quarter:
         raise ValueError(
@@ -241,7 +252,16 @@ def build_model(
 
     # --- Build CP-SAT model and decision variables ---
     model = cp_model.CpModel()
-    day_group_keys = list(DAY_GROUPS.keys())   # [1, 2]
+    day_group_keys = list(DAY_GROUPS.keys())   # [1, 2, 3]
+
+    # Friday (dg=3) is opt-in only. Build the set of cs_keys the user has
+    # explicitly placed on Friday; every other section gets no Friday
+    # variables, so the solver cannot auto-assign to Friday.
+    friday_allowed: set[str] = set()
+    if pinned:
+        friday_allowed.update(p["cs_key"] for p in pinned if p["day_group"] == 3)
+    if locked:
+        friday_allowed.update(l["cs_key"] for l in locked if l["day_group"] == 3)
 
     assignments: dict[tuple, cp_model.IntVar] = {}
 
@@ -250,6 +270,8 @@ def build_model(
         for prof_id in eligible_profs[cs_key]:
             for room_id in eligible_rooms[cs_key]:
                 for dg in day_group_keys:
+                    if dg == 3 and cs_key not in friday_allowed:
+                        continue
                     for ts in TIME_SLOTS:
                         key = (cs_key, prof_id, room_id, dg, ts)
                         # Sanitize ts for variable name (colons not valid in some solvers)

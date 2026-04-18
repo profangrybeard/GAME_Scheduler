@@ -264,6 +264,41 @@
   cursor: not-allowed;
 }
 
+/* ─── Overlay persistence cluster (Backup / Restore / Commit) ─────
+   Subordinate to Export — same control, lower visual weight.
+   Divider separates the cluster so "Commit" doesn't read as part of
+   the Export action. */
+.topbar-persist {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: 10px;
+  margin-right: 4px;
+  border-right: 1px solid var(--border);
+}
+
+.topbar-btn.topbar-btn--ghost {
+  border-color: transparent;
+  color: var(--text-faint);
+  padding: 0 8px;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.topbar-btn.topbar-btn--ghost:hover:not(:disabled) {
+  color: var(--text);
+  border-color: transparent;
+}
+
+.topbar-btn.topbar-btn--ghost:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.topbar-persist__input {
+  display: none;
+}
+
 /* ─── Version badge ─────────────────────────────────────────────── */
 
 .version-badge {
@@ -410,23 +445,125 @@
   cursor: not-allowed;
 }
 
-/* Small "ⓘ OR-Tools" info pill sitting next to Generate. Clickable link
-   to the OR-Tools docs. Tooltip (title attr) carries the longer blurb
-   explaining this is a constraint solver, not AI. */
+/* ─── Generate button — the reason for the whole tech stack ────────
+   The solver call is what every other control in this app feeds into,
+   so it gets the loudest treatment: accent fill, bold type, inline bolt
+   glyph, and a lifted shadow. Empty-Calendar next to it deliberately
+   stays tertiary (ghost) so the visual hierarchy reads
+   "primary / destructive" at a glance.
+
+   Higher specificity (compound class + element) is intentional — it has
+   to defeat the generic `.panel__actions button` reset above. */
+.panel__actions button.btn-generate {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-on);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.01em;
+  height: var(--hit-min);
+  padding: 0 14px 0 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.06),
+    0 4px 14px -6px color-mix(in oklab, var(--accent) 70%, transparent);
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.15s ease,
+    filter 0.15s ease;
+}
+
+.panel__actions button.btn-generate:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-on);
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.08),
+    0 10px 24px -8px color-mix(in oklab, var(--accent) 85%, transparent);
+}
+
+.panel__actions button.btn-generate:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(1.02);
+}
+
+.panel__actions button.btn-generate:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-generate__icon {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Subtle breathing glow while idle+ready — a gentle "press me" cue
+   without a flashing-CTA vibe. Paused on hover so the hover shadow wins
+   and freezes entirely under reduced-motion. */
+.panel__actions button.btn-generate:not(:disabled):not(:hover):not(.btn-generate--solving) {
+  animation: btn-generate-breathe 3.2s ease-in-out infinite;
+}
+
+@keyframes btn-generate-breathe {
+  0%, 100% {
+    box-shadow:
+      0 1px 0 rgba(0, 0, 0, 0.06),
+      0 4px 14px -6px color-mix(in oklab, var(--accent) 70%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 1px 0 rgba(0, 0, 0, 0.08),
+      0 7px 22px -4px color-mix(in oklab, var(--accent) 90%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel__actions button.btn-generate:not(:disabled):not(:hover):not(.btn-generate--solving),
+  .btn-generate__spinner {
+    animation: none;
+  }
+}
+
+/* Solving state — bolt glyph is swapped for a spinner. Colors track
+   the button text so the ring reads on both light and dark themes. */
+.btn-generate__spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid color-mix(in oklab, var(--accent-on) 35%, transparent);
+  border-top-color: var(--accent-on);
+  border-radius: 50%;
+  animation: btn-generate-spin 0.8s linear infinite;
+  display: block;
+  flex-shrink: 0;
+}
+
+@keyframes btn-generate-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Circular "OR" tell sitting at the left of the Generate/Empty-Calendar
+   cluster. Clickable link to the OR-Tools docs; tooltip carries the longer
+   blurb explaining this is a constraint solver, not AI. */
 .solver-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 0 8px;
+  justify-content: center;
+  align-self: center;
+  width: 24px;
   height: 24px;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-muted);
   background: transparent;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 50%;
   text-decoration: none;
   cursor: help;
   white-space: nowrap;
@@ -436,12 +573,6 @@
 .solver-badge:hover {
   color: var(--text);
   border-color: var(--text-faint);
-}
-
-.solver-badge__icon {
-  font-size: 0.85rem;
-  line-height: 1;
-  opacity: 0.85;
 }
 
 .solver-badge__label {
@@ -818,7 +949,8 @@
 }
 
 .class__select,
-.class__textarea {
+.class__textarea,
+.class__input {
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text);
@@ -830,7 +962,8 @@
 }
 
 .class__select:focus,
-.class__textarea:focus {
+.class__textarea:focus,
+.class__input:focus {
   outline: none;
   border-color: var(--accent);
 }
@@ -931,8 +1064,8 @@
 
 .schedule-grid {
   display: grid;
-  grid-template-columns: 72px 1fr 1fr;
-  grid-auto-rows: 1fr;
+  grid-template-columns: 72px 1fr 1fr 0.25fr;
+  grid-template-rows: auto repeat(4, 1fr);
   gap: 1px;
   background: var(--border);
   flex: 1;
@@ -946,18 +1079,26 @@
 .schedule-grid__day-header,
 .schedule-grid__time-header {
   background: var(--surface);
-  padding: var(--space-sm) var(--space-md);
-  font-size: 0.72rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
   color: var(--text-muted);
   display: flex;
   align-items: center;
 }
 
-.schedule-grid__day-header  { justify-content: center; }
-.schedule-grid__time-header { justify-content: flex-end; font-variant-numeric: tabular-nums; }
+.schedule-grid__day-header {
+  justify-content: center;
+  padding: var(--space-xs) var(--space-md);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.schedule-grid__time-header {
+  justify-content: flex-end;
+  padding: var(--space-xs) var(--space-md);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
 
 .schedule-grid__cell {
   background: var(--bg);
@@ -1006,7 +1147,8 @@
   height: 18px !important;
 }
 
-.schedule-grid__cell--dense .schedule-card__avatar.avatar--initials {
+.schedule-grid__cell--dense .schedule-card__avatar.avatar--initials,
+.schedule-grid__cell--dense .schedule-card__avatar .avatar--initials {
   font-size: 0.55rem !important;
 }
 
@@ -1071,10 +1213,21 @@
 .schedule-card__prof {
   grid-area: prof;
   font-size: 0.74rem;
-  color: var(--text-muted);
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Tentative prof — the displayed name will NOT survive a move. Covers
+   both AUTO (no choice yet) and solver-assigned (generated, drops on
+   drag). Italic + faint binds the two states together visually so users
+   read them as one class: "will reset if I move this card." A manually
+   picked prof stays regular/full-contrast as the anchor the eye lands
+   on first. */
+.schedule-card__prof--tentative {
+  color: var(--text-faint);
+  font-style: italic;
 }
 .schedule-card__room {
   grid-area: room;
@@ -1207,6 +1360,32 @@
 .roster__add-btn:hover {
   background: color-mix(in srgb, var(--accent) 10%, transparent);
   border-color: var(--accent);
+}
+
+/* Sibling to roster__add-btn in the Rooms tab — destructive tone. Loses the
+   margin-left:auto so both buttons cluster on the right together. */
+.roster__flush-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-faint);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.roster__flush-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, #c0392b 12%, transparent);
+  border-color: #c0392b;
+  color: #c0392b;
+}
+
+.roster__flush-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .roster__list {
@@ -1418,6 +1597,33 @@
   flex-shrink: 0;
 }
 
+/* Danger zone at the bottom of the room editor. Separated visually so the
+   delete button doesn't sit flush against the Notes textarea. */
+.room-card__danger {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border);
+}
+
+.room-card__delete {
+  width: 100%;
+  background: transparent;
+  border: 1px solid #c0392b;
+  color: #c0392b;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.room-card__delete:hover {
+  background: #c0392b;
+  color: #fff;
+}
+
 /* ─── Catalogue drawer (slide-out overlay) ─────────────────────── */
 
 .catalogue-drawer__scrim {
@@ -1505,6 +1711,41 @@
   cursor: pointer;
   border-radius: 50%;
   transition: opacity 0.12s ease;
+  position: relative;
+}
+
+/* Avatar wrapper — used only when ProfAvatar renders a chair. Positions
+   the gold star badge relative to the circular portrait without clipping
+   it (the inner .avatar keeps its own overflow:hidden). */
+.avatar-wrap {
+  display: inline-flex;
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Chair marker on the avatar — gold star for the faculty lead. Sized to
+   read at a glance but not compete with the portrait. The border matches
+   the page background so the badge reads as cut-out-from-the-avatar
+   rather than stamped-on-top. */
+.avatar__chair-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #d4a017;
+  color: #fff;
+  font-size: 8px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--bg);
+  pointer-events: none;
+  z-index: 1;
+  box-sizing: border-box;
+  font-weight: 600;
 }
 
 .roster-card__avatar-hit:hover,
@@ -1587,7 +1828,8 @@
   color: var(--text-faint);
 }
 
-.prof-card__quarters {
+.prof-card__quarters,
+.prof-card__chairs {
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
@@ -1597,16 +1839,117 @@
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+  align-items: center;
 }
 
 .prof-card__spec {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 0.68rem;
   color: var(--text-muted);
-  padding: 2px 6px;
+  padding: 2px 4px 2px 6px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   white-space: nowrap;
+}
+
+.prof-card__spec-remove {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  border-radius: 50%;
+}
+
+.prof-card__spec-remove:hover {
+  color: var(--danger);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.prof-card__spec-input {
+  appearance: none;
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.68rem;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  min-width: 72px;
+  outline: none;
+}
+
+.prof-card__spec-input::placeholder {
+  color: var(--text-faint);
+}
+
+.prof-card__spec-input:focus {
+  border-style: solid;
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+/* Collapsed specializations — kept intentionally quiet. Tags are
+   sometimes sensitive territory for faculty; the reveal-on-click keeps
+   them findable and editable without making them the main attraction. */
+.prof-card__specs {
+  gap: 8px;
+}
+
+.prof-card__specs > summary {
+  cursor: pointer;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: color 0.12s ease;
+  width: fit-content;
+}
+
+.prof-card__specs > summary::-webkit-details-marker {
+  display: none;
+}
+
+.prof-card__specs > summary::before {
+  content: "▸";
+  font-size: 0.7rem;
+  line-height: 1;
+  transition: transform 0.15s ease;
+  display: inline-block;
+}
+
+.prof-card__specs[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.prof-card__specs > summary:hover {
+  color: var(--text-muted);
+}
+
+.prof-card__specs-count {
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-faint);
+  font-size: 0.7rem;
 }
 
 .prof-card__portrait-actions {
@@ -1774,24 +2117,6 @@
 .topbar-btn:hover {
   color: var(--text);
   border-color: var(--text-faint);
-}
-
-/* ─── "OR-Tools · offline" tech badge ─────────────────────────────
-   Quietly defensive signifier: this is a constraint solver, not AI; runs
-   locally. Hover tooltip carries the longer copy. */
-.topbar-tech {
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--success) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--success) 35%, var(--border));
-  cursor: help;
-  white-space: nowrap;
-  flex-shrink: 0;
 }
 
 /* ─── Bee emoji next to the title ─────────────────────────────────
@@ -1966,7 +2291,7 @@
 
   /* Compact schedule */
   .schedule-grid {
-    grid-template-columns: 56px 1fr 1fr;
+    grid-template-columns: 56px 1fr 1fr 0.25fr;
   }
 
   .schedule-grid__time-header {

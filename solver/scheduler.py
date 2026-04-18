@@ -208,6 +208,7 @@ def run_schedule(
     offerings_override: dict | None = None,
     professors_override: dict[str, dict] | None = None,
     rooms_override: dict[str, dict] | None = None,
+    rooms: list[dict] | None = None,
     progress_callback: ProgressCallback | None = None,
 ) -> dict:
     """Run 3 CP-SAT solves (one per mode) for the given quarter.
@@ -263,6 +264,7 @@ def run_schedule(
             offerings_override=offerings_override,
             professors_override=professors_override,
             rooms_override=rooms_override,
+            rooms=rooms,
         )
 
         print(f"[{mode}] Applying constraints ...")

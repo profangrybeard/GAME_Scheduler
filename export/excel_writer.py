@@ -121,7 +121,7 @@ def _data_cell(ws, row: int, col: int, value, fill=None, bold=False) -> None:
 
 
 def _days_label(dg: int) -> str:
-    return "Mon/Wed" if dg == 1 else "Tue/Thu"
+    return "/".join(DAY_GROUPS.get(dg, [])) or f"dg{dg}"
 
 
 def _section_label(catalog_id: str, section_idx: int, total_sections: int) -> str:
