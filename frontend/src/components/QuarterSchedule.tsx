@@ -41,12 +41,6 @@ const DAY_GROUPS: ReadonlyArray<{ key: DayGroup; label: string }> = [
   { key: 2, label: "TTh" },
 ] as const
 
-const SOLVE_MODE_OPTIONS: ReadonlyArray<{ key: SolveMode; label: string }> = [
-  { key: "affinity_first", label: "Affinity" },
-  { key: "time_pref_first", label: "Time Pref" },
-  { key: "balanced", label: "Balanced" },
-]
-
 const DND_MIME = "application/x-offering"
 
 /** effectiveSlot — assignment (solver output) beats pinned (user placement). */
