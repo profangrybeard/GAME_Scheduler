@@ -36,9 +36,17 @@ const TIME_SLOTS: readonly TimeSlot[] = [
   "5:00PM",
 ] as const
 
+const TIME_LABELS: Record<TimeSlot, string> = {
+  "8:00AM": "8 AM",
+  "11:00AM": "11 AM",
+  "2:00PM": "2 PM",
+  "5:00PM": "5 PM",
+}
+
 const DAY_GROUPS: ReadonlyArray<{ key: DayGroup; label: string }> = [
   { key: 1, label: "MW" },
   { key: 2, label: "TTh" },
+  { key: 3, label: "F" },
 ] as const
 
 const DND_MIME = "application/x-offering"
@@ -71,6 +79,7 @@ export interface QuarterScheduleProps {
   onPinToSlot: (catalog_id: string, slot: Slot | null) => void
   onSetSolveMode: (mode: SolveMode) => void
   onSolve: () => void
+  onEmptyCalendar: () => void
   onStartPlacing: (id: string) => void
   onDismissError: () => void
   onDismissProgress: () => void
@@ -141,6 +150,10 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
     const isSelected = props.selectedOfferingId === o.catalog_id
     const isDragging = draggingId === o.catalog_id
     const isPlacing = props.placingId === o.catalog_id
+    // Prof text is "tentative" (italic, faint) when the displayed name will
+    // NOT survive a move — i.e. no manual pick. Covers both AUTO (no prof)
+    // and solver-assigned (prof came from the solver, drops on drag).
+    const profIsTentative = !o.assigned_prof_id
 
     return (
       <button
@@ -185,7 +198,12 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
           />
         </span>
         <span className="schedule-card__id">{o.catalog_id}</span>
-        <span className="schedule-card__prof">
+        <span
+          className={
+            "schedule-card__prof" +
+            (profIsTentative ? " schedule-card__prof--tentative" : "")
+          }
+        >
           {prof ? prof.name.split(" ").slice(-1)[0] : "AUTO"}
         </span>
         <span className="schedule-card__room">
@@ -204,13 +222,6 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
               an Affinity/Time Pref/Balanced card flips the calendar to that
               mode's cached results. The redundant chip row was removed. */}
           <div className="panel__actions">
-            <button
-              disabled={!canGenerate}
-              onClick={props.onSolve}
-              title={generateTitle}
-            >
-              {isSolving ? "Solving…" : "Generate"}
-            </button>
             <a
               className="solver-badge"
               href="https://developers.google.com/optimization/cp/cp_solver"
@@ -224,9 +235,38 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
               }
               aria-label="Learn about the OR-Tools constraint solver"
             >
-              <span className="solver-badge__icon" aria-hidden="true">ⓘ</span>
-              <span className="solver-badge__label">OR-Tools</span>
+              <span className="solver-badge__label">OR</span>
             </a>
+            <button
+              type="button"
+              className={"btn-generate" + (isSolving ? " btn-generate--solving" : "")}
+              disabled={!canGenerate}
+              onClick={props.onSolve}
+              title={generateTitle}
+            >
+              {isSolving ? (
+                <span className="btn-generate__spinner" aria-hidden="true" />
+              ) : (
+                <svg
+                  className="btn-generate__icon"
+                  viewBox="0 0 24 24"
+                  width="14"
+                  height="14"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path d="M13 2L4 14h7l-1 8 9-12h-7z" />
+                </svg>
+              )}
+              {isSolving ? "Solving…" : "Generate"}
+            </button>
+            <button
+              disabled={isSolving}
+              onClick={props.onEmptyCalendar}
+              title="Clear solver results and start over. User-pinned cards stay."
+            >
+              Empty Calendar
+            </button>
           </div>
         </div>
       </header>
@@ -293,7 +333,7 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
           {TIME_SLOTS.map(ts => (
             <Fragment key={ts}>
               <div className="schedule-grid__time-header" role="rowheader">
-                {ts}
+                {TIME_LABELS[ts]}
               </div>
               {DAY_GROUPS.map(g => {
                 const cellKey = `${g.key}|${ts}`

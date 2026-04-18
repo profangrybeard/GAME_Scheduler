@@ -3,6 +3,7 @@ import {
   downloadBlob,
   parseDraftState,
   pingApi,
+  postCommit,
   postExportStream,
   postSolveStream,
   responseAssignmentToAssignment,
@@ -13,6 +14,7 @@ import {
 import { CatalogueDrawer } from "./components/CatalogueDrawer"
 import { Class } from "./components/Class"
 import { PortraitContext } from "./components/PortraitContext"
+import { ProfessorContext } from "./components/ProfessorContext"
 import { ProfessorCard } from "./components/ProfessorCard"
 import { QuarterSchedule } from "./components/QuarterSchedule"
 import { RoomCard } from "./components/RoomCard"
@@ -20,6 +22,7 @@ import { Roster } from "./components/Roster"
 import { VersionBadge } from "./components/VersionBadge"
 import { loadInitialState } from "./data"
 import { useTheme } from "./hooks/useTheme"
+import { SCHOOL_LABELS, SCHOOL_ORDER } from "./types"
 import type { Assignment, Offering, Professor, Room, SchedulerState, Slot, SolveMode, SolveModeProgress, SolveProgressState } from "./types"
 import "./App.css"
 
@@ -38,20 +41,13 @@ import "./App.css"
 
 const PORTRAIT_STORAGE_KEY = "portrait-overrides"
 const PROF_EDITS_STORAGE_KEY = "professor-edits"
-const ROOM_EDITS_STORAGE_KEY = "room-edits"
+/** Full-list override for rooms. The saved list IS the deck — dept lists
+ *  diverge permanently, so merging onto an upstream baseline is the wrong
+ *  mental model. See CLAUDE.md "Path B". */
+const ROOMS_STORAGE_KEY = "rooms"
+/** Pre-Path-B overlay key. One-shot migrated on load then deleted. */
+const ROOM_EDITS_LEGACY_KEY = "room-edits"
 
-const SCHOOL_ORDER: ReadonlyArray<import("./types").Department> = [
-  "game", "motion_media", "ai", "ixds", "iact", "digi", "adbr",
-]
-const SCHOOL_LABELS: Record<import("./types").Department, string> = {
-  game: "GAME",
-  motion_media: "MOME",
-  ai: "AI",
-  ixds: "IXDS",
-  iact: "IACT",
-  digi: "DIGI",
-  adbr: "ADBR",
-}
 
 type ActivePanel = "roster" | "schedule" | "detail"
 
@@ -75,16 +71,28 @@ function saveProfEdits(edits: Record<string, Partial<Professor>>) {
   try { localStorage.setItem(PROF_EDITS_STORAGE_KEY, JSON.stringify(edits)) } catch { /* full */ }
 }
 
-function loadRoomEdits(): Record<string, Partial<Room>> {
+/** Return the saved full-list rooms, or null if no saved list exists.
+ *  If only the legacy `room-edits` overlay is present, migrate by applying
+ *  it to baseline, saving as the new format, and dropping the old key. */
+function loadRooms(baseline: Record<string, Room>): Room[] | null {
   try {
-    const raw = localStorage.getItem(ROOM_EDITS_STORAGE_KEY)
-    if (raw) return JSON.parse(raw) as Record<string, Partial<Room>>
+    const raw = localStorage.getItem(ROOMS_STORAGE_KEY)
+    if (raw) return JSON.parse(raw) as Room[]
+    const legacy = localStorage.getItem(ROOM_EDITS_LEGACY_KEY)
+    if (legacy) {
+      const edits = JSON.parse(legacy) as Record<string, Partial<Room>>
+      const merged = applyEdits(baseline, edits)
+      const list = Object.values(merged)
+      localStorage.setItem(ROOMS_STORAGE_KEY, JSON.stringify(list))
+      localStorage.removeItem(ROOM_EDITS_LEGACY_KEY)
+      return list
+    }
   } catch { /* corrupted */ }
-  return {}
+  return null
 }
 
-function saveRoomEdits(edits: Record<string, Partial<Room>>) {
-  try { localStorage.setItem(ROOM_EDITS_STORAGE_KEY, JSON.stringify(edits)) } catch { /* full */ }
+function saveRooms(rooms: Room[]) {
+  try { localStorage.setItem(ROOMS_STORAGE_KEY, JSON.stringify(rooms)) } catch { /* full */ }
 }
 
 function applyEdits<T>(
@@ -102,15 +110,17 @@ function App() {
   const [state, setState] = useState<SchedulerState>(() => {
     const base = loadInitialState()
     const profEdits = loadProfEdits()
-    const roomEdits = loadRoomEdits()
+    const savedRooms = loadRooms(base.rooms)
+    const rooms = savedRooms
+      ? Object.fromEntries(savedRooms.map(r => [r.id, r]))
+      : base.rooms
     return {
       ...base,
       professors: applyEdits(base.professors, profEdits),
-      rooms: applyEdits(base.rooms, roomEdits),
+      rooms,
     }
   })
   const [profEdits, setProfEdits] = useState<Record<string, Partial<Professor>>>(loadProfEdits)
-  const [roomEdits, setRoomEdits] = useState<Record<string, Partial<Room>>>(loadRoomEdits)
   const { theme, resolved, cycle: cycleTheme } = useTheme()
   const [catalogueOpen, setCatalogueOpen] = useState(false)
   const [selectedProfId, setSelectedProfId] = useState<string | null>(null)
@@ -240,21 +250,59 @@ function App() {
 
   const updateRoom = useCallback(
     (room_id: string, changes: Partial<Room>) => {
-      setState(s => ({
-        ...s,
-        rooms: {
+      setState(s => {
+        const next = {
           ...s.rooms,
           [room_id]: { ...s.rooms[room_id], ...changes },
-        },
-      }))
-      setRoomEdits(prev => {
-        const next = { ...prev, [room_id]: { ...prev[room_id], ...changes } }
-        saveRoomEdits(next)
-        return next
+        }
+        saveRooms(Object.values(next))
+        return { ...s, rooms: next }
       })
     },
     [],
   )
+
+  const addRoom = useCallback(() => {
+    // Timestamp-suffix id avoids collision across rapid clicks without
+    // threading a counter through setState's updater (which must stay pure).
+    const newId = `room_${Date.now().toString(36)}`
+    const fresh: Room = {
+      id: newId,
+      name: "New Room",
+      building: "",
+      room_type: "pc_lab",
+      station_count: 20,
+      station_type: "pc",
+      display_count: 1,
+      capacity: 20,
+    }
+    setState(s => {
+      const next = { ...s.rooms, [newId]: fresh }
+      saveRooms(Object.values(next))
+      return { ...s, rooms: next, selectedOfferingId: null }
+    })
+    setSelectedProfId(null)
+    setSelectedRoomId(newId)
+    setActivePanel("detail")
+  }, [])
+
+  const removeRoom = useCallback((room_id: string) => {
+    setState(s => {
+      const next = { ...s.rooms }
+      delete next[room_id]
+      saveRooms(Object.values(next))
+      return { ...s, rooms: next }
+    })
+    setSelectedRoomId(prev => (prev === room_id ? null : prev))
+  }, [])
+
+  const clearRooms = useCallback(() => {
+    setState(s => {
+      saveRooms([])
+      return { ...s, rooms: {} }
+    })
+    setSelectedRoomId(null)
+  }, [])
 
   // User DnD always overrides solver output. Clearing `assignment` alongside
   // `pinned` is what actually makes the card move (or leave) visually — the
@@ -304,14 +352,25 @@ function App() {
     [applyModeAssignments],
   )
 
+  const emptyCalendar = useCallback(() => {
+    setState(s => ({
+      ...s,
+      offerings: s.offerings.map(o => ({ ...o, assignment: null })),
+      solveStatus: "idle",
+    }))
+    modeResultsRef.current = null
+    setSolveProgress(null)
+    setSolveError(null)
+  }, [])
+
   const buildSolveRequest = useCallback((): SolveRequestBody => ({
     quarter:            state.quarter,
     year:               state.year,
     solveMode:          state.solveMode,
     offerings:          state.offerings,
     professorOverrides: profEdits,
-    roomOverrides:      roomEdits,
-  }), [state.quarter, state.year, state.solveMode, state.offerings, profEdits, roomEdits])
+    rooms:              Object.values(state.rooms),
+  }), [state.quarter, state.year, state.solveMode, state.offerings, profEdits, state.rooms])
 
   /** Reduce one SSE event into the SolveProgressState. Pure, so we can run
    *  it inside setSolveProgress's callback without stale-closure bugs. */
@@ -609,6 +668,149 @@ function App() {
     [],
   )
 
+  // ── Overlay persistence (Backup / Restore / Commit) ──────────────
+  //
+  // The workspace stores edits in three localStorage overlays (prof, room,
+  // portraits). These three actions let the user move that overlay around:
+  //   Backup  — download the overlay as a portable JSON file (works
+  //             everywhere; survives PC swaps, Drive round-trips, etc.)
+  //   Restore — replace the current overlay from a backup file
+  //   Commit  — write the overlay into the canonical data/*.json files
+  //             on disk (local stack only; hosted filesystem is ephemeral)
+  //
+  // Commit is the "pre-ship" action for the dev/author; Backup/Restore is
+  // the portability path every chair eventually needs when they change PCs.
+
+  const importInputRef = useRef<HTMLInputElement>(null)
+
+  const exportOverlay = useCallback(() => {
+    // schema_version 2: `rooms` is a full list (Path B), not a patch overlay.
+    // Restore handles both 1 (legacy roomEdits) and 2 for back-compat.
+    const snapshot = {
+      schema_version: 2,
+      kind: "scheduler-overlay",
+      exported_at: new Date().toISOString(),
+      profEdits,
+      rooms: Object.values(state.rooms),
+      portraits,
+    }
+    const blob = new Blob([JSON.stringify(snapshot, null, 2)], {
+      type: "application/json",
+    })
+    const date = new Date().toISOString().slice(0, 10)
+    downloadBlob(blob, `scheduler-overlay-${date}.json`)
+  }, [profEdits, state.rooms, portraits])
+
+  const handleImportFile = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      // Reset so picking the same file twice still fires onChange
+      e.target.value = ""
+      if (!file) return
+
+      let snapshot: {
+        schema_version?: number
+        kind?: string
+        profEdits?: Record<string, Partial<Professor>>
+        rooms?: Room[]
+        roomEdits?: Record<string, Partial<Room>> // legacy
+        portraits?: Record<string, string>
+      }
+      try {
+        snapshot = JSON.parse(await file.text())
+      } catch (err) {
+        alert(`Could not read file: ${err instanceof Error ? err.message : err}`)
+        return
+      }
+      if (snapshot.kind !== "scheduler-overlay" ||
+          (snapshot.schema_version !== 1 && snapshot.schema_version !== 2)) {
+        alert("Not a valid Scheduler overlay file.")
+        return
+      }
+
+      const baseline = loadInitialState()
+      const nextProf = snapshot.profEdits ?? {}
+      const nextPortraits = snapshot.portraits ?? {}
+
+      // Resolve the room list. v2 carries it explicitly; v1 carries overlay
+      // patches, which we apply to the current baseline just like the legacy
+      // loader would have. Either way, after restore the state.rooms IS the
+      // source of truth going forward.
+      let nextRooms: Room[]
+      if (snapshot.schema_version === 2 && snapshot.rooms) {
+        nextRooms = snapshot.rooms
+      } else {
+        const edits = snapshot.roomEdits ?? {}
+        nextRooms = Object.values(applyEdits(baseline.rooms, edits))
+      }
+
+      const counts =
+        `${Object.keys(nextProf).length} prof edits · ` +
+        `${nextRooms.length} rooms · ` +
+        `${Object.keys(nextPortraits).length} portraits`
+      if (!window.confirm(
+        `Restore overlay?\nThis replaces your current edits with:\n  ${counts}`
+      )) return
+
+      saveProfEdits(nextProf)
+      saveRooms(nextRooms)
+      try {
+        localStorage.setItem(PORTRAIT_STORAGE_KEY, JSON.stringify(nextPortraits))
+      } catch { /* full */ }
+
+      setProfEdits(nextProf)
+      setPortraits(nextPortraits)
+
+      // Rebuild the merged professors map from baseline + overlay, and write
+      // the full rooms list straight into state. Offerings, solve state,
+      // selections, etc. stay put — overlay restore is scoped to ref data.
+      const roomsMap = Object.fromEntries(nextRooms.map(r => [r.id, r]))
+      setState(s => ({
+        ...s,
+        professors: applyEdits(baseline.professors, nextProf),
+        rooms: roomsMap,
+      }))
+    },
+    [],
+  )
+
+  const commitToSource = useCallback(async () => {
+    const nProf = Object.keys(profEdits).length
+    const roomsList = Object.values(state.rooms)
+    const nRooms = roomsList.length
+    const nPortraits = Object.keys(portraits).length
+    if (nProf + nPortraits === 0) {
+      // Rooms are always written as a full list, so nRooms alone doesn't
+      // signal "has changes" the way prof edits and portraits do — but still
+      // bail if literally everything is empty.
+      if (nRooms === 0) {
+        alert("No edits to commit.")
+        return
+      }
+    }
+    if (!window.confirm(
+      `Write edits to source files on disk?\n\n` +
+      `  • data/professors.json  (${nProf} edits)\n` +
+      `  • data/rooms.json  (${nRooms} rooms, full replace)\n` +
+      `  • data/portraits/  (${nPortraits} portraits)\n\n` +
+      `Canonical files will be modified. Commit them to git afterward.`
+    )) return
+
+    try {
+      const result = await postCommit({ profEdits, rooms: roomsList, portraits })
+      const head =
+        `Committed: ${result.professorsUpdated} profs · ` +
+        `${result.roomsUpdated} rooms · ` +
+        `${result.portraitsWritten} portraits.`
+      const tail = result.warnings.length > 0
+        ? `\n\nWarnings:\n${result.warnings.map(w => "• " + w).join("\n")}`
+        : ""
+      alert(head + tail)
+    } catch (err) {
+      alert(`Commit failed: ${err instanceof Error ? err.message : err}`)
+    }
+  }, [profEdits, state.rooms, portraits])
+
   // Close the roster drawer when resizing up to desktop
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 1024px)")
@@ -664,6 +866,8 @@ function App() {
       onOpenCatalogue={openCatalogue}
       onStartPlacing={startPlacing}
       onUnpinToRoster={id => pinToSlot(id, null)}
+      onAddRoom={addRoom}
+      onClearRooms={clearRooms}
     />
   )
 
@@ -686,6 +890,7 @@ function App() {
       onPinToSlot={pinToSlot}
       onSetSolveMode={setSolveMode}
       onSolve={requestSolve}
+      onEmptyCalendar={emptyCalendar}
       onStartPlacing={startPlacing}
       onDismissError={() => setSolveError(null)}
       onDismissProgress={() => setSolveProgress(null)}
@@ -696,6 +901,7 @@ function App() {
     <RoomCard
       room={selectedRoom}
       onUpdate={updateRoom}
+      onDelete={removeRoom}
       onClose={() => setSelectedRoomId(null)}
     />
   ) : selectedProf ? (
@@ -721,6 +927,7 @@ function App() {
 
   return (
     <PortraitContext.Provider value={portraits}>
+     <ProfessorContext.Provider value={state.professors}>
       <div className="scheduler">
         <aside className="resume-rail" aria-label="Resume from an exported schedule">
           <button
@@ -831,6 +1038,44 @@ function App() {
             {state.solveMode}
           </span>
           <div className="scheduler__topbar-right">
+            <div className="topbar-persist" role="group" aria-label="Overlay storage">
+              <button
+                type="button"
+                className="topbar-btn topbar-btn--ghost"
+                onClick={exportOverlay}
+                title="Download current edits as a portable JSON backup"
+              >
+                Backup
+              </button>
+              <button
+                type="button"
+                className="topbar-btn topbar-btn--ghost"
+                onClick={() => importInputRef.current?.click()}
+                title="Replace current edits from a backup JSON"
+              >
+                Restore
+              </button>
+              <button
+                type="button"
+                className="topbar-btn topbar-btn--ghost"
+                onClick={commitToSource}
+                disabled={apiAvailable !== true}
+                title={
+                  apiAvailable === true
+                    ? "Write edits to data/*.json on disk"
+                    : "Requires the local launcher"
+                }
+              >
+                Commit
+              </button>
+              <input
+                ref={importInputRef}
+                type="file"
+                accept="application/json,.json"
+                className="topbar-persist__input"
+                onChange={handleImportFile}
+              />
+            </div>
             <button
               type="button"
               className="topbar-btn topbar-btn--export"
@@ -928,6 +1173,7 @@ function App() {
           onRemove={removeOffering}
         />
       </div>
+     </ProfessorContext.Provider>
     </PortraitContext.Provider>
   )
 }

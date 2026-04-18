@@ -60,7 +60,7 @@ def _minimal_export_body(*, solve_mode: str = "balanced") -> dict:
             },
         ],
         "professorOverrides": {},
-        "roomOverrides": {},
+        "rooms": [],
     }
 
 

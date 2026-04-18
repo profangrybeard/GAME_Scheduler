@@ -130,7 +130,9 @@ class SolveRequest(BaseModel):
     solveMode: str = Field("balanced")
     offerings: list[OfferingModel]
     professorOverrides: dict[str, dict] = Field(default_factory=dict)
-    roomOverrides: dict[str, dict] = Field(default_factory=dict)
+    # Full rooms deck, Path B (not patches). The frontend keeps the whole list
+    # in localStorage; solver uses it verbatim instead of merging onto disk.
+    rooms: list[dict] = Field(default_factory=list)
 
 
 class ExportRequest(BaseModel):
@@ -140,7 +142,7 @@ class ExportRequest(BaseModel):
     solveMode: str = Field("balanced")
     offerings: list[OfferingModel]
     professorOverrides: dict[str, dict] = Field(default_factory=dict)
-    roomOverrides: dict[str, dict] = Field(default_factory=dict)
+    rooms: list[dict] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -211,7 +213,7 @@ async def solve_stream(req: SolveRequest) -> StreamingResponse:
                     react_offerings, req.quarter, req.year,
                 ),
                 professors_override=req.professorOverrides,
-                rooms_override=req.roomOverrides,
+                rooms=req.rooms,
                 progress_callback=progress_cb,
             )
             event_queue.put({
@@ -308,7 +310,7 @@ def export(req: ExportRequest) -> Response:
                 react_offerings, req.quarter, req.year,
             ),
             professors_override=req.professorOverrides,
-            rooms_override=req.roomOverrides,
+            rooms=req.rooms,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -327,7 +329,7 @@ def export(req: ExportRequest) -> Response:
         "solver_mode":        req.solveMode,
         "offerings":          react_offerings,
         "professor_overrides": req.professorOverrides,
-        "room_overrides":     req.roomOverrides,
+        "rooms":              req.rooms,
         "solver_results":     _embedded_solver_results(results),
     }
 
@@ -387,7 +389,7 @@ async def export_stream(req: ExportRequest) -> StreamingResponse:
                     react_offerings, req.quarter, req.year,
                 ),
                 professors_override=req.professorOverrides,
-                rooms_override=req.roomOverrides,
+                rooms=req.rooms,
                 progress_callback=progress_cb,
             )
             event_queue.put({
@@ -408,7 +410,7 @@ async def export_stream(req: ExportRequest) -> StreamingResponse:
                 "solver_mode":        req.solveMode,
                 "offerings":          react_offerings,
                 "professor_overrides": req.professorOverrides,
-                "room_overrides":     req.roomOverrides,
+                "rooms":              req.rooms,
                 "solver_results":     _embedded_solver_results(results),
             }
 
@@ -579,6 +581,138 @@ async def parse_state(file: UploadFile = File(...)) -> dict:
     )
 
     return {"state": cleaned, "warnings": warnings}
+
+
+_PORTRAIT_MIME_EXT = {
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/webp": "webp",
+}
+_PORTRAIT_EXTS = ("png", "jpg", "jpeg", "webp")
+
+
+class CommitRequest(BaseModel):
+    """Snapshot the workspace mails home when the user hits "Commit to source".
+
+    Professors and portraits are still overlay patches (add/modify only —
+    the overlay has no "remove" verb for now). Rooms are Path B: the full
+    deck replaces data/rooms.json wholesale, so adds AND removes both land.
+    Pass an empty list to flush.
+    """
+    profEdits: dict[str, dict] = Field(default_factory=dict)
+    rooms: list[dict] = Field(default_factory=list)
+    # Values are full data URLs (data:image/png;base64,...). Removals aren't
+    # represented — the frontend deletes the key on remove, so absence means
+    # "no change" rather than "delete the baseline file". Committing removals
+    # would need a separate explicit signal; MVP ignores that gap.
+    portraits: dict[str, str] = Field(default_factory=dict)
+
+
+@app.post("/api/commit")
+def commit_overlay(req: CommitRequest) -> dict:
+    """Merge the overlay snapshot into the canonical data/ files on disk.
+
+    Only useful on the local stack — in the Fly.io container the filesystem
+    is ephemeral, so writes evaporate on redeploy. The frontend gates this
+    button behind an apiAvailable check plus an explicit confirm dialog.
+
+    Returns counts so the UI can surface a "committed 3 profs, 1 room, 2
+    portraits" toast. Unknown IDs in the overlay are reported as warnings
+    rather than hard-failing — they usually mean the canonical data drifted
+    since the overlay was captured (deleted prof, renamed room) and
+    dropping the orphan is the right move.
+    """
+    import base64 as _b64
+
+    summary: dict = {
+        "professorsUpdated": 0,
+        "roomsUpdated": 0,
+        "portraitsWritten": 0,
+        "warnings": [],
+    }
+
+    if req.profEdits:
+        prof_path = BASE / "data" / "professors.json"
+        profs = json.loads(prof_path.read_text(encoding="utf-8"))
+        prof_map = {p["id"]: p for p in profs}
+        for prof_id, patch in req.profEdits.items():
+            target = prof_map.get(prof_id)
+            if target is None:
+                summary["warnings"].append(f"Unknown prof_id: {prof_id}")
+                continue
+            target.update(patch)
+            summary["professorsUpdated"] += 1
+        prof_path.write_text(
+            json.dumps(profs, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+
+    # Rooms: full-list replacement. The frontend IS the source of truth for
+    # the dept's deck, so data/rooms.json gets rewritten wholesale. Empty
+    # list = flush. We still validate minimal shape so a malformed payload
+    # can't nuke the file with garbage.
+    if req.rooms is not None:
+        room_path = BASE / "data" / "rooms.json"
+        cleaned: list[dict] = []
+        seen_ids: set[str] = set()
+        for i, r in enumerate(req.rooms):
+            if not isinstance(r, dict):
+                summary["warnings"].append(f"Room index {i} is not an object — skipped")
+                continue
+            rid = r.get("id")
+            if not isinstance(rid, str) or not rid:
+                summary["warnings"].append(f"Room index {i} missing id — skipped")
+                continue
+            if rid in seen_ids:
+                summary["warnings"].append(f"Duplicate room id {rid} — skipped")
+                continue
+            seen_ids.add(rid)
+            cleaned.append(r)
+        room_path.write_text(
+            json.dumps(cleaned, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        summary["roomsUpdated"] = len(cleaned)
+
+    if req.portraits:
+        portraits_dir = BASE / "data" / "portraits"
+        portraits_dir.mkdir(exist_ok=True)
+        for prof_id, data_url in req.portraits.items():
+            # data URL: "data:image/png;base64,<payload>"
+            try:
+                header, encoded = data_url.split(",", 1)
+                mime = header.split(":", 1)[1].split(";", 1)[0]
+            except (ValueError, IndexError):
+                summary["warnings"].append(f"Invalid data URL for {prof_id}")
+                continue
+            ext = _PORTRAIT_MIME_EXT.get(mime)
+            if ext is None:
+                summary["warnings"].append(
+                    f"Unsupported image type for {prof_id}: {mime}"
+                )
+                continue
+            try:
+                raw = _b64.b64decode(encoded, validate=True)
+            except Exception:  # noqa: BLE001 — any decode error is a user-facing warning
+                summary["warnings"].append(f"Corrupt base64 for {prof_id}")
+                continue
+            # Remove any stale file with a different extension so we don't end
+            # up with both prof_allen.png and prof_allen.jpg after a re-upload
+            # (Vite glob would pick whichever sorted first; chaos).
+            for old_ext in _PORTRAIT_EXTS:
+                if old_ext == ext:
+                    continue
+                stale = portraits_dir / f"{prof_id}.{old_ext}"
+                if stale.exists():
+                    stale.unlink()
+            (portraits_dir / f"{prof_id}.{ext}").write_bytes(raw)
+            summary["portraitsWritten"] += 1
+
+    # Downstream endpoints memoize the canonical ID sets. Invalidate after a
+    # write so /api/state/parse's drift validation uses fresh data.
+    _local_reference_ids.cache_clear()
+
+    return summary
 
 
 # ---------------------------------------------------------------------------

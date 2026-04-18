@@ -16,6 +16,8 @@ import argparse
 import sys
 from pathlib import Path
 
+import config
+
 BASE = Path(__file__).resolve().parent
 
 
@@ -58,7 +60,7 @@ def _print_summary(results: dict) -> None:
     if balanced and balanced["schedule"]:
         print(f"\n  Preview - balanced schedule ({len(balanced['schedule'])} sections):")
         for a in balanced["schedule"]:
-            days  = "MW" if a["day_group"] == 1 else "TTh"
+            days  = config.DAY_GROUP_LABELS.get(a["day_group"], f"dg{a['day_group']}")
             grad  = "(G)" if a["is_graduate"] else "   "
             name  = a["course_name"][:40]
             print(f"    {a['time_slot']:8s} {days}  {a['catalog_id']:12s} {grad} {name}")

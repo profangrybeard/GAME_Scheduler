@@ -2,11 +2,10 @@ import { useMemo } from "react"
 import type {
   Course,
   Offering,
-  Priority,
   Professor,
   Room,
 } from "../types"
-import { classifyOffering } from "../types"
+import { classifyOffering, PRIORITIES, profRoleText } from "../types"
 import { ProfAvatar } from "./ProfAvatar"
 
 /**
@@ -26,13 +25,6 @@ import { ProfAvatar } from "./ProfAvatar"
  * Reads  (props):  the currently selected offering + reference data
  * Writes (events): updateOffering, removeOffering
  */
-
-const PRIORITY_OPTIONS: ReadonlyArray<{ key: Priority; label: string }> = [
-  { key: "must_have", label: "Must" },
-  { key: "should_have", label: "Should" },
-  { key: "could_have", label: "Could" },
-  { key: "nice_to_have", label: "Nice" },
-]
 
 
 export interface ClassProps {
@@ -143,10 +135,7 @@ export function Class(props: ClassProps) {
                 {assignedProf?.name ?? "AUTO professor"}
               </div>
               <div className="class__prof-sub">
-                {assignedProf
-                  ? (assignedProf.is_chair ? "Chair · " : "") +
-                    assignedProf.home_department.toUpperCase()
-                  : "Solver will pick"}
+                {assignedProf ? profRoleText(assignedProf) : "Solver will pick"}
               </div>
             </div>
           </div>
@@ -158,10 +147,11 @@ export function Class(props: ClassProps) {
         <section className="class__section">
           <label className="class__label">Priority</label>
           <div className="class__segmented">
-            {PRIORITY_OPTIONS.map(opt => (
+            {PRIORITIES.map(opt => (
               <button
                 key={opt.key}
                 type="button"
+                title={opt.tooltip}
                 className={
                   "class__seg" +
                   (offering.priority === opt.key ? " class__seg--active" : "")
@@ -174,6 +164,11 @@ export function Class(props: ClassProps) {
               </button>
             ))}
           </div>
+          <p className="class__hint">
+            MoSCoW-inspired soft weighting. Add “would be nice” classes
+            freely — the solver drops the lowest priorities first when it
+            can’t fit them all.
+          </p>
         </section>
 
         <section className="class__section">

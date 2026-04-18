@@ -31,7 +31,7 @@ def test_imports():
     assert callable(build_objective)
     assert callable(write_excel)
     assert len(config.TIME_SLOTS) == 4
-    assert set(config.DAY_GROUPS.keys()) == {1, 2}
+    assert set(config.DAY_GROUPS.keys()) == {1, 2, 3}
     assert set(config.MODE_WEIGHTS.keys()) == {"affinity_first", "time_pref_first", "balanced"}
     assert list(config.ROOM_COMPATIBILITY.keys())  # non-empty
 

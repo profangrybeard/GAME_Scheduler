@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
 import type { Course, Offering, Professor, Room } from "../types"
-import { classifyOffering } from "../types"
+import { classifyOffering, PRIORITY_INDEX, STATION_TYPE_LABELS } from "../types"
 import { ProfAvatar } from "./ProfAvatar"
 
 /**
@@ -16,13 +16,6 @@ import { ProfAvatar } from "./ProfAvatar"
  */
 
 const DND_MIME = "application/x-offering"
-
-const PRIORITY_ORDER: Record<string, number> = {
-  must_have: 0,
-  should_have: 1,
-  could_have: 2,
-  nice_to_have: 3,
-}
 
 type RosterTab = "offerings" | "profs" | "rooms"
 
@@ -44,11 +37,10 @@ export interface RosterProps {
   /** Called when a schedule card is dropped onto the offerings list —
    *  unpins it back to the unplaced roster. */
   onUnpinToRoster: (catalog_id: string) => void
-}
-
-/** An offering is "placed" if it has a slot on the grid. */
-function isPlaced(o: Offering): boolean {
-  return !!(o.pinned || o.assignment)
+  /** Create a fresh room with sensible defaults and open it for editing. */
+  onAddRoom: () => void
+  /** Flush the entire rooms list — dept starts from zero. Confirmed in UI. */
+  onClearRooms: () => void
 }
 
 export function Roster(props: RosterProps) {
@@ -56,10 +48,10 @@ export function Roster(props: RosterProps) {
 
   const unplaced = useMemo(() => {
     return props.offerings
-      .filter(o => !isPlaced(o))
+      .filter(o => classifyOffering(o) !== "placed")
       .sort((a, b) => {
-        const pa = PRIORITY_ORDER[a.priority] ?? 9
-        const pb = PRIORITY_ORDER[b.priority] ?? 9
+        const pa = PRIORITY_INDEX[a.priority] ?? 9
+        const pb = PRIORITY_INDEX[b.priority] ?? 9
         if (pa !== pb) return pa - pb
         return a.catalog_id.localeCompare(b.catalog_id)
       })
@@ -84,6 +76,17 @@ export function Roster(props: RosterProps) {
         ? `${profList.length}`
         : `${roomList.length}`
 
+  const handleClearRooms = () => {
+    const n = roomList.length
+    if (n === 0) return
+    if (!window.confirm(
+      `Flush all ${n} room${n === 1 ? "" : "s"}?\n\n` +
+      `Your dept's list will start empty. Add rooms one at a time to build ` +
+      `your deck. This only affects your browser until you Commit to disk.`
+    )) return
+    props.onClearRooms()
+  }
+
   return (
     <aside className="panel panel--roster" aria-label="Roster">
       <header className="panel__header">
@@ -98,6 +101,27 @@ export function Roster(props: RosterProps) {
           >
             + Add
           </button>
+        )}
+        {tab === "rooms" && (
+          <>
+            <button
+              type="button"
+              className="roster__add-btn"
+              onClick={props.onAddRoom}
+              title="Add a new room to your dept's list"
+            >
+              + Add
+            </button>
+            <button
+              type="button"
+              className="roster__flush-btn"
+              onClick={handleClearRooms}
+              disabled={roomList.length === 0}
+              title="Remove every room and start from scratch"
+            >
+              Flush
+            </button>
+          </>
         )}
       </header>
 
@@ -365,10 +389,6 @@ function ProfsList(props: ProfsListProps) {
               <span className="roster-card__name roster-card__name--primary">
                 {p.name}
               </span>
-              <span className="roster-card__sub">
-                {p.is_chair ? "Chair · " : ""}
-                {p.home_department.toUpperCase()} · max {p.max_classes}
-              </span>
             </span>
             <span
               className="roster-card__quarters"
@@ -399,7 +419,9 @@ function RoomsList(props: RoomsListProps) {
   return (
     <div className="panel__body roster__list">
       {props.rooms.length === 0 && (
-        <p className="placeholder placeholder--empty">No rooms loaded.</p>
+        <p className="placeholder placeholder--empty">
+          No rooms yet.<br />Click <strong>+ Add</strong> to build your deck.
+        </p>
       )}
       {props.rooms.map(r => {
         const isSelected = props.selectedRoomId === r.id
@@ -425,10 +447,13 @@ function RoomsList(props: RoomsListProps) {
             <span className="roster-card__icon" aria-hidden="true">▦</span>
             <span className="roster-card__course">
               <span className="roster-card__name roster-card__name--primary">
-                {r.name}
+                {r.name || "(untitled room)"}
               </span>
               <span className="roster-card__sub">
-                {r.station_count}×{r.station_type.toUpperCase()} · cap {r.capacity}
+                {r.building && <>{r.building}{" · "}</>}
+                {r.station_count}×
+                {(STATION_TYPE_LABELS[r.station_type] ?? r.station_type).toUpperCase()}
+                {" · cap "}{r.capacity}
               </span>
             </span>
             <span

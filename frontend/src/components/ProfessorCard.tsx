@@ -1,5 +1,6 @@
-import { useRef } from "react"
+import { useRef, useState } from "react"
 import type { Professor, TimePref } from "../types"
+import { profRoleText, SCHOOL_LABELS, SCHOOL_ORDER } from "../types"
 import { ProfAvatar } from "./ProfAvatar"
 
 /**
@@ -30,6 +31,22 @@ export interface ProfessorCardProps {
 export function ProfessorCard(props: ProfessorCardProps) {
   const { professor: p } = props
   const fileRef = useRef<HTMLInputElement>(null)
+  const [specDraft, setSpecDraft] = useState("")
+
+  const commitSpec = () => {
+    const normalized = specDraft.trim().toLowerCase().replace(/\s+/g, "_")
+    setSpecDraft("")
+    if (!normalized || p.specializations.includes(normalized)) return
+    props.onUpdate(p.id, {
+      specializations: [...p.specializations, normalized],
+    })
+  }
+
+  const removeSpec = (spec: string) => {
+    props.onUpdate(p.id, {
+      specializations: p.specializations.filter(s => s !== spec),
+    })
+  }
 
   const handlePortraitPick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -63,11 +80,36 @@ export function ProfessorCard(props: ProfessorCardProps) {
           <ProfAvatar profId={p.id} name={p.name} size={64} className="prof-card__avatar" />
           <div className="prof-card__identity">
             <h3 className="prof-card__name">{p.name}</h3>
-            <span className="prof-card__role">
-              {p.is_chair ? "Chair · " : ""}
-              {p.home_department.toUpperCase()}
-            </span>
+            <span className="prof-card__role">{profRoleText(p)}</span>
           </div>
+        </section>
+
+        <section className="class__section">
+          <label className="class__label">Chair of</label>
+          <div className="prof-card__chairs">
+            {SCHOOL_ORDER.map(d => {
+              const active = p.chairs.includes(d)
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  className={"chip" + (active ? " chip--active" : "")}
+                  onClick={() => {
+                    const next = active
+                      ? p.chairs.filter(x => x !== d)
+                      : [...p.chairs, d]
+                    props.onUpdate(p.id, {
+                      chairs: next,
+                      is_chair: next.length > 0,
+                    })
+                  }}
+                >
+                  {SCHOOL_LABELS[d]}
+                </button>
+              )
+            })}
+          </div>
+          <p className="class__hint">Leave empty if not a chair.</p>
         </section>
 
         <section className="class__section">
@@ -153,6 +195,46 @@ export function ProfessorCard(props: ProfessorCardProps) {
             }
           />
         </section>
+
+        <details className="class__section prof-card__specs">
+          <summary className="prof-card__specs-summary">
+            <span>Specializations</span>
+            {p.specializations.length > 0 && (
+              <span className="prof-card__specs-count">
+                {p.specializations.length}
+              </span>
+            )}
+          </summary>
+          <div className="prof-card__tags">
+            {p.specializations.map(spec => (
+              <span key={spec} className="prof-card__spec">
+                {spec.replace(/_/g, " ")}
+                <button
+                  type="button"
+                  className="prof-card__spec-remove"
+                  aria-label={`Remove ${spec}`}
+                  onClick={() => removeSpec(spec)}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+            <input
+              type="text"
+              className="prof-card__spec-input"
+              placeholder={p.specializations.length ? "Add…" : "Add tag…"}
+              value={specDraft}
+              onChange={e => setSpecDraft(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  commitSpec()
+                }
+              }}
+              onBlur={commitSpec}
+            />
+          </div>
+        </details>
 
         <section className="class__section">
           <label className="class__label">Portrait</label>

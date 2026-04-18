@@ -2,6 +2,7 @@
   {
     "id": "room_263",
     "name": "Room 263 \u2013 PC Game Lab",
+    "building": "Montgomery Hall",
     "room_type": "pc_lab",
     "station_count": 20,
     "station_type": "pc",
@@ -12,6 +13,7 @@
   {
     "id": "room_261",
     "name": "Room 261 \u2013 PC Game Lab",
+    "building": "Montgomery Hall",
     "room_type": "pc_lab",
     "station_count": 20,
     "station_type": "pc",
@@ -22,6 +24,7 @@
   {
     "id": "room_260",
     "name": "Room 260 \u2013 Mac Design Lab",
+    "building": "Montgomery Hall",
     "room_type": "mac_lab",
     "station_count": 20,
     "station_type": "mac",
@@ -32,6 +35,7 @@
   {
     "id": "room_259",
     "name": "Room 259 \u2013 PC Design Lab",
+    "building": "Montgomery Hall",
     "room_type": "pc_lab",
     "station_count": 20,
     "station_type": "pc",
@@ -42,6 +46,7 @@
   {
     "id": "room_258",
     "name": "Room 258 \u2013 Teacher Station",
+    "building": "Montgomery Hall",
     "room_type": "lecture_flex",
     "station_count": 1,
     "station_type": "pc",
@@ -52,6 +57,7 @@
   {
     "id": "room_257",
     "name": "Room 257 \u2013 Teacher Station",
+    "building": "Montgomery Hall",
     "room_type": "lecture_flex",
     "station_count": 1,
     "station_type": "pc",
@@ -62,6 +68,7 @@
   {
     "id": "room_156",
     "name": "Room 156 \u2013 Game Lab",
+    "building": "Montgomery Hall",
     "room_type": "large_game_lab",
     "station_count": 10,
     "station_type": "pc",

@@ -1,6 +1,7 @@
 import { useContext } from "react"
 import { PORTRAIT_BY_PROF_ID, PROF_COLORS, profInitials } from "../data"
 import { PortraitContext } from "./PortraitContext"
+import { ProfessorContext } from "./ProfessorContext"
 
 /**
  * Professor avatar — renders in priority order:
@@ -9,9 +10,10 @@ import { PortraitContext } from "./PortraitContext"
  *   3. Colored initials circle (PROF_COLORS[prof_id])
  *   4. Neutral silhouette (AUTO / no prof assigned)
  *
- * Portrait overrides come from PortraitContext (set by App.tsx). Context
- * lives in ./PortraitContext so this file only exports components
- * (satisfies react-refresh/only-export-components).
+ * Chair status (gold ★ badge) is resolved from ProfessorContext so every
+ * call site — roster, schedule grid, detail panel hero — shows the badge
+ * consistently the moment `is_chair` flips. Do NOT stamp a badge at the
+ * call site; add prof-level decoration here instead.
  */
 
 export interface ProfAvatarProps {
@@ -29,13 +31,30 @@ export function ProfAvatar({
   className = "",
   title,
 }: ProfAvatarProps) {
-  // Hook must be called unconditionally at the top — no branches before it.
   const overrides = useContext(PortraitContext)
+  const professors = useContext(ProfessorContext)
   const label = title ?? name ?? profId ?? "AUTO"
   const style = { width: size, height: size }
+  const isChair = profId ? professors[profId]?.is_chair === true : false
+
+  // Wrap any inner element with the chair badge. Keeps className on the
+  // outer wrapper so call-site layout classes (grid-area, flex-shrink)
+  // continue to target the root node.
+  const wrapWithBadge = (inner: React.ReactNode) => (
+    <span
+      className={`avatar-wrap ${className}`.trim()}
+      style={style}
+      title={label}
+    >
+      {inner}
+      <span className="avatar__chair-badge" aria-label="Chair" title="Chair">
+        ★
+      </span>
+    </span>
+  )
 
   if (!profId) {
-    // AUTO — silhouette placeholder
+    // AUTO — silhouette placeholder. Never a chair.
     const iconSize = Math.max(10, size - 8)
     return (
       <span
@@ -63,27 +82,29 @@ export function ProfAvatar({
 
   const portraitUrl = overrides[profId] ?? PORTRAIT_BY_PROF_ID[profId]
   if (portraitUrl) {
-    return (
+    const img = (
       <img
         src={portraitUrl}
         alt={label}
-        title={label}
-        className={`avatar avatar--photo ${className}`.trim()}
+        title={isChair ? undefined : label}
+        className={isChair ? "avatar avatar--photo" : `avatar avatar--photo ${className}`.trim()}
         style={style}
       />
     )
+    return isChair ? wrapWithBadge(img) : img
   }
 
   const color = PROF_COLORS[profId] ?? "#6b7280"
   const initials = profInitials(name ?? profId)
   const fontSize = Math.max(9, Math.floor(size * 0.42))
-  return (
+  const initialsEl = (
     <span
-      className={`avatar avatar--initials ${className}`.trim()}
+      className={isChair ? "avatar avatar--initials" : `avatar avatar--initials ${className}`.trim()}
       style={{ ...style, background: color, fontSize }}
-      title={label}
+      title={isChair ? undefined : label}
     >
       {initials}
     </span>
   )
+  return isChair ? wrapWithBadge(initialsEl) : initialsEl
 }
