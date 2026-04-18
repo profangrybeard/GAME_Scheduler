@@ -219,26 +219,6 @@ export async function postSolveStream(
   return finalResult
 }
 
-export async function postExport(
-  body: SolveRequestBody,
-): Promise<{ blob: Blob; filename: string }> {
-  const res = await fetch("/api/export", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) {
-    const detail = await res.text()
-    throw new Error(`export failed (${res.status}): ${detail.slice(0, 200)}`)
-  }
-  const cd = res.headers.get("Content-Disposition") ?? ""
-  const m = cd.match(/filename="?([^"]+)"?/i)
-  const filename = m?.[1] ?? `schedule_${body.quarter}_${body.year}.xlsx`
-  const blob = await res.blob()
-  return { blob, filename }
-}
-
-
 // ---------------------------------------------------------------------------
 // Streaming export — same event vocabulary as postSolveStream + the two
 // extra terminal events. Lets App.tsx reuse SolveProgress panel for both

@@ -18,6 +18,7 @@ from datetime import datetime
 from pathlib import Path
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 # ─── Version ────────────────────────────────────────────────────────
 APP_VERSION = "2.6.1"
@@ -485,6 +486,10 @@ CSS_TEMPLATE = """
     }}
     .badge-room {{ background: {ACCENT_AMBER}15; color: {TXT_MUTED}; border: 1px solid {BORDER}; }}
 
+    /* ── Spacers ── */
+    .gs-spacer-xs {{ height: 4px; }}
+    .gs-spacer-lg {{ height: 20px; }}
+
     /* Desktop-only gate: show overlay on small screens */
     @media (max-width: 1024px) {{
         .stApp::before {{
@@ -794,7 +799,7 @@ def show_welcome(home_quarter):
                 unsafe_allow_html=True,
             )
         with col_btn:
-            st.markdown('<div style="height:20px;"></div>', unsafe_allow_html=True)
+            st.markdown('<div class="gs-spacer-lg"></div>', unsafe_allow_html=True)
             if st.button("Load", key=f"welcome_{key}", use_container_width=True):
                 tmpl_quarter = intended_q if intended_q else home_quarter
                 st.session_state["active_project"] = {
@@ -831,7 +836,7 @@ if active_project is None:
             "Year", min_value=2024, max_value=2030, value=2026, label_visibility="collapsed"
         )
     with sf_col3:
-        st.markdown('<div style="height:4px;"></div>', unsafe_allow_html=True)
+        st.markdown('<div class="gs-spacer-xs"></div>', unsafe_allow_html=True)
         if st.button("Create New Schedule", type="primary", use_container_width=True):
             st.session_state["active_project"] = {
                 "quarter": new_quarter,
@@ -1162,7 +1167,6 @@ else:
                 unsafe_allow_html=True,
             )
             if _placing_just_started:
-                import streamlit.components.v1 as components
                 components.html(
                     '<script>setTimeout(function(){'
                     'try{window.parent.document.querySelectorAll("[data-baseweb=tab]")[2].click()}catch(e){}'
@@ -1192,8 +1196,7 @@ else:
 
     # Inject amber glow onto Generate Schedule button when pending changes exist
     if _pending_now > 0:
-        import streamlit.components.v1 as _components
-        _components.html(
+        components.html(
             f'<style>@keyframes gen-pulse {{'
             f'  0%,100% {{ box-shadow: 0 0 0 2px {ACCENT_AMBER}, 0 0 8px {ACCENT_AMBER}88; }}'
             f'  50%     {{ box-shadow: 0 0 0 2px {ACCENT_AMBER}, 0 0 20px {ACCENT_AMBER}; }}'
@@ -1274,8 +1277,7 @@ else:
     tab_catalog, tab_courses, tab_schedule = st.tabs(["Catalog", "Courses", _sched_label])
 
     # Tab persistence — remember which tab the user was on across reruns
-    import streamlit.components.v1 as _tab_components
-    _tab_components.html(
+    components.html(
         """
         <script>
         (function() {
@@ -1401,8 +1403,7 @@ else:
                 unsafe_allow_html=True,
             )
             # JS: after each rerun, move each portrait placeholder into its next-sibling expander's summary.
-            import streamlit.components.v1 as _crs
-            _crs.html(
+            components.html(
                 """
                 <script>
                 (function() {
@@ -1521,7 +1522,7 @@ else:
                                 ts_val = st.selectbox("Time", config.TIME_SLOTS, index=config.TIME_SLOTS.index(lock["time_slot"]), key=f"board_ts_{idx}")
                                 active_project["offerings"][idx]["locked"] = {"day_group": dg_val, "time_slot": ts_val}
                             with lt2:
-                                st.markdown(f'<div style="height:20px;"></div>', unsafe_allow_html=True)
+                                st.markdown('<div class="gs-spacer-lg"></div>', unsafe_allow_html=True)
                                 if st.button("Unlock", key=f"unlock_{idx}", use_container_width=True):
                                     active_project["offerings"][idx]["locked"] = None
                                     add_log("UNLOCK", f"Unlocked {cid}")
