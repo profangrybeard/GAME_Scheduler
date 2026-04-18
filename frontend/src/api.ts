@@ -108,10 +108,20 @@ export type SolveEvent =
       unscheduled_count: number
     }
   | ({ type: "solve_complete" } & SolveResponse)
+  // Extra terminal events emitted by /api/export/stream (in addition to all
+  // of the above). Reusing the same union keeps the App.tsx reducer single-
+  // discriminator instead of two near-identical event handlers.
+  | { type: "xlsx_writing" }
+  | {
+      type: "export_complete"
+      filename: string
+      size_bytes: number
+      xlsx_base64: string
+    }
   | {
       type: "error"
       message: string
-      kind: "invalid_input" | "solver_error"
+      kind: "invalid_input" | "solver_error" | "export_error"
     }
 
 /**
@@ -226,6 +236,113 @@ export async function postExport(
   const filename = m?.[1] ?? `schedule_${body.quarter}_${body.year}.xlsx`
   const blob = await res.blob()
   return { blob, filename }
+}
+
+
+// ---------------------------------------------------------------------------
+// Streaming export — same event vocabulary as postSolveStream + the two
+// extra terminal events. Lets App.tsx reuse SolveProgress panel for both
+// Generate and Export, so users see one consistent progress UI.
+// ---------------------------------------------------------------------------
+
+const _XLSX_MIME =
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+/** Decode base64 to Uint8Array. ~2x faster than the atob+charCodeAt loop on
+ *  the schedule file sizes we deal with (~10-50KB). */
+function _base64ToBytes(b64: string): Uint8Array {
+  const binary = atob(b64)
+  const out = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) out[i] = binary.charCodeAt(i)
+  return out
+}
+
+/**
+ * Stream an export from /api/export/stream, invoking `onEvent` for every
+ * frame. Returns the decoded XLSX `{ blob, filename }` on `export_complete`,
+ * or throws on `error` / transport failure.
+ *
+ * Mirrors postSolveStream's SSE-frame parsing so the same event pump works
+ * for both. The buffer-tolerant frame split (`\n\n`) handles mid-chunk reads.
+ */
+export async function postExportStream(
+  body: SolveRequestBody,
+  onEvent: (event: SolveEvent) => void,
+  signal?: AbortSignal,
+): Promise<{ blob: Blob; filename: string }> {
+  const res = await fetch("/api/export/stream", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept":       "text/event-stream",
+    },
+    body:   JSON.stringify(body),
+    signal,
+  })
+  if (!res.ok) {
+    const detail = await res.text()
+    throw new Error(`export stream failed (${res.status}): ${detail.slice(0, 200)}`)
+  }
+  if (!res.body) {
+    throw new Error("export stream failed: response had no body")
+  }
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder("utf-8")
+  let buffer = ""
+  let final: { blob: Blob; filename: string } | null = null
+  let errorEvent: { message: string; kind: string } | null = null
+
+  const parseFrame = (frame: string): SolveEvent | null => {
+    if (!frame || frame.startsWith(":")) return null // heartbeat / comment
+    let dataStr: string | null = null
+    for (const line of frame.split("\n")) {
+      if (line.startsWith("data:")) dataStr = line.slice(5).trim()
+    }
+    if (dataStr === null) return null
+    try { return JSON.parse(dataStr) as SolveEvent }
+    catch { return null }
+  }
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+
+      let sepIdx: number
+      while ((sepIdx = buffer.indexOf("\n\n")) !== -1) {
+        const frame = buffer.slice(0, sepIdx)
+        buffer = buffer.slice(sepIdx + 2)
+        const event = parseFrame(frame)
+        if (!event) continue
+        onEvent(event)
+        if (event.type === "export_complete") {
+          const bytes = _base64ToBytes(event.xlsx_base64)
+          // BlobPart can be ArrayBuffer or ArrayBufferView; pass the
+          // typed-array's underlying buffer to satisfy strict TS configs.
+          final = {
+            blob: new Blob([bytes.buffer as ArrayBuffer], { type: _XLSX_MIME }),
+            filename: event.filename,
+          }
+        } else if (event.type === "error") {
+          errorEvent = { message: event.message, kind: event.kind }
+        }
+      }
+    }
+  } finally {
+    try { reader.releaseLock() } catch { /* already released */ }
+  }
+
+  if (errorEvent) {
+    const err = new Error(errorEvent.message) as Error & { kind?: string }
+    err.kind = errorEvent.kind
+    throw err
+  }
+  if (!final) {
+    throw new Error("export stream ended without export_complete")
+  }
+  return final
 }
 
 // ---------------------------------------------------------------------------

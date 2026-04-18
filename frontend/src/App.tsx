@@ -3,7 +3,7 @@ import {
   downloadBlob,
   parseDraftState,
   pingApi,
-  postExport,
+  postExportStream,
   postSolveStream,
   responseAssignmentToAssignment,
   type SolveEvent,
@@ -358,7 +358,21 @@ function App() {
           })
 
         case "solve_complete":
+          // For Generate (no phase set), solve_complete IS the end —
+          // freeze the elapsed timer. For Export (phase set in flight),
+          // there's still xlsx writing to come; let export_complete freeze
+          // it, otherwise the elapsed counter stops mid-flow.
+          if (base.phase) return base
           return { ...base, endedAt: performance.now() }
+
+        case "xlsx_writing":
+          // Solve done, XLSX serialization in flight. Title flips to
+          // "Writing Excel…" via the phase field; mode cards stay visible.
+          return { ...base, phase: "writing" }
+
+        case "export_complete":
+          // Terminal for the export flow. Freeze elapsed now.
+          return { ...base, endedAt: performance.now(), phase: "exported" }
 
         case "error":
           return { ...base, endedAt: performance.now(), errorMessage: event.message }
@@ -418,16 +432,40 @@ function App() {
   }, [buildSolveRequest, applyModeAssignments, applyProgressEvent, state.solveMode])
 
   const requestExport = useCallback(async () => {
+    // Cancel any in-flight stream if the user re-presses Export.
+    solveAbortRef.current?.abort()
+    const controller = new AbortController()
+    solveAbortRef.current = controller
+
     setSolveError(null)
+    // Same SolveProgress UI Generate uses — phase field swaps the title to
+    // "Writing Excel…" once the xlsx_writing event fires.
+    setSolveProgress({
+      startedAt:    performance.now(),
+      endedAt:      null,
+      totalModes:   null,
+      modes:        {},
+      errorMessage: null,
+      phase:        "solving",
+    })
+
     try {
-      const { blob, filename } = await postExport(buildSolveRequest())
+      const { blob, filename } = await postExportStream(
+        buildSolveRequest(),
+        event => setSolveProgress(prev => applyProgressEvent(prev, event)),
+        controller.signal,
+      )
       downloadBlob(blob, filename)
     } catch (e) {
+      // AbortError fires if the user clicked Export again before this one
+      // finished — no need to surface it as a real failure.
+      if ((e as Error)?.name === "AbortError") return
       const msg = e instanceof Error ? e.message : String(e)
       console.error("[export] error:", msg)
       setSolveError(msg)
+      setSolveProgress(prev => prev ? { ...prev, endedAt: performance.now(), errorMessage: msg } : null)
     }
-  }, [buildSolveRequest])
+  }, [buildSolveRequest, applyProgressEvent])
 
   // ── Resume from Excel ─────────────────────────────────────────────
 

@@ -103,15 +103,24 @@ export function SolveProgress(props: Props) {
       <div className="solve-progress__header">
         <span className="solve-progress__title">
           {progress.errorMessage
-            ? "Solve failed"
-            : anyRunning
-              ? "Solving…"
-              : "Solve complete"}
+            ? (progress.phase === "writing" || progress.phase === "exported"
+                ? "Export failed"
+                : "Solve failed")
+            : progress.phase === "exported"
+              ? "Export complete"
+              : progress.phase === "writing"
+                ? "Writing Excel…"
+                : anyRunning
+                  ? "Solving…"
+                  : "Solve complete"}
         </span>
         <span className="solve-progress__elapsed">
           {formatSeconds(Math.round(totalElapsedMs))}
         </span>
-        {!anyRunning && (
+        {/* Hide Dismiss while xlsx_writing is in flight — closing the panel
+            would suggest the work is canceled, but the network call continues
+            and the download fires either way. */}
+        {!anyRunning && progress.phase !== "writing" && (
           <button
             type="button"
             className="solve-progress__dismiss"

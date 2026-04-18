@@ -49,13 +49,19 @@ export interface SolveModeProgress {
 }
 
 /** Aggregate progress state for an in-flight or recently-completed solve.
- *  Held in App.tsx; passed down to the progress panel. */
+ *  Held in App.tsx; passed down to the progress panel.
+ *
+ *  `phase` distinguishes Generate-only flows from streaming Export flows.
+ *  Generate stays in "solving" the whole time. Export passes through:
+ *  "solving" → "writing" (on `xlsx_writing` event) → "exported" (on
+ *  `export_complete`). Optional so existing solve flows don't have to set it. */
 export interface SolveProgressState {
   startedAt: number | null  // performance.now() when the stream opened
   endedAt: number | null    // performance.now() when solve_complete/error fired
   totalModes: number | null
   modes: Record<string, SolveModeProgress>
   errorMessage: string | null
+  phase?: "solving" | "writing" | "exported"
 }
 export type TimePref = "morning" | "afternoon" | "afternoon_evening"
 
