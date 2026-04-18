@@ -228,6 +228,60 @@ export async function postExport(
   return { blob, filename }
 }
 
+// ---------------------------------------------------------------------------
+// Resume from Excel — POST /api/state/parse
+// ---------------------------------------------------------------------------
+
+/**
+ * Embedded draft state shape returned by /api/state/parse. Mirrors what the
+ * backend writes into the hidden _state sheet of an exported XLSX. Offerings
+ * arrive in React shape so SchedulerState can hydrate without an inverse
+ * adapter; solver_results carries the last-shown calendar so reload doesn't
+ * land on an empty grid.
+ */
+export interface DraftState {
+  schema_version: number
+  source: string
+  quarter: string
+  year: number
+  solver_mode: SolveMode
+  offerings: Offering[]
+  solver_results?: SolveResponse
+  professor_overrides?: Record<string, Partial<Professor>>
+  room_overrides?: Record<string, Partial<Room>>
+  exported_at?: string
+}
+
+export interface ParseDraftResponse {
+  state: DraftState
+  warnings: string[]
+}
+
+/**
+ * Upload a Scheduler-exported XLSX to /api/state/parse. Returns the embedded
+ * draft state and any reference-drift warnings (offerings/locks dropped because
+ * their catalog_id / prof_id / room_id wasn't recognized locally).
+ *
+ * Throws Error with the server's `detail` string on 400/422 — the backend
+ * already produces user-facing copy, so the caller can render `error.message`
+ * directly without translation.
+ */
+export async function parseDraftState(file: File): Promise<ParseDraftResponse> {
+  const form = new FormData()
+  form.append("file", file)
+  const res = await fetch("/api/state/parse", { method: "POST", body: form })
+  if (!res.ok) {
+    let detail = `request failed (${res.status})`
+    try {
+      const body = await res.json() as { detail?: unknown }
+      if (typeof body.detail === "string") detail = body.detail
+    } catch { /* response wasn't JSON */ }
+    throw new Error(detail)
+  }
+  return await res.json() as ParseDraftResponse
+}
+
+
 /** Trigger a browser download for the given blob. */
 export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob)

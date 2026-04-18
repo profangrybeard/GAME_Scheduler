@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
   downloadBlob,
+  parseDraftState,
   pingApi,
   postExport,
   postSolveStream,
@@ -114,6 +115,12 @@ function App() {
   // solves. Populated by postSolveStream via the onEvent callback.
   const [solveProgress, setSolveProgress] = useState<SolveProgressState | null>(null)
   const solveAbortRef = useRef<AbortController | null>(null)
+
+  // ── Resume from Excel state ────────────────────────────────────
+  const [reloadWarnings, setReloadWarnings] = useState<string[] | null>(null)
+  const [reloadError, setReloadError] = useState<string | null>(null)
+  const [reloadFilename, setReloadFilename] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   // ── Responsive UI state ──────────────────────────────────────────
   const [activePanel, setActivePanel] = useState<ActivePanel>("schedule")
@@ -422,6 +429,82 @@ function App() {
     }
   }, [buildSolveRequest])
 
+  // ── Resume from Excel ─────────────────────────────────────────────
+
+  const triggerReloadPicker = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
+
+  const handleReloadFile = useCallback(async (file: File) => {
+    setReloadError(null)
+    setReloadWarnings(null)
+    setReloadFilename(null)
+    try {
+      const { state: draft, warnings } = await parseDraftState(file)
+
+      // Cache all modes from the embedded results so flipping the solveMode
+      // chip post-reload re-applies without a fresh solve. Each mode's
+      // schedule entries already carry catalog_id/prof_id/room_id/day_group/
+      // time_slot, which is exactly what responseAssignmentToAssignment reads.
+      const cachedModes: Record<string, SolveModeResult> = {}
+      if (draft.solver_results) {
+        for (const m of draft.solver_results.modes) {
+          cachedModes[m.mode] = m
+        }
+        modeResultsRef.current = cachedModes
+      } else {
+        modeResultsRef.current = null
+      }
+
+      // Build per-catalog assignment map for the active mode (so the calendar
+      // populates immediately without a second reducer pass).
+      const activeMode = cachedModes[draft.solver_mode]
+      const byCatalog: Record<string, Assignment> = {}
+      if (activeMode) {
+        for (const a of activeMode.assignments) {
+          byCatalog[a.catalog_id] = responseAssignmentToAssignment(a)
+        }
+      }
+
+      setState(s => ({
+        ...s,
+        selectedOfferingId: null,
+        quarter:    draft.quarter,
+        year:       draft.year,
+        solveMode:  draft.solver_mode,
+        solveStatus: "idle",
+        offerings: draft.offerings.map(o => ({
+          catalog_id:                    o.catalog_id,
+          priority:                      o.priority,
+          sections:                      o.sections ?? 1,
+          override_enrollment_cap:       o.override_enrollment_cap ?? null,
+          override_room_type:            o.override_room_type ?? null,
+          override_preferred_professors: o.override_preferred_professors ?? null,
+          notes:                         o.notes ?? null,
+          assigned_prof_id:              o.assigned_prof_id ?? null,
+          assigned_room_id:              o.assigned_room_id ?? null,
+          pinned:                        o.pinned ?? null,
+          assignment:                    byCatalog[o.catalog_id] ?? null,
+        })),
+      }))
+
+      setReloadWarnings(warnings)
+      setReloadFilename(file.name)
+      setSolveProgress(null)
+      setSolveError(null)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      console.error("[reload] error:", msg)
+      setReloadError(msg)
+    }
+  }, [])
+
+  const dismissReloadBanner = useCallback(() => {
+    setReloadWarnings(null)
+    setReloadError(null)
+    setReloadFilename(null)
+  }, [])
+
   // ── Placement mode (tap-to-place alternative to DnD) ────────────
 
   const startPlacing = useCallback((id: string) => {
@@ -570,6 +653,43 @@ function App() {
             </button>
           </div>
         )}
+        {(reloadError || reloadWarnings) && (
+          <div
+            className={
+              "reload-banner" +
+              (reloadError ? " reload-banner--error" : " reload-banner--success")
+            }
+            role="status"
+            aria-live="polite"
+          >
+            <div className="reload-banner__body">
+              {reloadError ? (
+                <strong>Couldn't load that file: {reloadError}</strong>
+              ) : (
+                <>
+                  <strong>
+                    Loaded draft{reloadFilename ? ` from ${reloadFilename}` : ""}
+                  </strong>
+                  {reloadWarnings && reloadWarnings.length > 0 && (
+                    <ul className="reload-banner__warnings">
+                      {reloadWarnings.map((w, i) => (
+                        <li key={i}>{w}</li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </div>
+            <button
+              type="button"
+              className="reload-banner__dismiss"
+              onClick={dismissReloadBanner}
+              aria-label="Dismiss reload notice"
+            >
+              ×
+            </button>
+          </div>
+        )}
         <header className="scheduler__topbar">
           <button
             type="button"
@@ -585,6 +705,27 @@ function App() {
             {state.solveMode}
           </span>
           <div className="scheduler__topbar-right">
+            <button
+              type="button"
+              className="topbar-btn"
+              onClick={triggerReloadPicker}
+              title="Resume from a previously exported Excel file"
+            >
+              Resume from Excel
+            </button>
+            {/* Hidden native file input. Reset .value so picking the same
+                file twice still triggers onChange (browsers de-dupe by default). */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) handleReloadFile(f)
+                e.target.value = ""
+              }}
+            />
             <VersionBadge />
             <button
               type="button"

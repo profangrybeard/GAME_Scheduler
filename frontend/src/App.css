@@ -1494,6 +1494,86 @@
   color: var(--accent-on);
 }
 
+/* ─── Topbar action button (Resume from Excel) ──────────────────── */
+
+.topbar-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  height: var(--hit-min);
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.topbar-btn:hover {
+  color: var(--text);
+  border-color: var(--text-faint);
+}
+
+/* ─── Reload-from-Excel result banner ───────────────────────────── */
+
+.reload-banner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  font-size: 0.82rem;
+  border-bottom: 1px solid currentColor;
+}
+
+.reload-banner--success {
+  background: color-mix(in srgb, var(--accent-green, #34d399) 14%, transparent);
+  border-bottom-color: var(--accent-green, #34d399);
+  color: var(--text);
+}
+
+.reload-banner--error {
+  background: color-mix(in srgb, var(--accent-red, #f87171) 14%, transparent);
+  border-bottom-color: var(--accent-red, #f87171);
+  color: var(--text);
+}
+
+.reload-banner__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.reload-banner__warnings {
+  margin: 6px 0 0 0;
+  padding-left: 1.2rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.reload-banner__warnings li + li {
+  margin-top: 4px;
+}
+
+.reload-banner__dismiss {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.reload-banner__dismiss:hover {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+
 /* Placing state on cards — "lifted" visual */
 .roster-card--placing,
 .schedule-card--placing {
