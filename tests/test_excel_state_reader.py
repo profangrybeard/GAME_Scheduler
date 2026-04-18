@@ -237,3 +237,65 @@ def test_validate_preserves_all_other_top_level_keys() -> None:
     assert cleaned["custom_extension"] == {"future": "field"}
     assert cleaned["solver_mode"] == "affinity_first"
     assert cleaned["schema_version"] == STATE_SCHEMA_VERSION
+
+
+# ---------------------------------------------------------------------------
+# Embedded solver_results (the empty-calendar-on-reload fix)
+# ---------------------------------------------------------------------------
+
+def test_round_trip_preserves_embedded_solver_results(tmp_path: Path) -> None:
+    """When the writer embeds the last solver output, the reader must return
+    it intact — that's how the calendar repopulates on reload without a
+    forced re-solve."""
+    state = _sample_state()
+    state["solver_results"] = {
+        "quarter": "fall",
+        "year": 2026,
+        "modes": [
+            {
+                "mode": "balanced",
+                "status": "optimal",
+                "objective": 42,
+                "schedule": [
+                    {
+                        "cs_key": "ITGM-220__0",
+                        "catalog_id": "ITGM-220",
+                        "prof_id": "p_001",
+                        "room_id": "r_101",
+                        "day_group": 1,
+                        "time_slot": "8:00 AM",
+                        "course_name": "Game Programming",
+                        "section_idx": 0,
+                        "department": "game",
+                        "is_graduate": False,
+                        "priority": "must_have",
+                        "affinity_level": 0,
+                        "time_pref": "preferred",
+                        "prof_name": "Smith",
+                        "room_name": "Lab 101",
+                    }
+                ],
+                "unscheduled": [],
+                "data": {"priority_by_cs_key": {"ITGM-220__0": "must_have"}},
+            }
+        ],
+    }
+    path = write_excel(_minimal_results(), tmp_path, draft_state=state)
+    loaded = read_draft_state(path)
+    assert loaded["solver_results"] == state["solver_results"]
+
+
+def test_validate_passes_solver_results_through_unchanged() -> None:
+    """validate_against_local_data only filters offerings + locks. The
+    solver_results key flows through verbatim — orphan-prevention is the
+    hydrate step's job (it drops solver_results when warnings are present)."""
+    state = _sample_state()
+    state["solver_results"] = {"modes": [{"mode": "balanced", "schedule": []}]}
+    cleaned, warnings = validate_against_local_data(
+        state,
+        catalog_ids={"ITGM-220", "ITGM-340"},
+        prof_ids={"p_001"},
+        room_ids={"r_101"},
+    )
+    assert warnings == []
+    assert cleaned["solver_results"] == state["solver_results"]

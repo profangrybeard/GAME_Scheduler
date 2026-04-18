@@ -549,6 +549,10 @@ def _build_excel_bytes(_results: dict, sig: str) -> tuple[bytes, str]:
         "offerings": live.get("offerings", []),
         "locked_assignments": st.session_state.get("locked_assignments", []),
         "solver_mode": st.session_state.get("solver_mode", "balanced"),
+        # Include the last solver output so reload lands on a populated
+        # calendar instead of forcing an immediate re-solve. Optional in
+        # the schema — readers tolerate its absence (Slice 2 era files).
+        "solver_results": _results,
     }
     with tempfile.TemporaryDirectory() as tmp_dir:
         excel_path = write_excel(_results, tmp_dir, draft_state=draft_state)
@@ -643,9 +647,19 @@ def _hydrate_from_draft_state(state: dict, source_filename: str, warnings: list[
     st.session_state["locked_assignments"] = state.get("locked_assignments", [])
     st.session_state["solver_mode"] = state.get("solver_mode", "balanced")
 
-    # Stale solver results would render an out-of-date calendar.
-    for k in ("solver_results", "results", "welcome_order"):
+    # Drop transient UI/state that would otherwise leak between drafts.
+    for k in ("results", "welcome_order", "placing_offering_idx"):
         st.session_state.pop(k, None)
+
+    # Restore the last computed schedule so the calendar populates immediately —
+    # but only if reference validation didn't drop anything. Any drops would
+    # orphan schedule entries against offerings/profs/rooms we just removed,
+    # so clear results and let the user re-solve from a clean slate.
+    embedded_results = state.get("solver_results")
+    if embedded_results and not warnings:
+        st.session_state["solver_results"] = embedded_results
+    else:
+        st.session_state.pop("solver_results", None)
 
     # React workspace's initial-state load reads the on-disk JSON; persist now.
     save_offerings(quarter, year, offerings)
