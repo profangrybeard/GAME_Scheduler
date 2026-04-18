@@ -69,8 +69,12 @@ class MalformedState(StateReadError):
 
 _REQUIRED_KEYS = frozenset({
     "schema_version", "quarter", "year",
-    "offerings", "locked_assignments", "solver_mode",
+    "offerings", "solver_mode",
 })
+# locked_assignments and solver_results are intentionally optional — the first
+# is Streamlit-specific (React uses per-offering `pinned` slots), the second
+# is large+optional (older Slice-2-era files won't have it). Consumers use
+# state.get(key, default) rather than indexing directly.
 
 
 def read_draft_state(file: Union[str, Path, BinaryIO, bytes]) -> dict:

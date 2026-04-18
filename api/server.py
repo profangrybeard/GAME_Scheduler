@@ -16,6 +16,11 @@ POST /api/solve/stream  — Run the 3-mode CP-SAT solve and stream progress as
                           carries the full result payload. No blocking variant
                           exists — the streaming endpoint IS the solve path.
 POST /api/export        — Write an Excel workbook from a prior solve's results.
+                          The file embeds a hidden _state sheet so it can be
+                          re-uploaded later via /api/state/parse.
+POST /api/state/parse   — Read a previously exported XLSX, return the embedded
+                          draft state (offerings + locks + mode + last solver
+                          output) for the React workspace to hydrate from.
 GET  /api/health        — Liveness check (React uses this to show availability).
 GET  /                  — React index.html (production only).
 GET  /{anything}        — SPA fallback to index.html, or 404 if /api/*.
@@ -101,6 +106,8 @@ class SolveRequest(BaseModel):
 class ExportRequest(BaseModel):
     quarter: str
     year: int
+    # Carried into the embedded _state so reload restores the user's mode pick.
+    solveMode: str = Field("balanced")
     offerings: list[OfferingModel]
     professorOverrides: dict[str, dict] = Field(default_factory=dict)
     roomOverrides: dict[str, dict] = Field(default_factory=dict)
@@ -248,12 +255,34 @@ async def solve_stream(req: SolveRequest) -> StreamingResponse:
     )
 
 
+def _strip_unserializable_results(results: dict | None) -> dict | None:
+    """JSON-safe copy of solver_results for embedding in the hidden _state sheet.
+
+    The solver's per-mode `data` field carries CP-SAT decision vars and
+    tuple-keyed lookup indexes that aren't JSON-encodable. Drop the whole
+    `data` dict per mode — the visible-sheet writer still receives the
+    full results via its first arg.
+    """
+    if not results:
+        return results
+    return {
+        **results,
+        "modes": [
+            {k: v for k, v in m.items() if k != "data"}
+            for m in results.get("modes", [])
+        ],
+    }
+
+
 @app.post("/api/export")
 def export(req: ExportRequest) -> Response:
     """Run the solver and write an Excel workbook. Returns the .xlsx file as
     a streamed download. We re-run the solve server-side so the file reflects
     the exact state the user is exporting (avoids trust issues where the
     client sends stale / tampered solver output).
+
+    Embeds the user's draft state in a hidden `_state` sheet so the file
+    can be re-uploaded later via POST /api/state/parse to resume editing.
     """
     from solver.scheduler import run_schedule
     from export.excel_writer import write_excel
@@ -273,9 +302,27 @@ def export(req: ExportRequest) -> Response:
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
+    # Compose the roundtrip draft state. Offerings are kept in React shape
+    # (rather than translated to the solver-doc shape) so reload can hydrate
+    # SchedulerState directly without an inverse adapter. The `source` field
+    # discriminates this from Streamlit-exported files (which embed Streamlit
+    # offerings shape) — readers can branch on it if/when they need to.
+    draft_state = {
+        "schema_version":     1,
+        "exported_at":        datetime.now().isoformat(timespec="seconds"),
+        "source":             "react",
+        "quarter":            req.quarter,
+        "year":               req.year,
+        "solver_mode":        req.solveMode,
+        "offerings":          react_offerings,
+        "professor_overrides": req.professorOverrides,
+        "room_overrides":     req.roomOverrides,
+        "solver_results":     _strip_unserializable_results(results),
+    }
+
     with tempfile.TemporaryDirectory() as tmp:
         out_dir = Path(tmp)
-        xlsx_path = write_excel(results, out_dir)
+        xlsx_path = write_excel(results, out_dir, draft_state=draft_state)
         content = xlsx_path.read_bytes()
 
     filename = f"schedule_{req.quarter}_{req.year}_{datetime.now():%Y%m%d}.xlsx"
@@ -284,6 +331,109 @@ def export(req: ExportRequest) -> Response:
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+# ---------------------------------------------------------------------------
+# Resume from Excel — parse uploaded XLSX, return embedded draft state
+# ---------------------------------------------------------------------------
+
+import functools as _functools
+import zipfile as _zipfile
+
+from fastapi import File, UploadFile
+
+
+@_functools.lru_cache(maxsize=1)
+def _local_reference_ids() -> tuple[set[str], set[str], set[str]]:
+    """Cache catalog/professor/room IDs for cross-machine drift validation.
+
+    Loaded once at first call; data files don't change at runtime in the
+    Fly.io container. Test runs that mutate these files would need to
+    `_local_reference_ids.cache_clear()` between cases.
+    """
+    catalog = json.loads((BASE / "data" / "course_catalog.json").read_text())
+    profs   = json.loads((BASE / "data" / "professors.json").read_text())
+    rooms   = json.loads((BASE / "data" / "rooms.json").read_text())
+    return (
+        {c["id"] for c in catalog},
+        {p["id"] for p in profs},
+        {r["id"] for r in rooms},
+    )
+
+
+@app.post("/api/state/parse")
+async def parse_state(file: UploadFile = File(...)) -> dict:
+    """Parse a Scheduler-exported XLSX and return the embedded draft state.
+
+    Returns:
+        ``{"state": <cleaned draft state>, "warnings": [<drift warnings>]}``
+
+    Status codes:
+        200 — parsed OK, may include warnings if local catalog/profs/rooms
+              don't recognize some referenced IDs (orphaned offerings/locks
+              are dropped from the returned state)
+        400 — uploaded file isn't a valid Excel workbook
+        422 — file is XLSX but doesn't contain readable Scheduler draft state
+              (missing _state sheet, wrong marker, unsupported schema version,
+              or malformed JSON). Detail copy is user-facing — surface it.
+    """
+    from export.excel_reader import (
+        MalformedState,
+        MarkerMismatch,
+        MissingStateSheet,
+        SchemaVersionUnsupported,
+        StateReadError,
+        read_draft_state,
+        validate_against_local_data,
+    )
+
+    raw = await file.read()
+
+    try:
+        state = read_draft_state(raw)
+    except _zipfile.BadZipFile:
+        raise HTTPException(status_code=400, detail="Not a valid Excel file.")
+    except MissingStateSheet:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "This Excel was exported before draft-reload was supported, "
+                "or isn't a Scheduler export."
+            ),
+        )
+    except MarkerMismatch:
+        raise HTTPException(
+            status_code=422,
+            detail="This Excel doesn't look like a GAME Scheduler export.",
+        )
+    except SchemaVersionUnsupported as e:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"This Excel was exported by a newer Scheduler "
+                f"(state v{e.found}, this build supports v{e.supported}). "
+                f"Update the app and try again."
+            ),
+        )
+    except MalformedState as e:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Draft state is corrupted: {e}",
+        )
+    except StateReadError as e:
+        # Defensive fallback for any future StateReadError subclass we add
+        # without remembering to update this handler.
+        raise HTTPException(status_code=422, detail=f"Could not read Excel: {e}")
+
+    catalog_ids, prof_ids, room_ids = _local_reference_ids()
+    cleaned, warnings = validate_against_local_data(
+        state,
+        catalog_ids=catalog_ids,
+        prof_ids=prof_ids,
+        room_ids=room_ids,
+    )
+
+    return {"state": cleaned, "warnings": warnings}
 
 
 # ---------------------------------------------------------------------------
