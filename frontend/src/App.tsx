@@ -428,7 +428,7 @@ function App() {
     } catch (e) {
       if ((e as { name?: string }).name === "AbortError") return
       const msg = e instanceof Error ? e.message : String(e)
-      console.error("[solve] error:", msg)
+      if (import.meta.env.DEV) console.error("[solve] error:", msg)
       setSolveError(msg)
       setState(s => ({ ...s, solveStatus: "error" }))
       setSolveProgress(prev =>
@@ -467,7 +467,7 @@ function App() {
       // finished — no need to surface it as a real failure.
       if ((e as Error)?.name === "AbortError") return
       const msg = e instanceof Error ? e.message : String(e)
-      console.error("[export] error:", msg)
+      if (import.meta.env.DEV) console.error("[export] error:", msg)
       setSolveError(msg)
       setSolveProgress(prev => prev ? { ...prev, endedAt: performance.now(), errorMessage: msg } : null)
     }
@@ -538,7 +538,7 @@ function App() {
       setSolveError(null)
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
-      console.error("[reload] error:", msg)
+      if (import.meta.env.DEV) console.error("[reload] error:", msg)
       setReloadError(msg)
     }
   }, [])
