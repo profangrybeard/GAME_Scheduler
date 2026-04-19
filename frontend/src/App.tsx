@@ -1006,7 +1006,7 @@ function App() {
       onAdd={addOffering}
       onPinToSlot={pinToSlot}
       onSetSolveMode={setSolveMode}
-      onSolve={requestSolve}
+      onSolve={() => { void requestSolve() }}
       onEmptyCalendar={emptyCalendar}
       onStartPlacing={startPlacing}
       onDismissError={() => setSolveError(null)}
