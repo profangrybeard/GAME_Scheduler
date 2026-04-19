@@ -357,7 +357,7 @@ def export(req: ExportRequest) -> Response:
         xlsx_path = write_excel(results, out_dir, draft_state=draft_state)
         content = xlsx_path.read_bytes()
 
-    filename = f"schedule_{req.quarter}_{req.year}_{datetime.now():%Y%m%d}.xlsx"
+    filename = f"schedule_{req.quarter}_{req.year}_{datetime.now():%Y%m%d}_all-modes.xlsx"
     return Response(
         content=content,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -441,7 +441,7 @@ async def export_stream(req: ExportRequest) -> StreamingResponse:
                 xlsx_path = write_excel(results, Path(tmp), draft_state=draft_state)
                 content = xlsx_path.read_bytes()
 
-            filename = f"schedule_{req.quarter}_{req.year}_{datetime.now():%Y%m%d}.xlsx"
+            filename = f"schedule_{req.quarter}_{req.year}_{datetime.now():%Y%m%d}_all-modes.xlsx"
             event_queue.put({
                 "type":        "export_complete",
                 "filename":    filename,
