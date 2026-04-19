@@ -37,7 +37,11 @@ from solver.constraints import apply_hard_constraints
 from solver.objectives import build_objective, _affinity_level, _time_pref_penalty
 
 
-_SOLVER_TIME_LIMIT = 10.0   # seconds per mode
+# Per-mode ceiling. CP-SAT stops early when it proves optimal; this is just
+# the safety cap if a model genuinely gets hard. Deterministic parameters
+# (8 interleaved workers + fixed seed — see solver block below) mean real
+# solve time is usually 2–5s per mode regardless of host machine.
+_SOLVER_TIME_LIMIT = 20.0   # seconds per mode
 
 ProgressCallback = Callable[[dict], None]
 
@@ -141,7 +145,7 @@ def _extract_result(solver: cp_model.CpSolver, raw_status: int, data: dict) -> d
         prof    = data["profs_by_id"][prof_id]
         room    = data["rooms_by_id"][room_id]
 
-        aff_level = _affinity_level(cs_info, prof_id)
+        aff_level = _affinity_level(cs_info, prof_id, prof)
         time_label = _time_label(prof, ts)
 
         schedule.append({
@@ -297,7 +301,18 @@ def run_schedule(
 
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = _SOLVER_TIME_LIMIT
-        solver.parameters.num_search_workers  = 0   # use all CPU cores
+        # Fixed workers + seed + interleaved search = deterministic result,
+        # same objective on every platform. Previously we used
+        # num_search_workers=0 ("all cores"), which auto-detected 2 on CI and
+        # happened to pick two strategies that proved INFEASIBLE on a model
+        # that solves cleanly locally — a platform-dependent answer the user
+        # can never explain to a dean. Running 8 interleaved strategies
+        # regardless of core count avoids that trap; on a 2-vCPU VM they just
+        # round-robin. Single-threaded (workers=1) was considered but burned
+        # the full budget without proving optimality.
+        solver.parameters.num_search_workers  = 8
+        solver.parameters.interleave_search   = True
+        solver.parameters.random_seed         = 42
 
         print(f"[{mode}] Solving ...")
         started_at = time.time()

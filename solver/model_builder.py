@@ -65,13 +65,17 @@ def _eligible_professors(
 ) -> list[str]:
     """Return IDs of professors eligible to teach this course this quarter.
 
-    Enforces HC7 (teaching_departments), HC8 (available_quarters),
-    HC9 (graduate courses require masters credential).
+    Enforces HC8 (available_quarters) and HC9 (graduate-credential) as hard
+    filters. HC7 (teaching_departments) is intentionally demoted to a *soft*
+    signal — profs outside the course's department are still returned here,
+    and the objective penalizes them at the "fallback" affinity tier (see
+    solver/objectives.py::_affinity_level). Rationale: a roster where no prof
+    teaches, say, IXDS shouldn't make an IXDS must_have section infeasible.
+    The user's guiding principle: every prof in the roster is available to
+    every course at *some* tier.
     """
     eligible = []
     for prof in professors:
-        if course["department"] not in prof["teaching_departments"]:   # HC7
-            continue
         if quarter not in prof.get("available_quarters", []):          # HC8
             continue
         if course["is_graduate"]:                                      # HC9
@@ -202,9 +206,21 @@ def build_model(
 
     # --- Expand offerings into course_sections ---
     # Each section of a multi-section offering is an independent scheduling unit.
+    # Catalog-id duplicates in the offerings list are an authoring bug: the
+    # current shape is one row per catalog_id with `sections: N`, not N rows
+    # with `sections: 1`. Left alone they collide on cs_key, which made HC11's
+    # cross-section constraint double-count variables and drove presolve to
+    # INFEASIBLE on CI for a good hour. Loud error beats silent bad model.
+    seen_catalog_ids: set[str] = set()
     course_sections: list[dict] = []
     for offering in offerings_doc["offerings"]:
         cid = offering["catalog_id"]
+        if cid in seen_catalog_ids:
+            raise ValueError(
+                f"Duplicate catalog_id {cid!r} in offerings — coalesce the "
+                f"duplicates into one entry with sections=N (current shape)."
+            )
+        seen_catalog_ids.add(cid)
         if cid not in catalog:
             print(f"  [warn] catalog_id '{cid}' not in course_catalog — skipping")
             continue

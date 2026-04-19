@@ -17,7 +17,10 @@ VALID_QUARTERS = ["fall", "winter", "spring", "summer"]
 VALID_DEPARTMENTS = ["game", "motion_media", "ai"]
 
 # === Penalty values ===
-AFFINITY_PENALTIES = {0: 0, 1: 1, 2: 3, "other": 10}
+# Level 3 ("fallback") is out-of-department but otherwise eligible — used when
+# the roster has no dept-matched prof for a course. Keeps must_have sections
+# feasible instead of crashing with "no eligible professors".
+AFFINITY_PENALTIES = {0: 0, 1: 1, 2: 3, 3: 10, "other": 10}
 TIME_PREF_PENALTIES = {"preferred": 0, "acceptable": 2, "not_preferred": 5}
 OVERLOAD_PENALTY = 8
 # Must exceed w_aff_max * AFFINITY_PENALTIES[2] (= 10 * 3 = 30) so that

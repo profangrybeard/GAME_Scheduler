@@ -274,7 +274,7 @@ _SCHED_WIDTHS = {
     "I": 12, "J": 16, "K": 14,
 }
 
-_AFFINITY_LABELS = {0: "Override", 1: "Preferred", 2: "Eligible"}
+_AFFINITY_LABELS = {0: "Override", 1: "Preferred", 2: "Eligible", 3: "Fallback"}
 _PRIORITY_LABELS = {"must_have": "Must", "should_have": "Should", "could_have": "Could"}
 
 

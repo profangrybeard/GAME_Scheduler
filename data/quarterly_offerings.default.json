@@ -5,7 +5,7 @@
     {
       "catalog_id": "GAME_120",
       "priority": "must_have",
-      "sections": 1,
+      "sections": 2,
       "override_enrollment_cap": null,
       "override_room_type": "standard",
       "override_preferred_professors": null,
@@ -16,29 +16,9 @@
       }
     },
     {
-      "catalog_id": "GAME_120",
-      "priority": "must_have",
-      "sections": 1,
-      "override_enrollment_cap": null,
-      "override_room_type": "standard",
-      "override_preferred_professors": null,
-      "notes": "Intro - always high demand",
-      "pinned": null
-    },
-    {
       "catalog_id": "GAME_220",
       "priority": "must_have",
-      "sections": 1,
-      "override_enrollment_cap": null,
-      "override_room_type": "standard",
-      "override_preferred_professors": null,
-      "notes": "Core Programming - 2 sections",
-      "pinned": null
-    },
-    {
-      "catalog_id": "GAME_220",
-      "priority": "must_have",
-      "sections": 1,
+      "sections": 2,
       "override_enrollment_cap": null,
       "override_room_type": "standard",
       "override_preferred_professors": null,
@@ -58,17 +38,7 @@
     {
       "catalog_id": "GAME_256",
       "priority": "must_have",
-      "sections": 1,
-      "override_enrollment_cap": null,
-      "override_room_type": "standard",
-      "override_preferred_professors": null,
-      "notes": "Dodson preferred",
-      "pinned": null
-    },
-    {
-      "catalog_id": "GAME_256",
-      "priority": "must_have",
-      "sections": 1,
+      "sections": 2,
       "override_enrollment_cap": null,
       "override_room_type": "standard",
       "override_preferred_professors": null,
@@ -130,17 +100,7 @@
     {
       "catalog_id": "MOME_105",
       "priority": "must_have",
-      "sections": 1,
-      "override_enrollment_cap": null,
-      "override_room_type": "mac_lab",
-      "override_preferred_professors": null,
-      "notes": "Intro - high demand",
-      "pinned": null
-    },
-    {
-      "catalog_id": "MOME_105",
-      "priority": "must_have",
-      "sections": 1,
+      "sections": 2,
       "override_enrollment_cap": null,
       "override_room_type": "mac_lab",
       "override_preferred_professors": null,

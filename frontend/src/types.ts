@@ -402,16 +402,24 @@ export function capacityState(cap: RosterCapacity): CapacityState {
   return "under"
 }
 
-/** Count sections pre-assigned to a specific prof. An offering with
- *  sections=2 assigned to prof X fills two slots on their meter.
- *  AUTO offerings (assigned_prof_id === null) are solver-bound and don't
- *  fill any individual prof's meter. */
+/** Count sections placed on a specific prof's contract. Covers both the
+ *  manual Kit-Station assignment (`assigned_prof_id`) and the solver's own
+ *  output (`assignment.prof_id`) so the Roster's Profs tab meter reflects
+ *  a generated schedule, not just pre-placements. An offering with
+ *  sections=2 fills two slots on whichever prof ends up holding it. */
 export function profLoadedCount(
   profId: string,
-  offerings: ReadonlyArray<{ assigned_prof_id: string | null; sections: number }>,
+  offerings: ReadonlyArray<{
+    assigned_prof_id: string | null
+    assignment: Assignment | null
+    sections: number
+  }>,
 ): number {
   let n = 0
-  for (const o of offerings) if (o.assigned_prof_id === profId) n += o.sections
+  for (const o of offerings) {
+    const effective = o.assignment?.prof_id ?? o.assigned_prof_id
+    if (effective === profId) n += o.sections
+  }
   return n
 }
 

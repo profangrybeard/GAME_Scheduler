@@ -44,18 +44,28 @@ export function Class(props: ClassProps) {
     : null
   const course = offering ? props.catalog[offering.catalog_id] : null
 
+  // Tiered dropdown: every roster prof is pickable. Groups mirror the solver's
+  // affinity tiers so the label the user sees matches what the solver will
+  // charge. "Fallback" profs teach a different department — they still work,
+  // just at a penalty, so a must_have never hits infeasibility just because
+  // no dept-matched prof is on the roster.
   const profCandidates = useMemo(() => {
-    if (!course) return []
-    const preferred = new Set(course.preferred_professors)
-    const all = Object.values(props.professors).filter(p =>
-      p.teaching_departments.includes(course.department),
-    )
-    return all.sort((a, b) => {
-      const aPref = preferred.has(a.id) ? 0 : 1
-      const bPref = preferred.has(b.id) ? 0 : 1
-      if (aPref !== bPref) return aPref - bPref
-      return a.name.localeCompare(b.name)
-    })
+    if (!course) return { preferred: [], dept: [], fallback: [] }
+    const preferredSet = new Set(course.preferred_professors)
+    const all = Object.values(props.professors)
+    const preferred: Professor[] = []
+    const dept: Professor[] = []
+    const fallback: Professor[] = []
+    for (const p of all) {
+      if (preferredSet.has(p.id)) preferred.push(p)
+      else if (p.teaching_departments.includes(course.department)) dept.push(p)
+      else fallback.push(p)
+    }
+    const byName = (a: Professor, b: Professor) => a.name.localeCompare(b.name)
+    preferred.sort(byName)
+    dept.sort(byName)
+    fallback.sort(byName)
+    return { preferred, dept, fallback }
   }, [course, props.professors])
 
   const roomCandidates = useMemo(() => {
@@ -86,7 +96,6 @@ export function Class(props: ClassProps) {
   }
 
   const state = classifyOffering(offering)
-  const preferred = new Set(course.preferred_professors)
   const assignedProf = offering.assigned_prof_id
     ? props.professors[offering.assigned_prof_id]
     : null
@@ -183,15 +192,38 @@ export function Class(props: ClassProps) {
             }
           >
             <option value="AUTO">AUTO — let the solver choose</option>
-            {profCandidates.map(p => (
-              <option key={p.id} value={p.id}>
-                {preferred.has(p.id) ? "★ " : ""}
-                {p.name}
-                {p.is_chair ? " (chair)" : ""}
-              </option>
-            ))}
+            {profCandidates.preferred.length > 0 && (
+              <optgroup label="★ Preferred for this course">
+                {profCandidates.preferred.map(p => (
+                  <option key={p.id} value={p.id}>
+                    ★ {p.name}
+                    {p.is_chair ? " (chair)" : ""}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {profCandidates.dept.length > 0 && (
+              <optgroup label={`${course.department} department`}>
+                {profCandidates.dept.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                    {p.is_chair ? " (chair)" : ""}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {profCandidates.fallback.length > 0 && (
+              <optgroup label="Fallback (other department)">
+                {profCandidates.fallback.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                    {p.is_chair ? " (chair)" : ""}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
-          {preferred.size > 0 && (
+          {profCandidates.preferred.length > 0 && (
             <p className="class__hint">★ = catalog-preferred for this course</p>
           )}
         </section>
