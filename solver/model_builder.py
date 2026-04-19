@@ -206,9 +206,21 @@ def build_model(
 
     # --- Expand offerings into course_sections ---
     # Each section of a multi-section offering is an independent scheduling unit.
+    # Catalog-id duplicates in the offerings list are an authoring bug: the
+    # current shape is one row per catalog_id with `sections: N`, not N rows
+    # with `sections: 1`. Left alone they collide on cs_key, which made HC11's
+    # cross-section constraint double-count variables and drove presolve to
+    # INFEASIBLE on CI for a good hour. Loud error beats silent bad model.
+    seen_catalog_ids: set[str] = set()
     course_sections: list[dict] = []
     for offering in offerings_doc["offerings"]:
         cid = offering["catalog_id"]
+        if cid in seen_catalog_ids:
+            raise ValueError(
+                f"Duplicate catalog_id {cid!r} in offerings — coalesce the "
+                f"duplicates into one entry with sections=N (current shape)."
+            )
+        seen_catalog_ids.add(cid)
         if cid not in catalog:
             print(f"  [warn] catalog_id '{cid}' not in course_catalog — skipping")
             continue
