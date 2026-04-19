@@ -1483,21 +1483,42 @@
 
 .roster-card__remove {
   grid-area: remove;
-  color: var(--text-faint);
-  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-size: 1.15rem;
+  font-weight: 500;
   line-height: 1;
-  padding: 2px 4px;
-  border-radius: 3px;
+  padding: 4px 8px;
+  border-radius: 4px;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.12s ease;
+  transition: opacity 0.12s ease, background 0.12s ease, color 0.12s ease;
 }
 
 .roster-card:hover .roster-card__remove { opacity: 1; }
 
 .roster-card__remove:hover {
   color: var(--danger);
-  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  background: color-mix(in srgb, var(--danger) 18%, transparent);
+}
+
+.roster-card__add-section {
+  grid-area: add;
+  color: var(--text-muted);
+  font-size: 1.15rem;
+  font-weight: 500;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+
+.roster-card:hover .roster-card__add-section { opacity: 1; }
+
+.roster-card__add-section:hover {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .roster-card__add-section {

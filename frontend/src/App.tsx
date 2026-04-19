@@ -610,6 +610,10 @@ function App() {
     const controller = new AbortController()
     solveAbortRef.current = controller
 
+    // If tap-to-place armed a card (touch only), stand down before running.
+    // The grid's `.schedule-grid--placing` overlay would otherwise dim the
+    // freshly-solved cards, making it look like Generate produced nothing.
+    setPlacingId(null)
     setSolveError(null)
     setState(s => ({ ...s, solveStatus: "running" }))
     setSolveProgress({
@@ -808,7 +812,16 @@ function App() {
 
   // ── Placement mode (tap-to-place alternative to DnD) ────────────
 
+  /** Tap-to-place exists for touch devices that can't HTML5-drag. On hover-
+   *  capable devices (desktop/laptop) we short-circuit so "click a class to
+   *  inspect it" doesn't also arm placement — that double-duty meant the
+   *  next click anywhere was silently re-pinning the selected card. See
+   *  CLAUDE.md "Rule 4: Tap-to-Place Coexists with DnD". */
   const startPlacing = useCallback((id: string) => {
+    if (typeof window !== "undefined" &&
+        window.matchMedia("(hover: hover)").matches) {
+      return
+    }
     setPlacingId(prev => (prev === id ? null : id))
   }, [])
 
