@@ -1,51 +1,26 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import {
+  loadTunedMix, saveTunedMix,
+  PRESETS, PRESET_LABELS,
+  type Mix,
+} from "./SolverMix"
 
 /**
- * UI prototype: per-department weight tuning with a gear metaphor.
+ * SolverTuning — dial in the middle ("Tune") mode's weight vector.
  *
- * NOT WIRED to the solver yet — this is purely the interaction sketch.
- * Three gears total to 100; dragging one redistributes the others
- * proportionally with elastic friction (no hard clamp). Presets snap
- * to the canonical mode mixes from config.MODE_WEIGHTS.
+ * Three gears share a budget of 100: Affinity, Time Pref, Overload. Dragging
+ * one redistributes the other two with elastic friction (no hard clamp); the
+ * gear spins faster and strains red as you push past what the others can
+ * yield. Snapping to a preset applies one of the canonical modes.
  *
- * Once the feel is signed off, we'll wire dept storage (Path B) +
- * pass weights into the solver request.
+ * Type + persistence live in SolverMix.ts so React Refresh keeps working
+ * (lint rule: component files only export components).
  */
-
-type DeptKey = "game" | "motion_media" | "ai"
-
-const DEPTS: Array<{ key: DeptKey; label: string; tone: string }> = [
-  { key: "game",         label: "Game",         tone: "var(--dept-game)" },
-  { key: "motion_media", label: "Motion Media", tone: "var(--dept-mome)" },
-  { key: "ai",           label: "AI",           tone: "var(--dept-ai)" },
-]
 
 type GearKey = "affinity" | "time" | "overload"
 
-interface Mix {
-  affinity: number
-  time:     number
-  overload: number
-}
-
 const MIN_FLOOR = 5    // no dial can go below this
 const TOTAL     = 100
-
-// Mirror config.MODE_WEIGHTS, expressed as percent of 100.
-// affinity_first  10/1/2   = 13   ->  77 / 8  / 15
-// time_pref_first 1/10/2   = 13   ->  8  / 77 / 15
-// balanced        10/4/3   = 17   ->  59 / 23 / 18
-const PRESETS: Record<string, Mix> = {
-  affinity_first:  { affinity: 77, time: 8,  overload: 15 },
-  time_pref_first: { affinity: 8,  time: 77, overload: 15 },
-  balanced:        { affinity: 59, time: 23, overload: 18 },
-}
-
-const PRESET_LABELS: Record<string, string> = {
-  affinity_first:  "Affinity-First",
-  time_pref_first: "Time-First",
-  balanced:        "Balanced",
-}
 
 const GEAR_LABELS: Record<GearKey, string> = {
   affinity: "Affinity",
@@ -145,23 +120,22 @@ function describeMix(mix: Mix): string {
 interface Props {
   open:    boolean
   onClose: () => void
+  /** Called when the user hits "Try it on current schedule". The modal closes
+   *  itself, then the parent kicks off a fresh solve with the tuned weights. */
+  onApply?: (mix: Mix) => void
 }
 
 export function SolverTuning(props: Props) {
-  const { open, onClose } = props
-  const [dept, setDept] = useState<DeptKey>("game")
-  const [byDept, setByDept] = useState<Record<DeptKey, Mix>>({
-    game:         { ...PRESETS.balanced },
-    motion_media: { ...PRESETS.time_pref_first },
-    ai:           { ...PRESETS.affinity_first },
-  })
+  const { open, onClose, onApply } = props
+  const [mix, setMixState] = useState<Mix>(() => loadTunedMix())
   const [tension, setTension] = useState<Record<GearKey, number>>({ affinity: 0, time: 0, overload: 0 })
   const [draggingKey, setDraggingKey] = useState<GearKey | null>(null)
 
-  const mix = byDept[dept]
+  // Persist on every committed mix change — this way dragging feels free, and
+  // only the snapped integer result hits localStorage.
   const setMix = useCallback((nextMix: Mix) => {
-    setByDept(prev => ({ ...prev, [dept]: nextMix }))
-  }, [dept])
+    setMixState(nextMix)
+  }, [])
 
   const dragRef = useRef<{ key: GearKey; startY: number; startMix: Mix } | null>(null)
 
@@ -188,11 +162,15 @@ export function SolverTuning(props: Props) {
     dragRef.current = null
     setDraggingKey(null)
     setTension({ affinity: 0, time: 0, overload: 0 })
-    setMix(commit(mix))
+    const snapped = commit(mix)
+    setMix(snapped)
+    saveTunedMix(snapped)
   }, [mix, setMix])
 
   const applyPreset = useCallback((presetKey: string) => {
-    setMix({ ...PRESETS[presetKey] })
+    const next = { ...PRESETS[presetKey] }
+    setMix(next)
+    saveTunedMix(next)
   }, [setMix])
 
   const currentPreset = useMemo(() => {
@@ -208,9 +186,15 @@ export function SolverTuning(props: Props) {
     return () => window.removeEventListener("keydown", onKey)
   }, [open, onClose])
 
-  if (!open) return null
+  const handleApply = useCallback(() => {
+    const snapped = commit(mix)
+    setMix(snapped)
+    saveTunedMix(snapped)
+    onApply?.(snapped)
+    onClose()
+  }, [mix, onApply, onClose, setMix])
 
-  const deptTone = DEPTS.find(d => d.key === dept)?.tone ?? "var(--accent)"
+  if (!open) return null
 
   return (
     <div className="solver-tune__scrim" onClick={onClose}>
@@ -220,31 +204,17 @@ export function SolverTuning(props: Props) {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
-        style={{ "--dept-tone": deptTone } as React.CSSProperties}
+        style={{ "--dept-tone": "var(--accent)" } as React.CSSProperties}
       >
         <header className="solver-tune__head">
           <div>
-            <h2 className="solver-tune__title">Solver Tuning</h2>
-            <p className="solver-tune__sub">Shape the solver's opinions for this department.</p>
+            <h2 className="solver-tune__title">Tune the Solver</h2>
+            <p className="solver-tune__sub">
+              Shape the middle mode — Affinity vs. Time vs. Overload.
+            </p>
           </div>
           <button type="button" className="solver-tune__close" onClick={onClose} aria-label="Close">×</button>
         </header>
-
-        <div className="solver-tune__dept-row" role="tablist" aria-label="Department">
-          {DEPTS.map(d => (
-            <button
-              key={d.key}
-              type="button"
-              role="tab"
-              aria-selected={dept === d.key}
-              className={"solver-tune__dept" + (dept === d.key ? " solver-tune__dept--active" : "")}
-              onClick={() => setDept(d.key)}
-              style={{ "--this-tone": d.tone } as React.CSSProperties}
-            >
-              {d.label}
-            </button>
-          ))}
-        </div>
 
         <div className="solver-tune__gears">
           {(["affinity", "time", "overload"] as GearKey[]).map(key => {
@@ -304,7 +274,7 @@ export function SolverTuning(props: Props) {
           <button type="button" className="solver-tune__btn solver-tune__btn--ghost" onClick={() => applyPreset("balanced")}>
             ↺ Reset to Balanced
           </button>
-          <button type="button" className="solver-tune__btn solver-tune__btn--primary" onClick={onClose}>
+          <button type="button" className="solver-tune__btn solver-tune__btn--primary" onClick={handleApply}>
             Try it on current schedule
           </button>
         </footer>

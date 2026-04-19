@@ -2632,6 +2632,53 @@
   white-space: nowrap;
 }
 
+/* Tune card affordance — the gear breaks past the card's left edge to make
+   the middle column read as "the editable one." The gear lives outside the
+   normal flex row (position: absolute) so it can protrude without disturbing
+   the title/pill layout; the card adds left padding to keep text clear of
+   the inset portion. Always rendered when onOpenTuning is wired so chairs
+   can re-tune mid-solve. */
+.solve-progress__mode--tune {
+  position: relative;
+  padding-left: 40px;
+  overflow: visible;
+}
+
+.solve-progress__tune-btn {
+  position: absolute;
+  left: -16px;
+  top: var(--space-sm);
+  appearance: none;
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  border-radius: 999px;
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.6rem;
+  line-height: 1;
+  padding: 0;
+  z-index: 2;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 28%, transparent);
+  transition: transform 0.35s cubic-bezier(0.34, 1.3, 0.5, 1),
+              background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.solve-progress__tune-btn:hover {
+  background: color-mix(in srgb, var(--accent) 24%, var(--surface));
+  transform: rotate(60deg) scale(1.06);
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--accent) 38%, transparent);
+}
+
+.solve-progress__tune-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .solve-progress__pill--running {
   background: color-mix(in srgb, var(--accent) 20%, transparent);
   color: var(--accent);

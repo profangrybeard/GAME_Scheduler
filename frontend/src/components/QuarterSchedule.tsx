@@ -83,6 +83,8 @@ export interface QuarterScheduleProps {
   onStartPlacing: (id: string) => void
   onDismissError: () => void
   onDismissProgress: () => void
+  /** Open the SolverTuning modal — forwarded to the Tune mode card. */
+  onOpenTuning: () => void
 }
 
 export function QuarterSchedule(props: QuarterScheduleProps) {
@@ -291,6 +293,7 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
         onDismiss={props.onDismissProgress}
         activeMode={props.solveMode}
         onSelectMode={(mode) => props.onSetSolveMode(mode as typeof props.solveMode)}
+        onOpenTuning={props.onOpenTuning}
       />
 
       <div className="schedule__day-toggle" role="tablist" aria-label="Day group">

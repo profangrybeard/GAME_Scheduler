@@ -60,14 +60,27 @@ def _time_pref_penalty(prof: dict, ts: str) -> int:
 # Main entry point
 # ---------------------------------------------------------------------------
 
-def build_objective(model: cp_model.CpModel, data: dict) -> None:
+def build_objective(
+    model: cp_model.CpModel,
+    data: dict,
+    *,
+    tuned_weights: dict | None = None,
+) -> None:
     """Compute weighted penalty and call model.Minimize().
 
     Adds auxiliary IntVars for overload and drop tracking; does not add
     any hard constraints beyond what is needed for penalty computation.
+
+    Parameters
+    ----------
+    tuned_weights : dict | None
+        When supplied, replaces MODE_WEIGHTS[mode]. Same shape as a
+        MODE_WEIGHTS entry: {affinity, time_pref, overload}. Used by the
+        "Tune" UI in the React workspace; only the caller (run_schedule)
+        decides which modes the override applies to.
     """
     mode    = data.get("mode", "balanced")
-    weights = MODE_WEIGHTS[mode]
+    weights = tuned_weights if tuned_weights is not None else MODE_WEIGHTS[mode]
     w_aff   = weights["affinity"]
     w_time  = weights["time_pref"]
     w_over  = weights["overload"]
