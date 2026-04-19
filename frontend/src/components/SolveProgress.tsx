@@ -16,10 +16,15 @@ import type { SolveModeProgress, SolveProgressState } from "../types"
 const MODE_LABELS: Record<string, string> = {
   affinity_first:  "Affinity",
   time_pref_first: "Time Pref",
-  balanced:        "Balanced",
+  // The middle mode is user-tunable: clicking the gear opens SolverTuning,
+  // which sends a fresh solve with the new mix as `tunedWeights`.
+  balanced:        "Tune",
 }
 
-const MODE_ORDER = ["affinity_first", "time_pref_first", "balanced"] as const
+// Tune sits in the middle: extremes on the wings (Affinity-First, Time-First),
+// the user-tuned mix between them. The middle card is the one with the gear,
+// reinforcing that this column is the editable one.
+const MODE_ORDER = ["affinity_first", "balanced", "time_pref_first"] as const
 
 function formatSeconds(ms: number): string {
   if (ms < 1000) return `${ms}ms`
@@ -55,10 +60,13 @@ interface Props {
    *  schedule — same effect the now-removed Affinity/Time Pref/Balanced
    *  chip buttons in QuarterSchedule used to have. */
   onSelectMode?: (mode: string) => void
+  /** Open the SolverTuning modal. When provided, the middle (Tune) card
+   *  surfaces a gear button next to its status pill. */
+  onOpenTuning?: () => void
 }
 
 export function SolveProgress(props: Props) {
-  const { progress, isSolving, onDismiss, activeMode, onSelectMode } = props
+  const { progress, isSolving, onDismiss, activeMode, onSelectMode, onOpenTuning } = props
 
   // `now` is driven by a 250ms interval while a solve is in flight. Using
   // state (instead of calling performance.now() during render) keeps the
@@ -156,14 +164,41 @@ export function SolveProgress(props: Props) {
           // be a no-op (no cached result to flip to).
           const isSelectable = m.state === "done" && !!onSelectMode
           const isActive = activeMode === key
+          // The middle (balanced) card carries the Tune affordance. Surface
+          // the gear whenever onOpenTuning is wired — even mid-solve, so
+          // chairs can re-open and re-tune without waiting.
+          const isTuneCard = key === "balanced" && !!onOpenTuning
           const className =
             "solve-progress__mode" +
             ` solve-progress__mode--${m.state}` +
             (isActive ? " solve-progress__mode--active" : "") +
-            (isSelectable ? " solve-progress__mode--selectable" : "")
+            (isSelectable ? " solve-progress__mode--selectable" : "") +
+            (isTuneCard ? " solve-progress__mode--tune" : "")
           const cardContent = (
             <>
               <div className="solve-progress__mode-row">
+                {isTuneCard && (
+                  <button
+                    type="button"
+                    className="solve-progress__tune-btn"
+                    onClick={(e) => {
+                      // The card-level handler (when selectable) would
+                      // also flip the board to balanced — the gear is a
+                      // distinct intent (open the modal), so swallow it.
+                      e.stopPropagation()
+                      onOpenTuning?.()
+                    }}
+                    onKeyDown={(e) => {
+                      // Keep Enter/Space from also bubbling to the card's
+                      // role=button (which would re-fire selection).
+                      if (e.key === "Enter" || e.key === " ") e.stopPropagation()
+                    }}
+                    aria-label="Tune solver weights"
+                    title="Tune the solver's weight mix"
+                  >
+                    ⚙
+                  </button>
+                )}
                 <span className="solve-progress__mode-name">
                   {MODE_LABELS[key] ?? key}
                 </span>
@@ -204,6 +239,38 @@ export function SolveProgress(props: Props) {
               </div>
             </>
           )
+          // When the Tune card needs to host a real <button> (the gear), we
+          // can't also be a <button> — so render as a div with role=button
+          // and keyboard handling. Other cards keep the cleaner native-button
+          // path when selectable.
+          if (isTuneCard) {
+            return (
+              <div
+                key={key}
+                className={className}
+                data-mode={key}
+                role={isSelectable ? "button" : undefined}
+                tabIndex={isSelectable ? 0 : undefined}
+                aria-pressed={isSelectable ? isActive : undefined}
+                onClick={isSelectable ? () => onSelectMode?.(key) : undefined}
+                onKeyDown={isSelectable ? (e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    onSelectMode?.(key)
+                  }
+                } : undefined}
+                title={
+                  isSelectable
+                    ? (isActive
+                        ? `${MODE_LABELS[key] ?? key} — currently shown on the board`
+                        : `Show ${MODE_LABELS[key] ?? key} on the board`)
+                    : undefined
+                }
+              >
+                {cardContent}
+              </div>
+            )
+          }
           // Render as a real <button> when selectable so keyboard + screen-
           // reader users get the same affordance as click. Otherwise plain div.
           return isSelectable ? (

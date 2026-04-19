@@ -19,7 +19,7 @@ import { ProfessorCard } from "./components/ProfessorCard"
 import { QuarterSchedule } from "./components/QuarterSchedule"
 import { RoomCard } from "./components/RoomCard"
 import { Roster } from "./components/Roster"
-import { SolverTuning } from "./components/SolverTuning"
+import { loadTunedMix, mixToSolverWeights, SolverTuning, type Mix } from "./components/SolverTuning"
 import { VersionBadge } from "./components/VersionBadge"
 import { loadInitialState } from "./data"
 import { useTheme } from "./hooks/useTheme"
@@ -55,6 +55,14 @@ const ROOM_EDITS_LEGACY_KEY = "room-edits"
 
 
 type ActivePanel = "roster" | "schedule" | "detail"
+
+/** Display labels for the solver modes in the topbar context strip. Mirrors
+ *  SolveProgress.MODE_LABELS so "Tune" reads consistently across the UI. */
+const SOLVE_MODE_LABELS: Record<string, string> = {
+  affinity_first:  "Affinity",
+  time_pref_first: "Time Pref",
+  balanced:        "Tune",
+}
 
 function loadPortraits(): Record<string, string> {
   try {
@@ -150,8 +158,11 @@ function App() {
   // ── Solver / API state ─────────────────────────────────────────
   const [apiAvailable, setApiAvailable] = useState<boolean | null>(null)
   const [solveError, setSolveError] = useState<string | null>(null)
-  // UI prototype: weight tuning modal. Not yet wired to the solver request.
+  // Weight-tuning modal + the tuned mix that replaces MODE_WEIGHTS["balanced"]
+  // in the solver request. The mix lives in localStorage (Path B); App.tsx
+  // mirrors it in state so the SolveRequestBody re-renders on changes.
   const [tuningOpen, setTuningOpen] = useState(false)
+  const [tunedMix, setTunedMix] = useState<Mix>(() => loadTunedMix())
   // Cache of all three solve modes from the last /api/solve/stream, so
   // flipping the solveMode chip re-applies without re-running the solver.
   const modeResultsRef = useRef<Record<string, SolveModeResult> | null>(null)
@@ -428,14 +439,19 @@ function App() {
     setSolveError(null)
   }, [])
 
-  const buildSolveRequest = useCallback((): SolveRequestBody => ({
-    quarter:    state.quarter,
-    year:       state.year,
-    solveMode:  state.solveMode,
-    offerings:  state.offerings,
-    professors: Object.values(state.professors),
-    rooms:      Object.values(state.rooms),
-  }), [state.quarter, state.year, state.solveMode, state.offerings, state.professors, state.rooms])
+  /** Build the solve request. Accepts an optional tuned-weights override so
+   *  the "Try it on current schedule" button can solve with a freshly-set mix
+   *  in the same tick (useState batches; reading tunedMix here would see the
+   *  prior value). */
+  const buildSolveRequest = useCallback((overrideMix?: Mix): SolveRequestBody => ({
+    quarter:      state.quarter,
+    year:         state.year,
+    solveMode:    state.solveMode,
+    offerings:    state.offerings,
+    professors:   Object.values(state.professors),
+    rooms:        Object.values(state.rooms),
+    tunedWeights: mixToSolverWeights(overrideMix ?? tunedMix),
+  }), [state.quarter, state.year, state.solveMode, state.offerings, state.professors, state.rooms, tunedMix])
 
   /** Reduce one SSE event into the SolveProgressState. Pure, so we can run
    *  it inside setSolveProgress's callback without stale-closure bugs. */
@@ -525,7 +541,12 @@ function App() {
     [],
   )
 
-  const requestSolve = useCallback(async () => {
+  /** Trigger a streaming solve. `overrideMix` lets a caller (e.g. the Tune
+   *  modal's "Try it" button) plug in a freshly-set mix without waiting for
+   *  the next render — useState batches, so reading tunedMix from closure
+   *  here would see the prior value. `displayMode` selects which mode's
+   *  result the calendar flips to on completion. */
+  const requestSolve = useCallback(async (overrideMix?: Mix, displayMode?: SolveMode) => {
     // Cancel any in-flight solve if the user re-presses. Don't await — the
     // stream reader will throw AbortError which we swallow below.
     solveAbortRef.current?.abort()
@@ -544,7 +565,7 @@ function App() {
 
     try {
       const res = await postSolveStream(
-        buildSolveRequest(),
+        buildSolveRequest(overrideMix),
         (event) => {
           setSolveProgress(prev => {
             const next = applyProgressEvent(prev, event)
@@ -560,8 +581,13 @@ function App() {
       const byMode: Record<string, SolveModeResult> = {}
       for (const m of res.modes) byMode[m.mode] = m
       modeResultsRef.current = byMode
-      applyModeAssignments(byMode[state.solveMode] ?? res.modes[0])
-      setState(s => ({ ...s, solveStatus: "done" }))
+      const targetMode = displayMode ?? state.solveMode
+      applyModeAssignments(byMode[targetMode] ?? res.modes[0])
+      setState(s => ({
+        ...s,
+        solveStatus: "done",
+        solveMode:   displayMode ?? s.solveMode,
+      }))
     } catch (e) {
       if ((e as { name?: string }).name === "AbortError") return
       const msg = e instanceof Error ? e.message : String(e)
@@ -573,6 +599,14 @@ function App() {
       )
     }
   }, [buildSolveRequest, applyModeAssignments, applyProgressEvent, state.solveMode])
+
+  /** Hook the tuning modal's "Try it on current schedule" button to a fresh
+   *  solve. Persists the new mix, flips the calendar to the balanced (Tune)
+   *  result, and kicks off the solve in the same tick. */
+  const handleApplyTunedMix = useCallback((nextMix: Mix) => {
+    setTunedMix(nextMix)
+    void requestSolve(nextMix, "balanced")
+  }, [requestSolve])
 
   const requestExport = useCallback(async () => {
     // Cancel any in-flight stream if the user re-presses Export.
@@ -976,6 +1010,7 @@ function App() {
       onStartPlacing={startPlacing}
       onDismissError={() => setSolveError(null)}
       onDismissProgress={() => setSolveProgress(null)}
+      onOpenTuning={() => setTuningOpen(true)}
     />
   )
 
@@ -1118,18 +1153,10 @@ function App() {
           </div>
           <span className="scheduler__context">
             {state.quarter} {state.year} · {offeringCount} offerings ·{" "}
-            {state.solveMode}
+            {SOLVE_MODE_LABELS[state.solveMode] ?? state.solveMode}
           </span>
           <div className="scheduler__topbar-right">
             <div className="topbar-persist" role="group" aria-label="Overlay storage">
-              <button
-                type="button"
-                className="topbar-btn topbar-btn--ghost"
-                onClick={() => setTuningOpen(true)}
-                title="Tune solver weights per department (UI prototype)"
-              >
-                ⚙ Tune
-              </button>
               <button
                 type="button"
                 className="topbar-btn topbar-btn--ghost"
@@ -1264,7 +1291,11 @@ function App() {
           onRemove={removeOffering}
         />
       </div>
-      <SolverTuning open={tuningOpen} onClose={() => setTuningOpen(false)} />
+      <SolverTuning
+        open={tuningOpen}
+        onClose={() => setTuningOpen(false)}
+        onApply={handleApplyTunedMix}
+      />
      </ProfessorContext.Provider>
     </PortraitContext.Provider>
   )

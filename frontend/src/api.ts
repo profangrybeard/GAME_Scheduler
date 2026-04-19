@@ -43,6 +43,10 @@ export interface SolveRequestBody {
   professors: Professor[]
   /** Full rooms list — replaces server baseline entirely (Path B). */
   rooms: Room[]
+  /** User-tuned weights for the "balanced" mode. When present, the server
+   *  uses these in place of MODE_WEIGHTS["balanced"]. Field names mirror the
+   *  Python config keys so the body passes through verbatim. */
+  tunedWeights?: { affinity: number; time_pref: number; overload: number }
 }
 
 /** Return a compact Assignment matching React's type shape. */

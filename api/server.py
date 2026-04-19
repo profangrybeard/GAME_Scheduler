@@ -124,6 +124,16 @@ class OfferingModel(BaseModel):
     assignment: AssignmentModel | None = None
 
 
+class TunedWeightsModel(BaseModel):
+    """User-tuned weight vector for the 'balanced' (Tune) mode. Same shape as
+    the entries in config.MODE_WEIGHTS, so the solver can swap it in directly.
+    Carried as percent-of-100 from the gear UI; the solver uses these as raw
+    coefficients (relative magnitude is what matters)."""
+    affinity:  int
+    time_pref: int
+    overload:  int
+
+
 class SolveRequest(BaseModel):
     quarter: str
     year: int
@@ -134,6 +144,9 @@ class SolveRequest(BaseModel):
     # merging onto disk. Each chair's deck IS the truth.
     professors: list[dict] = Field(default_factory=list)
     rooms: list[dict] = Field(default_factory=list)
+    # When provided, replaces MODE_WEIGHTS["balanced"] for this run only.
+    # The other two modes (affinity_first, time_pref_first) stay canonical.
+    tunedWeights: TunedWeightsModel | None = None
 
 
 class ExportRequest(BaseModel):
@@ -144,6 +157,7 @@ class ExportRequest(BaseModel):
     offerings: list[OfferingModel]
     professors: list[dict] = Field(default_factory=list)
     rooms: list[dict] = Field(default_factory=list)
+    tunedWeights: TunedWeightsModel | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -215,6 +229,8 @@ async def solve_stream(req: SolveRequest) -> StreamingResponse:
                 ),
                 professors=req.professors,
                 rooms=req.rooms,
+                tuned_weights=(req.tunedWeights.model_dump()
+                               if req.tunedWeights else None),
                 progress_callback=progress_cb,
             )
             event_queue.put({
@@ -312,6 +328,8 @@ def export(req: ExportRequest) -> Response:
             ),
             professors=req.professors,
             rooms=req.rooms,
+            tuned_weights=(req.tunedWeights.model_dump()
+                           if req.tunedWeights else None),
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -391,6 +409,8 @@ async def export_stream(req: ExportRequest) -> StreamingResponse:
                 ),
                 professors=req.professors,
                 rooms=req.rooms,
+                tuned_weights=(req.tunedWeights.model_dump()
+                               if req.tunedWeights else None),
                 progress_callback=progress_cb,
             )
             event_queue.put({

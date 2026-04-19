@@ -210,6 +210,7 @@ def run_schedule(
     professors: list[dict] | None = None,
     rooms_override: dict[str, dict] | None = None,
     rooms: list[dict] | None = None,
+    tuned_weights: dict | None = None,
     progress_callback: ProgressCallback | None = None,
 ) -> dict:
     """Run 3 CP-SAT solves (one per mode) for the given quarter.
@@ -273,7 +274,13 @@ def run_schedule(
         apply_hard_constraints(model, data)
 
         print(f"[{mode}] Building objective ...")
-        build_objective(model, data)
+        # tuned_weights only swaps in for the 'balanced' mode — Affinity-First
+        # and Time-First stay canonical so they remain the user's reference
+        # comparison points. Other modes ignore the override.
+        build_objective(
+            model, data,
+            tuned_weights=tuned_weights if mode == "balanced" else None,
+        )
 
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = _SOLVER_TIME_LIMIT
