@@ -33,14 +33,14 @@ export interface ClassProps {
   catalog: Record<string, Course>
   professors: Record<string, Professor>
   rooms: Record<string, Room>
-  onUpdate: (catalog_id: string, changes: Partial<Offering>) => void
-  onRemove: (catalog_id: string) => void
+  onUpdate: (offering_id: string, changes: Partial<Offering>) => void
+  onRemove: (offering_id: string) => void
   onSelectProfessor: (id: string | null) => void
 }
 
 export function Class(props: ClassProps) {
   const offering = props.selectedOfferingId
-    ? props.offerings.find(o => o.catalog_id === props.selectedOfferingId)
+    ? props.offerings.find(o => o.offering_id === props.selectedOfferingId)
     : null
   const course = offering ? props.catalog[offering.catalog_id] : null
 
@@ -157,7 +157,7 @@ export function Class(props: ClassProps) {
                   (offering.priority === opt.key ? " class__seg--active" : "")
                 }
                 onClick={() =>
-                  props.onUpdate(offering.catalog_id, { priority: opt.key })
+                  props.onUpdate(offering.offering_id, { priority: opt.key })
                 }
               >
                 {opt.label}
@@ -178,7 +178,7 @@ export function Class(props: ClassProps) {
               type="button"
               disabled={offering.sections <= 1}
               onClick={() =>
-                props.onUpdate(offering.catalog_id, {
+                props.onUpdate(offering.offering_id, {
                   sections: Math.max(1, offering.sections - 1),
                 })
               }
@@ -190,7 +190,7 @@ export function Class(props: ClassProps) {
               type="button"
               disabled={offering.sections >= 4}
               onClick={() =>
-                props.onUpdate(offering.catalog_id, {
+                props.onUpdate(offering.offering_id, {
                   sections: Math.min(4, offering.sections + 1),
                 })
               }
@@ -206,7 +206,7 @@ export function Class(props: ClassProps) {
             className="class__select"
             value={offering.assigned_prof_id ?? "AUTO"}
             onChange={e =>
-              props.onUpdate(offering.catalog_id, {
+              props.onUpdate(offering.offering_id, {
                 assigned_prof_id: e.target.value === "AUTO" ? null : e.target.value,
               })
             }
@@ -231,7 +231,7 @@ export function Class(props: ClassProps) {
             className="class__select"
             value={offering.assigned_room_id ?? "AUTO"}
             onChange={e =>
-              props.onUpdate(offering.catalog_id, {
+              props.onUpdate(offering.offering_id, {
                 assigned_room_id: e.target.value === "AUTO" ? null : e.target.value,
               })
             }
@@ -270,7 +270,7 @@ export function Class(props: ClassProps) {
             value={offering.notes ?? ""}
             placeholder="Scheduling notes, prof preferences, etc."
             onChange={e =>
-              props.onUpdate(offering.catalog_id, {
+              props.onUpdate(offering.offering_id, {
                 notes: e.target.value || null,
               })
             }
@@ -281,7 +281,7 @@ export function Class(props: ClassProps) {
           <button
             type="button"
             className="class__remove"
-            onClick={() => props.onRemove(offering.catalog_id)}
+            onClick={() => props.onRemove(offering.offering_id)}
           >
             Remove from quarter
           </button>

@@ -24,8 +24,8 @@ import { loadTunedMix, mixToSolverWeights, type Mix } from "./components/SolverM
 import { VersionBadge } from "./components/VersionBadge"
 import { loadInitialState } from "./data"
 import { useTheme } from "./hooks/useTheme"
-import { SCHOOL_LABELS, SCHOOL_ORDER } from "./types"
-import type { Assignment, Offering, Professor, Room, SchedulerState, Slot, SolveMode, SolveModeProgress, SolveProgressState } from "./types"
+import { mintOfferingId, profContractCeiling, profContractFloor, SCHOOL_LABELS, SCHOOL_ORDER } from "./types"
+import type { Assignment, Offering, Professor, RosterCapacity, Room, SchedulerState, Slot, SolveMode, SolveModeProgress, SolveProgressState } from "./types"
 import "./App.css"
 
 /**
@@ -216,12 +216,25 @@ function App() {
     }
   }, [])
 
-  const addOffering = useCallback((catalog_id: string) => {
+  /** Add an offering for `catalog_id`. Until PR 2 splits sections, at most
+   *  one offering per catalog_id — a second call for the same catalog_id
+   *  selects the existing row instead of creating a duplicate.
+   *
+   *  Returns the resulting offering_id (new or existing) so the DnD flow can
+   *  chain `pinToSlot(newId, slot)` without waiting for a re-render. */
+  const addOffering = useCallback((catalog_id: string): string | null => {
+    let resultId: string | null = null
     setState(s => {
-      if (s.offerings.some(o => o.catalog_id === catalog_id)) return s
-      const course = s.catalog[catalog_id]
-      if (!course) return s
+      if (!s.catalog[catalog_id]) return s
+      const existing = s.offerings.find(o => o.catalog_id === catalog_id)
+      if (existing) {
+        resultId = existing.offering_id
+        return { ...s, selectedOfferingId: existing.offering_id }
+      }
+      const newId = mintOfferingId(catalog_id, s.offerings)
+      resultId = newId
       const fresh: Offering = {
+        offering_id: newId,
         catalog_id,
         priority: "should_have",
         sections: 1,
@@ -237,27 +250,28 @@ function App() {
       return {
         ...s,
         offerings: [...s.offerings, fresh],
-        selectedOfferingId: catalog_id,
+        selectedOfferingId: newId,
       }
     })
     setSelectedProfId(null)
+    return resultId
   }, [])
 
-  const removeOffering = useCallback((catalog_id: string) => {
+  const removeOffering = useCallback((offering_id: string) => {
     setState(s => ({
       ...s,
-      offerings: s.offerings.filter(o => o.catalog_id !== catalog_id),
+      offerings: s.offerings.filter(o => o.offering_id !== offering_id),
       selectedOfferingId:
-        s.selectedOfferingId === catalog_id ? null : s.selectedOfferingId,
+        s.selectedOfferingId === offering_id ? null : s.selectedOfferingId,
     }))
   }, [])
 
   const updateOffering = useCallback(
-    (catalog_id: string, changes: Partial<Offering>) => {
+    (offering_id: string, changes: Partial<Offering>) => {
       setState(s => ({
         ...s,
         offerings: s.offerings.map(o =>
-          o.catalog_id === catalog_id ? { ...o, ...changes } : o,
+          o.offering_id === offering_id ? { ...o, ...changes } : o,
         ),
       }))
     },
@@ -385,11 +399,11 @@ function App() {
   // `pinned` is what actually makes the card move (or leave) visually — the
   // calendar's effectiveSlot is `assignment ?? pinned`, so a stale assignment
   // would silently win and the drop would look like it did nothing.
-  const pinToSlot = useCallback((catalog_id: string, slot: Slot | null) => {
+  const pinToSlot = useCallback((offering_id: string, slot: Slot | null) => {
     setState(s => ({
       ...s,
       offerings: s.offerings.map(o =>
-        o.catalog_id === catalog_id
+        o.offering_id === offering_id
           ? { ...o, pinned: slot, assignment: null }
           : o,
       ),
@@ -703,6 +717,8 @@ function App() {
         }
       }
 
+      // offering_id is runtime-only — regenerate on every reload. See data.ts.
+      const seen: Record<string, number> = {}
       setState(s => ({
         ...s,
         selectedOfferingId: null,
@@ -710,19 +726,24 @@ function App() {
         year:       draft.year,
         solveMode:  draft.solver_mode,
         solveStatus: "idle",
-        offerings: draft.offerings.map(o => ({
-          catalog_id:                    o.catalog_id,
-          priority:                      o.priority,
-          sections:                      o.sections ?? 1,
-          override_enrollment_cap:       o.override_enrollment_cap ?? null,
-          override_room_type:            o.override_room_type ?? null,
-          override_preferred_professors: o.override_preferred_professors ?? null,
-          notes:                         o.notes ?? null,
-          assigned_prof_id:              o.assigned_prof_id ?? null,
-          assigned_room_id:              o.assigned_room_id ?? null,
-          pinned:                        o.pinned ?? null,
-          assignment:                    byCatalog[o.catalog_id] ?? null,
-        })),
+        offerings: draft.offerings.map(o => {
+          const n = (seen[o.catalog_id] ?? 0) + 1
+          seen[o.catalog_id] = n
+          return {
+            offering_id:                   `${o.catalog_id}#${n}`,
+            catalog_id:                    o.catalog_id,
+            priority:                      o.priority,
+            sections:                      o.sections ?? 1,
+            override_enrollment_cap:       o.override_enrollment_cap ?? null,
+            override_room_type:            o.override_room_type ?? null,
+            override_preferred_professors: o.override_preferred_professors ?? null,
+            notes:                         o.notes ?? null,
+            assigned_prof_id:              o.assigned_prof_id ?? null,
+            assigned_room_id:              o.assigned_room_id ?? null,
+            pinned:                        o.pinned ?? null,
+            assignment:                    byCatalog[o.catalog_id] ?? null,
+          }
+        }),
       }))
 
       setReloadWarnings(warnings)
@@ -947,7 +968,6 @@ function App() {
 
   // ── Render ─────────────────────────────────────────────────────────
 
-  const offeringCount = state.offerings.length
   const loadedSchools = useMemo(() => {
     const depts = new Set<string>()
     for (const course of Object.values(state.catalog)) {
@@ -955,10 +975,24 @@ function App() {
     }
     return SCHOOL_ORDER.filter(d => depts.has(d)).map(d => SCHOOL_LABELS[d])
   }, [state.catalog])
+
+  const rosterCapacity = useMemo<RosterCapacity>(() => {
+    let floorTotal = 0
+    let ceilingTotal = 0
+    for (const p of Object.values(state.professors)) {
+      floorTotal += profContractFloor(p)
+      ceilingTotal += profContractCeiling(p)
+    }
+    // Count sections, not offering rows — matches the solver's unit
+    // (one offering with sections=2 is two placements to schedule).
+    let loaded = 0
+    for (const o of state.offerings) loaded += o.sections
+    return { floorTotal, ceilingTotal, loaded }
+  }, [state.professors, state.offerings])
   const selectedProf = selectedProfId ? state.professors[selectedProfId] : null
   const selectedRoom = selectedRoomId ? state.rooms[selectedRoomId] : null
   const placingOffering = placingId
-    ? state.offerings.find(o => o.catalog_id === placingId)
+    ? state.offerings.find(o => o.offering_id === placingId)
     : null
   const placingCourse = placingOffering
     ? state.catalog[placingOffering.catalog_id]
@@ -970,6 +1004,7 @@ function App() {
       catalog={state.catalog}
       professors={state.professors}
       rooms={state.rooms}
+      capacity={rosterCapacity}
       selectedOfferingId={state.selectedOfferingId}
       selectedProfId={selectedProfId}
       selectedRoomId={selectedRoomId}
@@ -1153,7 +1188,7 @@ function App() {
             </h1>
           </div>
           <span className="scheduler__context">
-            {state.quarter} {state.year} · {offeringCount} offerings ·{" "}
+            {state.quarter} {state.year} · {rosterCapacity.loaded} classes ·{" "}
             {SOLVE_MODE_LABELS[state.solveMode] ?? state.solveMode}
           </span>
           <div className="scheduler__topbar-right">

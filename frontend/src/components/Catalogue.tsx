@@ -16,15 +16,20 @@ import type { Course, Department, Offering } from "../types"
  * source of truth (SchedulerState) stays in App.tsx.
  */
 
-const DND_MIME = "application/x-offering"
+/** Catalogue drags carry catalog_id (payload = course to add on drop).
+ *  Distinct MIME from the `application/x-offering` used by Roster + Schedule
+ *  so drop targets can tell add-from-catalogue from move-existing. */
+const DND_MIME_COURSE = "application/x-course"
 
 export interface CatalogueProps {
   catalog: Record<string, Course>
   offerings: Offering[]
   selectedOfferingId: string | null
-  onSelect: (id: string | null) => void
-  onAdd: (catalog_id: string) => void
-  onRemove: (catalog_id: string) => void
+  onSelect: (offering_id: string | null) => void
+  /** Returns the resulting offering_id (new or existing) so the click path
+   *  can chain a select on it without waiting for a re-render. */
+  onAdd: (catalog_id: string) => string | null
+  onRemove: (offering_id: string) => void
 }
 
 const DEPT_CHIPS: ReadonlyArray<{ key: Department | "all"; label: string }> = [
@@ -42,10 +47,24 @@ export function Catalogue(props: CatalogueProps) {
   const [query, setQuery] = useState("")
   const [dept, setDept] = useState<Department | "all">("all")
 
+  /** catalog_ids that currently have at least one offering. Drives the
+   *  "offered" chrome on each row. Siblings (PR 2+) collapse to the set. */
   const offeredIds = useMemo(
     () => new Set(props.offerings.map(o => o.catalog_id)),
     [props.offerings],
   )
+
+  /** catalog_id of whichever offering is currently selected, or null. Used to
+   *  decide the row highlight. Today's 1:1 relationship means highlighting
+   *  the catalog_id row is unambiguous; post-split, multiple rows could share
+   *  a catalog_id but only one sibling is ever selected. */
+  const selectedCatalogId = useMemo(() => {
+    if (!props.selectedOfferingId) return null
+    const found = props.offerings.find(
+      o => o.offering_id === props.selectedOfferingId,
+    )
+    return found?.catalog_id ?? null
+  }, [props.offerings, props.selectedOfferingId])
 
   const rows = useMemo(() => {
     const all = Object.values(props.catalog)
@@ -98,7 +117,16 @@ export function Catalogue(props: CatalogueProps) {
         )}
         {rows.map(course => {
           const isOffered = offeredIds.has(course.id)
-          const isSelected = props.selectedOfferingId === course.id
+          const isSelected = selectedCatalogId === course.id
+          const handleActivate = () => {
+            const existing = props.offerings.find(o => o.catalog_id === course.id)
+            if (existing) {
+              props.onSelect(existing.offering_id)
+              return
+            }
+            const newId = props.onAdd(course.id)
+            if (newId) props.onSelect(newId)
+          }
           return (
             <div
               key={course.id}
@@ -110,19 +138,15 @@ export function Catalogue(props: CatalogueProps) {
                 (isOffered ? " catalogue-row--offered" : "") +
                 (isSelected ? " catalogue-row--selected" : "")
               }
-              onClick={() => {
-                if (!isOffered) props.onAdd(course.id)
-                props.onSelect(course.id)
-              }}
+              onClick={handleActivate}
               onKeyDown={e => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault()
-                  if (!isOffered) props.onAdd(course.id)
-                  props.onSelect(course.id)
+                  handleActivate()
                 }
               }}
               onDragStart={e => {
-                e.dataTransfer.setData(DND_MIME, course.id)
+                e.dataTransfer.setData(DND_MIME_COURSE, course.id)
                 e.dataTransfer.setData("text/plain", course.id)
                 e.dataTransfer.effectAllowed = "copyMove"
               }}
@@ -141,7 +165,10 @@ export function Catalogue(props: CatalogueProps) {
                   aria-label={`Remove ${course.id} from offerings`}
                   onClick={e => {
                     e.stopPropagation()
-                    props.onRemove(course.id)
+                    const existing = props.offerings.find(
+                      o => o.catalog_id === course.id,
+                    )
+                    if (existing) props.onRemove(existing.offering_id)
                   }}
                 >
                   ×
