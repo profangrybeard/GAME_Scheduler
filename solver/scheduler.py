@@ -313,6 +313,13 @@ def run_schedule(
         solver.parameters.num_search_workers  = 8
         solver.parameters.interleave_search   = True
         solver.parameters.random_seed         = 42
+        # TEMP DIAGNOSTIC: dump CP-SAT presolve/search log so we can see why
+        # Linux CI proves INFEASIBLE on a model that solves cleanly on macOS
+        # and Windows. Remove once the platform-specific trap is identified.
+        solver.parameters.log_search_progress = True
+        import os
+        if os.environ.get("CI"):
+            print(f"[{mode}] CI=TRUE — dumping CP-SAT diagnostic log")
 
         print(f"[{mode}] Solving ...")
         started_at = time.time()
