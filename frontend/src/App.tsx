@@ -19,6 +19,7 @@ import { ProfessorCard } from "./components/ProfessorCard"
 import { QuarterSchedule } from "./components/QuarterSchedule"
 import { RoomCard } from "./components/RoomCard"
 import { Roster } from "./components/Roster"
+import { SolverTuning } from "./components/SolverTuning"
 import { VersionBadge } from "./components/VersionBadge"
 import { loadInitialState } from "./data"
 import { useTheme } from "./hooks/useTheme"
@@ -149,6 +150,8 @@ function App() {
   // ── Solver / API state ─────────────────────────────────────────
   const [apiAvailable, setApiAvailable] = useState<boolean | null>(null)
   const [solveError, setSolveError] = useState<string | null>(null)
+  // UI prototype: weight tuning modal. Not yet wired to the solver request.
+  const [tuningOpen, setTuningOpen] = useState(false)
   // Cache of all three solve modes from the last /api/solve/stream, so
   // flipping the solveMode chip re-applies without re-running the solver.
   const modeResultsRef = useRef<Record<string, SolveModeResult> | null>(null)
@@ -1122,6 +1125,14 @@ function App() {
               <button
                 type="button"
                 className="topbar-btn topbar-btn--ghost"
+                onClick={() => setTuningOpen(true)}
+                title="Tune solver weights per department (UI prototype)"
+              >
+                ⚙ Tune
+              </button>
+              <button
+                type="button"
+                className="topbar-btn topbar-btn--ghost"
                 onClick={exportOverlay}
                 title="Download current edits as a portable JSON backup"
               >
@@ -1253,6 +1264,7 @@ function App() {
           onRemove={removeOffering}
         />
       </div>
+      <SolverTuning open={tuningOpen} onClose={() => setTuningOpen(false)} />
      </ProfessorContext.Provider>
     </PortraitContext.Provider>
   )
