@@ -172,35 +172,6 @@ export function Class(props: ClassProps) {
         </section>
 
         <section className="class__section">
-          <label className="class__label">Sections</label>
-          <div className="class__stepper">
-            <button
-              type="button"
-              disabled={offering.sections <= 1}
-              onClick={() =>
-                props.onUpdate(offering.offering_id, {
-                  sections: Math.max(1, offering.sections - 1),
-                })
-              }
-            >
-              −
-            </button>
-            <span className="class__stepper-value">{offering.sections}</span>
-            <button
-              type="button"
-              disabled={offering.sections >= 4}
-              onClick={() =>
-                props.onUpdate(offering.offering_id, {
-                  sections: Math.min(4, offering.sections + 1),
-                })
-              }
-            >
-              +
-            </button>
-          </div>
-        </section>
-
-        <section className="class__section">
           <label className="class__label">Professor</label>
           <select
             className="class__select"

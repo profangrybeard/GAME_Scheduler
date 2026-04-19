@@ -22,23 +22,37 @@ def react_offerings_to_doc(
 ) -> dict:
     """Build a quarterly_offerings.json-shaped dict from React's offerings.
 
-    React `Offering` ships `pinned: {day_group, time_slot} | null` as the only
-    slot hint (we collapsed `locked` into `pinned` earlier this session).
-    The solver reads offerings from disk; we drop `pinned` here and emit the
-    slot as a `pinned` solver hint separately via `react_pinned_to_solver()`.
+    React ships one row per sibling (`sections: 1` each); the solver expects
+    one row per catalog_id with `sections: N`. We group by catalog_id preserving
+    order — the first sibling's priority/overrides win (the Class detail panel
+    only writes those from sibling #1).
+
+    `pinned` is stripped here; it leaves via `react_pinned_to_solver()` using
+    section_idx = position within the group, which matches the cs_keys the
+    solver mints (`${cid}__0`, `${cid}__1`, ...).
     """
-    out_offerings = []
+    groups: dict[str, list[dict]] = {}
+    order: list[str] = []
     for o in react_offerings:
+        cid = o["catalog_id"]
+        if cid not in groups:
+            groups[cid] = []
+            order.append(cid)
+        groups[cid].append(o)
+    out_offerings = []
+    for cid in order:
+        group = groups[cid]
+        first = group[0]
         out_offerings.append({
-            "catalog_id":  o["catalog_id"],
-            "priority":    o["priority"],
-            "sections":    o.get("sections", 1),
-            "override_enrollment_cap":         o.get("override_enrollment_cap"),
-            "override_room_type":              o.get("override_room_type"),
-            "override_preferred_professors":   o.get("override_preferred_professors"),
-            "notes":                           o.get("notes"),
-            "assigned_prof_id":                o.get("assigned_prof_id"),
-            "assigned_room_id":                o.get("assigned_room_id"),
+            "catalog_id":  cid,
+            "priority":    first["priority"],
+            "sections":    len(group),
+            "override_enrollment_cap":         first.get("override_enrollment_cap"),
+            "override_room_type":              first.get("override_room_type"),
+            "override_preferred_professors":   first.get("override_preferred_professors"),
+            "notes":                           first.get("notes"),
+            "assigned_prof_id":                first.get("assigned_prof_id"),
+            "assigned_room_id":                first.get("assigned_room_id"),
         })
     return {"quarter": quarter, "year": year, "offerings": out_offerings}
 
@@ -46,17 +60,23 @@ def react_offerings_to_doc(
 def react_pinned_to_solver(react_offerings: list[dict]) -> list[dict]:
     """Build solver-shaped `pinned=[{cs_key, day_group, time_slot}]` from React.
 
-    Section 0 of each pinned offering receives the slot hint. Additional
-    sections (if sections > 1) are free for the solver to place — matches
-    app.py's existing behavior (see app.py:1004-1012).
+    Each React row is one sibling; its section_idx is its position within the
+    same-catalog_id group (0 for the first row seen, 1 for the second, ...).
+    The cs_key `${cid}__${section_idx}` must match how the solver labels its
+    sections, which is why we walk in document order — the coalescing in
+    `react_offerings_to_doc()` uses the same traversal.
     """
     pinned = []
+    section_idx_by_cid: dict[str, int] = {}
     for o in react_offerings:
+        cid = o["catalog_id"]
+        sec_idx = section_idx_by_cid.get(cid, 0)
+        section_idx_by_cid[cid] = sec_idx + 1
         p = o.get("pinned")
         if not p:
             continue
         pinned.append({
-            "cs_key":     f"{o['catalog_id']}__0",
+            "cs_key":     f"{cid}__{sec_idx}",
             "day_group":  p["day_group"],
             "time_slot":  p["time_slot"],
         })
@@ -105,21 +125,25 @@ def apply_room_overrides(
 
 def solver_schedule_to_react_assignments(schedule: list[dict]) -> list[dict]:
     """Flatten solver's verbose schedule rows into React-friendly assignment
-    records. The React workspace stores one `Assignment` per offering (section
-    0); multi-section overflow is on our roadmap, not this plan.
+    records. One record per (catalog_id, section_idx) — the React workspace
+    holds N sibling Offering rows for a multi-section course and routes each
+    assignment to its sibling by `${catalog_id}#${section_idx + 1}`.
+
+    We still dedupe on the (catalog_id, section_idx) tuple in case the solver
+    emits duplicate rows for a section; the first wins.
     """
     out: list[dict] = []
-    seen_catalog_ids: set[str] = set()
+    seen: set[tuple[str, int]] = set()
     for row in schedule:
         catalog_id = row["catalog_id"]
-        if row.get("section_idx", 0) != 0:
+        section_idx = row.get("section_idx", 0)
+        key = (catalog_id, section_idx)
+        if key in seen:
             continue
-        if catalog_id in seen_catalog_ids:
-            continue
-        seen_catalog_ids.add(catalog_id)
+        seen.add(key)
         out.append({
             "catalog_id":     catalog_id,
-            "section_idx":    row.get("section_idx", 0),
+            "section_idx":    section_idx,
             "prof_id":        row["prof_id"],
             "room_id":        row["room_id"],
             "day_group":      row["day_group"],
