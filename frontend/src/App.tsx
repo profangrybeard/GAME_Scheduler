@@ -24,8 +24,8 @@ import { loadTunedMix, mixToSolverWeights, type Mix } from "./components/SolverM
 import { VersionBadge } from "./components/VersionBadge"
 import { loadInitialState } from "./data"
 import { useTheme } from "./hooks/useTheme"
-import { mintOfferingId, profContractCeiling, profContractFloor, SCHOOL_LABELS, SCHOOL_ORDER } from "./types"
-import type { Assignment, Offering, Professor, RosterCapacity, Room, SchedulerState, Slot, SolveMode, SolveModeProgress, SolveProgressState } from "./types"
+import { coalesceOfferingsForWire, expandOfferingsFromWire, mintOfferingId, profContractCeiling, profContractFloor, SCHOOL_LABELS, SCHOOL_ORDER } from "./types"
+import type { Assignment, Offering, Professor, RosterCapacity, Room, SchedulerState, Slot, SolveMode, SolveModeProgress, SolveProgressState, WireOffering } from "./types"
 import "./App.css"
 
 /**
@@ -216,9 +216,11 @@ function App() {
     }
   }, [])
 
-  /** Add an offering for `catalog_id`. Until PR 2 splits sections, at most
-   *  one offering per catalog_id — a second call for the same catalog_id
-   *  selects the existing row instead of creating a duplicate.
+  /** Add an offering for `catalog_id` or select the first existing sibling.
+   *  Used by the Catalogue drawer and the calendar's DnD-from-catalogue flow;
+   *  both want "one click = one row in the Roster", not "one click = new
+   *  sibling every time". Use `addSectionOffering` instead to explicitly grow
+   *  the sibling count (the Roster's per-card + button).
    *
    *  Returns the resulting offering_id (new or existing) so the DnD flow can
    *  chain `pinToSlot(newId, slot)` without waiting for a re-render. */
@@ -264,6 +266,34 @@ function App() {
       selectedOfferingId:
         s.selectedOfferingId === offering_id ? null : s.selectedOfferingId,
     }))
+  }, [])
+
+  /** Add another sibling (section) for `catalog_id`. Unlike `addOffering`
+   *  (which de-dupes to one offering per catalog), this always mints a fresh
+   *  offering_id so the Roster's + button grows the roster card-by-card. The
+   *  new sibling copies priority/override fields from the existing first
+   *  sibling — adding a second section shouldn't reset the chair's settings. */
+  const addSectionOffering = useCallback((catalog_id: string) => {
+    setState(s => {
+      if (!s.catalog[catalog_id]) return s
+      const template = s.offerings.find(o => o.catalog_id === catalog_id)
+      const fresh: Offering = {
+        offering_id: mintOfferingId(catalog_id, s.offerings),
+        catalog_id,
+        priority: template?.priority ?? "should_have",
+        sections: 1,
+        override_enrollment_cap: template?.override_enrollment_cap ?? null,
+        override_room_type: template?.override_room_type ?? null,
+        override_preferred_professors:
+          template?.override_preferred_professors ?? null,
+        notes: template?.notes ?? null,
+        assigned_prof_id: null,
+        assigned_room_id: null,
+        pinned: null,
+        assignment: null,
+      }
+      return { ...s, offerings: [...s.offerings, fresh] }
+    })
   }, [])
 
   const updateOffering = useCallback(
@@ -413,19 +443,25 @@ function App() {
 
   /** Apply a mode's assignments to the offerings list. Assignments not present
    *  in the mode clear `offering.assignment` — the user sees only the current
-   *  mode's schedule, not a stale one. */
+   *  mode's schedule, not a stale one.
+   *
+   *  Multi-section: the backend emits one assignment per (catalog_id,
+   *  section_idx); sibling offering_ids follow the `${catalog_id}#${k}`
+   *  convention with k = section_idx + 1. Keying the map by offering_id
+   *  routes each assignment to its matching sibling. */
   const applyModeAssignments = useCallback(
     (mode: SolveModeResult | undefined) => {
       if (!mode) return
-      const byCatalog: Record<string, Assignment> = {}
+      const byOfferingId: Record<string, Assignment> = {}
       for (const a of mode.assignments) {
-        byCatalog[a.catalog_id] = responseAssignmentToAssignment(a)
+        const oid = `${a.catalog_id}#${(a.section_idx ?? 0) + 1}`
+        byOfferingId[oid] = responseAssignmentToAssignment(a)
       }
       setState(s => ({
         ...s,
         offerings: s.offerings.map(o => ({
           ...o,
-          assignment: byCatalog[o.catalog_id] ?? null,
+          assignment: byOfferingId[o.offering_id] ?? null,
         })),
       }))
     },
@@ -457,12 +493,18 @@ function App() {
   /** Build the solve request. Accepts an optional tuned-weights override so
    *  the "Try it on current schedule" button can solve with a freshly-set mix
    *  in the same tick (useState batches; reading tunedMix here would see the
-   *  prior value). */
+   *  prior value).
+   *
+   *  Offerings are coalesced back to the single-row-per-catalog_id wire shape
+   *  (sibling #1's fields + `sections: N`) so the backend sees the same schema
+   *  it always has. See types.ts::coalesceOfferingsForWire for the contract.
+   *  The type cast is safe: `WireOffering` is `Offering` minus two runtime
+   *  fields the backend's Pydantic `OfferingModel` already ignores. */
   const buildSolveRequest = useCallback((overrideMix?: Mix): SolveRequestBody => ({
     quarter:      state.quarter,
     year:         state.year,
     solveMode:    state.solveMode,
-    offerings:    state.offerings,
+    offerings:    coalesceOfferingsForWire(state.offerings) as unknown as Offering[],
     professors:   Object.values(state.professors),
     rooms:        Object.values(state.rooms),
     tunedWeights: mixToSolverWeights(overrideMix ?? tunedMix),
@@ -707,18 +749,36 @@ function App() {
         modeResultsRef.current = null
       }
 
-      // Build per-catalog assignment map for the active mode (so the calendar
-      // populates immediately without a second reducer pass).
+      // Build per-offering assignment map for the active mode (so the
+      // calendar populates immediately without a second reducer pass).
+      // Sibling offering_ids follow `${catalog_id}#${section_idx + 1}`.
       const activeMode = cachedModes[draft.solver_mode]
-      const byCatalog: Record<string, Assignment> = {}
+      const byOfferingId: Record<string, Assignment> = {}
       if (activeMode) {
         for (const a of activeMode.assignments) {
-          byCatalog[a.catalog_id] = responseAssignmentToAssignment(a)
+          const oid = `${a.catalog_id}#${(a.section_idx ?? 0) + 1}`
+          byOfferingId[oid] = responseAssignmentToAssignment(a)
         }
       }
 
-      // offering_id is runtime-only — regenerate on every reload. See data.ts.
-      const seen: Record<string, number> = {}
+      // Wire → runtime: a wire entry with sections=N expands into N siblings
+      // with sections=1 each. offering_id is runtime-only (see data.ts).
+      const wireOfferings: WireOffering[] = draft.offerings.map(o => ({
+        catalog_id:                    o.catalog_id,
+        priority:                      o.priority,
+        sections:                      o.sections ?? 1,
+        override_enrollment_cap:       o.override_enrollment_cap ?? null,
+        override_room_type:            o.override_room_type ?? null,
+        override_preferred_professors: o.override_preferred_professors ?? null,
+        notes:                         o.notes ?? null,
+        assigned_prof_id:              o.assigned_prof_id ?? null,
+        assigned_room_id:              o.assigned_room_id ?? null,
+        pinned:                        o.pinned ?? null,
+      }))
+      const expanded = expandOfferingsFromWire(wireOfferings).map(o => ({
+        ...o,
+        assignment: byOfferingId[o.offering_id] ?? null,
+      }))
       setState(s => ({
         ...s,
         selectedOfferingId: null,
@@ -726,24 +786,7 @@ function App() {
         year:       draft.year,
         solveMode:  draft.solver_mode,
         solveStatus: "idle",
-        offerings: draft.offerings.map(o => {
-          const n = (seen[o.catalog_id] ?? 0) + 1
-          seen[o.catalog_id] = n
-          return {
-            offering_id:                   `${o.catalog_id}#${n}`,
-            catalog_id:                    o.catalog_id,
-            priority:                      o.priority,
-            sections:                      o.sections ?? 1,
-            override_enrollment_cap:       o.override_enrollment_cap ?? null,
-            override_room_type:            o.override_room_type ?? null,
-            override_preferred_professors: o.override_preferred_professors ?? null,
-            notes:                         o.notes ?? null,
-            assigned_prof_id:              o.assigned_prof_id ?? null,
-            assigned_room_id:              o.assigned_room_id ?? null,
-            pinned:                        o.pinned ?? null,
-            assignment:                    byCatalog[o.catalog_id] ?? null,
-          }
-        }),
+        offerings: expanded,
       }))
 
       setReloadWarnings(warnings)
@@ -1013,6 +1056,7 @@ function App() {
       onSelectProfessor={selectProfessor}
       onSelectRoom={selectRoom}
       onRemove={removeOffering}
+      onAddSectionOffering={addSectionOffering}
       onOpenCatalogue={openCatalogue}
       onStartPlacing={startPlacing}
       onUnpinToRoster={id => pinToSlot(id, null)}

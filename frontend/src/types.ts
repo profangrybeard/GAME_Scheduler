@@ -226,6 +226,82 @@ export function mintOfferingId(
   return `${catalog_id}#${max + 1}`
 }
 
+/** Shape of an offering as it travels on the wire — initial JSON from
+ *  `data/quarterly_offerings.json`, the `_state` sheet of a reloaded XLSX,
+ *  and the POST body to `/api/solve/stream`. Same as `Offering` minus the
+ *  runtime-only `offering_id` (minted at expand time) and `assignment`
+ *  (hydrated separately from solver results).
+ *
+ *  Flat format (one row per section): each row has `sections: 1` and its own
+ *  `pinned` slot. Legacy `sections: N` rows are still accepted on load —
+ *  `expandOfferingsFromWire` expands them in-place. */
+export type WireOffering = Omit<Offering, "offering_id" | "assignment">
+
+/** Parse a `${cid}#${n}` offering_id into its 1-based sibling ordinal.
+ *  Non-matching ids fall back to 0 (sorts before any real sibling). */
+export function offeringIdOrdinal(id: string): number {
+  const hash = id.lastIndexOf("#")
+  if (hash < 0) return 0
+  const n = parseInt(id.slice(hash + 1), 10)
+  return Number.isFinite(n) ? n : 0
+}
+
+/** Expand a wire-shape offerings list into runtime `Offering` rows. For the
+ *  flat wire format (one row per section), each row becomes one Offering with
+ *  a minted `offering_id`. The legacy coalesced format (`sections: N` per
+ *  catalog_id) is expanded on the fly so old fixtures still load — each
+ *  sibling after #1 starts unpinned since the legacy format only carries one
+ *  pin per catalog_id. */
+export function expandOfferingsFromWire(
+  wire: ReadonlyArray<WireOffering>,
+): Offering[] {
+  const out: Offering[] = []
+  const nextOrdinal: Map<string, number> = new Map()
+  for (const w of wire) {
+    const n = Math.max(1, w.sections | 0)
+    for (let k = 0; k < n; k++) {
+      const ordinal = (nextOrdinal.get(w.catalog_id) ?? 0) + 1
+      nextOrdinal.set(w.catalog_id, ordinal)
+      out.push({
+        offering_id: `${w.catalog_id}#${ordinal}`,
+        catalog_id: w.catalog_id,
+        priority: w.priority,
+        sections: 1,
+        override_enrollment_cap: w.override_enrollment_cap,
+        override_room_type: w.override_room_type,
+        override_preferred_professors: w.override_preferred_professors,
+        notes: w.notes,
+        assigned_prof_id: w.assigned_prof_id,
+        assigned_room_id: w.assigned_room_id,
+        pinned: k === 0 ? w.pinned : null,
+        assignment: null,
+      })
+    }
+  }
+  return out
+}
+
+/** Serialize runtime offerings back to the flat wire format — one row per
+ *  sibling, each carrying its own `pinned` slot. Drops the runtime-only
+ *  `offering_id` and `assignment` fields. Output order matches input order
+ *  so a round-trip preserves the user-visible sibling sequence. */
+export function coalesceOfferingsForWire(
+  offerings: ReadonlyArray<Offering>,
+): WireOffering[] {
+  return offerings.map(o => ({
+    catalog_id: o.catalog_id,
+    priority: o.priority,
+    sections: 1,
+    override_enrollment_cap: o.override_enrollment_cap,
+    override_room_type: o.override_room_type,
+    override_preferred_professors: o.override_preferred_professors,
+    notes: o.notes,
+    assigned_prof_id: o.assigned_prof_id,
+    assigned_room_id: o.assigned_room_id,
+    pinned: o.pinned,
+  }))
+}
+
 // ─── Offering classification (shared by Roster + Class) ──────────
 
 export type OfferingState =

@@ -17,13 +17,15 @@ import professorsJson from "../../data/professors.json"
 import roomsJson from "../../data/rooms.json"
 import offeringsJson from "../../data/quarterly_offerings.default.json"
 
-import type {
-  Course,
-  Offering,
-  Professor,
-  Room,
-  SchedulerState,
-  Slot,
+import {
+  expandOfferingsFromWire,
+  type Course,
+  type Offering,
+  type Professor,
+  type Room,
+  type SchedulerState,
+  type Slot,
+  type WireOffering,
 } from "./types"
 
 // ─── Reference data ──────────────────────────────────────────────────
@@ -93,30 +95,25 @@ export function loadInitialState(): SchedulerState {
   const rooms: Record<string, Room> = {}
   for (const r of rawRooms) rooms[r.id] = r
 
-  // offering_id is runtime-only (not persisted). Mint `${catalog_id}#1` for
-  // the first offering per catalog_id; siblings (when PR 2 lands) will get
-  // #2, #3, etc. Assignment is per-offering, not per-catalog_id.
-  const seen: Record<string, number> = {}
-  const offerings: Offering[] = rawOfferingsDoc.offerings.map(raw => {
-    const n = (seen[raw.catalog_id] ?? 0) + 1
-    seen[raw.catalog_id] = n
-    return {
-      offering_id: `${raw.catalog_id}#${n}`,
-      catalog_id: raw.catalog_id,
-      priority: raw.priority,
-      sections: raw.sections,
-      override_enrollment_cap: raw.override_enrollment_cap ?? null,
-      override_room_type: raw.override_room_type ?? null,
-      override_preferred_professors: raw.override_preferred_professors ?? null,
-      notes: raw.notes ?? null,
-      assigned_prof_id: null,
-      assigned_room_id: null,
-      // Legacy `locked` slot collapses into `pinned` — they were the same
-      // information post-solver-collapse. See Record of Resistance.
-      pinned: raw.pinned ?? raw.locked ?? null,
-      assignment: null,
-    }
-  })
+  // The flat wire format stores one row per section; expandOfferingsFromWire
+  // mints an offering_id for each row (sibling siblings share a catalog_id but
+  // differ by `#n` suffix). Legacy fixtures that still use `sections: N` on a
+  // single row are expanded in-place for backward compat — see types.ts.
+  const wireOfferings: WireOffering[] = rawOfferingsDoc.offerings.map(raw => ({
+    catalog_id: raw.catalog_id,
+    priority: raw.priority,
+    sections: raw.sections,
+    override_enrollment_cap: raw.override_enrollment_cap ?? null,
+    override_room_type: raw.override_room_type ?? null,
+    override_preferred_professors: raw.override_preferred_professors ?? null,
+    notes: raw.notes ?? null,
+    assigned_prof_id: null,
+    assigned_room_id: null,
+    // Legacy `locked` slot collapses into `pinned` — they were the same
+    // information post-solver-collapse. See Record of Resistance.
+    pinned: raw.pinned ?? raw.locked ?? null,
+  }))
+  const offerings: Offering[] = expandOfferingsFromWire(wireOfferings)
 
   return {
     selectedOfferingId: offerings[0]?.offering_id ?? null,

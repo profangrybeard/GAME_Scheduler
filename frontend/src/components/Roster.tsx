@@ -48,6 +48,9 @@ export interface RosterProps {
   onSelectProfessor: (id: string | null) => void
   onSelectRoom: (id: string | null) => void
   onRemove: (offering_id: string) => void
+  /** Add another sibling (section) for this catalog_id. Siblings share
+   *  catalog-level settings but pin independently. */
+  onAddSectionOffering: (catalog_id: string) => void
   onOpenCatalogue: () => void
   onStartPlacing: (offering_id: string) => void
   /** Called when a schedule card is dropped onto the offerings list —
@@ -230,6 +233,7 @@ export function Roster(props: RosterProps) {
           onSelect={props.onSelect}
           onSelectProfessor={props.onSelectProfessor}
           onRemove={props.onRemove}
+          onAddSectionOffering={props.onAddSectionOffering}
           onStartPlacing={props.onStartPlacing}
           onUnpinToRoster={props.onUnpinToRoster}
         />
@@ -271,6 +275,7 @@ interface OfferingsListProps {
   onSelect: (id: string | null) => void
   onSelectProfessor: (id: string | null) => void
   onRemove: (offering_id: string) => void
+  onAddSectionOffering: (catalog_id: string) => void
   onStartPlacing: (offering_id: string) => void
   onUnpinToRoster: (offering_id: string) => void
 }
@@ -417,6 +422,18 @@ function OfferingsList(props: OfferingsListProps) {
               className={`roster-card__status roster-card__status--${state}`}
               title={state}
             />
+            <span
+              className="roster-card__add-section"
+              role="button"
+              aria-label={`Add another section of ${course.id}`}
+              title={`Add another section of ${course.id}`}
+              onClick={e => {
+                e.stopPropagation()
+                props.onAddSectionOffering(offering.catalog_id)
+              }}
+            >
+              +
+            </span>
             <span
               className="roster-card__remove"
               role="button"
