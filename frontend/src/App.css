@@ -3030,3 +3030,173 @@
     gap: var(--space-lg);
   }
 }
+
+/* ─── Offerings-tab capacity strip (ammo counter above the list) ── */
+
+.roster__capacity {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px var(--space-md);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.roster__capacity-count {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.roster__capacity-sep {
+  margin: 0 1px;
+  opacity: 0.55;
+  font-weight: 400;
+}
+
+.roster__capacity-overload {
+  font-size: 0.78rem;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.roster__capacity-hint {
+  margin-left: auto;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  opacity: 0.75;
+}
+
+.roster__capacity--under {
+  color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 10%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--warn) 45%, var(--border));
+}
+
+.roster__capacity--contract {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--success) 50%, var(--border));
+}
+
+.roster__capacity--overload {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+}
+
+.roster__capacity--maxed {
+  color: var(--accent-on);
+  background: var(--success);
+  border-bottom-color: var(--success);
+}
+
+/* ─── Roster nag (Profs-tab header) ───────────────────────────── */
+
+.roster__nag {
+  margin: 0 0 var(--space-sm);
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  font-style: italic;
+  font-variant-numeric: tabular-nums;
+  border-radius: var(--radius-sm);
+  border-left: 2px solid var(--border);
+  color: var(--text-muted);
+}
+
+.roster__nag--under {
+  color: var(--warn);
+  border-left-color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 8%, transparent);
+}
+
+.roster__nag--contract {
+  color: var(--success);
+  border-left-color: var(--success);
+  background: color-mix(in srgb, var(--success) 8%, transparent);
+}
+
+.roster__nag--overload {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.roster__nag--maxed {
+  color: var(--success);
+  border-left-color: var(--success);
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  font-weight: 600;
+  font-style: normal;
+}
+
+/* ─── Per-prof contract meter (Profs-tab card) ─────────────────── */
+
+.prof-meter {
+  grid-area: prof;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.prof-meter__dots {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.prof-meter__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.prof-meter__dot--filled {
+  background: var(--success);
+}
+
+.prof-meter__dot--overload {
+  background: var(--accent);
+}
+
+.prof-meter__dot--empty {
+  background: color-mix(in srgb, var(--border) 70%, transparent);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.prof-meter__ratio {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.prof-meter__ceiling {
+  margin-left: 2px;
+  opacity: 0.55;
+  font-weight: 400;
+}
+
+.prof-meter--under .prof-meter__ratio {
+  color: var(--warn);
+}
+
+.prof-meter--contract .prof-meter__ratio {
+  color: var(--success);
+}
+
+.prof-meter--overload .prof-meter__ratio {
+  color: var(--accent);
+}
+
+.prof-meter--maxed .prof-meter__ratio {
+  color: var(--success);
+}

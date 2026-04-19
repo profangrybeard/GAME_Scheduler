@@ -160,6 +160,11 @@ export interface Assignment {
  * hard-constraint mechanism on top then (see Record of Resistance).
  */
 export interface Offering {
+  /** Stable runtime identity for this offering row. Required everywhere
+   *  selection, DnD, and mutations happen. Persistence (JSON/Excel) is still
+   *  keyed by `catalog_id`; `offering_id` is regenerated at load. Format:
+   *  `${catalog_id}#${n}` where `n` starts at 1 per catalog_id. */
+  offering_id: string
   catalog_id: string
   priority: Priority
   sections: number
@@ -200,6 +205,25 @@ export interface SchedulerState {
   // Context
   quarter: string
   year: number
+}
+
+// ─── Offering identity helpers ────────────────────────────────────
+
+/** Mint a fresh offering_id unique among `existing`. Format: `${cid}#${n}`
+ *  with n starting at 1 and incrementing past any sibling already present.
+ *  Used on load, add, and post-solve state rebuilds. */
+export function mintOfferingId(
+  catalog_id: string,
+  existing: ReadonlyArray<{ offering_id: string }>,
+): string {
+  const prefix = catalog_id + "#"
+  let max = 0
+  for (const o of existing) {
+    if (!o.offering_id.startsWith(prefix)) continue
+    const n = parseInt(o.offering_id.slice(prefix.length), 10)
+    if (Number.isFinite(n) && n > max) max = n
+  }
+  return `${catalog_id}#${max + 1}`
 }
 
 // ─── Offering classification (shared by Roster + Class) ──────────
@@ -260,6 +284,84 @@ export function profRoleText(p: Professor): string {
   return p.is_chair ? `Chair · ${dept}` : dept
 }
 
+// ─── Contract capacity ────────────────────────────────────────────
+
+/** Contract floor — how many classes this professor is expected to teach
+ *  before the chair considers an overload. Chairs get 2 (admin load eats
+ *  the other 2), everyone else gets the standard 4-class contract. */
+export function profContractFloor(p: Professor): number {
+  return p.is_chair ? 2 : 4
+}
+
+/** Contract ceiling — floor + 1 if the prof can overload, else floor.
+ *  One overload slot max per prof by current SCAD faculty contract. */
+export function profContractCeiling(p: Professor): number {
+  return profContractFloor(p) + (p.can_overload ? 1 : 0)
+}
+
+/** Department-wide capacity summary used by the topbar chip and the
+ *  Profs-tab nag. `loaded` is the total offering count — pre-assigning an
+ *  offering to a specific prof doesn't change the dept-level math, only
+ *  the per-prof meter. */
+export interface RosterCapacity {
+  /** Sum of contract floors across profs available for the active quarter. */
+  floorTotal: number
+  /** Sum of contract ceilings (floor + overload slot where allowed). */
+  ceilingTotal: number
+  /** Total offerings loaded for the quarter. */
+  loaded: number
+}
+
+export type CapacityState = "under" | "contract" | "overload" | "maxed"
+
+/** Map {loaded, floorTotal, ceilingTotal} to one of four semantic states:
+ *  - under:    loaded < floor              (keep adding classes)
+ *  - contract: loaded === floor            (hit the floor, overloads still open)
+ *  - overload: floor < loaded < ceiling    (spending overload slots)
+ *  - maxed:    loaded >= ceiling           (clip is full) */
+export function capacityState(cap: RosterCapacity): CapacityState {
+  if (cap.loaded >= cap.ceilingTotal) return "maxed"
+  if (cap.loaded > cap.floorTotal) return "overload"
+  if (cap.loaded === cap.floorTotal) return "contract"
+  return "under"
+}
+
+/** Count sections pre-assigned to a specific prof. An offering with
+ *  sections=2 assigned to prof X fills two slots on their meter.
+ *  AUTO offerings (assigned_prof_id === null) are solver-bound and don't
+ *  fill any individual prof's meter. */
+export function profLoadedCount(
+  profId: string,
+  offerings: ReadonlyArray<{ assigned_prof_id: string | null; sections: number }>,
+): number {
+  let n = 0
+  for (const o of offerings) if (o.assigned_prof_id === profId) n += o.sections
+  return n
+}
+
+/** Tooltip copy for the ammo-counter chip — mirrors the Profs-tab nag so
+ *  hover and glance tell the same story. */
+export function capacityChipTitle(
+  cap: RosterCapacity,
+  state: CapacityState,
+): string {
+  const gap = cap.floorTotal - cap.loaded
+  const overloadSlots = cap.ceilingTotal - cap.floorTotal
+  switch (state) {
+    case "under":
+      return `${gap} slot${gap === 1 ? "" : "s"} under contract — keep loading.`
+    case "contract":
+      return `Contract met. ${overloadSlots} overload slot${overloadSlots === 1 ? "" : "s"} open for MUSTs.`
+    case "overload": {
+      const used = cap.loaded - cap.floorTotal
+      const left = cap.ceilingTotal - cap.loaded
+      return `${used} overload used, ${left} left.`
+    }
+    case "maxed":
+      return "Clip's full — nice work."
+  }
+}
+
 // ─── Room type vocabulary ─────────────────────────────────────────
 
 /** Display labels for each room_type key. Values are natural-cased;
@@ -294,11 +396,14 @@ export const STATION_TYPE_ORDER: ReadonlyArray<string> = ["pc", "mac"]
 // ─── Actions (events-up) ──────────────────────────────────────────
 
 export interface SchedulerActions {
-  selectOffering: (id: string | null) => void
-  addOffering: (catalog_id: string) => void
-  removeOffering: (catalog_id: string) => void
-  updateOffering: (catalog_id: string, changes: Partial<Offering>) => void
-  pinToSlot: (catalog_id: string, slot: Slot | null) => void
+  /** All ID params below are offering_ids except `addOffering`, which takes a
+   *  catalog_id (the thing the user dragged from the catalogue) and returns
+   *  the newly-created offering_id so callers can chain pin/select. */
+  selectOffering: (offering_id: string | null) => void
+  addOffering: (catalog_id: string) => string | null
+  removeOffering: (offering_id: string) => void
+  updateOffering: (offering_id: string, changes: Partial<Offering>) => void
+  pinToSlot: (offering_id: string, slot: Slot | null) => void
   setSolveMode: (mode: SolveMode) => void
   requestSolve: () => void
   requestExport: () => void

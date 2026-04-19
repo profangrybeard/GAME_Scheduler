@@ -1,6 +1,15 @@
 import { useMemo, useState } from "react"
-import type { Course, Offering, Professor, Room } from "../types"
-import { classifyOffering, PRIORITY_INDEX, STATION_TYPE_LABELS } from "../types"
+import type { Course, Offering, Professor, Room, RosterCapacity } from "../types"
+import {
+  capacityChipTitle,
+  capacityState,
+  classifyOffering,
+  PRIORITY_INDEX,
+  profContractCeiling,
+  profContractFloor,
+  profLoadedCount,
+  STATION_TYPE_LABELS,
+} from "../types"
 import { ProfAvatar } from "./ProfAvatar"
 
 /**
@@ -15,7 +24,10 @@ import { ProfAvatar } from "./ProfAvatar"
  * Only the Offerings tab participates in drag-and-drop.
  */
 
-const DND_MIME = "application/x-offering"
+/** DnD MIME for dragging an existing offering (payload: offering_id). The
+ *  roster is the source + target for existing offerings only; catalogue→schedule
+ *  drops use a separate `application/x-course` MIME handled by QuarterSchedule. */
+const DND_MIME_OFFERING = "application/x-offering"
 
 type RosterTab = "offerings" | "profs" | "rooms"
 
@@ -24,6 +36,10 @@ export interface RosterProps {
   catalog: Record<string, Course>
   professors: Record<string, Professor>
   rooms: Record<string, Room>
+  /** Department-wide contract capacity for the Profs-tab nag & per-card
+   *  meters. Computed in App.tsx so the topbar chip and the roster share
+   *  one source of truth. */
+  capacity: RosterCapacity
   selectedOfferingId: string | null
   selectedProfId: string | null
   selectedRoomId: string | null
@@ -31,12 +47,12 @@ export interface RosterProps {
   onSelect: (id: string | null) => void
   onSelectProfessor: (id: string | null) => void
   onSelectRoom: (id: string | null) => void
-  onRemove: (catalog_id: string) => void
+  onRemove: (offering_id: string) => void
   onOpenCatalogue: () => void
-  onStartPlacing: (id: string) => void
+  onStartPlacing: (offering_id: string) => void
   /** Called when a schedule card is dropped onto the offerings list —
    *  unpins it back to the unplaced roster. */
-  onUnpinToRoster: (catalog_id: string) => void
+  onUnpinToRoster: (offering_id: string) => void
   /** Create a fresh professor with sensible defaults and open for editing. */
   onAddProfessor: () => void
   /** Clear the entire professors list — dept starts from zero. Confirmed in UI. */
@@ -57,7 +73,11 @@ export function Roster(props: RosterProps) {
         const pa = PRIORITY_INDEX[a.priority] ?? 9
         const pb = PRIORITY_INDEX[b.priority] ?? 9
         if (pa !== pb) return pa - pb
-        return a.catalog_id.localeCompare(b.catalog_id)
+        // Stable tiebreaker: catalog_id groups siblings, then offering_id
+        // disambiguates within a group so order stays deterministic.
+        const byCid = a.catalog_id.localeCompare(b.catalog_id)
+        if (byCid !== 0) return byCid
+        return a.offering_id.localeCompare(b.offering_id)
       })
   }, [props.offerings])
 
@@ -202,6 +222,7 @@ export function Roster(props: RosterProps) {
         <OfferingsList
           unplaced={unplaced}
           totalCount={props.offerings.length}
+          capacity={props.capacity}
           catalog={props.catalog}
           professors={props.professors}
           selectedOfferingId={props.selectedOfferingId}
@@ -217,6 +238,8 @@ export function Roster(props: RosterProps) {
       {tab === "profs" && (
         <ProfsList
           profs={profList}
+          offerings={props.offerings}
+          capacity={props.capacity}
           selectedProfId={props.selectedProfId}
           onSelect={props.onSelectProfessor}
         />
@@ -238,23 +261,27 @@ export function Roster(props: RosterProps) {
 interface OfferingsListProps {
   unplaced: Offering[]
   totalCount: number
+  /** Department capacity so the sub-header chip sits in the placement flow,
+   *  not in the easily-ignored topbar. */
+  capacity: RosterCapacity
   catalog: Record<string, Course>
   professors: Record<string, Professor>
   selectedOfferingId: string | null
   placingId: string | null
   onSelect: (id: string | null) => void
   onSelectProfessor: (id: string | null) => void
-  onRemove: (catalog_id: string) => void
-  onStartPlacing: (id: string) => void
-  onUnpinToRoster: (catalog_id: string) => void
+  onRemove: (offering_id: string) => void
+  onStartPlacing: (offering_id: string) => void
+  onUnpinToRoster: (offering_id: string) => void
 }
 
 function OfferingsList(props: OfferingsListProps) {
   const [isDragOver, setIsDragOver] = useState(false)
 
   const handleDragOver = (e: React.DragEvent) => {
-    // Accept the drop only if the dragged data is an offering.
-    if (!e.dataTransfer.types.includes(DND_MIME) &&
+    // Accept an existing offering (unpin flow). A catalogue row dragged here
+    // would need to be an "add" — currently a no-op, so we don't highlight.
+    if (!e.dataTransfer.types.includes(DND_MIME_OFFERING) &&
         !e.dataTransfer.types.includes("text/plain")) return
     e.preventDefault()
     e.dataTransfer.dropEffect = "move"
@@ -270,30 +297,57 @@ function OfferingsList(props: OfferingsListProps) {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragOver(false)
-    const catId =
-      e.dataTransfer.getData(DND_MIME) || e.dataTransfer.getData("text/plain")
-    if (catId) props.onUnpinToRoster(catId)
+    const offeringId =
+      e.dataTransfer.getData(DND_MIME_OFFERING) ||
+      e.dataTransfer.getData("text/plain")
+    if (offeringId) props.onUnpinToRoster(offeringId)
   }
 
+  const capState = capacityState(props.capacity)
+  const overloadSlots = props.capacity.ceilingTotal - props.capacity.floorTotal
+
   return (
-    <div
-      className={
-        "panel__body roster__list" +
-        (isDragOver ? " roster__list--drag-over" : "")
-      }
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      {props.unplaced.length === 0 && (
-        <p className="placeholder placeholder--empty">
-          {props.totalCount === 0
-            ? <>No offerings yet.<br />Click <strong>+ Add</strong> to pick courses.</>
-            : isDragOver
-              ? "Drop here to unpin"
-              : "All placed — nice work."}
-        </p>
-      )}
+    <>
+      <div
+        className={`roster__capacity roster__capacity--${capState}`}
+        title={capacityChipTitle(props.capacity, capState)}
+        aria-label={capacityChipTitle(props.capacity, capState)}
+      >
+        <span className="roster__capacity-count">
+          {props.capacity.loaded}
+          <span className="roster__capacity-sep">/</span>
+          {props.capacity.floorTotal}
+        </span>
+        {overloadSlots > 0 && (
+          <span className="roster__capacity-overload">
+            +{overloadSlots} OL
+          </span>
+        )}
+        <span className="roster__capacity-hint">
+          {capState === "under" && "keep loading"}
+          {capState === "contract" && "contract met"}
+          {capState === "overload" && "in overload"}
+          {capState === "maxed" && "clip full"}
+        </span>
+      </div>
+      <div
+        className={
+          "panel__body roster__list" +
+          (isDragOver ? " roster__list--drag-over" : "")
+        }
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {props.unplaced.length === 0 && (
+          <p className="placeholder placeholder--empty">
+            {props.totalCount === 0
+              ? <>No offerings yet.<br />Click <strong>+ Add</strong> to pick courses.</>
+              : isDragOver
+                ? "Drop here to unpin"
+                : "All placed — nice work."}
+          </p>
+        )}
       {props.unplaced.map(offering => {
         const course = props.catalog[offering.catalog_id]
         if (!course) return null
@@ -302,12 +356,12 @@ function OfferingsList(props: OfferingsListProps) {
         const prof = offering.assigned_prof_id
           ? props.professors[offering.assigned_prof_id]
           : null
-        const isSelected = props.selectedOfferingId === offering.catalog_id
-        const isPlacing = props.placingId === offering.catalog_id
+        const isSelected = props.selectedOfferingId === offering.offering_id
+        const isPlacing = props.placingId === offering.offering_id
 
         return (
           <div
-            key={offering.catalog_id}
+            key={offering.offering_id}
             role="button"
             tabIndex={0}
             draggable
@@ -318,18 +372,18 @@ function OfferingsList(props: OfferingsListProps) {
               (isPlacing ? " roster-card--placing" : "")
             }
             onClick={() => {
-              props.onSelect(offering.catalog_id)
-              props.onStartPlacing(offering.catalog_id)
+              props.onSelect(offering.offering_id)
+              props.onStartPlacing(offering.offering_id)
             }}
             onKeyDown={e => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault()
-                props.onSelect(offering.catalog_id)
+                props.onSelect(offering.offering_id)
               }
             }}
             onDragStart={e => {
-              e.dataTransfer.setData(DND_MIME, offering.catalog_id)
-              e.dataTransfer.setData("text/plain", offering.catalog_id)
+              e.dataTransfer.setData(DND_MIME_OFFERING, offering.offering_id)
+              e.dataTransfer.setData("text/plain", offering.offering_id)
               e.dataTransfer.effectAllowed = "move"
             }}
           >
@@ -369,7 +423,7 @@ function OfferingsList(props: OfferingsListProps) {
               aria-label={`Remove ${course.id} from offerings`}
               onClick={e => {
                 e.stopPropagation()
-                props.onRemove(offering.catalog_id)
+                props.onRemove(offering.offering_id)
               }}
             >
               ×
@@ -377,7 +431,8 @@ function OfferingsList(props: OfferingsListProps) {
           </div>
         )
       })}
-    </div>
+      </div>
+    </>
   )
 }
 
@@ -385,11 +440,16 @@ function OfferingsList(props: OfferingsListProps) {
 
 interface ProfsListProps {
   profs: Professor[]
+  offerings: Offering[]
+  capacity: RosterCapacity
   selectedProfId: string | null
   onSelect: (id: string | null) => void
 }
 
 function ProfsList(props: ProfsListProps) {
+  const state = capacityState(props.capacity)
+  const nag = capacityNag(props.capacity, state)
+
   return (
     <div className="panel__body roster__list">
       {props.profs.length === 0 && (
@@ -397,8 +457,19 @@ function ProfsList(props: ProfsListProps) {
           No professors yet.<br />Click <strong>+ Add</strong> to build your roster.
         </p>
       )}
+      {props.profs.length > 0 && (
+        <p className={`roster__nag roster__nag--${state}`}>{nag}</p>
+      )}
       {props.profs.map(p => {
         const isSelected = props.selectedProfId === p.id
+        const floor = profContractFloor(p)
+        const ceiling = profContractCeiling(p)
+        const loaded = profLoadedCount(p.id, props.offerings)
+        const loadState =
+          loaded >= ceiling ? "maxed"
+          : loaded > floor ? "overload"
+          : loaded === floor ? "contract"
+          : "under"
         return (
           <div
             key={p.id}
@@ -429,6 +500,12 @@ function ProfsList(props: ProfsListProps) {
                 {p.name}
               </span>
             </span>
+            <ProfMeter
+              loaded={loaded}
+              floor={floor}
+              ceiling={ceiling}
+              state={loadState}
+            />
             <span
               className="roster-card__quarters"
               title={`Available: ${p.available_quarters.join(", ") || "none"}`}
@@ -444,6 +521,65 @@ function ProfsList(props: ProfsListProps) {
       })}
     </div>
   )
+}
+
+/** Contract meter + floor/ceiling badge for a single prof card. */
+function ProfMeter(props: {
+  loaded: number
+  floor: number
+  ceiling: number
+  state: "under" | "contract" | "overload" | "maxed"
+}) {
+  const { loaded, floor, ceiling, state } = props
+  const title =
+    state === "under"
+      ? `${floor - loaded} to contract · ceiling ${ceiling}`
+      : state === "contract"
+        ? `Contract met · ${ceiling - floor} overload available`
+        : state === "overload"
+          ? `Overload in use · ${ceiling - loaded} slot left`
+          : "Maxed out"
+  const dots: Array<"filled" | "overload" | "empty"> = []
+  for (let i = 0; i < ceiling; i++) {
+    if (i < loaded) dots.push(i < floor ? "filled" : "overload")
+    else dots.push("empty")
+  }
+  return (
+    <span className={`prof-meter prof-meter--${state}`} title={title}>
+      <span className="prof-meter__dots" aria-hidden="true">
+        {dots.map((d, i) => (
+          <span key={i} className={`prof-meter__dot prof-meter__dot--${d}`} />
+        ))}
+      </span>
+      <span className="prof-meter__ratio">
+        {loaded}/{floor}
+        {ceiling > floor && (
+          <span className="prof-meter__ceiling">·{ceiling}</span>
+        )}
+      </span>
+    </span>
+  )
+}
+
+/** Three-state nag copy for the Profs-tab header — matches the "All placed
+ *  — nice work" cadence on the Offerings tab. */
+function capacityNag(
+  cap: RosterCapacity,
+  state: "under" | "contract" | "overload" | "maxed",
+): string {
+  const gap = cap.floorTotal - cap.loaded
+  const overloadSlots = cap.ceilingTotal - cap.floorTotal
+  const overloadLeft = cap.ceilingTotal - cap.loaded
+  switch (state) {
+    case "under":
+      return `${gap} slot${gap === 1 ? "" : "s"} under contract — keep loading.`
+    case "contract":
+      return `Contract met. ${overloadSlots} overload slot${overloadSlots === 1 ? "" : "s"} open for MUSTs.`
+    case "overload":
+      return `Overload in use — ${overloadLeft} slot${overloadLeft === 1 ? "" : "s"} left.`
+    case "maxed":
+      return "Clip's full — nice work."
+  }
 }
 
 // ─── Rooms tab ─────────────────────────────────────────────────────

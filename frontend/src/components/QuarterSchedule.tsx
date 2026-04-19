@@ -49,7 +49,11 @@ const DAY_GROUPS: ReadonlyArray<{ key: DayGroup; label: string }> = [
   { key: 3, label: "F" },
 ] as const
 
-const DND_MIME = "application/x-offering"
+/** DnD MIME for dragging an existing placed/docked offering (payload:
+ *  offering_id). Catalogue drags use `application/x-course` with a catalog_id
+ *  payload; the drop handler checks both and dispatches add+pin accordingly. */
+const DND_MIME_OFFERING = "application/x-offering"
+const DND_MIME_COURSE = "application/x-course"
 
 /** effectiveSlot — assignment (solver output) beats pinned (user placement). */
 function effectiveSlot(o: Offering): Slot | null {
@@ -73,14 +77,16 @@ export interface QuarterScheduleProps {
   solveError: string | null
   /** Live per-mode progress during a streaming solve. null between solves. */
   solveProgress: SolveProgressState | null
-  onSelect: (id: string | null) => void
+  onSelect: (offering_id: string | null) => void
   onSelectProfessor: (id: string | null) => void
-  onAdd: (catalog_id: string) => void
-  onPinToSlot: (catalog_id: string, slot: Slot | null) => void
+  /** Add an offering for catalog_id. Returns the new (or existing) offering_id
+   *  so the DnD drop handler can chain onPinToSlot without a re-render wait. */
+  onAdd: (catalog_id: string) => string | null
+  onPinToSlot: (offering_id: string, slot: Slot | null) => void
   onSetSolveMode: (mode: SolveMode) => void
   onSolve: () => void
   onEmptyCalendar: () => void
-  onStartPlacing: (id: string) => void
+  onStartPlacing: (offering_id: string) => void
   onDismissError: () => void
   onDismissProgress: () => void
   /** Open the SolverTuning modal — forwarded to the Tune mode card. */
@@ -126,20 +132,38 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
     e.preventDefault()
     setDragOverKey(null)
     setDraggingId(null)
-    const catId =
-      e.dataTransfer.getData(DND_MIME) || e.dataTransfer.getData("text/plain")
-    if (!catId) return
-    const isOffering = props.offerings.some(o => o.catalog_id === catId)
-    if (!isOffering) {
-      // Dragging a catalogue course that isn't in offerings yet: add first.
-      props.onAdd(catId)
+
+    // Offering drags carry offering_id (existing row). Catalogue drags carry
+    // catalog_id — we add + pin in one gesture. text/plain is a last-ditch
+    // fallback for browsers that strip custom MIME types.
+    let offeringId = e.dataTransfer.getData(DND_MIME_OFFERING)
+    const catalogId = e.dataTransfer.getData(DND_MIME_COURSE)
+    const textFallback = e.dataTransfer.getData("text/plain")
+
+    if (!offeringId && catalogId) {
+      const newId = props.onAdd(catalogId)
+      if (!newId) return
+      offeringId = newId
+    } else if (!offeringId && textFallback) {
+      // Legacy / cross-origin fallback: decide whether it's an offering_id
+      // already in state, or a catalog_id to add.
+      const existing = props.offerings.find(o => o.offering_id === textFallback)
+      if (existing) {
+        offeringId = existing.offering_id
+      } else {
+        const newId = props.onAdd(textFallback)
+        if (!newId) return
+        offeringId = newId
+      }
     }
+    if (!offeringId) return
+
     if (target.kind === "cell") {
-      props.onPinToSlot(catId, target.slot)
+      props.onPinToSlot(offeringId, target.slot)
     } else {
-      props.onPinToSlot(catId, null)
+      props.onPinToSlot(offeringId, null)
     }
-    props.onSelect(catId)
+    props.onSelect(offeringId)
   }
 
   const renderCard = (o: Offering) => {
@@ -149,9 +173,9 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
     const prof = profId ? props.professors[profId] : null
     const room = roomId ? props.rooms[roomId] : null
     const dept = course?.department ?? "game"
-    const isSelected = props.selectedOfferingId === o.catalog_id
-    const isDragging = draggingId === o.catalog_id
-    const isPlacing = props.placingId === o.catalog_id
+    const isSelected = props.selectedOfferingId === o.offering_id
+    const isDragging = draggingId === o.offering_id
+    const isPlacing = props.placingId === o.offering_id
     // Prof text is "tentative" (italic, faint) when the displayed name will
     // NOT survive a move — i.e. no manual pick. Covers both AUTO (no prof)
     // and solver-assigned (prof came from the solver, drops on drag).
@@ -159,7 +183,7 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
 
     return (
       <button
-        key={o.catalog_id}
+        key={o.offering_id}
         type="button"
         draggable
         className={
@@ -171,15 +195,15 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
         }
         onClick={e => {
           e.stopPropagation()
-          props.onSelect(o.catalog_id)
-          props.onStartPlacing(o.catalog_id)
+          props.onSelect(o.offering_id)
+          props.onStartPlacing(o.offering_id)
         }}
         onDragStart={e => {
-          e.dataTransfer.setData(DND_MIME, o.catalog_id)
-          e.dataTransfer.setData("text/plain", o.catalog_id)
+          e.dataTransfer.setData(DND_MIME_OFFERING, o.offering_id)
+          e.dataTransfer.setData("text/plain", o.offering_id)
           e.dataTransfer.effectAllowed = "move"
-          setDraggingId(o.catalog_id)
-          props.onSelect(o.catalog_id)
+          setDraggingId(o.offering_id)
+          props.onSelect(o.offering_id)
         }}
         onDragEnd={() => setDraggingId(null)}
       >
@@ -345,7 +369,7 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
                 const isDropTarget = dragOverKey === cellKey
                 const canPinClick =
                   props.selectedOfferingId !== null &&
-                  !cards.some(c => c.catalog_id === props.selectedOfferingId)
+                  !cards.some(c => c.offering_id === props.selectedOfferingId)
                 const isHidden = g.key !== visibleDayGroup // only hidden on portrait via CSS
                 // Density: 1-2 → column; 3-4 → 2-col grid; 5+ → 2-col + compact cards.
                 const densityClass =

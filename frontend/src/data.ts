@@ -93,24 +93,33 @@ export function loadInitialState(): SchedulerState {
   const rooms: Record<string, Room> = {}
   for (const r of rawRooms) rooms[r.id] = r
 
-  const offerings: Offering[] = rawOfferingsDoc.offerings.map(raw => ({
-    catalog_id: raw.catalog_id,
-    priority: raw.priority,
-    sections: raw.sections,
-    override_enrollment_cap: raw.override_enrollment_cap ?? null,
-    override_room_type: raw.override_room_type ?? null,
-    override_preferred_professors: raw.override_preferred_professors ?? null,
-    notes: raw.notes ?? null,
-    assigned_prof_id: null,
-    assigned_room_id: null,
-    // Legacy `locked` slot collapses into `pinned` — they were the same
-    // information post-solver-collapse. See Record of Resistance.
-    pinned: raw.pinned ?? raw.locked ?? null,
-    assignment: null,
-  }))
+  // offering_id is runtime-only (not persisted). Mint `${catalog_id}#1` for
+  // the first offering per catalog_id; siblings (when PR 2 lands) will get
+  // #2, #3, etc. Assignment is per-offering, not per-catalog_id.
+  const seen: Record<string, number> = {}
+  const offerings: Offering[] = rawOfferingsDoc.offerings.map(raw => {
+    const n = (seen[raw.catalog_id] ?? 0) + 1
+    seen[raw.catalog_id] = n
+    return {
+      offering_id: `${raw.catalog_id}#${n}`,
+      catalog_id: raw.catalog_id,
+      priority: raw.priority,
+      sections: raw.sections,
+      override_enrollment_cap: raw.override_enrollment_cap ?? null,
+      override_room_type: raw.override_room_type ?? null,
+      override_preferred_professors: raw.override_preferred_professors ?? null,
+      notes: raw.notes ?? null,
+      assigned_prof_id: null,
+      assigned_room_id: null,
+      // Legacy `locked` slot collapses into `pinned` — they were the same
+      // information post-solver-collapse. See Record of Resistance.
+      pinned: raw.pinned ?? raw.locked ?? null,
+      assignment: null,
+    }
+  })
 
   return {
-    selectedOfferingId: offerings[0]?.catalog_id ?? null,
+    selectedOfferingId: offerings[0]?.offering_id ?? null,
     offerings,
     catalog,
     professors,
