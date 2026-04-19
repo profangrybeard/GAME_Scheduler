@@ -31,5 +31,10 @@ primary_region = "atl"           # Atlanta — closest major region to SCAD Sava
     path = "/api/health"
 
 [[vm]]
-  size = "shared-cpu-1x"
-  memory = "1gb"                 # headroom for ortools + bursty real-use; ~$6/mo with auto-stop
+  size = "performance-2x"        # dedicated 2-vCPU — CP-SAT on 27+ sections hit the
+                                 # shared-cpu-1x ceiling (all 3 modes UNKNOWN at 29).
+                                 # Dedicated + 2 cores lets num_search_workers actually
+                                 # parallelize the search. With auto_stop, typical cost is
+                                 # a few $/mo; only pays full $42/mo rate if it never idles.
+  memory = "4gb"                 # performance-2x minimum; ortools is memory-hungry on
+                                 # big models, so the extra headroom is real-use, not slack.
