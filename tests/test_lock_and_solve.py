@@ -184,6 +184,68 @@ def test_lock_with_none_behaves_like_base_solve():
         assert len(m1['schedule']) == len(m2['schedule'])
 
 
+def test_eligibility_includes_wrong_dept_profs_at_fallback_tier():
+    """HC7 is a soft signal. An out-of-department prof must still appear in
+    the eligible pool and be tagged affinity level 3, so must_have sections
+    in a department with no roster coverage don't go infeasible."""
+    from solver.model_builder import _eligible_professors
+    from solver.objectives import _affinity_level
+
+    course_game = {
+        "department": "game",
+        "is_graduate": False,
+        "preferred_professors": [],
+    }
+    profs = [
+        {
+            "id": "prof_game",
+            "teaching_departments": ["game"],
+            "available_quarters": ["fall"],
+            "has_masters": True,
+        },
+        {
+            "id": "prof_mome",
+            "teaching_departments": ["motion_media"],
+            "available_quarters": ["fall"],
+            "has_masters": True,
+        },
+        {
+            "id": "prof_offline",
+            "teaching_departments": ["game"],
+            "available_quarters": ["winter"],
+            "has_masters": True,
+        },
+    ]
+
+    eligible = _eligible_professors(course_game, profs, "fall")
+    assert eligible == ["prof_game", "prof_mome"], (
+        "HC8-offline prof correctly excluded; HC7 wrong-dept prof included"
+    )
+
+    cs_info = {"course": course_game, "offering": {}}
+    assert _affinity_level(cs_info, "prof_game", profs[0]) == 2
+    assert _affinity_level(cs_info, "prof_mome", profs[1]) == 3, (
+        "wrong-department prof must surface at fallback tier (level 3)"
+    )
+
+
+def test_eligibility_still_enforces_grad_credential():
+    """HC9 stays hard — a prof without masters / masters-in-progress cannot
+    be placed on a graduate course even at the fallback tier."""
+    from solver.model_builder import _eligible_professors
+
+    grad_course = {
+        "department": "game",
+        "is_graduate": True,
+        "preferred_professors": [],
+    }
+    profs = [
+        {"id": "prof_ok",      "teaching_departments": ["game"], "available_quarters": ["fall"], "has_masters": True},
+        {"id": "prof_undergrad", "teaching_departments": ["game"], "available_quarters": ["fall"], "has_masters": False, "masters_in_progress": False},
+    ]
+    assert _eligible_professors(grad_course, profs, "fall") == ["prof_ok"]
+
+
 def test_warm_start_all_three_modes_find_feasible():
     """Regression: at scale, later modes can time out hunting for a first
     feasible because the objective topology doesn't lead CP-SAT there

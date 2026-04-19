@@ -15,7 +15,8 @@ Affinity levels
 ---------------
   0  Professor is in offering.override_preferred_professors  → AFFINITY_PENALTIES[0] = 0
   1  Professor is in course.preferred_professors             → AFFINITY_PENALTIES[1] = 1
-  2  Professor eligible but not in either preferred list     → AFFINITY_PENALTIES[2] = 3
+  2  Professor in course department, not preferred           → AFFINITY_PENALTIES[2] = 3
+  3  Professor outside course department (fallback tier)     → AFFINITY_PENALTIES[3] = 10
 
 Mode weights (from config.MODE_WEIGHTS)
 ---------------------------------------
@@ -39,14 +40,25 @@ from config import (
 # Per-variable penalty helpers
 # ---------------------------------------------------------------------------
 
-def _affinity_level(cs_info: dict, prof_id: str) -> int:
-    """Return affinity level (0, 1, or 2) for a professor-course pairing."""
+def _affinity_level(cs_info: dict, prof_id: str, prof: dict | None = None) -> int:
+    """Return affinity level (0-3) for a professor-course pairing.
+
+    Level 3 is the out-of-department fallback. `_eligible_professors` returns
+    any prof who passes HC8/HC9, so wrong-dept profs show up here and get
+    penalized — never excluded. Pass ``prof`` (the full professor record) to
+    detect out-of-department pairings; without it, out-of-dept profs collapse
+    into level 2 (back-compat for legacy callers that don't have a prof handle).
+    """
     override = set(cs_info["offering"].get("override_preferred_professors") or [])
     preferred = set(cs_info["course"].get("preferred_professors") or [])
     if override and prof_id in override:
         return 0
     if prof_id in preferred:
         return 1
+    if prof is not None:
+        course_dept = cs_info["course"]["department"]
+        if course_dept not in prof.get("teaching_departments", []):
+            return 3
     return 2
 
 
@@ -138,7 +150,7 @@ def build_objective(
         cs_info = cs_by_key[cs_key]
         prof    = profs_by_id[prof_id]
 
-        aff_pen  = AFFINITY_PENALTIES.get(_affinity_level(cs_info, prof_id),
+        aff_pen  = AFFINITY_PENALTIES.get(_affinity_level(cs_info, prof_id, prof),
                                            AFFINITY_PENALTIES["other"])
         time_pen = _time_pref_penalty(prof, ts)
 

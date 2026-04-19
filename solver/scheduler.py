@@ -141,7 +141,7 @@ def _extract_result(solver: cp_model.CpSolver, raw_status: int, data: dict) -> d
         prof    = data["profs_by_id"][prof_id]
         room    = data["rooms_by_id"][room_id]
 
-        aff_level = _affinity_level(cs_info, prof_id)
+        aff_level = _affinity_level(cs_info, prof_id, prof)
         time_label = _time_label(prof, ts)
 
         schedule.append({

@@ -65,13 +65,17 @@ def _eligible_professors(
 ) -> list[str]:
     """Return IDs of professors eligible to teach this course this quarter.
 
-    Enforces HC7 (teaching_departments), HC8 (available_quarters),
-    HC9 (graduate courses require masters credential).
+    Enforces HC8 (available_quarters) and HC9 (graduate-credential) as hard
+    filters. HC7 (teaching_departments) is intentionally demoted to a *soft*
+    signal — profs outside the course's department are still returned here,
+    and the objective penalizes them at the "fallback" affinity tier (see
+    solver/objectives.py::_affinity_level). Rationale: a roster where no prof
+    teaches, say, IXDS shouldn't make an IXDS must_have section infeasible.
+    The user's guiding principle: every prof in the roster is available to
+    every course at *some* tier.
     """
     eligible = []
     for prof in professors:
-        if course["department"] not in prof["teaching_departments"]:   # HC7
-            continue
         if quarter not in prof.get("available_quarters", []):          # HC8
             continue
         if course["is_graduate"]:                                      # HC9
