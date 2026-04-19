@@ -353,101 +353,128 @@ function OfferingsList(props: OfferingsListProps) {
                 : "All placed — nice work."}
           </p>
         )}
-      {props.unplaced.map(offering => {
-        const course = props.catalog[offering.catalog_id]
-        if (!course) return null
-
-        const state = classifyOffering(offering)
-        const prof = offering.assigned_prof_id
-          ? props.professors[offering.assigned_prof_id]
-          : null
-        const isSelected = props.selectedOfferingId === offering.offering_id
-        const isPlacing = props.placingId === offering.offering_id
-
-        return (
-          <div
-            key={offering.offering_id}
-            role="button"
-            tabIndex={0}
-            draggable
-            className={
-              "roster-card" +
-              ` dept--${course.department}` +
-              (isSelected ? " roster-card--selected" : "") +
-              (isPlacing ? " roster-card--placing" : "")
-            }
-            onClick={() => {
-              props.onSelect(offering.offering_id)
-              props.onStartPlacing(offering.offering_id)
-            }}
-            onKeyDown={e => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault()
-                props.onSelect(offering.offering_id)
-              }
-            }}
-            onDragStart={e => {
-              e.dataTransfer.setData(DND_MIME_OFFERING, offering.offering_id)
-              e.dataTransfer.setData("text/plain", offering.offering_id)
-              e.dataTransfer.effectAllowed = "move"
-            }}
-          >
-            <span
-              className="roster-card__avatar-hit"
+      {(() => {
+        // Bucket consecutive same-catalog_id offerings so siblings (additional
+        // sections of one course) render inside a shared frame — visually reads
+        // as "these are siblings" rather than three unrelated rows. `unplaced`
+        // is already sorted so siblings are adjacent.
+        const groups: Offering[][] = []
+        for (const o of props.unplaced) {
+          const tail = groups[groups.length - 1]
+          if (tail && tail[0].catalog_id === o.catalog_id) tail.push(o)
+          else groups.push([o])
+        }
+        const renderCard = (offering: Offering) => {
+          const course = props.catalog[offering.catalog_id]
+          if (!course) return null
+          const state = classifyOffering(offering)
+          const prof = offering.assigned_prof_id
+            ? props.professors[offering.assigned_prof_id]
+            : null
+          const isSelected = props.selectedOfferingId === offering.offering_id
+          const isPlacing = props.placingId === offering.offering_id
+          return (
+            <div
+              key={offering.offering_id}
               role="button"
-              tabIndex={-1}
-              onClick={e => {
-                e.stopPropagation()
-                if (offering.assigned_prof_id) {
-                  props.onSelectProfessor(offering.assigned_prof_id)
+              tabIndex={0}
+              draggable
+              className={
+                "roster-card" +
+                ` dept--${course.department}` +
+                (isSelected ? " roster-card--selected" : "") +
+                (isPlacing ? " roster-card--placing" : "")
+              }
+              onClick={() => {
+                props.onSelect(offering.offering_id)
+                props.onStartPlacing(offering.offering_id)
+              }}
+              onKeyDown={e => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault()
+                  props.onSelect(offering.offering_id)
                 }
               }}
+              onDragStart={e => {
+                e.dataTransfer.setData(DND_MIME_OFFERING, offering.offering_id)
+                e.dataTransfer.setData("text/plain", offering.offering_id)
+                e.dataTransfer.effectAllowed = "move"
+              }}
             >
-              <ProfAvatar
-                profId={offering.assigned_prof_id}
-                name={prof?.name}
-                size={32}
-                className="roster-card__avatar"
+              <span
+                className="roster-card__avatar-hit"
+                role="button"
+                tabIndex={-1}
+                onClick={e => {
+                  e.stopPropagation()
+                  if (offering.assigned_prof_id) {
+                    props.onSelectProfessor(offering.assigned_prof_id)
+                  }
+                }}
+              >
+                <ProfAvatar
+                  profId={offering.assigned_prof_id}
+                  name={prof?.name}
+                  size={32}
+                  className="roster-card__avatar"
+                />
+              </span>
+              <span className="roster-card__course">
+                <span className="roster-card__id">{course.id}</span>
+                {" "}
+                <span className="roster-card__name">{course.name}</span>
+              </span>
+              <span className="roster-card__prof">
+                {prof ? prof.name.split(" ").pop() : "AUTO"}
+              </span>
+              <span
+                className={`roster-card__status roster-card__status--${state}`}
+                title={state}
               />
-            </span>
-            <span className="roster-card__course">
-              <span className="roster-card__id">{course.id}</span>
-              {" "}
-              <span className="roster-card__name">{course.name}</span>
-            </span>
-            <span className="roster-card__prof">
-              {prof ? prof.name.split(" ").pop() : "AUTO"}
-            </span>
-            <span
-              className={`roster-card__status roster-card__status--${state}`}
-              title={state}
-            />
-            <span
-              className="roster-card__add-section"
-              role="button"
-              aria-label={`Add another section of ${course.id}`}
-              title={`Add another section of ${course.id}`}
-              onClick={e => {
-                e.stopPropagation()
-                props.onAddSectionOffering(offering.catalog_id)
-              }}
+              <span className="roster-card__controls">
+                <span
+                  className="roster-card__add-section"
+                  role="button"
+                  aria-label={`Add another section of ${course.id}`}
+                  title={`Add another section of ${course.id}`}
+                  onClick={e => {
+                    e.stopPropagation()
+                    props.onAddSectionOffering(offering.catalog_id)
+                  }}
+                >
+                  +
+                </span>
+                <span
+                  className="roster-card__remove"
+                  role="button"
+                  aria-label={`Remove a section of ${course.id}`}
+                  title={`Remove a section of ${course.id}`}
+                  onClick={e => {
+                    e.stopPropagation()
+                    props.onRemove(offering.offering_id)
+                  }}
+                >
+                  {"\u2212"}
+                </span>
+              </span>
+            </div>
+          )
+        }
+        return groups.map(group => {
+          if (group.length === 1) return renderCard(group[0])
+          const cid = group[0].catalog_id
+          const course = props.catalog[cid]
+          return (
+            <div
+              key={`group-${cid}`}
+              className={"roster-card-group" + (course ? ` dept--${course.department}` : "")}
+              aria-label={`${group.length} sections of ${cid}`}
             >
-              +
-            </span>
-            <span
-              className="roster-card__remove"
-              role="button"
-              aria-label={`Remove ${course.id} from offerings`}
-              onClick={e => {
-                e.stopPropagation()
-                props.onRemove(offering.offering_id)
-              }}
-            >
-              ×
-            </span>
-          </div>
-        )
-      })}
+              {group.map(renderCard)}
+            </div>
+          )
+        })
+      })()}
       </div>
     </>
   )
