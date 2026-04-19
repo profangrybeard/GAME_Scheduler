@@ -250,6 +250,14 @@ def run_schedule(
 
     mode_list = list(MODE_WEIGHTS)
     mode_results = []
+    # Feasible assignment tuples from the most recent successful mode. All three
+    # modes share hard constraints (only the objective differs), so any feasible
+    # placement in one is feasible in the others. We replay it into the next
+    # mode as a CP-SAT hint — first-feasibility is "free," and the full 10s
+    # budget goes to optimization. Without this, at ~27+ sections on Fly's
+    # shared-cpu-1x, later modes burn their whole budget hunting for a first
+    # feasible and time out at UNKNOWN with 0 placements.
+    hint_keys: set[tuple] = set()
     for i, mode in enumerate(mode_list, start=1):
         if progress_callback:
             progress_callback({
@@ -282,6 +290,11 @@ def run_schedule(
             tuned_weights=tuned_weights if mode == "balanced" else None,
         )
 
+        if hint_keys:
+            for key, var in data["assignments"].items():
+                model.AddHint(var, 1 if key in hint_keys else 0)
+            print(f"[{mode}] Warm-starting from prior solution ({len(hint_keys)} active assignments)")
+
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = _SOLVER_TIME_LIMIT
         solver.parameters.num_search_workers  = 0   # use all CPU cores
@@ -310,6 +323,15 @@ def run_schedule(
             for u in result["unscheduled"]:
                 flag = " *** MUST-HAVE UNSCHEDULED ***" if u["priority"] == "must_have" else ""
                 print(f"  Unscheduled: {u['cs_key']} ({u['priority']}){flag}")
+
+        # Refresh hint for next mode only when this one actually found a feasible
+        # solution. A failed mode leaves the prior hint in place so later modes
+        # still benefit from the last-known-good assignment.
+        if result["schedule"]:
+            hint_keys = {
+                key for key, var in data["assignments"].items()
+                if solver.Value(var) == 1
+            }
 
         if progress_callback:
             progress_callback({

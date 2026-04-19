@@ -182,3 +182,23 @@ def test_lock_with_none_behaves_like_base_solve():
         assert m1['mode'] == m2['mode']
         assert m1['status'] == m2['status']
         assert len(m1['schedule']) == len(m2['schedule'])
+
+
+def test_warm_start_all_three_modes_find_feasible():
+    """Regression: at scale, later modes can time out hunting for a first
+    feasible because the objective topology doesn't lead CP-SAT there
+    quickly. Warm-starting each mode from the previous mode's feasible
+    assignment (same hard constraints across modes) gives CP-SAT a free
+    first solution. If any mode returns UNKNOWN/INFEASIBLE on the default
+    fixture, warm-start has regressed.
+    """
+    results = run_schedule('fall')
+    for m in results['modes']:
+        assert m['status'] in ('optimal', 'feasible'), (
+            f"mode {m['mode']} returned {m['status']!r} — warm-start should "
+            "guarantee first-feasibility for modes 2 and 3"
+        )
+        assert len(m['schedule']) > 0, (
+            f"mode {m['mode']} placed 0 sections — warm-start should have "
+            "seeded the full prior assignment"
+        )
