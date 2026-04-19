@@ -1,4 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import {
+  loadTunedMix, saveTunedMix,
+  PRESETS, PRESET_LABELS,
+  type Mix,
+} from "./SolverMix"
 
 /**
  * SolverTuning — dial in the middle ("Tune") mode's weight vector.
@@ -8,42 +13,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
  * gear spins faster and strains red as you push past what the others can
  * yield. Snapping to a preset applies one of the canonical modes.
  *
- * The committed mix lives in localStorage under TUNED_WEIGHTS_KEY and is sent
- * to the solver as `tunedWeights` in the solve request. When present, the
- * server uses it in place of MODE_WEIGHTS["balanced"] for the balanced solve.
+ * Type + persistence live in SolverMix.ts so React Refresh keeps working
+ * (lint rule: component files only export components).
  */
 
 type GearKey = "affinity" | "time" | "overload"
 
-export interface Mix {
-  affinity: number
-  time:     number
-  overload: number
-}
-
 const MIN_FLOOR = 5    // no dial can go below this
 const TOTAL     = 100
-
-/** localStorage key. Path B: the saved object IS the mix, not a patch. */
-export const TUNED_WEIGHTS_KEY = "tunedWeights"
-
-// Mirror config.MODE_WEIGHTS, expressed as percent of 100.
-// affinity_first  10/1/2   = 13   ->  77 / 8  / 15
-// time_pref_first 1/10/2   = 13   ->  8  / 77 / 15
-// balanced        10/4/3   = 17   ->  59 / 23 / 18
-const PRESETS: Record<string, Mix> = {
-  affinity_first:  { affinity: 77, time: 8,  overload: 15 },
-  time_pref_first: { affinity: 8,  time: 77, overload: 15 },
-  balanced:        { affinity: 59, time: 23, overload: 18 },
-}
-
-const PRESET_LABELS: Record<string, string> = {
-  affinity_first:  "Affinity-First",
-  time_pref_first: "Time-First",
-  balanced:        "Balanced",
-}
-
-export const DEFAULT_TUNED_MIX: Mix = { ...PRESETS.balanced }
 
 const GEAR_LABELS: Record<GearKey, string> = {
   affinity: "Affinity",
@@ -55,28 +32,6 @@ const GEAR_HINTS: Record<GearKey, string> = {
   affinity: "How much expertise matches matter",
   time:     "How much prof time-of-day matters",
   overload: "How much we punish overloading a prof",
-}
-
-/** Load the saved mix from localStorage, or the Balanced default. */
-export function loadTunedMix(): Mix {
-  try {
-    const raw = localStorage.getItem(TUNED_WEIGHTS_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw) as Partial<Mix>
-      if (
-        typeof parsed.affinity === "number" &&
-        typeof parsed.time     === "number" &&
-        typeof parsed.overload === "number"
-      ) {
-        return { affinity: parsed.affinity, time: parsed.time, overload: parsed.overload }
-      }
-    }
-  } catch { /* corrupted */ }
-  return { ...DEFAULT_TUNED_MIX }
-}
-
-function saveTunedMix(mix: Mix) {
-  try { localStorage.setItem(TUNED_WEIGHTS_KEY, JSON.stringify(mix)) } catch { /* full */ }
 }
 
 /** Friction model: dragging beyond the available budget gets harder, doesn't
@@ -160,17 +115,6 @@ function describeMix(mix: Mix): string {
     : "Overloading is barely penalized — expect a few profs to carry heavy quarters."
 
   return `${expertVerdict} ${overVerdict}`
-}
-
-/** Convert the percent-of-100 Mix into the integer weights the solver uses
- *  (shape of MODE_WEIGHTS entries). We divide by a small common factor so
- *  coefficients stay in the same ballpark as the canonical 10/4/3 style. */
-export function mixToSolverWeights(mix: Mix): { affinity: number; time_pref: number; overload: number } {
-  return {
-    affinity:  mix.affinity,
-    time_pref: mix.time,
-    overload:  mix.overload,
-  }
 }
 
 interface Props {
