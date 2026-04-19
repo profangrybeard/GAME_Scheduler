@@ -2679,3 +2679,307 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* ==========================================================================
+   Solver Tuning panel (UI prototype — not wired to solver yet)
+   ========================================================================== */
+
+.solver-tune__scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  display: grid;
+  place-items: center;
+  z-index: 200;
+  animation: solver-tune-fade 0.18s ease;
+}
+
+@keyframes solver-tune-fade {
+  from { opacity: 0 }
+  to   { opacity: 1 }
+}
+
+.solver-tune {
+  width: min(720px, 92vw);
+  max-height: 92vh;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  color: var(--text);
+  overflow: auto;
+  --dept-tone: var(--accent);
+}
+
+.solver-tune__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.solver-tune__title {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.solver-tune__sub {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.solver-tune__close {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+}
+.solver-tune__close:hover {
+  border-color: var(--text);
+  color: var(--text);
+}
+
+/* ----- Department tabs ----- */
+.solver-tune__dept-row {
+  display: flex;
+  gap: var(--space-xs);
+  padding: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.solver-tune__dept {
+  flex: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  padding: 8px 12px;
+  border-radius: 4px;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  --this-tone: var(--accent);
+}
+
+.solver-tune__dept:hover {
+  color: var(--text);
+}
+
+.solver-tune__dept--active {
+  background: color-mix(in srgb, var(--this-tone) 15%, transparent);
+  border-color: color-mix(in srgb, var(--this-tone) 50%, var(--border));
+  color: var(--text);
+}
+
+/* ----- Gears ----- */
+.solver-tune__gears {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-md);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  align-items: end;
+}
+
+.solver-tune__gear {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  user-select: none;
+}
+
+.solver-tune__gear-grab {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: ns-resize;
+  display: grid;
+  place-items: center;
+  transition: transform 0.08s ease-out;
+  touch-action: none;
+}
+
+.solver-tune__gear--dragging .solver-tune__gear-grab {
+  cursor: grabbing;
+}
+
+.solver-tune__gear-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  transition: filter 0.12s ease-out;
+  animation: gear-idle-spin 24s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+@keyframes gear-idle-spin {
+  from { transform: rotate(0deg) }
+  to   { transform: rotate(360deg) }
+}
+
+.solver-tune__gear-svg--spin {
+  animation-duration: 4s;
+}
+
+.solver-tune__gear--strain .solver-tune__gear-svg {
+  animation-duration: 1.5s;
+}
+
+.solver-tune__gear-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.solver-tune__gear-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.solver-tune__gear-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1;
+}
+
+.solver-tune__gear-hint {
+  font-size: 11px;
+  color: var(--text-faint);
+  max-width: 14ch;
+}
+
+/* ----- Presets ----- */
+.solver-tune__presets {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.solver-tune__presets-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.solver-tune__preset {
+  background: var(--surface);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.solver-tune__preset:hover {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+
+.solver-tune__preset--active {
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+/* ----- Readout ----- */
+.solver-tune__readout {
+  background: color-mix(in srgb, var(--dept-tone) 6%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--dept-tone) 30%, var(--border));
+  border-radius: 6px;
+  padding: var(--space-md);
+}
+
+.solver-tune__readout-head {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.solver-tune__readout-body {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+/* ----- Footer ----- */
+.solver-tune__foot {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-top: 4px;
+}
+
+.solver-tune__btn {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 10px 18px;
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.solver-tune__btn--ghost {
+  color: var(--text-muted);
+  background: transparent;
+}
+
+.solver-tune__btn--ghost:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+
+.solver-tune__btn--primary {
+  background: var(--accent);
+  color: var(--accent-on);
+  border-color: var(--accent);
+}
+
+.solver-tune__btn--primary:hover {
+  background: color-mix(in srgb, var(--accent) 80%, white);
+}
+
+@media (max-width: 767px) {
+  .solver-tune__gears {
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+  }
+}
