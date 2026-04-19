@@ -20,14 +20,21 @@ VALID_DEPARTMENTS = ["game", "motion_media", "ai"]
 AFFINITY_PENALTIES = {0: 0, 1: 1, 2: 3, "other": 10}
 TIME_PREF_PENALTIES = {"preferred": 0, "acceptable": 2, "not_preferred": 5}
 OVERLOAD_PENALTY = 8
-SHOULD_HAVE_DROP_PENALTY = 15
+# Must exceed w_aff_max * AFFINITY_PENALTIES[2] (= 10 * 3 = 30) so that
+# affinity_first never chooses to drop a should_have rather than place it
+# with a non-preferred but eligible prof.
+SHOULD_HAVE_DROP_PENALTY = 35
 COULD_HAVE_DROP_PENALTY = 5
 
 # === Optimization mode weight vectors ===
+# balanced is expert-leaning. With raw max penalties aff=3 and time=5, the
+# 10:4 ratio ties the worst trade-off (pref-prof@bad-slot 10+20=30 vs
+# elig-prof@good-slot 30+0=30) and tips toward the expert for every less
+# extreme case — e.g. pref@acceptable (1+8=9) beats elig@preferred (30+0=30).
 MODE_WEIGHTS = {
     "affinity_first":    {"affinity": 10, "time_pref": 1, "overload": 2},
     "time_pref_first":   {"affinity": 1,  "time_pref": 10, "overload": 2},
-    "balanced":          {"affinity": 5,  "time_pref": 5,  "overload": 3},
+    "balanced":          {"affinity": 10, "time_pref": 4,  "overload": 3},
 }
 
 # === Time preference full mapping ===

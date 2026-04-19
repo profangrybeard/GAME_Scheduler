@@ -21,7 +21,7 @@ Mode weights (from config.MODE_WEIGHTS)
 ---------------------------------------
   affinity_first  : affinity*10  time_pref*1   overload*2
   time_pref_first : affinity*1   time_pref*10  overload*2
-  balanced        : affinity*5   time_pref*5   overload*3
+  balanced        : affinity*10  time_pref*4   overload*3   (expert-leaning)
 
 Drop penalties are NOT mode-weighted — they reflect schedule completeness, not quality.
 """
