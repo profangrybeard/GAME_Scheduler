@@ -1402,11 +1402,11 @@
 
 .roster-card {
   display: grid;
-  grid-template-columns: 32px 1fr auto auto auto;
+  grid-template-columns: 32px 1fr auto auto;
   grid-template-rows: auto auto;
   grid-template-areas:
-    "avatar course  status add remove"
-    "avatar prof    .      .   .";
+    "avatar course  status controls"
+    "avatar prof    .      .";
   gap: 1px 8px;
   align-items: center;
   padding: 6px var(--space-lg) 6px var(--space-md);
@@ -1481,63 +1481,78 @@
 .roster-card__status--kitted   { background: var(--accent); }
 .roster-card__status--placed   { background: var(--success); }
 
+/* Section controls — "+" and "−" paired as a single pill on the right of
+   each offering card. + mints another sibling section; − removes one section
+   (the last one removes the course from offerings entirely, since the last
+   sibling's delete unseats the catalog_id). The pill's rounded frame does
+   the eye-catching so the glyphs inside stay modest. Appears on card hover;
+   touch devices keep it always visible. Negative right margin pulls the
+   pill flush to the card's right edge, past the card's generous right
+   padding — the pill is the only thing that wants the edge, not the text
+   rows above it. */
+.roster-card__controls {
+  grid-area: controls;
+  justify-self: end;
+  margin-right: calc(var(--space-sm) - var(--space-lg));
+  display: inline-flex;
+  align-items: stretch;
+  line-height: 1;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--surface-hover) 55%, transparent);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.roster-card:hover .roster-card__controls,
+.roster-card:focus-visible .roster-card__controls { opacity: 1; }
+
+.roster-card__add-section,
 .roster-card__remove {
-  grid-area: remove;
-  color: var(--text-muted);
-  font-size: 1.15rem;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  font-size: 0.95rem;
+  font-weight: 600;
   line-height: 1;
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 3px 8px;
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.12s ease, background 0.12s ease, color 0.12s ease;
-}
-
-.roster-card:hover .roster-card__remove { opacity: 1; }
-
-.roster-card__remove:hover {
-  color: var(--danger);
-  background: color-mix(in srgb, var(--danger) 18%, transparent);
-}
-
-.roster-card__add-section {
-  grid-area: add;
   color: var(--text-muted);
-  font-size: 1.15rem;
-  font-weight: 500;
-  line-height: 1;
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.12s ease, background 0.12s ease, color 0.12s ease;
+  background: transparent;
+  transition: background 0.12s ease, color 0.12s ease;
+  user-select: none;
 }
 
-.roster-card:hover .roster-card__add-section { opacity: 1; }
+.roster-card__add-section + .roster-card__remove {
+  border-left: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+}
 
 .roster-card__add-section:hover {
   color: var(--accent);
   background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
-.roster-card__add-section {
-  grid-area: add;
-  color: var(--text-faint);
-  font-size: 0.9rem;
-  line-height: 1;
-  padding: 2px 4px;
-  border-radius: 3px;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.12s ease;
+.roster-card__remove:hover {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 18%, transparent);
 }
 
-.roster-card:hover .roster-card__add-section { opacity: 1; }
-
-.roster-card__add-section:hover {
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
+/* Sibling sections of one course render inside this wrapper — a 1px bracket
+   with a couple of px of breathing room that reads as "these belong together."
+   The wrapper is non-interactive: each inner .roster-card keeps its own
+   drag/select/remove behavior. */
+.roster-card-group {
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  border-radius: 6px;
+  padding: 2px;
+  margin: 2px 0;
+  background: color-mix(in srgb, var(--surface) 40%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
 /* ─── Roster person/room rows (Profs + Rooms tabs) ─────────────── */
@@ -2293,8 +2308,7 @@
 /* ─── Touch: always-visible remove, no hover-only UI ────────────── */
 
 @media (hover: none) {
-  .roster-card__remove,
-  .roster-card__add-section { opacity: 1; }
+  .roster-card__controls { opacity: 1; }
 }
 
 /* ─── Roster drawer — landscape-only ────────────────────────────── */
@@ -2673,22 +2687,25 @@
   white-space: nowrap;
 }
 
-/* Tune card affordance — the gear breaks past the card's left edge to make
-   the middle column read as "the editable one." The gear lives outside the
-   normal flex row (position: absolute) so it can protrude without disturbing
-   the title/pill layout; the card adds left padding to keep text clear of
-   the inset portion. Always rendered when onOpenTuning is wired so chairs
-   can re-tune mid-solve. */
+/* Tune card affordance — the gear sits centered on the top edge of the card,
+   horizontally aligned with the Penalty metric (the middle column of the
+   3-column metrics grid). Half above / half inside, so it reads as a crown
+   on the middle column — intentional, centered, and draws the eye to the
+   one card that's editable. Position: absolute keeps it out of the
+   title/pill flex row; the card leaves the horizontal center of the
+   mode-row empty (flex: title left, pill right) so the intruding half
+   doesn't collide with text. Always rendered when onOpenTuning is wired so
+   chairs can re-tune mid-solve. */
 .solve-progress__mode--tune {
   position: relative;
-  padding-left: 40px;
   overflow: visible;
 }
 
 .solve-progress__tune-btn {
   position: absolute;
-  left: -16px;
-  top: var(--space-sm);
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, -50%);
   appearance: none;
   background: color-mix(in srgb, var(--accent) 14%, var(--surface));
   border: 1.5px solid var(--accent);
@@ -2711,7 +2728,7 @@
 
 .solve-progress__tune-btn:hover {
   background: color-mix(in srgb, var(--accent) 24%, var(--surface));
-  transform: rotate(60deg) scale(1.06);
+  transform: translate(-50%, -50%) rotate(60deg) scale(1.06);
   box-shadow: 0 3px 12px color-mix(in srgb, var(--accent) 38%, transparent);
 }
 
