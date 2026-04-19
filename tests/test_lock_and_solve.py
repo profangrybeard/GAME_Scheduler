@@ -166,13 +166,6 @@ def test_lock_preserves_assignments():
         assert a['time_slot'] == lock['time_slot'], f"Time slot changed for {lock['cs_key']}"
 
 
-@pytest.mark.xfail(
-    reason="OR-Tools CP-SAT with num_search_workers=0 (all cores) is "
-    "non-deterministic across runs; two equivalent-objective solutions "
-    "can place different numbers of sections. Fix would pin workers=1 "
-    "or assert on objective equality rather than schedule length.",
-    strict=False,
-)
 def test_lock_with_none_behaves_like_base_solve():
     """run_schedule(q, locked=None) should behave same as run_schedule(q)."""
     r1 = run_schedule('fall')
