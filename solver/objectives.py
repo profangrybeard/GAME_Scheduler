@@ -57,6 +57,38 @@ def _time_pref_penalty(prof: dict, ts: str) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Weight scaling
+# ---------------------------------------------------------------------------
+
+# Canonical MODE_WEIGHTS top out at 10 (affinity_first, time_pref_first).
+# Per-assignment penalty coefs scale as w * pen, so a weight of 10 with the
+# worst time_pref penalty (5) gives coef 50. Inputs from the gear UI live on
+# a percent-of-100 scale, so an extreme mix like {5, 90, 5} yields a coef of
+# 450 — ~9x the canonical ceiling. CP-SAT's search heuristic is sensitive to
+# objective scale: at that magnitude, on Fly's shared-cpu-1x, balanced/Tune
+# mode timed out at UNKNOWN with zero feasible solutions found, while the
+# (small-weighted) affinity_first and time_pref_first modes solved fine.
+# Rescaling so the max weight equals the canonical ceiling preserves the
+# user's intended ratio without blowing up the heuristic.
+_CANONICAL_MAX_WEIGHT = 10
+
+
+def _normalize_weights(weights: dict) -> dict:
+    """Rescale a weight vector so its max equals _CANONICAL_MAX_WEIGHT,
+    preserving ratios. No-op for canonical MODE_WEIGHTS (already on this
+    scale). All-zero input is returned as-is — Minimize(0) handles it."""
+    max_w = max(weights["affinity"], weights["time_pref"], weights["overload"])
+    if max_w <= _CANONICAL_MAX_WEIGHT:
+        return weights
+    scale = _CANONICAL_MAX_WEIGHT / max_w
+    return {
+        "affinity":  max(1, round(weights["affinity"]  * scale)),
+        "time_pref": max(1, round(weights["time_pref"] * scale)),
+        "overload":  max(1, round(weights["overload"]  * scale)),
+    }
+
+
+# ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
 
@@ -81,6 +113,7 @@ def build_objective(
     """
     mode    = data.get("mode", "balanced")
     weights = tuned_weights if tuned_weights is not None else MODE_WEIGHTS[mode]
+    weights = _normalize_weights(weights)
     w_aff   = weights["affinity"]
     w_time  = weights["time_pref"]
     w_over  = weights["overload"]
