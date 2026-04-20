@@ -12,6 +12,7 @@ import {
   type SolveRequestBody,
 } from "./api"
 import { CatalogueDrawer } from "./components/CatalogueDrawer"
+import { ChangeLog, type ChangeLogEntry } from "./components/ChangeLog"
 import { Class } from "./components/Class"
 import { PortraitContext } from "./components/PortraitContext"
 import { ProfessorContext } from "./components/ProfessorContext"
@@ -183,6 +184,18 @@ function App() {
   const [activePanel, setActivePanel] = useState<ActivePanel>("schedule")
   const [rosterDrawerOpen, setRosterDrawerOpen] = useState(false)
   const [placingId, setPlacingId] = useState<string | null>(null)
+
+  // ── Change log (tiny bottom-left chip) ──────────────────────────
+  // In-memory only; resets on refresh. Capped to the last 20 entries so
+  // the list scan stays O(1)-small even in a long editing session.
+  const [changeLog, setChangeLog] = useState<ChangeLogEntry[]>([])
+  const logIdRef = useRef(0)
+  const logChange = useCallback((type: string, text: string) => {
+    logIdRef.current += 1
+    const entry: ChangeLogEntry = { id: logIdRef.current, ts: Date.now(), type, text }
+    setChangeLog(log => [entry, ...log].slice(0, 20))
+  }, [])
+  const clearChangeLog = useCallback(() => setChangeLog([]), [])
 
   const openCatalogue = useCallback(() => setCatalogueOpen(true), [])
   const closeCatalogue = useCallback(() => setCatalogueOpen(false), [])
@@ -430,6 +443,7 @@ function App() {
   // calendar's effectiveSlot is `assignment ?? pinned`, so a stale assignment
   // would silently win and the drop would look like it did nothing.
   const pinToSlot = useCallback((offering_id: string, slot: Slot | null) => {
+    const cid = state.offerings.find(o => o.offering_id === offering_id)?.catalog_id
     setState(s => ({
       ...s,
       offerings: s.offerings.map(o =>
@@ -438,8 +452,16 @@ function App() {
           : o,
       ),
     }))
+    if (cid) {
+      if (slot) {
+        const day = slot.day_group === 1 ? "MW" : slot.day_group === 2 ? "TTh" : "F"
+        logChange("pin", `${cid} → ${day} ${slot.time_slot}`)
+      } else {
+        logChange("unpin", cid)
+      }
+    }
     setPlacingId(null)
-  }, [])
+  }, [state.offerings, logChange])
 
   /** Apply a mode's assignments to the offerings list. Assignments not present
    *  in the mode clear `offering.assignment` — the user sees only the current
@@ -475,8 +497,9 @@ function App() {
       // a new round-trip. If we haven't solved yet, there's nothing to apply.
       const cached = modeResultsRef.current?.[mode]
       if (cached) applyModeAssignments(cached)
+      logChange("mode", SOLVE_MODE_LABELS[mode] ?? mode)
     },
-    [applyModeAssignments],
+    [applyModeAssignments, logChange],
   )
 
   const emptyCalendar = useCallback(() => {
@@ -667,7 +690,11 @@ function App() {
   const handleApplyTunedMix = useCallback((nextMix: Mix) => {
     setTunedMix(nextMix)
     void requestSolve(nextMix, "balanced")
-  }, [requestSolve])
+    logChange(
+      "tune",
+      `aff ${nextMix.affinity} · time ${nextMix.time} · overload ${nextMix.overload}`,
+    )
+  }, [requestSolve, logChange])
 
   const requestExport = useCallback(async () => {
     // Cancel any in-flight stream if the user re-presses Export.
@@ -838,6 +865,7 @@ function App() {
       setReloadFilename(file.name)
       setSolveProgress(synthesizedProgress)
       setSolveError(null)
+      logChange("resume", file.name)
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
       if (import.meta.env.DEV) console.error("[reload] error:", msg)
@@ -919,7 +947,8 @@ function App() {
     })
     const date = new Date().toISOString().slice(0, 10)
     downloadBlob(blob, `scheduler-overlay-${date}.json`)
-  }, [state.professors, state.rooms, portraits])
+    logChange("backup", `scheduler-overlay-${date}.json`)
+  }, [state.professors, state.rooms, portraits, logChange])
 
   const handleImportFile = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1000,8 +1029,12 @@ function App() {
         professors: profsMap,
         rooms: roomsMap,
       }))
+      logChange(
+        "restore",
+        `${nextProfs.length} profs · ${nextRooms.length} rooms`,
+      )
     },
-    [],
+    [logChange],
   )
 
   const commitToSource = useCallback(async () => {
@@ -1039,10 +1072,14 @@ function App() {
         ? `\n\nWarnings:\n${result.warnings.map(w => "• " + w).join("\n")}`
         : ""
       alert(head + tail)
+      logChange(
+        "commit",
+        `${result.professorsUpdated} profs · ${result.roomsUpdated} rooms`,
+      )
     } catch (err) {
       alert(`Commit failed: ${err instanceof Error ? err.message : err}`)
     }
-  }, [state.professors, state.rooms, portraits])
+  }, [state.professors, state.rooms, portraits, logChange])
 
   // Close the roster drawer when resizing up to desktop
   useEffect(() => {
@@ -1217,8 +1254,7 @@ function App() {
         {placingOffering && placingCourse && (
           <div className="placement-banner placement-banner--visible">
             <span>
-              Tap a cell to place <strong>{placingCourse.id}</strong>, or tap the
-              unpin strip to remove.
+              Tap a cell to place <strong>{placingCourse.id}</strong>.
             </span>
             <button
               type="button"
@@ -1430,6 +1466,7 @@ function App() {
         onClose={() => setTuningOpen(false)}
         onApply={handleApplyTunedMix}
       />
+      <ChangeLog entries={changeLog} onClear={clearChangeLog} />
      </ProfessorContext.Provider>
     </PortraitContext.Provider>
   )

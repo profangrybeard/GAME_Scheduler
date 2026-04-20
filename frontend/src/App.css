@@ -1278,35 +1278,6 @@
   min-width: 160px;
 }
 
-/* ─── Schedule unpin strip (replaces the full dock) ────────────── */
-
-.schedule-unpin-strip {
-  border-top: 1px solid var(--border);
-  background: var(--bg);
-  padding: 6px var(--space-md);
-  flex-shrink: 0;
-  text-align: center;
-  transition: background 0.15s ease, box-shadow 0.15s ease;
-}
-
-.schedule-unpin-strip__label {
-  font-size: 0.68rem;
-  color: var(--text-faint);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  opacity: 0.4;
-}
-
-.schedule-unpin-strip--over {
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  box-shadow: inset 0 0 0 2px var(--accent);
-}
-
-.schedule-unpin-strip--over .schedule-unpin-strip__label {
-  color: var(--accent);
-  opacity: 1;
-}
-
 /* ─── Roster panel ─────────────────────────────────────────────── */
 
 .roster__tabs {
@@ -2300,11 +2271,6 @@
   animation: cell-pulse 1.5s ease infinite;
 }
 
-.schedule-grid--placing .schedule-unpin-strip {
-  animation: cell-pulse 1.5s ease infinite;
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
-}
-
 /* ─── Touch: always-visible remove, no hover-only UI ────────────── */
 
 @media (hover: none) {
@@ -2512,15 +2478,6 @@
   .chip {
     min-height: 36px;
     padding: 6px 12px;
-  }
-
-  /* Unpin strip: taller */
-  .schedule-unpin-strip {
-    padding: 12px var(--space-md);
-  }
-
-  .schedule-unpin-strip__label {
-    font-size: 0.78rem;
   }
 
   /* Panel titles slightly larger */
@@ -3257,4 +3214,173 @@
 
 .prof-meter--maxed .prof-meter__ratio {
   color: var(--success);
+}
+
+/* ========================================================================
+ * ChangeLog — tiny, easily-missed "recent changes" chip in the bottom-left.
+ * Rolled up by default; expands into a small list on click.
+ * ====================================================================== */
+
+.change-log {
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  pointer-events: none; /* children re-enable; keeps the empty gap inert */
+}
+
+.change-log__toggle {
+  pointer-events: auto;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: var(--text-faint);
+  font-size: 0.9rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.35;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.change-log__toggle:hover,
+.change-log__toggle:focus-visible {
+  opacity: 1;
+  color: var(--text);
+  background: var(--surface-hover);
+  outline: none;
+}
+
+.change-log--open .change-log__toggle {
+  opacity: 1;
+  color: var(--accent);
+  background: var(--surface-hover);
+}
+
+.change-log__panel {
+  pointer-events: auto;
+  width: 320px;
+  max-height: 280px;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px color-mix(in srgb, #000 25%, transparent);
+  padding: var(--space-sm);
+  gap: var(--space-xs);
+  font-size: 0.78rem;
+}
+
+.change-log__panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.change-log__title {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  font-weight: 600;
+}
+
+.change-log__clear {
+  background: none;
+  border: none;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.change-log__clear:hover {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+
+.change-log__empty {
+  padding: var(--space-sm) 4px;
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+.change-log__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  max-height: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.change-log__entry {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 4px;
+  border-radius: 4px;
+}
+
+.change-log__entry:hover {
+  background: var(--surface-hover);
+}
+
+.change-log__badge {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  text-align: center;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.change-log__badge--pin     { background: color-mix(in srgb, var(--accent)  18%, transparent); color: var(--accent); }
+.change-log__badge--unpin   { background: color-mix(in srgb, var(--warn)    18%, transparent); color: var(--warn); }
+.change-log__badge--mode    { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success); }
+.change-log__badge--tune    { background: color-mix(in srgb, var(--accent)  18%, transparent); color: var(--accent); }
+.change-log__badge--resume  { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success); }
+.change-log__badge--commit  { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success); }
+.change-log__badge--backup,
+.change-log__badge--restore { background: color-mix(in srgb, var(--text-muted) 18%, transparent); color: var(--text-muted); }
+
+.change-log__text {
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.change-log__time {
+  color: var(--text-faint);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Portrait / narrow: hide chip. Mobile is for light editing; the log is
+   a desktop-only affordance that would overlap the bottom tab bar anyway. */
+@media (max-width: 767px) {
+  .change-log { display: none; }
 }
