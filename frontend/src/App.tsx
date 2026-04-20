@@ -753,13 +753,51 @@ function App() {
         modeResultsRef.current = null
       }
 
+      // Synthesize a "done" SolveProgressState from the cached modes so the
+      // solve-progress strip renders on resume — otherwise the three cached
+      // results have no UI surface (can't flip modes, can't re-tune). Missing
+      // metrics (elapsedMs, solutionsFound) weren't persisted with the draft;
+      // the progress component shows "—" for those gracefully.
+      const modeOrder = ["affinity_first", "balanced", "time_pref_first"] as const
+      const synthesizedProgress: SolveProgressState | null = draft.solver_results
+        ? {
+            startedAt:    null,
+            endedAt:      null,
+            totalModes:   draft.solver_results.modes.length,
+            modes: Object.fromEntries(
+              draft.solver_results.modes.map((m): [string, SolveModeProgress] => {
+                const idx = modeOrder.indexOf(m.mode as typeof modeOrder[number])
+                // Older exports (example-schedule.xlsx, pre-v1 drafts) only
+                // persist mode + assignments; default the rest so the strip
+                // still renders instead of crashing on missing fields.
+                const placed = m.assignments?.length ?? 0
+                const unsched = m.unscheduled?.length ?? 0
+                return [m.mode, {
+                  mode:             m.mode,
+                  state:            "done",
+                  index:            idx >= 0 ? idx + 1 : null,
+                  solutionsFound:   0,
+                  bestObjective:    m.objective ?? null,
+                  bestBound:        null,
+                  nPlaced:          placed,
+                  nTotal:           placed + unsched,
+                  elapsedMs:        null,
+                  status:           m.status ?? null,
+                  unscheduledCount: unsched,
+                }]
+              }),
+            ),
+            errorMessage: null,
+          }
+        : null
+
       // Build per-offering assignment map for the active mode (so the
       // calendar populates immediately without a second reducer pass).
       // Sibling offering_ids follow `${catalog_id}#${section_idx + 1}`.
       const activeMode = cachedModes[draft.solver_mode]
       const byOfferingId: Record<string, Assignment> = {}
       if (activeMode) {
-        for (const a of activeMode.assignments) {
+        for (const a of activeMode.assignments ?? []) {
           const oid = `${a.catalog_id}#${(a.section_idx ?? 0) + 1}`
           byOfferingId[oid] = responseAssignmentToAssignment(a)
         }
@@ -789,13 +827,16 @@ function App() {
         quarter:    draft.quarter,
         year:       draft.year,
         solveMode:  draft.solver_mode,
-        solveStatus: "idle",
+        // With cached modes, the schedule is semantically already solved —
+        // mark "done" so Export stays enabled and the progress strip doesn't
+        // claim a fresh solve is needed.
+        solveStatus: synthesizedProgress ? "done" : "idle",
         offerings: expanded,
       }))
 
       setReloadWarnings(warnings)
       setReloadFilename(file.name)
-      setSolveProgress(null)
+      setSolveProgress(synthesizedProgress)
       setSolveError(null)
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
@@ -1296,7 +1337,7 @@ function App() {
                 apiAvailable !== true
                   ? "Solver requires the local launcher"
                   : state.solveStatus === "done"
-                    ? "Download schedule as Excel"
+                    ? "Download Excel with all three modes + solver state (resume-able)"
                     : "Generate a schedule first"
               }
             >
