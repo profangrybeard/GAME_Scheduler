@@ -1,0 +1,292 @@
+/* Mobile read-only schedule viewer.
+   All rules prefixed with .mobile-* so they can't collide with the desktop
+   workspace styles. The viewer uses the same CSS variables from App.css
+   (--surface, --text, --border, --dept-* colors) so dark/light theming
+   comes along for free. */
+
+.mobile-index,
+.mobile-schedule {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  padding: calc(env(safe-area-inset-top, 0px) + 20px)
+          env(safe-area-inset-right, 0px)
+          calc(env(safe-area-inset-bottom, 0px) + 24px)
+          env(safe-area-inset-left, 0px);
+  box-sizing: border-box;
+}
+
+/* ─── Index ─────────────────────────────────────────────────────── */
+
+.mobile-index__header {
+  padding: 0 20px 16px;
+}
+
+.mobile-index__title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.mobile-index__subtitle {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.mobile-index__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mobile-index__group {
+  padding: 16px 20px 8px;
+}
+
+.mobile-index__group-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin: 0 0 10px;
+}
+
+.mobile-index__empty {
+  padding: 16px 14px;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.mobile-index__versions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mobile-index__version-btn {
+  width: 100%;
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-index__version-btn:active {
+  transform: scale(0.98);
+  background: var(--surface-hover);
+}
+
+.mobile-index__version-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.mobile-index__latest-tag {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  background: var(--accent, #3b82f6);
+  color: #fff;
+  border-radius: 999px;
+}
+
+.mobile-index__version-meta {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.mobile-index__version-stats {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.mobile-index__footer {
+  padding: 32px 20px 8px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.mobile-index__footer p { margin: 0; }
+
+/* ─── Schedule detail ──────────────────────────────────────────── */
+
+.mobile-schedule__header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.mobile-schedule__back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 6px 10px 6px 0;
+  background: none;
+  border: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-schedule__title {
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.mobile-schedule__meta {
+  margin-top: 4px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.mobile-schedule__day-toggle {
+  display: flex;
+  gap: 8px;
+  padding: 14px 20px 6px;
+}
+
+.mobile-schedule__day-btn {
+  flex: 1;
+  min-height: 44px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-schedule__day-btn--active {
+  background: var(--accent, #3b82f6);
+  border-color: var(--accent, #3b82f6);
+  color: #fff;
+}
+
+.mobile-schedule__slots {
+  padding: 10px 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mobile-slot {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.mobile-slot__time {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+
+.mobile-slot__empty {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 6px 0 2px;
+}
+
+.mobile-slot__cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+/* Dept accent on the left border — reuses the same palette as the desktop
+   schedule cards for visual continuity. */
+.mobile-card.dept--game         { border-left-color: #fcd34d; }
+.mobile-card.dept--motion_media { border-left-color: #f472b6; }
+.mobile-card.dept--ai           { border-left-color: #818cf8; }
+.mobile-card.dept--ixds         { border-left-color: #5eead4; }
+.mobile-card.dept--iact         { border-left-color: #fb923c; }
+.mobile-card.dept--digi         { border-left-color: #a3e635; }
+.mobile-card.dept--adbr         { border-left-color: #f87171; }
+
+.mobile-card__id {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+}
+
+.mobile-card__name {
+  margin-top: 2px;
+  font-size: 0.98rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.mobile-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.mobile-card__room::before {
+  content: "·";
+  margin-right: 10px;
+  color: var(--border);
+}
