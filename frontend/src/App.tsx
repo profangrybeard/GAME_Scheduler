@@ -21,7 +21,7 @@ import { QuarterSchedule } from "./components/QuarterSchedule"
 import { RoomCard } from "./components/RoomCard"
 import { Roster } from "./components/Roster"
 import { SolverTuning } from "./components/SolverTuning"
-import { loadTunedMix, mixToSolverWeights, type Mix } from "./components/SolverMix"
+import { loadTunedMix, mixToSolverWeights, saveTunedMix, type Mix } from "./components/SolverMix"
 import { VersionBadge } from "./components/VersionBadge"
 import { loadInitialState } from "./data"
 import { useTheme } from "./hooks/useTheme"
@@ -848,6 +848,17 @@ function App() {
         ...o,
         assignment: byOfferingId[o.offering_id] ?? null,
       }))
+      // Professors/rooms from the xlsx replace the current deck (Path B —
+      // the exporting workspace's deck IS the truth). Also persist to
+      // localStorage so the edits survive a refresh, just like in-session
+      // edits do.
+      const nextProfessors = draft.professors
+        ? Object.fromEntries(draft.professors.map(p => [p.id, p]))
+        : null
+      const nextRooms = draft.rooms
+        ? Object.fromEntries(draft.rooms.map(r => [r.id, r]))
+        : null
+
       setState(s => ({
         ...s,
         selectedOfferingId: null,
@@ -859,7 +870,24 @@ function App() {
         // claim a fresh solve is needed.
         solveStatus: synthesizedProgress ? "done" : "idle",
         offerings: expanded,
+        professors: nextProfessors ?? s.professors,
+        rooms:      nextRooms      ?? s.rooms,
       }))
+      if (draft.professors) saveProfessors(draft.professors)
+      if (draft.rooms)      saveRooms(draft.rooms)
+
+      // Tuned weights: the xlsx carries solver-shape (time_pref); remap to
+      // the Mix's `time` field and persist via the same helper the Tune
+      // modal uses so both sources write to the same localStorage key.
+      if (draft.tunedWeights) {
+        const mix: Mix = {
+          affinity: draft.tunedWeights.affinity,
+          time:     draft.tunedWeights.time_pref,
+          overload: draft.tunedWeights.overload,
+        }
+        setTunedMix(mix)
+        saveTunedMix(mix)
+      }
 
       setReloadWarnings(warnings)
       setReloadFilename(file.name)

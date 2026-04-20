@@ -349,6 +349,8 @@ def export(req: ExportRequest) -> Response:
         "offerings":          react_offerings,
         "professors":         req.professors,
         "rooms":              req.rooms,
+        "tunedWeights":       (req.tunedWeights.model_dump()
+                               if req.tunedWeights else None),
         "solver_results":     _embedded_solver_results(results),
     }
 
@@ -432,6 +434,8 @@ async def export_stream(req: ExportRequest) -> StreamingResponse:
                 "offerings":          react_offerings,
                 "professors":         req.professors,
                 "rooms":              req.rooms,
+                "tunedWeights":       (req.tunedWeights.model_dump()
+                                       if req.tunedWeights else None),
                 "solver_results":     _embedded_solver_results(results),
             }
 
