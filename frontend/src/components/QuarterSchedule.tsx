@@ -86,6 +86,10 @@ export interface QuarterScheduleProps {
   onSetSolveMode: (mode: SolveMode) => void
   onSolve: () => void
   onEmptyCalendar: () => void
+  /** True when the Clear button is in stage-2 (next click also drops user
+   *  pins). Renders a matching red dot on the button so the cue lines up
+   *  with the pins' own dots. */
+  clearArmed: boolean
   onStartPlacing: (offering_id: string) => void
   onDismissError: () => void
   onDismissProgress: () => void
@@ -228,6 +232,13 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
         <span className="schedule-card__room">
           {room ? room.name.split("–")[0].trim().replace("Room ", "") : "—"}
         </span>
+        {o.pinned !== null && (
+          <span
+            className="schedule-card__pin-dot"
+            aria-label="Manually placed by you"
+            title="You placed this card. Use Empty Calendar twice to remove it."
+          />
+        )}
       </button>
     )
   }
@@ -280,11 +291,25 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
               {isSolving ? "Solving…" : "Generate"}
             </button>
             <button
+              className={
+                "btn-empty-calendar" +
+                (props.clearArmed ? " btn-empty-calendar--armed" : "")
+              }
               disabled={isSolving}
               onClick={props.onEmptyCalendar}
-              title="Clear solver results and start over. User-pinned cards stay."
+              title={
+                props.clearArmed
+                  ? "Click again to also clear your manually placed cards."
+                  : "Clear solver results and start over. User-placed cards stay."
+              }
             >
               Empty Calendar
+              {props.clearArmed && (
+                <span
+                  className="btn-empty-calendar__armed-dot"
+                  aria-hidden="true"
+                />
+              )}
             </button>
           </div>
         </div>

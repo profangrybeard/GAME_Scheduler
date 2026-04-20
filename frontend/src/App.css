@@ -1164,6 +1164,7 @@
 /* ─── Schedule cards (placed offerings) ─────────────────────────── */
 
 .schedule-card {
+  position: relative;
   display: grid;
   grid-template-columns: auto auto 1fr;
   grid-template-rows: auto auto;
@@ -1187,6 +1188,34 @@
 .schedule-card:active                          { cursor: grabbing; }
 .schedule-card:hover                           { background: var(--surface-hover); }
 .schedule-card--dragging                       { opacity: 0.4; }
+
+/* Small red dot flagging a user-placed ("pinned") card. Matches the dot
+   that appears on Empty Calendar when a second click will also drop pins. */
+.schedule-card__pin-dot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  background: #e11d48;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--surface);
+  pointer-events: none;
+}
+
+.btn-empty-calendar { position: relative; }
+
+.btn-empty-calendar__armed-dot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  background: #e11d48;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--surface);
+  pointer-events: none;
+}
 
 .schedule-card--selected {
   border-color: var(--accent);
