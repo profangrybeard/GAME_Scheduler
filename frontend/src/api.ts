@@ -388,13 +388,17 @@ export interface DraftState {
   offerings: Offering[]
   solver_results?: SolveResponse
   /** Path B: full profs deck from the exporting workspace. Older exports
-   *  may carry `professor_overrides` instead; neither is applied yet on reload. */
+   *  may carry `professor_overrides` instead. */
   professors?: Professor[]
   professor_overrides?: Record<string, Partial<Professor>>
   /** Path B: full rooms deck from the exporting workspace. Older exports
-   *  may carry `room_overrides` instead; neither is applied yet on reload. */
+   *  may carry `room_overrides` instead. */
   rooms?: Room[]
   room_overrides?: Record<string, Partial<Room>>
+  /** Tuned weights (percent-of-100 from the Tune gear). Written by the
+   *  server in solver-shape (time_pref, not the Mix's `time`); callers
+   *  translating to Mix must remap `time_pref` → `time`. */
+  tunedWeights?: { affinity: number; time_pref: number; overload: number } | null
   exported_at?: string
 }
 
