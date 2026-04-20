@@ -125,10 +125,7 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
     return placed
   }, [props.offerings])
 
-  const handleDrop = (
-    e: React.DragEvent,
-    target: { kind: "cell"; slot: Slot } | { kind: "dock" },
-  ) => {
+  const handleDrop = (e: React.DragEvent, slot: Slot) => {
     e.preventDefault()
     setDragOverKey(null)
     setDraggingId(null)
@@ -158,11 +155,7 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
     }
     if (!offeringId) return
 
-    if (target.kind === "cell") {
-      props.onPinToSlot(offeringId, target.slot)
-    } else {
-      props.onPinToSlot(offeringId, null)
-    }
+    props.onPinToSlot(offeringId, slot)
     props.onSelect(offeringId)
   }
 
@@ -406,7 +399,7 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
                     onDragLeave={() => {
                       if (dragOverKey === cellKey) setDragOverKey(null)
                     }}
-                    onDrop={e => handleDrop(e, { kind: "cell", slot })}
+                    onDrop={e => handleDrop(e, slot)}
                   >
                     {cards.map(renderCard)}
                   </div>
@@ -414,31 +407,6 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
               })}
             </Fragment>
           ))}
-        </div>
-
-        {/* Thin drop strip — drag a card here to unpin it from the grid */}
-        <div
-          className={
-            "schedule-unpin-strip" +
-            (dragOverKey === "dock" ? " schedule-unpin-strip--over" : "")
-          }
-          aria-label="Drop here to unpin"
-          onClick={() => {
-            if (props.placingId) props.onPinToSlot(props.placingId, null)
-          }}
-          onDragOver={e => {
-            e.preventDefault()
-            e.dataTransfer.dropEffect = "move"
-            if (dragOverKey !== "dock") setDragOverKey("dock")
-          }}
-          onDragLeave={() => {
-            if (dragOverKey === "dock") setDragOverKey(null)
-          }}
-          onDrop={e => handleDrop(e, { kind: "dock" })}
-        >
-          <span className="schedule-unpin-strip__label">
-            {props.placingId ? "Tap to unpin" : "Drop to unpin"}
-          </span>
         </div>
       </div>
     </section>
