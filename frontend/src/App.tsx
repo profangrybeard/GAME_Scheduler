@@ -174,6 +174,11 @@ function App() {
   const [solveProgress, setSolveProgress] = useState<SolveProgressState | null>(null)
   const solveAbortRef = useRef<AbortController | null>(null)
 
+  // Two-stage Empty Calendar. Stage 1 = drop solver assignments, keep user
+  // pins; if any pins survive, we arm. Stage 2 = also drop pins. Any new
+  // solve disarms so the button starts fresh.
+  const [clearArmed, setClearArmed] = useState(false)
+
   // ── Resume from Excel state ────────────────────────────────────
   const [reloadWarnings, setReloadWarnings] = useState<string[] | null>(null)
   const [reloadError, setReloadError] = useState<string | null>(null)
@@ -503,15 +508,23 @@ function App() {
   )
 
   const emptyCalendar = useCallback(() => {
-    setState(s => ({
-      ...s,
-      offerings: s.offerings.map(o => ({ ...o, assignment: null })),
-      solveStatus: "idle",
-    }))
+    setState(s => {
+      // Stage 2: armed click clears pins too and disarms.
+      // Stage 1: clear assignments only; arm iff any pin survives.
+      const clearPins = clearArmed
+      const nextOfferings = s.offerings.map(o => ({
+        ...o,
+        assignment: null,
+        pinned: clearPins ? null : o.pinned,
+      }))
+      const anyPinned = nextOfferings.some(o => o.pinned !== null)
+      setClearArmed(!clearPins && anyPinned)
+      return { ...s, offerings: nextOfferings, solveStatus: "idle" }
+    })
     modeResultsRef.current = null
     setSolveProgress(null)
     setSolveError(null)
-  }, [])
+  }, [clearArmed])
 
   /** Build the solve request. Accepts an optional tuned-weights override so
    *  the "Try it on current schedule" button can solve with a freshly-set mix
@@ -638,6 +651,7 @@ function App() {
     // freshly-solved cards, making it look like Generate produced nothing.
     setPlacingId(null)
     setSolveError(null)
+    setClearArmed(false)
     setState(s => ({ ...s, solveStatus: "running" }))
     setSolveProgress({
       startedAt:    performance.now(),
@@ -1206,6 +1220,7 @@ function App() {
       onSetSolveMode={setSolveMode}
       onSolve={() => { void requestSolve() }}
       onEmptyCalendar={emptyCalendar}
+      clearArmed={clearArmed}
       onStartPlacing={startPlacing}
       onDismissError={() => setSolveError(null)}
       onDismissProgress={() => setSolveProgress(null)}
