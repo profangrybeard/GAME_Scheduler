@@ -1184,6 +1184,11 @@ function App() {
               className="resume-rail__loaded"
               title={`File last modified ${new Date(reloadMtime).toLocaleString()}`}
             >
+              {reloadFilename && (
+                <span className="resume-rail__loaded-filename">
+                  {reloadFilename}
+                </span>
+              )}
               <span className="resume-rail__loaded-label">
                 Loaded {formatLoadedTimestamp(reloadMtime)}
               </span>

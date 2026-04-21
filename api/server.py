@@ -27,6 +27,8 @@ POST /api/export/stream — Same as /api/export but streams progress via SSE.
 POST /api/state/parse   — Read a previously exported XLSX, return the embedded
                           draft state (offerings + locks + mode + last solver
                           output) for the React workspace to hydrate from.
+GET  /api/backups/reveal — Open the local `.backups/` folder in the user's OS
+                          file browser. Local-only (501 in hosted mode).
 GET  /api/health        — Liveness check (React uses this to show availability).
 GET  /                  — React index.html (production only).
 GET  /{anything}        — SPA fallback to index.html, or 404 if /api/*.
@@ -38,6 +40,8 @@ import asyncio
 import json
 import os
 import queue
+import subprocess
+import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
@@ -168,6 +172,45 @@ class ExportRequest(BaseModel):
 @app.get("/api/health")
 def health() -> dict:
     return {"ok": True, "service": "game-scheduler-api"}
+
+
+# ---------------------------------------------------------------------------
+# Backups folder reveal — local-only convenience for the About popover
+# ---------------------------------------------------------------------------
+
+@app.get("/api/backups/reveal")
+def reveal_backups() -> dict:
+    """Open `<repo>/.backups/` in the user's OS file browser. Hooked to the
+    About popover's "Show backups folder" link.
+
+    Hosted Fly containers have an ephemeral filesystem — nothing the solver
+    writes there survives a restart, so a backups folder would be empty and
+    misleading. Detect via `FLY_APP_NAME` (Fly always sets it) and 501 out.
+    """
+    if os.getenv("FLY_APP_NAME"):
+        raise HTTPException(
+            status_code=501,
+            detail="The backups folder is a local-only convenience — nothing persists on the hosted container.",
+        )
+    backups_dir = BASE / ".backups"
+    if not backups_dir.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="No backups folder yet. Export a schedule first — every export is copied into .backups/.",
+        )
+    try:
+        if os.name == "nt":
+            os.startfile(str(backups_dir))  # type: ignore[attr-defined]  # Windows-only
+        elif sys.platform == "darwin":
+            subprocess.run(["open", str(backups_dir)], check=True)
+        else:
+            subprocess.run(["xdg-open", str(backups_dir)], check=True)
+    except Exception as exc:  # noqa: BLE001 — any OS-level failure becomes a 500
+        raise HTTPException(
+            status_code=500,
+            detail=f"Couldn't open folder: {exc}",
+        ) from exc
+    return {"ok": True, "path": str(backups_dir)}
 
 
 # ---------------------------------------------------------------------------
