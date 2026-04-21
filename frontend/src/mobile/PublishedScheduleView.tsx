@@ -11,6 +11,8 @@
  * can collapse this down to a thin wrapper.
  */
 import { useState } from "react"
+import { MobileBrandEyebrow } from "./MobileBrandEyebrow"
+import { MobileThemeToggle } from "./MobileThemeToggle"
 import type { DayGroup, Offering, TimeSlot } from "../types"
 import type { PublishedSchedule } from "./publishedFixtures"
 
@@ -36,9 +38,25 @@ function formatPublished(iso: string): string {
   })
 }
 
+/** Same mailto template as the invite card on the index, duplicated here
+ *  as a tiny helper to avoid a shared util for three lines. Reminder-chip
+ *  in the schedule view so users who landed directly on a deep link still
+ *  have a one-tap way to carry the URL over to desktop. */
+function buildMailtoHref(url: string): string {
+  const body = `Open on a larger screen for the full workspace:\n\n${url}\n`
+  return (
+    "mailto:?subject=" + encodeURIComponent("GAME Scheduler — open on desktop") +
+    "&body=" + encodeURIComponent(body)
+  )
+}
+
 export function PublishedScheduleView(props: PublishedScheduleViewProps) {
   const { schedule } = props
   const [dayGroup, setDayGroup] = useState<DayGroup>(1)
+  /** null = "All" — every card shown at full strength. Any other value dims
+   *  cards whose assigned prof doesn't match, instead of hiding them, so
+   *  the layout (and neighbor context) stays intact. */
+  const [activeProfId, setActiveProfId] = useState<string | null>(null)
   const { offerings, professors, rooms, catalog } = schedule.snapshot
 
   // Bucket offerings by (day_group, time_slot) using their assignment. Only
@@ -54,24 +72,42 @@ export function PublishedScheduleView(props: PublishedScheduleViewProps) {
     byCell.set(key, bucket)
   }
 
+  // Distinct prof IDs actually referenced in this snapshot's assignments,
+  // sorted by display name. We show a chip per prof (+ an "All" chip) so
+  // the user can scan one person's week at a time.
+  const profIdsInUse = Array.from(
+    new Set(offerings.filter(o => o.assignment).map(o => o.assignment!.prof_id)),
+  ).sort((a, b) => (professors[a]?.name ?? a).localeCompare(professors[b]?.name ?? b))
+
   return (
     <main className="mobile-schedule">
       <header className="mobile-schedule__header">
-        <button
-          type="button"
-          className="mobile-schedule__back"
-          onClick={props.onBack}
-          aria-label="Back to schedules"
-        >
-          <span aria-hidden="true">←</span> Schedules
-        </button>
+        <div className="mobile-schedule__top-row">
+          <button
+            type="button"
+            className="mobile-schedule__back"
+            onClick={props.onBack}
+            aria-label="Back to schedules"
+          >
+            <span aria-hidden="true">←</span> Schedules
+          </button>
+          <MobileThemeToggle />
+        </div>
         <div className="mobile-schedule__title-group">
+          <MobileBrandEyebrow />
           <h1 className="mobile-schedule__title">
             {schedule.quarter} {schedule.year}
           </h1>
           <div className="mobile-schedule__meta">
             v{schedule.version} · {formatPublished(schedule.publishedAt)} · {schedule.author}
           </div>
+          <a
+            className="mobile-schedule__email-chip"
+            href={buildMailtoHref(typeof window !== "undefined" ? window.location.href : "")}
+          >
+            <span aria-hidden="true">✉</span>
+            <span>Email this link</span>
+          </a>
         </div>
       </header>
 
@@ -93,6 +129,45 @@ export function PublishedScheduleView(props: PublishedScheduleViewProps) {
         ))}
       </div>
 
+      {profIdsInUse.length > 1 && (
+        <div
+          className="mobile-schedule__prof-filter"
+          role="tablist"
+          aria-label="Filter by professor"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeProfId === null}
+            className={
+              "mobile-prof-chip" +
+              (activeProfId === null ? " mobile-prof-chip--active" : "")
+            }
+            onClick={() => setActiveProfId(null)}
+          >
+            All
+          </button>
+          {profIdsInUse.map(pid => {
+            const active = activeProfId === pid
+            return (
+              <button
+                key={pid}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                className={
+                  "mobile-prof-chip" +
+                  (active ? " mobile-prof-chip--active" : "")
+                }
+                onClick={() => setActiveProfId(active ? null : pid)}
+              >
+                {professors[pid]?.name ?? pid}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       <section className="mobile-schedule__slots" aria-label={
         DAY_GROUPS.find(g => g.key === dayGroup)?.full ?? ""
       }>
@@ -110,10 +185,14 @@ export function PublishedScheduleView(props: PublishedScheduleViewProps) {
                     const prof   = o.assignment ? professors[o.assignment.prof_id] : null
                     const room   = o.assignment ? rooms[o.assignment.room_id]       : null
                     const dept   = course?.department ?? "game"
+                    const dimmed = activeProfId !== null && o.assignment?.prof_id !== activeProfId
                     return (
                       <li
                         key={o.offering_id}
-                        className={"mobile-card dept--" + dept}
+                        className={
+                          "mobile-card dept--" + dept +
+                          (dimmed ? " mobile-card--dim" : "")
+                        }
                       >
                         <div className="mobile-card__id">{o.catalog_id}</div>
                         <div className="mobile-card__name">{course?.name ?? "—"}</div>

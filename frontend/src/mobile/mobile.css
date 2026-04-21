@@ -21,21 +21,66 @@
 /* ─── Index ─────────────────────────────────────────────────────── */
 
 .mobile-index__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
   padding: 0 20px 16px;
 }
 
-.mobile-index__title {
-  font-size: 1.6rem;
+.mobile-index__title-group {
+  min-width: 0;
+  flex: 1;
+}
+
+/* Shared SCAD brand eyebrow used above the headline on every mobile
+   screen. Tracked-out uppercase over a tight large headline gives the
+   landing a sense of place without leaning on a logo. Rendered by
+   <MobileBrandEyebrow /> — edit markup in one place. */
+.mobile-eyebrow {
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+/* Orange "Prototype" tag appended to the SCAD wordmark — reads as an
+   under-construction stamp without needing a badge. Mixed case + tight
+   tracking breaks the typographic rhythm deliberately so it registers as
+   a status label rather than part of the wordmark. Color differs by theme
+   so the orange stays legible on both backgrounds: deeper on light, warmer
+   on dark. */
+.mobile-eyebrow-tag {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+  color: #c2410c;
+  margin-left: 2px;
+}
+
+:root[data-theme="dark"] .mobile-eyebrow-tag {
+  color: #fb923c;
+}
+
+.mobile-index__title {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
   margin: 0;
 }
 
 .mobile-index__subtitle {
-  margin-top: 4px;
+  margin-top: 8px;
   color: var(--text-muted);
   font-size: 0.9rem;
 }
+
+/* The buzz keyframe itself is declared in App.css (.resume-rail__mark).
+   Re-declaring here would duplicate; the name resolves globally. */
 
 .mobile-index__list {
   list-style: none;
@@ -129,15 +174,212 @@
   font-variant-numeric: tabular-nums;
 }
 
-.mobile-index__footer {
-  padding: 32px 20px 8px;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  line-height: 1.5;
-  text-align: center;
+/* ─── Upstream invite (hand-off card on the index) ──────────────── */
+
+/* The invite sits between the header and the list. It reads as the
+   primary "what now?" element so the landing page isn't a dead gallery.
+   Two actions — Copy link, Email it — are the whole point; the copy
+   around them just frames the mobile view as a deliberate reading mode. */
+.mobile-invite {
+  margin: 4px 20px 20px;
+  padding: 18px 18px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 12px;
 }
 
-.mobile-index__footer p { margin: 0; }
+/* Top row inside the invite card: eyebrow on the left, bee in the corner. */
+.mobile-invite__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mobile-invite__eyebrow {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  padding-top: 4px; /* nudge down to optically center against the bee */
+}
+
+/* Bee in the invite card corner. Matches the desktop rail bee (same emoji,
+   same buzz keyframe on hover) so brand voice carries across breakpoints.
+   Tap fires a rim-glow chase around the "Email it to me" CTA below. */
+.mobile-invite__bee {
+  flex: 0 0 auto;
+  /* Negative offsets let the bee sit in the card's padding zone so it
+     reads as a corner ornament rather than a header element. */
+  margin: -8px -8px 0 0;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  transform-origin: center;
+  -webkit-tap-highlight-color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.25));
+}
+
+.mobile-invite__bee:hover  { animation: bee-buzz 0.18s linear infinite; }
+.mobile-invite__bee--chasing { animation: bee-buzz 0.14s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-invite__bee:hover,
+  .mobile-invite__bee--chasing { animation: none; }
+}
+
+.mobile-invite__headline {
+  margin: 6px 0 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  line-height: 1.25;
+}
+
+.mobile-invite__body {
+  margin: 8px 0 14px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.mobile-invite__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.mobile-invite__btn {
+  position: relative;
+  flex: 1;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+
+.mobile-invite__btn:active { transform: scale(0.98); }
+
+.mobile-invite__btn--primary {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: var(--accent-on, #fff);
+}
+
+.mobile-invite__btn--secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.mobile-invite__btn--secondary:active {
+  background: var(--surface-hover);
+}
+
+/* Orange rim-glow chaser. A conic gradient on a pseudo-element with mask-
+   composite cuts out the center so only a rounded-rect ring of orange light
+   orbits the button. @property animates the conic's angle CSS var so the
+   highlight rotates smoothly. On reduced-motion, the ring sits static —
+   the call-out still reads, just without the chase. */
+@property --rim-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes rim-chase {
+  to { --rim-angle: 360deg; }
+}
+
+.mobile-invite__btn--chasing::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 14px; /* btn radius (10) + inset (4) to stay concentric */
+  padding: 3px;
+  background: conic-gradient(
+    from var(--rim-angle),
+    transparent 0deg,
+    rgba(255, 122, 0, 0.15) 10deg,
+    #ff7a00 30deg,
+    #ffb347 55deg,
+    #fff2cc 70deg,
+    #ffb347 85deg,
+    rgba(255, 122, 0, 0.2) 110deg,
+    transparent 130deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  animation: rim-chase 1.1s linear infinite;
+  filter:
+    drop-shadow(0 0 4px rgba(255, 140, 0, 0.85))
+    drop-shadow(0 0 12px rgba(255, 140, 0, 0.5));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-invite__btn--chasing::before { animation: none; }
+}
+
+/* ─── Theme toggle (mobile) ────────────────────────────────────── */
+
+/* Mirrors desktop `.theme-toggle` in shape and behavior. Slightly larger
+   hit target since mobile taps are the primary input. The little "A"
+   badge in the corner marks "system" mode — i.e. tracking OS preference. */
+.mobile-theme-toggle {
+  position: relative;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.mobile-theme-toggle:active {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.mobile-theme-toggle__auto {
+  position: absolute;
+  bottom: 3px;
+  right: 4px;
+  font-size: 0.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
+}
 
 /* ─── Schedule detail ──────────────────────────────────────────── */
 
@@ -147,6 +389,13 @@
   gap: 12px;
   padding: 0 20px 16px;
   border-bottom: 1px solid var(--border);
+}
+
+.mobile-schedule__top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .mobile-schedule__back {
@@ -178,6 +427,33 @@
   color: var(--text-muted);
 }
 
+/* Small outlined pill sitting just below the meta line. Quiet reminder —
+   if a user landed deep-linked on a schedule (say, via a QR code), they
+   might not think to back out to the index to grab the Email-it action.
+   This puts the same hand-off within reach from any schedule view. */
+.mobile-schedule__email-chip {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 6px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+
+.mobile-schedule__email-chip:active {
+  color: var(--text);
+  border-color: var(--text-faint);
+}
+
 .mobile-schedule__day-toggle {
   display: flex;
   gap: 8px;
@@ -203,6 +479,44 @@
   background: var(--accent, #3b82f6);
   border-color: var(--accent, #3b82f6);
   color: #fff;
+}
+
+/* Prof filter — horizontal scrolling chip row. One chip per prof actually
+   referenced by an assignment in this snapshot, plus a leading "All" chip.
+   Selecting a prof dims the non-matching cards (see .mobile-card--dim)
+   rather than hiding them, so the week's overall shape still reads. */
+.mobile-schedule__prof-filter {
+  display: flex;
+  gap: 8px;
+  padding: 10px 20px 2px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.mobile-schedule__prof-filter::-webkit-scrollbar { display: none; }
+
+.mobile-prof-chip {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 7px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.mobile-prof-chip--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-on, #fff);
 }
 
 .mobile-schedule__slots {
@@ -249,7 +563,12 @@
   border-left-width: 3px;
   border-radius: 8px;
   padding: 10px 12px;
+  transition: opacity 0.18s ease;
 }
+
+/* When a prof filter is active, non-matching cards dim rather than hide —
+   keeps the week's overall shape visible as context. */
+.mobile-card--dim { opacity: 0.32; }
 
 /* Dept accent on the left border — reuses the same palette as the desktop
    schedule cards for visual continuity. */

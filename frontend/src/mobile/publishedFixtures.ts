@@ -131,3 +131,24 @@ export function groupByQuarter(
 export function findPublishedById(id: string): PublishedSchedule | null {
   return PUBLISHED_SCHEDULES.find(s => s.id === id) ?? null
 }
+
+/** Derive the "YYYY–YYYY" academic-year label from the available data.
+ *  SCAD academic years run Fall→Summer, so the label is anchored on the
+ *  earliest Fall year in the list. Falls back to the canonical QUARTER_YEAR
+ *  mapping when no schedules have been published yet. Once the real API
+ *  is returning a list, this same function keeps working — no change
+ *  needed at the call site. */
+export function academicYearLabel(
+  list: ReadonlyArray<PublishedSchedule> = PUBLISHED_SCHEDULES,
+): string {
+  const fallYears = list.filter(s => s.quarter === "Fall").map(s => s.year)
+  const start =
+    fallYears.length > 0
+      ? Math.min(...fallYears)
+      // No Fall published yet — Winter/Spring/Summer year N belongs to the
+      // academic year that started in Fall of N-1.
+      : list.length > 0
+        ? Math.min(...list.map(s => s.year)) - 1
+        : QUARTER_YEAR.Fall
+  return `${start}–${start + 1}`
+}
