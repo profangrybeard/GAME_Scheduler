@@ -368,15 +368,33 @@ export interface DraftState {
   exported_at?: string
 }
 
+/** One structured validation error from the reader/drift-validator.
+ *  Each dropped record produces one entry so the Data Issues panel can list
+ *  them clickable (phase 3). Matches the backend shape emitted by
+ *  `validate_against_local_data` in `export/excel_reader.py`. */
+export interface ValidationError {
+  /** Technical sheet name, e.g. `_data_offerings`. */
+  sheet: string
+  /** 1-based row in that sheet (row 1 is the header). */
+  row: number
+  /** Header field name the error refers to, e.g. `catalog_id`. */
+  column: string
+  /** Human-readable detail — safe to render directly in UI copy. */
+  reason: string
+  /** `error` = record excluded; `warning` = kept but flagged; `info` = notice. */
+  severity: "error" | "warning" | "info"
+}
+
 export interface ParseDraftResponse {
   state: DraftState
-  warnings: string[]
+  errors: ValidationError[]
 }
 
 /**
  * Upload a Scheduler-exported XLSX to /api/state/parse. Returns the embedded
- * draft state and any reference-drift warnings (offerings/locks dropped because
- * their catalog_id / prof_id / room_id wasn't recognized locally).
+ * draft state and any validation errors — structured entries for offerings/
+ * locks dropped because their catalog_id / prof_id / room_id wasn't recognized
+ * locally.
  *
  * Throws Error with the server's `detail` string on 400/422 — the backend
  * already produces user-facing copy, so the caller can render `error.message`
