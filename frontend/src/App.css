@@ -141,6 +141,26 @@
   opacity: 0.72;
 }
 
+.resume-rail__loaded {
+  flex-direction: column;
+  gap: 6px;
+}
+
+.resume-rail__loaded-filename {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  /* Filenames can exceed the rail height — clamp vertical length so the
+     timestamp below still has a place to live without overflowing the rail. */
+  max-height: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
 .resume-rail__loaded-label {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
@@ -168,14 +188,19 @@
     padding: 12px 0;
   }
   .resume-rail__label,
-  .resume-rail__loaded-label {
+  .resume-rail__loaded-label,
+  .resume-rail__loaded-filename {
     writing-mode: horizontal-tb;
     transform: none;
+    max-height: none;
   }
   .resume-rail__loaded {
     border-top: 0;
     border-left: 1px solid color-mix(in srgb, var(--bg) 20%, transparent);
     padding: 12px 16px;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 10px;
   }
 }
 
@@ -419,6 +444,30 @@
 
 .topbar-about__mailto:hover {
   color: var(--accent);
+}
+
+.topbar-about__action {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.topbar-about__action:hover {
+  background: var(--surface-hover);
+  border-color: var(--accent);
+}
+
+.topbar-about__status {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
 }
 
 /* ─── Theme toggle ─────────────────────────────────────────────── */

@@ -1,6 +1,14 @@
 import { execSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+
+// Semver lives in package.json so `npm version` keeps it bumped the normal
+// way. Read at config time and bake into the bundle — the About popover
+// shows this as "GAME_Scheduler v<semver>" alongside the build SHA.
+const pkg = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf8'),
+) as { version: string }
 
 // Read the current commit's short SHA at config time so it can be baked into
 // the bundle. In CI, actions/checkout gives us the pushed commit. Locally, it
@@ -27,6 +35,7 @@ export default defineConfig({
   base: process.env.GITHUB_PAGES === 'true' ? '/GAME_Scheduler/' : '/',
   define: {
     __APP_VERSION__: JSON.stringify(gitShortSha()),
+    __APP_SEMVER__: JSON.stringify(pkg.version),
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
   },
   server: {
