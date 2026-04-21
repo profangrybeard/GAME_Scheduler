@@ -1,4 +1,4 @@
-"""Tests for export/excel_reader.py — the reload side of Slice 3.
+"""Tests for export/excel_reader.py — the reload side of the workbook SSOT.
 
 Round-trips against excel_writer (write a draft state, read it back,
 assert equality), exercises every typed exception, and pins the
@@ -22,9 +22,10 @@ from export.excel_reader import (
     validate_against_local_data,
 )
 from export.excel_writer import (
-    STATE_MARKER,
-    STATE_SCHEMA_VERSION,
-    STATE_SHEET_NAME,
+    DATA_MARKER,
+    DATA_SCHEMA_VERSION,
+    DATA_SHEET_META,
+    DATA_SHEET_OFFERINGS,
     write_excel,
 )
 
@@ -48,7 +49,7 @@ def _minimal_results() -> dict:
 
 def _sample_state() -> dict:
     return {
-        "schema_version": STATE_SCHEMA_VERSION,
+        "schema_version": DATA_SCHEMA_VERSION,
         "exported_at": "2026-04-17T12:00:00",
         "quarter": "fall",
         "year": 2026,
@@ -73,11 +74,20 @@ def _sample_state() -> dict:
 # Reader — happy path + exceptions
 # ---------------------------------------------------------------------------
 
-def test_round_trip_returns_identical_state(tmp_path: Path) -> None:
+def test_round_trip_preserves_top_level_keys(tmp_path: Path) -> None:
     original = _sample_state()
     path = write_excel(_minimal_results(), tmp_path, draft_state=original)
     loaded = read_draft_state(path)
-    assert loaded == original
+    for k in (
+        "schema_version",
+        "exported_at",
+        "quarter",
+        "year",
+        "solver_mode",
+        "offerings",
+        "locked_assignments",
+    ):
+        assert loaded[k] == original[k], f"key {k} didn't round-trip"
 
 
 def test_read_from_bytes_works(tmp_path: Path) -> None:
@@ -88,8 +98,8 @@ def test_read_from_bytes_works(tmp_path: Path) -> None:
     assert loaded["quarter"] == "fall"
 
 
-def test_missing_state_sheet_raises_specific(tmp_path: Path) -> None:
-    """Older exports (or non-Scheduler XLSX) have no _state sheet."""
+def test_missing_data_meta_raises_specific(tmp_path: Path) -> None:
+    """Workbooks without _data_meta (e.g. older exports) raise MissingStateSheet."""
     path = write_excel(_minimal_results(), tmp_path)  # no draft_state passed
     with pytest.raises(MissingStateSheet):
         read_draft_state(path)
@@ -97,9 +107,9 @@ def test_missing_state_sheet_raises_specific(tmp_path: Path) -> None:
 
 def test_marker_mismatch_raises_specific(tmp_path: Path) -> None:
     path = write_excel(_minimal_results(), tmp_path, draft_state=_sample_state())
-    # Corrupt the marker in A1 of the _state sheet
+    # Corrupt the marker value in _data_meta (row 1: A=key, B=value)
     wb = openpyxl.load_workbook(path)
-    wb[STATE_SHEET_NAME]["A1"] = "NOT_OUR_MARKER"
+    wb[DATA_SHEET_META]["B1"] = "NOT_OUR_MARKER"
     bad = tmp_path / "bad_marker.xlsx"
     wb.save(bad)
     with pytest.raises(MarkerMismatch):
@@ -107,43 +117,95 @@ def test_marker_mismatch_raises_specific(tmp_path: Path) -> None:
 
 
 def test_unsupported_schema_version_carries_versions(tmp_path: Path) -> None:
-    state = _sample_state()
-    state["schema_version"] = STATE_SCHEMA_VERSION + 99
-    path = write_excel(_minimal_results(), tmp_path, draft_state=state)
-    with pytest.raises(SchemaVersionUnsupported) as exc_info:
-        read_draft_state(path)
-    assert exc_info.value.found == STATE_SCHEMA_VERSION + 99
-    assert exc_info.value.supported == STATE_SCHEMA_VERSION
-
-
-def test_malformed_json_raises_specific(tmp_path: Path) -> None:
+    # Write at supported version, then bump the cell in _data_meta (row 2, col B)
     path = write_excel(_minimal_results(), tmp_path, draft_state=_sample_state())
     wb = openpyxl.load_workbook(path)
-    ws = wb[STATE_SHEET_NAME]
-    # Wipe valid payload, write garbage that won't parse
-    ws.cell(row=2, column=1, value="{not valid json")
-    for row in range(3, 10):
-        ws.cell(row=row, column=1, value=None)
-    bad = tmp_path / "bad_json.xlsx"
+    wb[DATA_SHEET_META]["B2"] = DATA_SCHEMA_VERSION + 99
+    bad = tmp_path / "future_schema.xlsx"
     wb.save(bad)
-    with pytest.raises(MalformedState):
+    with pytest.raises(SchemaVersionUnsupported) as exc_info:
         read_draft_state(bad)
+    assert exc_info.value.found == DATA_SCHEMA_VERSION + 99
+    assert exc_info.value.supported == DATA_SCHEMA_VERSION
 
 
 def test_missing_required_keys_raises_specific(tmp_path: Path) -> None:
-    state = _sample_state()
-    del state["offerings"]
-    path = write_excel(_minimal_results(), tmp_path, draft_state=state)
+    """A draft state missing a required meta key (solver_mode) should fail
+    the required-key check on reload — even if every other meta field is fine."""
+    partial_state = _sample_state()
+    del partial_state["solver_mode"]  # writer skips absent keys
+    path = write_excel(_minimal_results(), tmp_path, draft_state=partial_state)
     with pytest.raises(MalformedState) as exc_info:
         read_draft_state(path)
-    assert "offerings" in str(exc_info.value)
+    assert "solver_mode" in str(exc_info.value)
 
 
 def test_all_typed_errors_inherit_state_read_error(tmp_path: Path) -> None:
     """UI code can catch StateReadError as a single net for any failure."""
-    path = write_excel(_minimal_results(), tmp_path)  # no _state
+    path = write_excel(_minimal_results(), tmp_path)  # no _data_meta
     with pytest.raises(StateReadError):
         read_draft_state(path)
+
+
+# ---------------------------------------------------------------------------
+# Entity sheets — shape + optional-sheet semantics
+# ---------------------------------------------------------------------------
+
+def test_optional_sheets_absent_when_state_key_not_set(tmp_path: Path) -> None:
+    """If draft_state has no `professors` key, the sheet must not be created —
+    and the reader must not invent an empty list."""
+    state = _sample_state()  # no professors / rooms / tunedWeights
+    path = write_excel(_minimal_results(), tmp_path, draft_state=state)
+    wb = openpyxl.load_workbook(path)
+    assert "_data_professors" not in wb.sheetnames
+    assert "_data_rooms" not in wb.sheetnames
+    assert "_data_tuned_weights" not in wb.sheetnames
+
+    loaded = read_draft_state(path)
+    assert "professors" not in loaded
+    assert "rooms" not in loaded
+    assert "tunedWeights" not in loaded
+
+
+def test_professors_and_rooms_roundtrip_as_flat_tables(tmp_path: Path) -> None:
+    state = _sample_state()
+    state["professors"] = [
+        {"id": "p_001", "name": "Smith", "department": "game"},
+        {"id": "p_002", "name": "Jones", "department": "ai", "preferred_times": ["8:00 AM", "11:00 AM"]},
+    ]
+    state["rooms"] = [
+        {"id": "r_101", "name": "Lab 101", "capacity": 30},
+    ]
+    path = write_excel(_minimal_results(), tmp_path, draft_state=state)
+    loaded = read_draft_state(path)
+    assert loaded["professors"] == state["professors"]
+    assert loaded["rooms"] == state["rooms"]
+
+
+def test_tuned_weights_roundtrip(tmp_path: Path) -> None:
+    state = _sample_state()
+    state["tunedWeights"] = {"affinity": 50, "time_pref": 30, "overload": 20}
+    path = write_excel(_minimal_results(), tmp_path, draft_state=state)
+    loaded = read_draft_state(path)
+    assert loaded["tunedWeights"] == state["tunedWeights"]
+
+
+def test_nested_offering_fields_survive_roundtrip(tmp_path: Path) -> None:
+    """Offerings have nested `pinned` and list `override_preferred_professors`
+    fields — both must survive the flat-table JSON-stringify/parse cycle."""
+    state = _sample_state()
+    state["offerings"] = [
+        {
+            "catalog_id": "GAME-300",
+            "priority": "must_have",
+            "sections": 1,
+            "pinned": {"day_group": 2, "time_slot": "2:00 PM"},
+            "override_preferred_professors": ["p_001", "p_002"],
+        }
+    ]
+    path = write_excel(_minimal_results(), tmp_path, draft_state=state)
+    loaded = read_draft_state(path)
+    assert loaded["offerings"] == state["offerings"]
 
 
 # ---------------------------------------------------------------------------
@@ -236,7 +298,7 @@ def test_validate_preserves_all_other_top_level_keys() -> None:
     )
     assert cleaned["custom_extension"] == {"future": "field"}
     assert cleaned["solver_mode"] == "affinity_first"
-    assert cleaned["schema_version"] == STATE_SCHEMA_VERSION
+    assert cleaned["schema_version"] == DATA_SCHEMA_VERSION
 
 
 # ---------------------------------------------------------------------------

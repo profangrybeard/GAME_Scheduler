@@ -17,7 +17,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from export.excel_writer import STATE_SCHEMA_VERSION, write_excel  # noqa: E402
+from export.excel_writer import DATA_SCHEMA_VERSION, write_excel  # noqa: E402
 DATA = REPO_ROOT / "data"
 OUT_DIR = REPO_ROOT / "frontend" / "public"
 
@@ -92,7 +92,7 @@ def build_example() -> tuple[dict, dict]:
         ],
     }
 
-    # React-shape offerings for the hidden _state sheet — same contract as
+    # React-shape offerings for the hidden _data_* sheets — same contract as
     # live exports. Locks pin the course to the slot shown in the schedule.
     offerings = []
     for a in schedule:
@@ -121,7 +121,7 @@ def build_example() -> tuple[dict, dict]:
     } for a in schedule]
 
     draft_state = {
-        "schema_version": STATE_SCHEMA_VERSION,
+        "schema_version": DATA_SCHEMA_VERSION,
         "source":         "example",
         "exported_at":    datetime.now(timezone.utc).isoformat(),
         "quarter":        "fall",

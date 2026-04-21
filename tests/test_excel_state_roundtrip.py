@@ -1,9 +1,9 @@
-"""Tests for the hidden _state sheet that lets exported XLSX files be
-re-uploaded as a working draft (Slice 2 of the IO additions plan).
+"""Tests for the hidden _data_* sheets that let exported XLSX files be
+re-uploaded as a working draft.
 
-We don't run the solver here — `write_excel` accepts a synthetic results
+We don't run the solver here — ``write_excel`` accepts a synthetic results
 dict with empty schedules so we can exercise the workbook construction +
-state-sheet roundtrip in milliseconds.
+state-roundtrip in milliseconds.
 """
 from __future__ import annotations
 
@@ -14,9 +14,14 @@ import openpyxl
 import pytest
 
 from export.excel_writer import (
-    STATE_MARKER,
-    STATE_SCHEMA_VERSION,
-    STATE_SHEET_NAME,
+    DATA_MARKER,
+    DATA_SCHEMA_VERSION,
+    DATA_SHEET_META,
+    DATA_SHEET_OFFERINGS,
+    DATA_SHEET_PROFESSORS,
+    DATA_SHEET_ROOMS,
+    DATA_SHEET_SOLVER_RESULTS,
+    DATA_SHEET_TUNED_WEIGHTS,
     write_excel,
 )
 
@@ -41,7 +46,7 @@ def _minimal_results() -> dict:
 
 def _sample_draft_state() -> dict:
     return {
-        "schema_version": STATE_SCHEMA_VERSION,
+        "schema_version": DATA_SCHEMA_VERSION,
         "exported_at": "2026-04-17T12:00:00",
         "quarter": "fall",
         "year": 2026,
@@ -50,7 +55,7 @@ def _sample_draft_state() -> dict:
                 "catalog_id": "ITGM-220",
                 "priority": "must_have",
                 "sections": 1,
-                "locked": {"day_group": 1, "time_slot": "8:00 AM"},
+                "pinned": {"day_group": 1, "time_slot": "8:00 AM"},
             }
         ],
         "locked_assignments": [
@@ -66,68 +71,112 @@ def _sample_draft_state() -> dict:
     }
 
 
-def test_write_excel_without_draft_state_omits_state_sheet(tmp_path: Path) -> None:
-    """Backward-compat: callers that don't pass draft_state get the original
-    4-sheet workbook."""
+def test_write_excel_without_draft_state_omits_data_sheets(tmp_path: Path) -> None:
+    """Callers that don't pass draft_state get a plain 4-sheet workbook."""
     path = write_excel(_minimal_results(), tmp_path)
     wb = openpyxl.load_workbook(path)
-    assert STATE_SHEET_NAME not in wb.sheetnames
+    assert DATA_SHEET_META not in wb.sheetnames
+    assert DATA_SHEET_OFFERINGS not in wb.sheetnames
 
 
-def test_state_sheet_is_hidden_and_marker_set(tmp_path: Path) -> None:
+def test_data_sheets_are_very_hidden_and_marker_set(tmp_path: Path) -> None:
     path = write_excel(_minimal_results(), tmp_path, draft_state=_sample_draft_state())
     wb = openpyxl.load_workbook(path)
-    assert STATE_SHEET_NAME in wb.sheetnames
-    ws = wb[STATE_SHEET_NAME]
-    assert ws.sheet_state == "hidden"
-    assert ws["A1"].value == STATE_MARKER
+    # Meta sheet exists, is veryHidden, and carries the marker as a kv row
+    assert DATA_SHEET_META in wb.sheetnames
+    ws_meta = wb[DATA_SHEET_META]
+    assert ws_meta.sheet_state == "veryHidden"
+
+    kv = {row[0].value: row[1].value for row in ws_meta.iter_rows(max_col=2) if row[0].value}
+    assert kv["marker"] == DATA_MARKER
+    assert kv["schema_version"] == DATA_SCHEMA_VERSION
+
+    # Offerings sheet is also veryHidden
+    assert DATA_SHEET_OFFERINGS in wb.sheetnames
+    assert wb[DATA_SHEET_OFFERINGS].sheet_state == "veryHidden"
 
 
-def test_state_sheet_roundtrips_draft_state_json(tmp_path: Path) -> None:
-    """The whole point of the sheet: write a draft state, read it back exactly."""
+def test_workbook_structure_is_protected(tmp_path: Path) -> None:
+    """When draft state is embedded, the workbook structure is locked so
+    chairs can't unhide _data_* sheets via Excel's UI."""
+    path = write_excel(_minimal_results(), tmp_path, draft_state=_sample_draft_state())
+    wb = openpyxl.load_workbook(path)
+    assert wb.security is not None
+    # openpyxl exposes lockStructure as a string "1"/"0" or a bool depending on version
+    assert str(wb.security.lockStructure).lower() in ("1", "true")
+
+
+def test_offerings_sheet_is_a_flat_table(tmp_path: Path) -> None:
+    state = _sample_draft_state()
+    state["offerings"] = [
+        {"catalog_id": "A", "priority": "must_have", "sections": 1},
+        {"catalog_id": "B", "priority": "should_have", "sections": 2},
+    ]
+    path = write_excel(_minimal_results(), tmp_path, draft_state=state)
+    wb = openpyxl.load_workbook(path)
+    ws = wb[DATA_SHEET_OFFERINGS]
+
+    rows = list(ws.iter_rows(values_only=True))
+    headers = list(rows[0])
+    assert "catalog_id" in headers
+    assert "priority" in headers
+    assert "sections" in headers
+    # Two entity rows, header + 2 = 3
+    non_empty = [r for r in rows if any(v is not None for v in r)]
+    assert len(non_empty) == 3
+
+
+def test_data_sheets_roundtrip_draft_state(tmp_path: Path) -> None:
+    """Write a draft state, read it back via the reader, expect equality."""
+    from export.excel_reader import read_draft_state
     original = _sample_draft_state()
     path = write_excel(_minimal_results(), tmp_path, draft_state=original)
+    loaded = read_draft_state(path)
+    # schema_version, quarter, year, solver_mode, exported_at, offerings, locks
+    assert loaded["schema_version"] == DATA_SCHEMA_VERSION
+    assert loaded["quarter"] == "fall"
+    assert loaded["year"] == 2026
+    assert loaded["solver_mode"] == "affinity_first"
+    assert loaded["exported_at"] == "2026-04-17T12:00:00"
+    assert loaded["offerings"] == original["offerings"]
+    assert loaded["locked_assignments"] == original["locked_assignments"]
+
+
+def test_solver_results_chunked_cleanly_when_large(tmp_path: Path) -> None:
+    """A solver_results payload big enough to exceed Excel's 32,767-char
+    single-cell limit must still roundtrip via chunking."""
+    state = _sample_draft_state()
+    state["solver_results"] = {
+        "modes": [
+            {
+                "mode": "balanced",
+                "assignments": [
+                    {
+                        "catalog_id": f"DUMMY-{i:04d}",
+                        "section_idx": 0,
+                        "prof_id": "p_001",
+                        "room_id": "r_101",
+                        "day_group": 1,
+                        "time_slot": "8:00 AM",
+                        "notes": "x" * 100,
+                    }
+                    for i in range(500)
+                ],
+            }
+        ],
+    }
+    path = write_excel(_minimal_results(), tmp_path, draft_state=state)
     wb = openpyxl.load_workbook(path)
-    ws = wb[STATE_SHEET_NAME]
-
-    # Concatenate every non-empty cell in column A starting at row 2 — the
-    # writer chunks payloads >30k chars across multiple rows.
-    chunks = []
-    row = 2
-    while True:
-        val = ws.cell(row=row, column=1).value
-        if val is None or val == "":
-            break
-        chunks.append(val)
-        row += 1
-    payload = "".join(chunks)
-    assert payload, "state sheet had no payload below the marker"
-
-    parsed = json.loads(payload)
-    assert parsed == original
-
-
-def test_state_sheet_handles_payload_larger_than_one_cell(tmp_path: Path) -> None:
-    """An offerings list big enough to exceed Excel's 32,767-char single-cell
-    limit must still roundtrip cleanly via chunking."""
-    big_state = _sample_draft_state()
-    # ~80k chars of offerings — forces at least 3 chunks at chunk_size=30,000
-    big_state["offerings"] = [
-        {"catalog_id": f"DUMMY-{i:04d}", "priority": "could_have", "sections": 1, "notes": "x" * 100}
-        for i in range(500)
-    ]
-    path = write_excel(_minimal_results(), tmp_path, draft_state=big_state)
-    wb = openpyxl.load_workbook(path)
-    ws = wb[STATE_SHEET_NAME]
+    ws = wb[DATA_SHEET_SOLVER_RESULTS]
 
     chunks = []
-    row = 2
+    row = 1
     while ws.cell(row=row, column=1).value:
         chunks.append(ws.cell(row=row, column=1).value)
         row += 1
     assert len(chunks) >= 2, f"expected chunking, got {len(chunks)} chunk(s)"
     parsed = json.loads("".join(chunks))
-    assert parsed == big_state
+    assert parsed == state["solver_results"]
 
 
 def test_summary_sheet_has_metric_column_comments(tmp_path: Path) -> None:
@@ -208,8 +257,6 @@ def test_summary_quarter_overview_skipped_when_data_missing(tmp_path: Path) -> N
     path = write_excel(results_no_data, tmp_path)
     wb = openpyxl.load_workbook(path)
     ws = wb["Summary"]
-    # Scan the whole Summary sheet — "QUARTER OVERVIEW" section header
-    # must not appear when data is missing. "COLOUR LEGEND" still should.
     all_text = " ".join(
         str(c.value) for row in ws.iter_rows() for c in row if c.value
     )

@@ -16,8 +16,8 @@ POST /api/solve/stream  — Run the 3-mode CP-SAT solve and stream progress as
                           carries the full result payload. No blocking variant
                           exists — the streaming endpoint IS the solve path.
 POST /api/export        — Write an Excel workbook from a prior solve's results.
-                          The file embeds a hidden _state sheet so it can be
-                          re-uploaded later via /api/state/parse.
+                          The file embeds veryHidden _data_* sheets so it can
+                          be re-uploaded later via /api/state/parse.
 POST /api/export/stream — Same as /api/export but streams progress via SSE.
                           Reuses the React workspace's SolveProgress panel
                           (same event vocabulary as /api/solve/stream) plus
@@ -55,10 +55,11 @@ from api.adapter import (
     react_pinned_to_solver,
     solver_result_to_react_mode,
 )
+from export.excel_writer import DATA_SCHEMA_VERSION
 
 
 def _embedded_solver_results(results: dict | None) -> dict | None:
-    """Reshape solver_results for embedding in the hidden _state sheet.
+    """Reshape solver_results for embedding in the _data_solver_results sheet.
 
     Two responsibilities folded into one:
       1. Strip the per-mode `data` field — CP-SAT decision vars + tuple-keyed
@@ -340,7 +341,7 @@ def export(req: ExportRequest) -> Response:
     # discriminates this from Streamlit-exported files (which embed Streamlit
     # offerings shape) — readers can branch on it if/when they need to.
     draft_state = {
-        "schema_version":     1,
+        "schema_version":     DATA_SCHEMA_VERSION,
         "exported_at":        datetime.now().isoformat(timespec="seconds"),
         "source":             "react",
         "quarter":            req.quarter,
@@ -427,7 +428,7 @@ async def export_stream(req: ExportRequest) -> StreamingResponse:
             # Same draft_state composition as POST /api/export so reload of an
             # SSE-exported file produces an identical result.
             draft_state = {
-                "schema_version":     1,
+                "schema_version":     DATA_SCHEMA_VERSION,
                 "exported_at":        datetime.now().isoformat(timespec="seconds"),
                 "source":             "react",
                 "quarter":            req.quarter,
@@ -550,7 +551,7 @@ async def parse_state(file: UploadFile = File(...)) -> dict:
               are dropped from the returned state)
         400 — uploaded file isn't a valid Excel workbook
         422 — file is XLSX but doesn't contain readable Scheduler draft state
-              (missing _state sheet, wrong marker, unsupported schema version,
+              (missing _data_meta sheet, wrong marker, unsupported schema version,
               or malformed JSON). Detail copy is user-facing — surface it.
     """
     from export.excel_reader import (
@@ -573,7 +574,7 @@ async def parse_state(file: UploadFile = File(...)) -> dict:
         raise HTTPException(
             status_code=422,
             detail=(
-                "This Excel was exported before draft-reload was supported, "
+                "This Excel was exported by an older Scheduler build, "
                 "or isn't a Scheduler export."
             ),
         )

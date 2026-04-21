@@ -1,7 +1,7 @@
 """Tests for the React-side roundtrip endpoints:
 
-  POST /api/export        — must embed a draft _state sheet
-  POST /api/state/parse   — must read it back, validate against local data,
+  POST /api/export        — must embed _data_* sheets
+  POST /api/state/parse   — must read them back, validate against local data,
                             map each typed reader exception to a specific
                             HTTP status with user-facing detail copy
 
@@ -21,9 +21,9 @@ from fastapi.testclient import TestClient
 
 from export.excel_reader import read_draft_state
 from export.excel_writer import (
-    STATE_MARKER,
-    STATE_SCHEMA_VERSION,
-    STATE_SHEET_NAME,
+    DATA_MARKER,
+    DATA_SCHEMA_VERSION,
+    DATA_SHEET_META,
     write_excel,
 )
 
@@ -102,7 +102,7 @@ def fake_run_schedule(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# /api/export — embeds the _state sheet
+# /api/export — embeds the _data_* sheets
 # ---------------------------------------------------------------------------
 
 def test_export_returns_xlsx_response(client, fake_run_schedule):
@@ -113,20 +113,21 @@ def test_export_returns_xlsx_response(client, fake_run_schedule):
     assert "attachment" in res.headers["content-disposition"]
 
 
-def test_export_response_has_hidden_state_sheet(client, fake_run_schedule):
+def test_export_response_has_very_hidden_meta_sheet(client, fake_run_schedule):
     res = client.post("/api/export", json=_minimal_export_body())
     wb = openpyxl.load_workbook(io.BytesIO(res.content))
-    assert STATE_SHEET_NAME in wb.sheetnames
-    ws = wb[STATE_SHEET_NAME]
-    assert ws.sheet_state == "hidden"
-    assert ws["A1"].value == STATE_MARKER
+    assert DATA_SHEET_META in wb.sheetnames
+    ws = wb[DATA_SHEET_META]
+    assert ws.sheet_state == "veryHidden"
+    # Marker lives in cell B1 (row 1: A=key "marker", B=value DATA_MARKER)
+    assert ws["B1"].value == DATA_MARKER
 
 
 def test_export_embedded_state_carries_react_shape_fields(client, fake_run_schedule):
     res = client.post("/api/export", json=_minimal_export_body(solve_mode="affinity_first"))
     state = read_draft_state(res.content)
 
-    assert state["schema_version"] == STATE_SCHEMA_VERSION
+    assert state["schema_version"] == DATA_SCHEMA_VERSION
     assert state["source"] == "react"
     assert state["quarter"] == "fall"
     assert state["year"] == 2026
@@ -209,8 +210,8 @@ def test_parse_400_for_non_xlsx(client):
     assert "Excel" in res.json()["detail"]
 
 
-def test_parse_422_when_xlsx_has_no_state_sheet(client, tmp_path):
-    """Older exports / non-Scheduler XLSX files have no _state sheet."""
+def test_parse_422_when_xlsx_has_no_data_meta(client, tmp_path):
+    """Older exports / non-Scheduler XLSX files have no _data_meta sheet."""
     fake_results = {
         "quarter": "fall",
         "year": 2026,
@@ -223,7 +224,8 @@ def test_parse_422_when_xlsx_has_no_state_sheet(client, tmp_path):
     path = write_excel(fake_results, tmp_path)  # no draft_state passed
     res = _post_parse(client, path.read_bytes())
     assert res.status_code == 422
-    assert "before draft-reload" in res.json()["detail"]
+    # Error copy mentions this is an older/non-scheduler export
+    assert "older" in res.json()["detail"].lower() or "scheduler" in res.json()["detail"].lower()
 
 
 def test_parse_422_with_versions_when_schema_too_new(client, tmp_path):
@@ -236,18 +238,23 @@ def test_parse_422_with_versions_when_schema_too_new(client, tmp_path):
             "data": {"priority_by_cs_key": {}},
         }],
     }
-    future_state = {
-        "schema_version": STATE_SCHEMA_VERSION + 99,
+    state = {
+        "schema_version": DATA_SCHEMA_VERSION,
         "source": "react", "quarter": "fall", "year": 2026,
         "solver_mode": "balanced",
         "offerings": [], "locked_assignments": [],
     }
-    path = write_excel(fake_results, tmp_path, draft_state=future_state)
-    res = _post_parse(client, path.read_bytes())
+    path = write_excel(fake_results, tmp_path, draft_state=state)
+    # Rewrite the schema_version cell in _data_meta to a future number
+    wb = openpyxl.load_workbook(path)
+    wb[DATA_SHEET_META]["B2"] = DATA_SCHEMA_VERSION + 99
+    future = tmp_path / "future.xlsx"
+    wb.save(future)
+    res = _post_parse(client, future.read_bytes())
     assert res.status_code == 422
     detail = res.json()["detail"]
-    assert f"v{STATE_SCHEMA_VERSION + 99}" in detail
-    assert f"v{STATE_SCHEMA_VERSION}" in detail
+    assert f"v{DATA_SCHEMA_VERSION + 99}" in detail
+    assert f"v{DATA_SCHEMA_VERSION}" in detail
 
 
 def test_parse_422_when_marker_corrupted(client, tmp_path):
@@ -260,14 +267,14 @@ def test_parse_422_when_marker_corrupted(client, tmp_path):
         }],
     }
     valid_state = {
-        "schema_version": STATE_SCHEMA_VERSION,
+        "schema_version": DATA_SCHEMA_VERSION,
         "source": "react", "quarter": "fall", "year": 2026,
         "solver_mode": "balanced",
         "offerings": [], "locked_assignments": [],
     }
     path = write_excel(fake_results, tmp_path, draft_state=valid_state)
     wb = openpyxl.load_workbook(path)
-    wb[STATE_SHEET_NAME]["A1"] = "NOT_OUR_MARKER"
+    wb[DATA_SHEET_META]["B1"] = "NOT_OUR_MARKER"
     bad = tmp_path / "bad_marker.xlsx"
     wb.save(bad)
     res = _post_parse(client, bad.read_bytes())
@@ -287,7 +294,7 @@ def test_parse_returns_warning_for_unknown_catalog_id(client, tmp_path):
         }],
     }
     drift_state = {
-        "schema_version": STATE_SCHEMA_VERSION,
+        "schema_version": DATA_SCHEMA_VERSION,
         "source": "react", "quarter": "fall", "year": 2026,
         "solver_mode": "balanced",
         "offerings": [

@@ -15,7 +15,7 @@ import openpyxl
 import pytest
 from fastapi.testclient import TestClient
 
-from export.excel_writer import STATE_MARKER, STATE_SHEET_NAME
+from export.excel_writer import DATA_MARKER, DATA_SHEET_META
 
 
 # ---------------------------------------------------------------------------
@@ -122,7 +122,7 @@ def test_stream_emits_solve_then_xlsx_then_export_complete(monkeypatch, client):
 
 def test_stream_export_complete_carries_decodable_xlsx(monkeypatch, client):
     """`export_complete` must include base64 bytes that decode to a valid
-    workbook with the hidden _state sheet (proves end-to-end roundtrip
+    workbook with the veryHidden _data_meta sheet (proves end-to-end roundtrip
     capability — the streamed file matches what /api/export produces)."""
     monkeypatch.setattr(
         "solver.scheduler.run_schedule",
@@ -142,10 +142,12 @@ def test_stream_export_complete_carries_decodable_xlsx(monkeypatch, client):
     xlsx_bytes = base64.b64decode(final["xlsx_base64"])
     assert len(xlsx_bytes) == final["size_bytes"]
 
-    # Real workbook with the embedded _state sheet?
+    # Real workbook with the embedded _data_meta sheet?
     wb = openpyxl.load_workbook(io.BytesIO(xlsx_bytes))
-    assert STATE_SHEET_NAME in wb.sheetnames
-    assert wb[STATE_SHEET_NAME]["A1"].value == STATE_MARKER
+    assert DATA_SHEET_META in wb.sheetnames
+    assert wb[DATA_SHEET_META].sheet_state == "veryHidden"
+    # Marker lives in B1 (A1="marker" key, B1=value DATA_MARKER)
+    assert wb[DATA_SHEET_META]["B1"].value == DATA_MARKER
 
 
 def test_stream_solve_complete_carries_react_shape_modes(monkeypatch, client):

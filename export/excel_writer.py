@@ -27,6 +27,7 @@ import openpyxl
 from openpyxl.comments import Comment
 from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
+from openpyxl.workbook.protection import WorkbookProtection
 
 from config import TIME_SLOTS, DAY_GROUPS
 
@@ -45,13 +46,39 @@ BACKUP_RETENTION = 10
 
 
 # ---------------------------------------------------------------------------
-# Roundtrip state-sheet protocol — see _write_state_sheet for details.
+# Hidden data-sheet protocol — see _write_data_sheets for details.
 # ---------------------------------------------------------------------------
-STATE_SHEET_NAME    = "_state"
-STATE_MARKER        = "GAME_SCHEDULER_STATE_V1"
-STATE_SCHEMA_VERSION = 1
+# The workbook is the single source of truth for the user's working state.
+# Six veryHidden sheets under the _data_* prefix split that state into
+# structured, inspectable tables rather than one opaque JSON blob.
+
+DATA_SCHEMA_VERSION = 2
+DATA_MARKER         = "GAME_SCHEDULER_DATA_V2"
+
+DATA_SHEET_META           = "_data_meta"
+DATA_SHEET_OFFERINGS      = "_data_offerings"
+DATA_SHEET_PROFESSORS     = "_data_professors"
+DATA_SHEET_ROOMS          = "_data_rooms"
+DATA_SHEET_TUNED_WEIGHTS  = "_data_tuned_weights"
+DATA_SHEET_SOLVER_RESULTS = "_data_solver_results"
+DATA_SHEET_LOCKED         = "_data_locked_assignments"
+
+# draft_state top-level keys that map to row-per-entity flat-table sheets.
+_DATA_LIST_SHEETS: dict[str, str] = {
+    "offerings":           DATA_SHEET_OFFERINGS,
+    "professors":          DATA_SHEET_PROFESSORS,
+    "rooms":               DATA_SHEET_ROOMS,
+    "locked_assignments":  DATA_SHEET_LOCKED,
+}
+
 # Excel's hard cell limit is 32,767 chars; chunk well under that.
-_STATE_CHUNK_SIZE   = 30_000
+_DATA_CHUNK_SIZE = 30_000
+
+# Cosmetic structure protection — prevents chairs from unhiding sheets via
+# Excel's UI. The password lives in this open-source file; it's a "please
+# do not edit" barrier, not security against a motivated user.
+_DATA_STRUCTURE_PASSWORD = "GAME_SCHEDULER_PROTECTED"
+
 _COMMENT_AUTHOR     = "GAME Scheduler"
 
 # Hover-tooltip copy for the Summary sheet's mode comparison columns.
@@ -377,31 +404,105 @@ def _write_schedule_sheet(ws, result: dict) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Hidden roundtrip-state sheet
+# Hidden data sheets — the workbook-is-SSOT side of the export
 # ---------------------------------------------------------------------------
 
-def _write_state_sheet(ws, draft_state: dict) -> None:
-    """Embed the user's draft state (offerings, locks, mode) so the export
-    can be re-opened later as a working draft, not just a static report.
+def _write_kv_sheet(ws, sheet_name: str, kv: dict) -> None:
+    """Two-column key/value sheet. Column A = key, column B = value; nested
+    dicts/lists are JSON-stringified so values round-trip through a cell."""
+    ws.title = sheet_name
+    ws.sheet_state = "veryHidden"
+    for row_idx, (k, v) in enumerate(kv.items(), start=1):
+        ws.cell(row=row_idx, column=1, value=k)
+        if isinstance(v, (dict, list)):
+            v = json.dumps(v, separators=(",", ":"), default=str)
+        ws.cell(row=row_idx, column=2, value=v)
 
-    Layout
-    ------
-      A1            : marker string ``GAME_SCHEDULER_STATE_V1`` — readers
-                      use this to verify the sheet is the format they expect
-      A2 .. A(N+1)  : the JSON payload, split into chunks of <=30,000 chars
-                      so it survives Excel's 32,767-char single-cell limit
 
-    The sheet is hidden so chairs viewing the file in Excel/Sheets don't see
-    a wall of JSON next to the human-readable schedule.
-    """
-    ws.title = STATE_SHEET_NAME
-    ws.sheet_state = "hidden"
-    ws["A1"] = STATE_MARKER
-    payload = json.dumps(draft_state, separators=(",", ":"), default=str)
-    if not payload:
+def _write_flat_table_sheet(ws, sheet_name: str, entities: list[dict]) -> None:
+    """Row-per-entity table with a header row. Columns are the union of keys
+    across ``entities`` in first-seen order; nested dict/list values get
+    JSON-stringified so the sheet stays rectangular."""
+    ws.title = sheet_name
+    ws.sheet_state = "veryHidden"
+    if not entities:
         return
-    for i, start in enumerate(range(0, len(payload), _STATE_CHUNK_SIZE)):
-        ws.cell(row=2 + i, column=1, value=payload[start:start + _STATE_CHUNK_SIZE])
+    keys: list[str] = []
+    seen: set[str] = set()
+    for e in entities:
+        for k in e.keys():
+            if k not in seen:
+                seen.add(k)
+                keys.append(k)
+    for col, k in enumerate(keys, start=1):
+        ws.cell(row=1, column=col, value=k)
+    for row_idx, e in enumerate(entities, start=2):
+        for col, k in enumerate(keys, start=1):
+            v = e.get(k)
+            if isinstance(v, (dict, list)):
+                v = json.dumps(v, separators=(",", ":"), default=str)
+            ws.cell(row=row_idx, column=col, value=v)
+
+
+def _write_json_chunks_sheet(ws, sheet_name: str, payload) -> None:
+    """Chunk a nested JSON payload across column A. Used for solver results
+    (deeply nested, rarely inspected — a flat table would be overkill)."""
+    ws.title = sheet_name
+    ws.sheet_state = "veryHidden"
+    serialized = json.dumps(payload, separators=(",", ":"), default=str)
+    if not serialized or serialized == "null":
+        return
+    for i, start in enumerate(range(0, len(serialized), _DATA_CHUNK_SIZE)):
+        ws.cell(
+            row=1 + i,
+            column=1,
+            value=serialized[start:start + _DATA_CHUNK_SIZE],
+        )
+
+
+def _write_data_sheets(wb, draft_state: dict) -> None:
+    """Embed user's working state across veryHidden ``_data_*`` sheets.
+
+    Sheets written
+    --------------
+      _data_meta             marker, schema_version + scalar fields
+                             (exported_at, source, quarter, year, solver_mode)
+      _data_offerings        row-per-offering flat table  (required)
+      _data_professors       row-per-professor flat table (optional)
+      _data_rooms            row-per-room flat table      (optional)
+      _data_locked_assignments  Streamlit locks table     (optional)
+      _data_tuned_weights    key/value scalars            (optional)
+      _data_solver_results   JSON-chunked cache           (optional)
+
+    Optional sheets are skipped when the corresponding draft_state key is
+    ``None`` — the reader maps absent sheets back to absent keys.
+    """
+    # Meta — always-present scalars plus the internal marker / schema_version.
+    meta_kv: dict = {
+        "marker":         DATA_MARKER,
+        "schema_version": DATA_SCHEMA_VERSION,
+    }
+    for k in ("exported_at", "source", "quarter", "year", "solver_mode"):
+        if k in draft_state:
+            meta_kv[k] = draft_state[k]
+    _write_kv_sheet(wb.create_sheet(), DATA_SHEET_META, meta_kv)
+
+    # List-valued entity sheets
+    for key, sheet_name in _DATA_LIST_SHEETS.items():
+        entities = draft_state.get(key)
+        if entities is None:
+            continue
+        _write_flat_table_sheet(wb.create_sheet(), sheet_name, entities)
+
+    # Tuned weights (optional scalar kv)
+    tw = draft_state.get("tunedWeights")
+    if tw is not None:
+        _write_kv_sheet(wb.create_sheet(), DATA_SHEET_TUNED_WEIGHTS, tw)
+
+    # Solver results (optional, nested, chunked)
+    sr = draft_state.get("solver_results")
+    if sr is not None:
+        _write_json_chunks_sheet(wb.create_sheet(), DATA_SHEET_SOLVER_RESULTS, sr)
 
 
 # ---------------------------------------------------------------------------
@@ -416,9 +517,10 @@ def write_excel(
 ) -> Path:
     """Write the workbook and return the file path.
 
-    If ``draft_state`` is provided, a hidden ``_state`` sheet is appended
-    carrying the user's working state (offerings, locks, mode, etc.) so
-    the file can be re-uploaded later to resume editing.
+    If ``draft_state`` is provided, six veryHidden ``_data_*`` sheets are
+    appended carrying the user's working state so the file can be re-opened
+    later as a draft. The workbook structure is also password-protected to
+    keep chairs from accidentally unhiding or reorganizing those sheets.
 
     If ``backup_root`` is provided, the written workbook is also copied into
     ``<backup_root>/.backups/<stem>_<ISO>.xlsx`` and that directory is pruned
@@ -445,10 +547,14 @@ def write_excel(
         ws = wb.create_sheet()
         _write_schedule_sheet(ws, res)
 
-    # Sheet 5 (hidden): roundtrip draft state — only when caller provides it
+    # Hidden data sheets — only when caller supplies a draft state
     if draft_state is not None:
-        ws_state = wb.create_sheet()
-        _write_state_sheet(ws_state, draft_state)
+        _write_data_sheets(wb, draft_state)
+        wb.security = WorkbookProtection(
+            workbookPassword=_DATA_STRUCTURE_PASSWORD,
+            lockStructure=True,
+            lockWindows=False,
+        )
 
     wb.save(path)
 
