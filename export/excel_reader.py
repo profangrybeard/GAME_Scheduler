@@ -1,9 +1,9 @@
 """Read draft state back from a previously-exported XLSX.
 
-Companion to ``excel_writer.py``. The hidden ``_state`` sheet uses a
-versioned, chunked-JSON protocol — see ``write_excel`` for the writer
-side. This module is pure parsing + reference validation; the Streamlit
-upload UI lives in ``app.py``.
+Companion to ``excel_writer.py``. The workbook is the single source of
+truth: six ``veryHidden`` sheets under the ``_data_*`` prefix carry the
+user's working state as per-entity flat tables plus a JSON-chunked
+solver-results cache. See ``_write_data_sheets`` for the writer side.
 
 Two public entry points:
 
@@ -27,9 +27,15 @@ from typing import BinaryIO, Union
 import openpyxl
 
 from export.excel_writer import (
-    STATE_MARKER,
-    STATE_SCHEMA_VERSION,
-    STATE_SHEET_NAME,
+    DATA_MARKER,
+    DATA_SCHEMA_VERSION,
+    DATA_SHEET_LOCKED,
+    DATA_SHEET_META,
+    DATA_SHEET_OFFERINGS,
+    DATA_SHEET_PROFESSORS,
+    DATA_SHEET_ROOMS,
+    DATA_SHEET_SOLVER_RESULTS,
+    DATA_SHEET_TUNED_WEIGHTS,
 )
 
 
@@ -43,11 +49,11 @@ class StateReadError(Exception):
 
 
 class MissingStateSheet(StateReadError):
-    """No _state sheet — likely an XLSX exported before Slice 2 shipped."""
+    """No _data_meta sheet — not a v2-format Scheduler export."""
 
 
 class MarkerMismatch(StateReadError):
-    """A1 doesn't carry the expected marker — not a Scheduler export."""
+    """_data_meta's marker row doesn't carry our signature."""
 
 
 class SchemaVersionUnsupported(StateReadError):
@@ -60,22 +66,98 @@ class SchemaVersionUnsupported(StateReadError):
 
 
 class MalformedState(StateReadError):
-    """JSON parse failed or required keys are missing/wrong type."""
+    """Required sheet structure missing, or JSON parse failed."""
+
+
+# ---------------------------------------------------------------------------
+# Sheet readers
+# ---------------------------------------------------------------------------
+
+# Required keys in the reconstructed state dict. offerings is also required
+# but handled separately — a missing sheet becomes an empty list.
+_REQUIRED_KEYS = frozenset({
+    "schema_version", "quarter", "year", "solver_mode",
+})
+
+
+def _maybe_parse_json(v):
+    """If ``v`` looks like a JSON array/object, try to parse it; fall back
+    to the original value on any failure. Used both for kv value rows and
+    flat-table cells so nested structures survive a roundtrip."""
+    if not isinstance(v, str) or not v:
+        return v
+    if v[0] not in "[{":
+        return v
+    try:
+        return json.loads(v)
+    except (json.JSONDecodeError, TypeError):
+        return v
+
+
+def _read_kv_sheet(ws) -> dict:
+    """Two-column key/value sheet → dict. Stops at first empty-key row."""
+    out: dict = {}
+    for row in ws.iter_rows(values_only=True):
+        if not row:
+            continue
+        key = row[0]
+        if key is None or key == "":
+            break
+        value = row[1] if len(row) > 1 else None
+        out[str(key)] = _maybe_parse_json(value)
+    return out
+
+
+def _read_flat_table_sheet(ws) -> list[dict]:
+    """Row-per-entity flat table → list[dict]. First row = headers; empty
+    rows (all-None) terminate the table.
+
+    Empty cells are treated as absent keys (not ``None``) — the writer's
+    union-of-keys layout forces every row to carry every column, so we
+    need an unambiguous "this entity doesn't have this field" encoding.
+    Our state model treats explicit ``None`` and absent-key identically,
+    so this lossless for our shapes."""
+    rows = list(ws.iter_rows(values_only=True))
+    if not rows:
+        return []
+    headers: list[str] = [h for h in rows[0] if h is not None]
+    if not headers:
+        return []
+    out: list[dict] = []
+    for data_row in rows[1:]:
+        if data_row is None or all(v is None for v in data_row):
+            continue
+        entity: dict = {}
+        for i, h in enumerate(headers):
+            value = data_row[i] if i < len(data_row) else None
+            if value is None:
+                continue
+            entity[h] = _maybe_parse_json(value)
+        out.append(entity)
+    return out
+
+
+def _read_json_chunks_sheet(ws):
+    """Column-A JSON chunks → parsed payload. Returns ``None`` if empty."""
+    chunks: list[str] = []
+    for row in ws.iter_rows(values_only=True):
+        if not row:
+            break
+        v = row[0]
+        if v is None or v == "":
+            break
+        chunks.append(str(v))
+    if not chunks:
+        return None
+    try:
+        return json.loads("".join(chunks))
+    except json.JSONDecodeError as e:
+        raise MalformedState(f"JSON parse failed in chunked sheet: {e}") from e
 
 
 # ---------------------------------------------------------------------------
 # Reader
 # ---------------------------------------------------------------------------
-
-_REQUIRED_KEYS = frozenset({
-    "schema_version", "quarter", "year",
-    "offerings", "solver_mode",
-})
-# locked_assignments and solver_results are intentionally optional — the first
-# is Streamlit-specific (React uses per-offering `pinned` slots), the second
-# is large+optional (older Slice-2-era files won't have it). Consumers use
-# state.get(key, default) rather than indexing directly.
-
 
 def read_draft_state(file: Union[str, Path, BinaryIO, bytes]) -> dict:
     """Open an XLSX and return the embedded draft state dict.
@@ -90,55 +172,53 @@ def read_draft_state(file: Union[str, Path, BinaryIO, bytes]) -> dict:
     else:
         wb = openpyxl.load_workbook(file, read_only=True, data_only=True)
 
-    if STATE_SHEET_NAME not in wb.sheetnames:
+    if DATA_SHEET_META not in wb.sheetnames:
         raise MissingStateSheet(
-            "No _state sheet — this file was exported before draft-reload "
-            "was supported, or isn't a Scheduler export."
+            "No _data_meta sheet — this file wasn't exported by this version "
+            "of the Scheduler, or isn't a Scheduler export."
         )
 
-    ws = wb[STATE_SHEET_NAME]
-    marker = ws["A1"].value
-    if marker != STATE_MARKER:
-        raise MarkerMismatch(f"expected marker {STATE_MARKER!r}, got {marker!r}")
+    meta = _read_kv_sheet(wb[DATA_SHEET_META])
 
-    # Concatenate every non-empty cell in column A from row 2 onward.
-    # The writer chunks payloads >30,000 chars across multiple rows.
-    chunks: list[str] = []
-    row = 2
-    while True:
-        val = ws.cell(row=row, column=1).value
-        if val is None or val == "":
-            break
-        chunks.append(str(val))
-        row += 1
+    marker = meta.pop("marker", None)
+    if marker != DATA_MARKER:
+        raise MarkerMismatch(f"expected marker {DATA_MARKER!r}, got {marker!r}")
 
-    payload = "".join(chunks)
-    if not payload:
-        raise MalformedState("state sheet has marker but no JSON payload below it")
-
-    try:
-        state = json.loads(payload)
-    except json.JSONDecodeError as e:
-        raise MalformedState(f"JSON parse failed: {e}") from e
-
-    if not isinstance(state, dict):
-        raise MalformedState(
-            f"top-level must be a JSON object, got {type(state).__name__}"
-        )
-
-    missing = _REQUIRED_KEYS - state.keys()
-    if missing:
-        raise MalformedState(f"missing required keys: {sorted(missing)}")
-
-    schema = state.get("schema_version")
+    schema = meta.pop("schema_version", None)
     if not isinstance(schema, int):
         raise MalformedState(
             f"schema_version must be int, got {type(schema).__name__}"
         )
-    # We could read older versions if/when v2+ ships; for now we only refuse
-    # newer ones. Older versions hitting a newer reader are forward-compat.
-    if schema > STATE_SCHEMA_VERSION:
-        raise SchemaVersionUnsupported(schema, STATE_SCHEMA_VERSION)
+    if schema > DATA_SCHEMA_VERSION:
+        raise SchemaVersionUnsupported(schema, DATA_SCHEMA_VERSION)
+
+    # Remaining meta keys carry into the public dict verbatim
+    state: dict = dict(meta)
+    state["schema_version"] = schema
+
+    # List-valued sheets — absent sheets mean the key wasn't written
+    for key, sheet_name in [
+        ("offerings",          DATA_SHEET_OFFERINGS),
+        ("professors",         DATA_SHEET_PROFESSORS),
+        ("rooms",              DATA_SHEET_ROOMS),
+        ("locked_assignments", DATA_SHEET_LOCKED),
+    ]:
+        if sheet_name in wb.sheetnames:
+            state[key] = _read_flat_table_sheet(wb[sheet_name])
+
+    # Optional scalar sheet
+    if DATA_SHEET_TUNED_WEIGHTS in wb.sheetnames:
+        state["tunedWeights"] = _read_kv_sheet(wb[DATA_SHEET_TUNED_WEIGHTS])
+
+    # Optional JSON-chunked cache
+    if DATA_SHEET_SOLVER_RESULTS in wb.sheetnames:
+        sr = _read_json_chunks_sheet(wb[DATA_SHEET_SOLVER_RESULTS])
+        if sr is not None:
+            state["solver_results"] = sr
+
+    missing = _REQUIRED_KEYS - state.keys()
+    if missing:
+        raise MalformedState(f"missing required keys: {sorted(missing)}")
 
     return state
 

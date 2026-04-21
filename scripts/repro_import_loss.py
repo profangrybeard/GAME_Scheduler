@@ -1,8 +1,8 @@
 """Repro: prof/room edits and tunedWeights are lost on Excel reimport.
 
-Writes a minimal hidden _state sheet with a modified prof name + custom
-tuned weights, then reads it back via the same reader /api/state/parse uses.
-This isolates which layer is dropping data.
+Writes a minimal set of hidden _data_* sheets with a modified prof name +
+custom tuned weights, then reads them back via the same reader
+/api/state/parse uses. This isolates which layer is dropping data.
 """
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from pathlib import Path
 from openpyxl import Workbook
 
 from export.excel_reader import read_draft_state
-from export.excel_writer import _write_state_sheet
+from export.excel_writer import DATA_SCHEMA_VERSION, _write_data_sheets
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -24,7 +24,7 @@ modified_profs = [dict(p) for p in profs]
 modified_profs[0]["name"] = "SMOKING_GUN_NAME"
 
 draft_state = {
-    "schema_version": 1,
+    "schema_version": DATA_SCHEMA_VERSION,
     "source":         "react",
     "exported_at":    "2026-04-20",
     "quarter":        "fall",
@@ -39,8 +39,7 @@ draft_state = {
 
 wb = Workbook()
 wb.active.title = "placeholder"
-state_ws = wb.create_sheet("_state")
-_write_state_sheet(state_ws, draft_state)
+_write_data_sheets(wb, draft_state)
 buf = io.BytesIO()
 wb.save(buf)
 buf.seek(0)

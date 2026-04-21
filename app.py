@@ -567,8 +567,9 @@ def _build_excel_bytes(_results: dict, sig: str) -> tuple[bytes, str]:
             live = json.load(f)
     except FileNotFoundError:
         live = {"quarter": None, "year": None, "offerings": []}
+    from export.excel_writer import DATA_SCHEMA_VERSION
     draft_state = {
-        "schema_version": 1,
+        "schema_version": DATA_SCHEMA_VERSION,
         "exported_at": _dt.datetime.now().isoformat(timespec="seconds"),
         "quarter": live.get("quarter"),
         "year": live.get("year"),
