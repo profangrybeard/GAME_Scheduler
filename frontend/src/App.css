@@ -2412,6 +2412,30 @@
   background: var(--surface-hover);
 }
 
+.reload-banner__snapshot {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.reload-banner__snapshot-btn {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.reload-banner__snapshot-btn:hover {
+  background: var(--surface-hover);
+}
+
 /* Placing state on cards — "lifted" visual */
 .roster-card--placing,
 .schedule-card--placing {

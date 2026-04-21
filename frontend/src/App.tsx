@@ -6,11 +6,17 @@ import {
   postExportStream,
   postSolveStream,
   responseAssignmentToAssignment,
+  type DraftState,
   type SolveEvent,
   type SolveModeResult,
   type SolveRequestBody,
   type ValidationError,
 } from "./api"
+import {
+  type DraftSnapshot,
+  loadDraftSnapshot,
+  saveDraftSnapshot,
+} from "./draftSnapshot"
 import { BrandEyebrow } from "./components/BrandEyebrow"
 import { CatalogueDrawer } from "./components/CatalogueDrawer"
 import { ChangeLog, type ChangeLogEntry } from "./components/ChangeLog"
@@ -205,6 +211,11 @@ function App() {
   const [reloadErrors, setReloadErrors] = useState<ValidationError[] | null>(null)
   const [reloadError, setReloadError] = useState<string | null>(null)
   const [reloadFilename, setReloadFilename] = useState<string | null>(null)
+  // Phase 1.3 fallback: when a structural parse fails, check localStorage
+  // for a last-known-good snapshot of this filename and offer one-click
+  // restore in the error banner. Null = no snapshot available / banner
+  // shouldn't offer recovery.
+  const [reloadSnapshot, setReloadSnapshot] = useState<DraftSnapshot | null>(null)
   // Workbook's last-modified epoch ms, read from the File object at load
   // time. Surfaced in the resume-rail so the user can tell at a glance how
   // fresh the file they're editing actually is.
@@ -786,155 +797,188 @@ function App() {
     fileInputRef.current?.click()
   }, [])
 
+  /** Apply a parsed draft state to all the UI's mutable surfaces: offerings,
+   *  professors/rooms decks, tuned weights, cached mode results, and the
+   *  synthesized "done" progress strip. Pure side-effects — no return value,
+   *  no banner copy. Reused by both the parse-success path (handleReloadFile)
+   *  and the snapshot-restore path (restoreFromSnapshot). */
+  const hydrateFromDraft = useCallback((draft: DraftState): void => {
+    // Cache all modes from the embedded results so flipping the solveMode
+    // chip post-reload re-applies without a fresh solve. Each mode's
+    // schedule entries already carry catalog_id/prof_id/room_id/day_group/
+    // time_slot, which is exactly what responseAssignmentToAssignment reads.
+    const cachedModes: Record<string, SolveModeResult> = {}
+    if (draft.solver_results) {
+      for (const m of draft.solver_results.modes) {
+        cachedModes[m.mode] = m
+      }
+      modeResultsRef.current = cachedModes
+    } else {
+      modeResultsRef.current = null
+    }
+
+    // Synthesize a "done" SolveProgressState from the cached modes so the
+    // solve-progress strip renders on resume — otherwise the three cached
+    // results have no UI surface (can't flip modes, can't re-tune). Missing
+    // metrics (elapsedMs, solutionsFound) weren't persisted with the draft;
+    // the progress component shows "—" for those gracefully.
+    const modeOrder = ["affinity_first", "balanced", "time_pref_first"] as const
+    const synthesizedProgress: SolveProgressState | null = draft.solver_results
+      ? {
+          startedAt:    null,
+          endedAt:      null,
+          totalModes:   draft.solver_results.modes.length,
+          modes: Object.fromEntries(
+            draft.solver_results.modes.map((m): [string, SolveModeProgress] => {
+              const idx = modeOrder.indexOf(m.mode as typeof modeOrder[number])
+              // Older exports (example-schedule.xlsx, pre-v1 drafts) only
+              // persist mode + assignments; default the rest so the strip
+              // still renders instead of crashing on missing fields.
+              const placed = m.assignments?.length ?? 0
+              const unsched = m.unscheduled?.length ?? 0
+              return [m.mode, {
+                mode:             m.mode,
+                state:            "done",
+                index:            idx >= 0 ? idx + 1 : null,
+                solutionsFound:   0,
+                bestObjective:    m.objective ?? null,
+                bestBound:        null,
+                nPlaced:          placed,
+                nTotal:           placed + unsched,
+                elapsedMs:        null,
+                status:           m.status ?? null,
+                unscheduledCount: unsched,
+              }]
+            }),
+          ),
+          errorMessage: null,
+        }
+      : null
+
+    // Build per-offering assignment map for the active mode (so the
+    // calendar populates immediately without a second reducer pass).
+    // Sibling offering_ids follow `${catalog_id}#${section_idx + 1}`.
+    const activeMode = cachedModes[draft.solver_mode]
+    const byOfferingId: Record<string, Assignment> = {}
+    if (activeMode) {
+      for (const a of activeMode.assignments ?? []) {
+        const oid = `${a.catalog_id}#${(a.section_idx ?? 0) + 1}`
+        byOfferingId[oid] = responseAssignmentToAssignment(a)
+      }
+    }
+
+    // Wire → runtime: a wire entry with sections=N expands into N siblings
+    // with sections=1 each. offering_id is runtime-only (see data.ts).
+    const wireOfferings: WireOffering[] = draft.offerings.map(o => ({
+      catalog_id:                    o.catalog_id,
+      priority:                      o.priority,
+      sections:                      o.sections ?? 1,
+      override_enrollment_cap:       o.override_enrollment_cap ?? null,
+      override_room_type:            o.override_room_type ?? null,
+      override_preferred_professors: o.override_preferred_professors ?? null,
+      notes:                         o.notes ?? null,
+      assigned_prof_id:              o.assigned_prof_id ?? null,
+      assigned_room_id:              o.assigned_room_id ?? null,
+      pinned:                        o.pinned ?? null,
+    }))
+    const expanded = expandOfferingsFromWire(wireOfferings).map(o => ({
+      ...o,
+      assignment: byOfferingId[o.offering_id] ?? null,
+    }))
+    // Professors/rooms from the xlsx replace the current deck (Path B —
+    // the exporting workspace's deck IS the truth). Also persist to
+    // localStorage so the edits survive a refresh, just like in-session
+    // edits do.
+    const nextProfessors = draft.professors
+      ? Object.fromEntries(draft.professors.map(p => [p.id, p]))
+      : null
+    const nextRooms = draft.rooms
+      ? Object.fromEntries(draft.rooms.map(r => [r.id, r]))
+      : null
+
+    setState(s => ({
+      ...s,
+      selectedOfferingId: null,
+      quarter:    draft.quarter,
+      year:       draft.year,
+      solveMode:  draft.solver_mode,
+      // With cached modes, the schedule is semantically already solved —
+      // mark "done" so Export stays enabled and the progress strip doesn't
+      // claim a fresh solve is needed.
+      solveStatus: synthesizedProgress ? "done" : "idle",
+      offerings: expanded,
+      professors: nextProfessors ?? s.professors,
+      rooms:      nextRooms      ?? s.rooms,
+    }))
+    if (draft.professors) saveProfessors(draft.professors)
+    if (draft.rooms)      saveRooms(draft.rooms)
+
+    // Tuned weights: the xlsx carries solver-shape (time_pref); remap to
+    // the Mix's `time` field and persist via the same helper the Tune
+    // modal uses so both sources write to the same localStorage key.
+    if (draft.tunedWeights) {
+      const mix: Mix = {
+        affinity: draft.tunedWeights.affinity,
+        time:     draft.tunedWeights.time_pref,
+        overload: draft.tunedWeights.overload,
+      }
+      setTunedMix(mix)
+      saveTunedMix(mix)
+    }
+
+    setSolveProgress(synthesizedProgress)
+    setSolveError(null)
+  }, [])
+
   const handleReloadFile = useCallback(async (file: File) => {
     setReloadError(null)
     setReloadErrors(null)
     setReloadFilename(null)
     setReloadMtime(null)
+    setReloadSnapshot(null)
     try {
       const { state: draft, errors } = await parseDraftState(file)
-
-      // Cache all modes from the embedded results so flipping the solveMode
-      // chip post-reload re-applies without a fresh solve. Each mode's
-      // schedule entries already carry catalog_id/prof_id/room_id/day_group/
-      // time_slot, which is exactly what responseAssignmentToAssignment reads.
-      const cachedModes: Record<string, SolveModeResult> = {}
-      if (draft.solver_results) {
-        for (const m of draft.solver_results.modes) {
-          cachedModes[m.mode] = m
-        }
-        modeResultsRef.current = cachedModes
-      } else {
-        modeResultsRef.current = null
-      }
-
-      // Synthesize a "done" SolveProgressState from the cached modes so the
-      // solve-progress strip renders on resume — otherwise the three cached
-      // results have no UI surface (can't flip modes, can't re-tune). Missing
-      // metrics (elapsedMs, solutionsFound) weren't persisted with the draft;
-      // the progress component shows "—" for those gracefully.
-      const modeOrder = ["affinity_first", "balanced", "time_pref_first"] as const
-      const synthesizedProgress: SolveProgressState | null = draft.solver_results
-        ? {
-            startedAt:    null,
-            endedAt:      null,
-            totalModes:   draft.solver_results.modes.length,
-            modes: Object.fromEntries(
-              draft.solver_results.modes.map((m): [string, SolveModeProgress] => {
-                const idx = modeOrder.indexOf(m.mode as typeof modeOrder[number])
-                // Older exports (example-schedule.xlsx, pre-v1 drafts) only
-                // persist mode + assignments; default the rest so the strip
-                // still renders instead of crashing on missing fields.
-                const placed = m.assignments?.length ?? 0
-                const unsched = m.unscheduled?.length ?? 0
-                return [m.mode, {
-                  mode:             m.mode,
-                  state:            "done",
-                  index:            idx >= 0 ? idx + 1 : null,
-                  solutionsFound:   0,
-                  bestObjective:    m.objective ?? null,
-                  bestBound:        null,
-                  nPlaced:          placed,
-                  nTotal:           placed + unsched,
-                  elapsedMs:        null,
-                  status:           m.status ?? null,
-                  unscheduledCount: unsched,
-                }]
-              }),
-            ),
-            errorMessage: null,
-          }
-        : null
-
-      // Build per-offering assignment map for the active mode (so the
-      // calendar populates immediately without a second reducer pass).
-      // Sibling offering_ids follow `${catalog_id}#${section_idx + 1}`.
-      const activeMode = cachedModes[draft.solver_mode]
-      const byOfferingId: Record<string, Assignment> = {}
-      if (activeMode) {
-        for (const a of activeMode.assignments ?? []) {
-          const oid = `${a.catalog_id}#${(a.section_idx ?? 0) + 1}`
-          byOfferingId[oid] = responseAssignmentToAssignment(a)
-        }
-      }
-
-      // Wire → runtime: a wire entry with sections=N expands into N siblings
-      // with sections=1 each. offering_id is runtime-only (see data.ts).
-      const wireOfferings: WireOffering[] = draft.offerings.map(o => ({
-        catalog_id:                    o.catalog_id,
-        priority:                      o.priority,
-        sections:                      o.sections ?? 1,
-        override_enrollment_cap:       o.override_enrollment_cap ?? null,
-        override_room_type:            o.override_room_type ?? null,
-        override_preferred_professors: o.override_preferred_professors ?? null,
-        notes:                         o.notes ?? null,
-        assigned_prof_id:              o.assigned_prof_id ?? null,
-        assigned_room_id:              o.assigned_room_id ?? null,
-        pinned:                        o.pinned ?? null,
-      }))
-      const expanded = expandOfferingsFromWire(wireOfferings).map(o => ({
-        ...o,
-        assignment: byOfferingId[o.offering_id] ?? null,
-      }))
-      // Professors/rooms from the xlsx replace the current deck (Path B —
-      // the exporting workspace's deck IS the truth). Also persist to
-      // localStorage so the edits survive a refresh, just like in-session
-      // edits do.
-      const nextProfessors = draft.professors
-        ? Object.fromEntries(draft.professors.map(p => [p.id, p]))
-        : null
-      const nextRooms = draft.rooms
-        ? Object.fromEntries(draft.rooms.map(r => [r.id, r]))
-        : null
-
-      setState(s => ({
-        ...s,
-        selectedOfferingId: null,
-        quarter:    draft.quarter,
-        year:       draft.year,
-        solveMode:  draft.solver_mode,
-        // With cached modes, the schedule is semantically already solved —
-        // mark "done" so Export stays enabled and the progress strip doesn't
-        // claim a fresh solve is needed.
-        solveStatus: synthesizedProgress ? "done" : "idle",
-        offerings: expanded,
-        professors: nextProfessors ?? s.professors,
-        rooms:      nextRooms      ?? s.rooms,
-      }))
-      if (draft.professors) saveProfessors(draft.professors)
-      if (draft.rooms)      saveRooms(draft.rooms)
-
-      // Tuned weights: the xlsx carries solver-shape (time_pref); remap to
-      // the Mix's `time` field and persist via the same helper the Tune
-      // modal uses so both sources write to the same localStorage key.
-      if (draft.tunedWeights) {
-        const mix: Mix = {
-          affinity: draft.tunedWeights.affinity,
-          time:     draft.tunedWeights.time_pref,
-          overload: draft.tunedWeights.overload,
-        }
-        setTunedMix(mix)
-        saveTunedMix(mix)
-      }
-
+      hydrateFromDraft(draft)
       setReloadErrors(errors)
       setReloadFilename(file.name)
       setReloadMtime(file.lastModified || null)
-      setSolveProgress(synthesizedProgress)
-      setSolveError(null)
       logChange("resume", file.name)
+      // Stash a last-known-good snapshot for this filename so a future
+      // reload with a corrupted `_data_*` can recover via the banner's
+      // "Use last-saved snapshot" button.
+      saveDraftSnapshot(file.name, draft)
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
       if (import.meta.env.DEV) console.error("[reload] error:", msg)
       setReloadError(msg)
+      setReloadFilename(file.name)
+      // Offer snapshot restore if we have one for this filename — this is
+      // the phase 1.3 "fall back to last-known-good" behaviour. The user
+      // decides; we don't auto-restore silently (would mask the fact that
+      // their actual file is broken).
+      const snap = loadDraftSnapshot(file.name)
+      if (snap) setReloadSnapshot(snap)
     }
-  }, [])
+  }, [hydrateFromDraft])
+
+  const restoreFromSnapshot = useCallback(() => {
+    if (!reloadSnapshot || !reloadFilename) return
+    hydrateFromDraft(reloadSnapshot.state)
+    setReloadError(null)
+    setReloadErrors([])
+    // Use the snapshot's savedAt as the "loaded at" time in the sidebar —
+    // that's when this data was actually fresh, which is the honest signal.
+    setReloadMtime(reloadSnapshot.savedAt)
+    setReloadSnapshot(null)
+    logChange("resume_snapshot", reloadFilename)
+  }, [reloadSnapshot, reloadFilename, hydrateFromDraft])
 
   const dismissReloadBanner = useCallback(() => {
     setReloadErrors(null)
     setReloadError(null)
     setReloadFilename(null)
     setReloadMtime(null)
+    setReloadSnapshot(null)
   }, [])
 
   // ── Placement mode (tap-to-place alternative to DnD) ────────────
@@ -1164,7 +1208,24 @@ function App() {
           >
             <div className="reload-banner__body">
               {reloadError ? (
-                <strong>Couldn't load that file: {reloadError}</strong>
+                <>
+                  <strong>Couldn't load that file: {reloadError}</strong>
+                  {reloadSnapshot && (
+                    <div className="reload-banner__snapshot">
+                      <span>
+                        A last-saved snapshot from{" "}
+                        {formatLoadedTimestamp(reloadSnapshot.savedAt)} is available.
+                      </span>
+                      <button
+                        type="button"
+                        className="reload-banner__snapshot-btn"
+                        onClick={restoreFromSnapshot}
+                      >
+                        Use last-saved snapshot
+                      </button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <>
                   <strong>
