@@ -356,7 +356,9 @@ def export(req: ExportRequest) -> Response:
 
     with tempfile.TemporaryDirectory() as tmp:
         out_dir = Path(tmp)
-        xlsx_path = write_excel(results, out_dir, draft_state=draft_state)
+        xlsx_path = write_excel(
+            results, out_dir, draft_state=draft_state, backup_root=BASE,
+        )
         content = xlsx_path.read_bytes()
 
     filename = f"schedule_{req.quarter}_{req.year}_{datetime.now():%Y%m%d}_all-modes.xlsx"
@@ -442,7 +444,9 @@ async def export_stream(req: ExportRequest) -> StreamingResponse:
             event_queue.put({"type": "xlsx_writing"})
 
             with tempfile.TemporaryDirectory() as tmp:
-                xlsx_path = write_excel(results, Path(tmp), draft_state=draft_state)
+                xlsx_path = write_excel(
+                    results, Path(tmp), draft_state=draft_state, backup_root=BASE,
+                )
                 content = xlsx_path.read_bytes()
 
             filename = f"schedule_{req.quarter}_{req.year}_{datetime.now():%Y%m%d}_all-modes.xlsx"
@@ -606,149 +610,6 @@ async def parse_state(file: UploadFile = File(...)) -> dict:
     )
 
     return {"state": cleaned, "warnings": warnings}
-
-
-_PORTRAIT_MIME_EXT = {
-    "image/png": "png",
-    "image/jpeg": "jpg",
-    "image/webp": "webp",
-}
-_PORTRAIT_EXTS = ("png", "jpg", "jpeg", "webp")
-
-
-class CommitRequest(BaseModel):
-    """Snapshot the workspace mails home when the user hits "Commit to source".
-
-    Professors and rooms are both Path B: the full decks replace
-    data/professors.json and data/rooms.json wholesale, so adds AND removes
-    both land. Pass an empty list to clear all. Portraits are still an
-    additive overlay (no "remove" verb for now — absence = "no change").
-    """
-    professors: list[dict] = Field(default_factory=list)
-    rooms: list[dict] = Field(default_factory=list)
-    # Values are full data URLs (data:image/png;base64,...). Removals aren't
-    # represented — the frontend deletes the key on remove, so absence means
-    # "no change" rather than "delete the baseline file". Committing removals
-    # would need a separate explicit signal; MVP ignores that gap.
-    portraits: dict[str, str] = Field(default_factory=dict)
-
-
-@app.post("/api/commit")
-def commit_overlay(req: CommitRequest) -> dict:
-    """Merge the overlay snapshot into the canonical data/ files on disk.
-
-    Only useful on the local stack — in the Fly.io container the filesystem
-    is ephemeral, so writes evaporate on redeploy. The frontend gates this
-    button behind an apiAvailable check plus an explicit confirm dialog.
-
-    Returns counts so the UI can surface a "committed 3 profs, 1 room, 2
-    portraits" toast. Unknown IDs in the overlay are reported as warnings
-    rather than hard-failing — they usually mean the canonical data drifted
-    since the overlay was captured (deleted prof, renamed room) and
-    dropping the orphan is the right move.
-    """
-    import base64 as _b64
-
-    summary: dict = {
-        "professorsUpdated": 0,
-        "roomsUpdated": 0,
-        "portraitsWritten": 0,
-        "warnings": [],
-    }
-
-    # Professors: full-list replacement. The frontend IS the source of truth
-    # for the dept's faculty deck, so data/professors.json gets rewritten
-    # wholesale. Empty list = clear all. Validate minimal shape so a malformed
-    # payload can't nuke the file with garbage.
-    if req.professors is not None:
-        prof_path = BASE / "data" / "professors.json"
-        cleaned_profs: list[dict] = []
-        seen_prof_ids: set[str] = set()
-        for i, p in enumerate(req.professors):
-            if not isinstance(p, dict):
-                summary["warnings"].append(f"Prof index {i} is not an object — skipped")
-                continue
-            pid = p.get("id")
-            if not isinstance(pid, str) or not pid:
-                summary["warnings"].append(f"Prof index {i} missing id — skipped")
-                continue
-            if pid in seen_prof_ids:
-                summary["warnings"].append(f"Duplicate prof id {pid} — skipped")
-                continue
-            seen_prof_ids.add(pid)
-            cleaned_profs.append(p)
-        prof_path.write_text(
-            json.dumps(cleaned_profs, indent=2, ensure_ascii=False) + "\n",
-            encoding="utf-8",
-        )
-        summary["professorsUpdated"] = len(cleaned_profs)
-
-    # Rooms: full-list replacement. The frontend IS the source of truth for
-    # the dept's deck, so data/rooms.json gets rewritten wholesale. Empty
-    # list = clear all. We still validate minimal shape so a malformed payload
-    # can't nuke the file with garbage.
-    if req.rooms is not None:
-        room_path = BASE / "data" / "rooms.json"
-        cleaned: list[dict] = []
-        seen_ids: set[str] = set()
-        for i, r in enumerate(req.rooms):
-            if not isinstance(r, dict):
-                summary["warnings"].append(f"Room index {i} is not an object — skipped")
-                continue
-            rid = r.get("id")
-            if not isinstance(rid, str) or not rid:
-                summary["warnings"].append(f"Room index {i} missing id — skipped")
-                continue
-            if rid in seen_ids:
-                summary["warnings"].append(f"Duplicate room id {rid} — skipped")
-                continue
-            seen_ids.add(rid)
-            cleaned.append(r)
-        room_path.write_text(
-            json.dumps(cleaned, indent=2, ensure_ascii=False) + "\n",
-            encoding="utf-8",
-        )
-        summary["roomsUpdated"] = len(cleaned)
-
-    if req.portraits:
-        portraits_dir = BASE / "data" / "portraits"
-        portraits_dir.mkdir(exist_ok=True)
-        for prof_id, data_url in req.portraits.items():
-            # data URL: "data:image/png;base64,<payload>"
-            try:
-                header, encoded = data_url.split(",", 1)
-                mime = header.split(":", 1)[1].split(";", 1)[0]
-            except (ValueError, IndexError):
-                summary["warnings"].append(f"Invalid data URL for {prof_id}")
-                continue
-            ext = _PORTRAIT_MIME_EXT.get(mime)
-            if ext is None:
-                summary["warnings"].append(
-                    f"Unsupported image type for {prof_id}: {mime}"
-                )
-                continue
-            try:
-                raw = _b64.b64decode(encoded, validate=True)
-            except Exception:  # noqa: BLE001 — any decode error is a user-facing warning
-                summary["warnings"].append(f"Corrupt base64 for {prof_id}")
-                continue
-            # Remove any stale file with a different extension so we don't end
-            # up with both prof_allen.png and prof_allen.jpg after a re-upload
-            # (Vite glob would pick whichever sorted first; chaos).
-            for old_ext in _PORTRAIT_EXTS:
-                if old_ext == ext:
-                    continue
-                stale = portraits_dir / f"{prof_id}.{old_ext}"
-                if stale.exists():
-                    stale.unlink()
-            (portraits_dir / f"{prof_id}.{ext}").write_bytes(raw)
-            summary["portraitsWritten"] += 1
-
-    # Downstream endpoints memoize the canonical ID sets. Invalidate after a
-    # write so /api/state/parse's drift validation uses fresh data.
-    _local_reference_ids.cache_clear()
-
-    return summary
 
 
 # ---------------------------------------------------------------------------

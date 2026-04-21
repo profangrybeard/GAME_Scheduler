@@ -582,7 +582,9 @@ def _build_excel_bytes(_results: dict, sig: str) -> tuple[bytes, str]:
         "solver_results": _strip_unserializable_results(_results),
     }
     with tempfile.TemporaryDirectory() as tmp_dir:
-        excel_path = write_excel(_results, tmp_dir, draft_state=draft_state)
+        excel_path = write_excel(
+            _results, tmp_dir, draft_state=draft_state, backup_root=PROJECT_ROOT,
+        )
         return excel_path.read_bytes(), excel_path.name
 
 

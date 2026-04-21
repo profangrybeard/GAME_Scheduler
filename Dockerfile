@@ -9,7 +9,7 @@
 FROM node:20-alpine AS frontend-build
 WORKDIR /app
 
-# git is required by vite.config.ts `gitShortSha()` — the VersionBadge
+# git is required by vite.config.ts `gitShortSha()` — the About popover
 # bakes the short SHA into the bundle at build time so every deployed
 # build flags its own commit. Node Alpine doesn't include git by default.
 RUN apk add --no-cache git

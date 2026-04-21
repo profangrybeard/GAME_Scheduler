@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 
-// Baked in at build time by vite.config.ts → `define`. See VersionBadge.tsx.
+// Baked in at build time by vite.config.ts → `define`. Surfaced in the
+// topbar About popover (TopbarMenu.tsx).
 declare const __APP_VERSION__: string
 declare const __BUILD_TIME__: string

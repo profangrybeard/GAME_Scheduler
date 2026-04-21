@@ -21,7 +21,7 @@ users can reach it.
 | **Cloudflare Access** | Gates the proxied URL with the `@scad.edu` policy. Unauthorized users never reach Fly. |
 
 **Deploys are automatic.** Merge to main → ~60–90 seconds later the new
-version is live. The [version badge](frontend/src/components/VersionBadge.tsx)
+version is live. The [About popover](frontend/src/components/TopbarMenu.tsx)
 in the top-right shows the deployed commit's short SHA so you can see at a
 glance which build is serving.
 
