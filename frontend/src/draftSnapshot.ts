@@ -45,6 +45,7 @@ export function saveDraftSnapshot(filename: string, state: DraftState): void {
   // Fallback: drop the biggest field (solver_results) and try again. The
   // calendar will be empty on restore but the user's edits survive — which
   // is what they actually can't rebuild by re-solving.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { solver_results: _drop, ...lean } = state
   write(lean as DraftState)
 }
