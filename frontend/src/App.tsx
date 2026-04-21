@@ -11,6 +11,7 @@ import {
   type SolveModeResult,
   type SolveRequestBody,
 } from "./api"
+import { BrandEyebrow } from "./components/BrandEyebrow"
 import { CatalogueDrawer } from "./components/CatalogueDrawer"
 import { ChangeLog, type ChangeLogEntry } from "./components/ChangeLog"
 import { Class } from "./components/Class"
@@ -22,10 +23,10 @@ import { RoomCard } from "./components/RoomCard"
 import { Roster } from "./components/Roster"
 import { SolverTuning } from "./components/SolverTuning"
 import { loadTunedMix, mixToSolverWeights, saveTunedMix, type Mix } from "./components/SolverMix"
-import { VersionBadge } from "./components/VersionBadge"
+import { TopbarMenu } from "./components/TopbarMenu"
 import { loadInitialState } from "./data"
 import { useTheme } from "./hooks/useTheme"
-import { coalesceOfferingsForWire, expandOfferingsFromWire, mintOfferingId, profContractCeiling, profContractFloor, SCHOOL_LABELS, SCHOOL_ORDER } from "./types"
+import { coalesceOfferingsForWire, expandOfferingsFromWire, mintOfferingId, profContractCeiling, profContractFloor } from "./types"
 import type { Assignment, Offering, Professor, RosterCapacity, Room, SchedulerState, Slot, SolveMode, SolveModeProgress, SolveProgressState, WireOffering } from "./types"
 import "./App.css"
 
@@ -232,6 +233,14 @@ function App() {
       setState(s => ({ ...s, selectedOfferingId: null }))
       setActivePanel("detail")
     }
+  }, [])
+
+  /** Set the active quarter label. The current catalog/offerings stay put —
+   *  switching quarters is a label change the user is making in-place, not a
+   *  data swap. The field still flows into exports + resume round-trips, so a
+   *  re-saved XLSX carries the chosen quarter forward. */
+  const setQuarter = useCallback((quarter: string) => {
+    setState(s => (s.quarter === quarter ? s : { ...s, quarter }))
   }, [])
 
   /** Add an offering for `catalog_id` or select the first existing sibling.
@@ -1144,14 +1153,6 @@ function App() {
 
   // ── Render ─────────────────────────────────────────────────────────
 
-  const loadedSchools = useMemo(() => {
-    const depts = new Set<string>()
-    for (const course of Object.values(state.catalog)) {
-      depts.add(course.department)
-    }
-    return SCHOOL_ORDER.filter(d => depts.has(d)).map(d => SCHOOL_LABELS[d])
-  }, [state.catalog])
-
   const rosterCapacity = useMemo<RosterCapacity>(() => {
     let floorTotal = 0
     let ceilingTotal = 0
@@ -1207,6 +1208,7 @@ function App() {
       catalog={state.catalog}
       professors={state.professors}
       rooms={state.rooms}
+      quarter={state.quarter}
       solveStatus={state.solveStatus}
       solveMode={state.solveMode}
       placingId={placingId}
@@ -1218,6 +1220,7 @@ function App() {
       onAdd={addOffering}
       onPinToSlot={pinToSlot}
       onSetSolveMode={setSolveMode}
+      onSetQuarter={setQuarter}
       onSolve={() => { void requestSolve() }}
       onEmptyCalendar={emptyCalendar}
       clearArmed={clearArmed}
@@ -1355,58 +1358,12 @@ function App() {
             >
               ☰
             </button>
-            <h1 className="scheduler__title">
-              SCAD Course Planner for Faculty
-              {loadedSchools.length > 0 && (
-                <span className="scheduler__schools">
-                  {loadedSchools.join(" · ")}
-                </span>
-              )}
-            </h1>
-          </div>
-          <span className="scheduler__context">
-            {state.quarter} {state.year} · {rosterCapacity.loaded} classes ·{" "}
-            {SOLVE_MODE_LABELS[state.solveMode] ?? state.solveMode}
-          </span>
-          <div className="scheduler__topbar-right">
-            <div className="topbar-persist" role="group" aria-label="Overlay storage">
-              <button
-                type="button"
-                className="topbar-btn topbar-btn--ghost"
-                onClick={exportOverlay}
-                title="Download current edits as a portable JSON backup"
-              >
-                Backup
-              </button>
-              <button
-                type="button"
-                className="topbar-btn topbar-btn--ghost"
-                onClick={() => importInputRef.current?.click()}
-                title="Replace current edits from a backup JSON"
-              >
-                Restore
-              </button>
-              <button
-                type="button"
-                className="topbar-btn topbar-btn--ghost"
-                onClick={commitToSource}
-                disabled={apiAvailable !== true}
-                title={
-                  apiAvailable === true
-                    ? "Write edits to data/*.json on disk"
-                    : "Requires the local launcher"
-                }
-              >
-                Commit
-              </button>
-              <input
-                ref={importInputRef}
-                type="file"
-                accept="application/json,.json"
-                className="topbar-persist__input"
-                onChange={handleImportFile}
-              />
+            <div className="scheduler__title-group">
+              <BrandEyebrow />
+              <h1 className="scheduler__title">Course Planner</h1>
             </div>
+          </div>
+          <div className="scheduler__topbar-right">
             <button
               type="button"
               className="topbar-btn topbar-btn--export"
@@ -1422,7 +1379,6 @@ function App() {
             >
               Export
             </button>
-            <VersionBadge />
             <button
               type="button"
               className="theme-toggle"
@@ -1433,6 +1389,19 @@ function App() {
               {resolved === "dark" ? "\u263E" : "\u2600"}
               {theme === "system" && <span className="theme-toggle__auto">A</span>}
             </button>
+            <TopbarMenu
+              apiAvailable={apiAvailable}
+              onBackup={exportOverlay}
+              onRestore={() => importInputRef.current?.click()}
+              onCommit={commitToSource}
+            />
+            <input
+              ref={importInputRef}
+              type="file"
+              accept="application/json,.json"
+              className="topbar-persist__input"
+              onChange={handleImportFile}
+            />
           </div>
         </header>
         <main className="scheduler__canvas" data-active={activePanel}>

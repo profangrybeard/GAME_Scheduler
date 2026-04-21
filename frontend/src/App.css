@@ -199,37 +199,44 @@
   min-height: 52px;
 }
 
+.scheduler__title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  line-height: 1.1;
+}
+
 .scheduler__title {
   margin: 0;
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--text);
-  display: inline-flex;
-  align-items: baseline;
-  gap: 10px;
   min-width: 0;
 }
 
-.scheduler__schools {
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+/* Brand eyebrow — SCAD wordmark + ":Prototype" tag. The tag keeps
+   capitalization (not uppercased) and stays orange so the "under
+   construction" status reads quickly regardless of theme. */
+.brand-eyebrow {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
-.scheduler__context {
-  font-size: 0.72rem;
+.brand-eyebrow__tag {
+  text-transform: none;
+  letter-spacing: 0;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
+  color: #c2410c;
+}
+
+:root[data-theme="dark"] .brand-eyebrow__tag {
+  color: #fb923c;
 }
 
 .scheduler__topbar-left {
@@ -265,39 +272,104 @@
   cursor: not-allowed;
 }
 
-/* ─── Overlay persistence cluster (Backup / Restore / Commit) ─────
-   Subordinate to Export — same control, lower visual weight.
-   Divider separates the cluster so "Commit" doesn't read as part of
-   the Export action. */
-.topbar-persist {
+/* File input used by the settings menu's Restore action — kept visually
+   hidden since the trigger is a menu item, not the input itself. */
+.topbar-persist__input {
+  display: none;
+}
+
+/* ─── Topbar overflow menu (Backup / Restore / Commit / Version) ───
+   Low-frequency controls live behind an ⋯ trigger so the topbar's
+   right edge keeps Export + theme toggle as the primary actions. */
+.topbar-menu {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding-right: 10px;
-  margin-right: 4px;
-  border-right: 1px solid var(--border);
 }
 
-.topbar-btn.topbar-btn--ghost {
-  border-color: transparent;
-  color: var(--text-faint);
-  padding: 0 8px;
-  font-size: 0.78rem;
-  font-weight: 500;
+.topbar-menu__trigger {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: var(--hit-min);
+  height: var(--hit-min);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
 }
 
-.topbar-btn.topbar-btn--ghost:hover:not(:disabled) {
+.topbar-menu__trigger:hover,
+.topbar-menu__trigger[aria-expanded="true"] {
   color: var(--text);
-  border-color: transparent;
+  border-color: var(--text-faint);
 }
 
-.topbar-btn.topbar-btn--ghost:disabled {
-  opacity: 0.4;
+.topbar-menu__popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 220px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 50;
+}
+
+.topbar-menu__item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+
+.topbar-menu__item:hover:not(:disabled) {
+  background: var(--surface-hover, color-mix(in srgb, var(--text) 8%, transparent));
+}
+
+.topbar-menu__item:disabled {
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
-.topbar-persist__input {
-  display: none;
+.topbar-menu__label {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.topbar-menu__hint {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.topbar-menu__divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+.topbar-menu__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 4px 6px 2px;
 }
 
 /* ─── Version badge ─────────────────────────────────────────────── */
@@ -409,6 +481,50 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-muted);
+}
+
+/* Inline <select> inside a panel title (used by Quarter Schedule). The
+   wrapper lets us layer a caret glyph on top of the native <select>
+   without losing native keyboard/screen-reader behavior. */
+.panel__title-select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  color: var(--accent);
+}
+
+.panel__title-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0 14px 0 0;
+  margin: 0;
+  font: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.panel__title-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.panel__title-select-caret {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-45%);
+  font-size: 1.2em;
+  line-height: 1;
+  pointer-events: none;
+  color: var(--accent);
 }
 
 .panel__count {
@@ -2363,10 +2479,6 @@
 
   .topbar-hamburger { display: inline-flex; }
 
-  .scheduler__context {
-    font-size: 0.68rem;
-  }
-
   /* Compact schedule */
   .schedule-grid {
     grid-template-columns: 56px 1fr 1fr 0.25fr;
@@ -2426,7 +2538,6 @@
   .topbar-hamburger { display: none; }
 
   .scheduler__title { font-size: 0.95rem; }
-  .scheduler__context { display: none; }
 
   .bottom-tabs { display: flex; }
 
