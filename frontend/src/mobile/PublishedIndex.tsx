@@ -6,10 +6,99 @@
  * The desktop workspace is completely hidden under 768px — this is the only
  * thing mobile users see. Read-only by design; no Generate, no editing.
  */
-import { groupByQuarter, type PublishedSchedule, type Quarter } from "./publishedFixtures"
+import { useState } from "react"
+import { MobileBrandEyebrow } from "./MobileBrandEyebrow"
+import { MobileThemeToggle } from "./MobileThemeToggle"
+import {
+  academicYearLabel,
+  groupByQuarter,
+  type PublishedSchedule,
+  type Quarter,
+} from "./publishedFixtures"
 
 interface PublishedIndexProps {
   onOpen: (id: string) => void
+}
+
+/** Hand-off card shown above the schedule list. Frames the mobile view as a
+ *  deliberate "reading" mode and gives the user a one-tap way to carry the
+ *  URL over to a desktop browser — either via the clipboard or a prefilled
+ *  email. Without this, the landing reads as a dead-end (published list +
+ *  quiet footer); with it, continuing on mobile feels like a choice.
+ *
+ *  The bee lives in the card's top-right: it's both a brand eye-grabber for
+ *  the card and the trigger for an orange rim-glow chase around the "Email
+ *  it to me" button. Keeping it inside the card (rather than in the page
+ *  header) frees the header for the theme toggle, which stays in the same
+ *  place on both mobile screens. */
+function UpstreamInvite() {
+  const [copied, setCopied] = useState(false)
+  // Chase auto-clears after ~1.6s — one full loop of the rim-chase
+  // keyframe plus a beat so the arc completes at least one orbit.
+  const [chasing, setChasing] = useState(false)
+
+  const url = typeof window !== "undefined" ? window.location.href : ""
+
+  async function onCopy() {
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1800)
+    } catch {
+      // Clipboard permission denied or unsupported — fall through silently.
+      // The email action is always available as a secondary path.
+    }
+  }
+
+  function triggerChase() {
+    setChasing(true)
+    window.setTimeout(() => setChasing(false), 1600)
+  }
+
+  const mailBody = `Open on a larger screen for the full workspace:\n\n${url}\n`
+  const mailHref =
+    "mailto:?subject=" + encodeURIComponent("GAME Scheduler — open on desktop") +
+    "&body=" + encodeURIComponent(mailBody)
+
+  return (
+    <aside className="mobile-invite" aria-label="Open on desktop">
+      <div className="mobile-invite__top">
+        <div className="mobile-invite__eyebrow">Reading view</div>
+        <button
+          type="button"
+          className={"mobile-invite__bee" + (chasing ? " mobile-invite__bee--chasing" : "")}
+          onClick={triggerChase}
+          aria-label="Buzz the email button"
+        >
+          <span aria-hidden="true">🐝</span>
+        </button>
+      </div>
+      <h2 className="mobile-invite__headline">The workspace lives on desktop.</h2>
+      <p className="mobile-invite__body">
+        Here you can read the published schedules. Tuning, solving, and publishing
+        new versions happen on a larger screen.
+      </p>
+      <div className="mobile-invite__actions">
+        <button
+          type="button"
+          className="mobile-invite__btn mobile-invite__btn--primary"
+          onClick={onCopy}
+          aria-live="polite"
+        >
+          {copied ? "Link copied" : "Copy link"}
+        </button>
+        <a
+          className={
+            "mobile-invite__btn mobile-invite__btn--secondary" +
+            (chasing ? " mobile-invite__btn--chasing" : "")
+          }
+          href={mailHref}
+        >
+          Email it to me
+        </a>
+      </div>
+    </aside>
+  )
 }
 
 function formatPublished(iso: string): string {
@@ -28,16 +117,23 @@ function quarterLabel(quarter: Quarter, year: number): string {
 export function PublishedIndex(props: PublishedIndexProps) {
   const groups = groupByQuarter()
 
-  // All schedules in this mock are from the same academic year. Once the
-  // real API lands we'll accept academic-year as a prop / URL segment.
-  const academicYear = "2025–2026"
+  // Derived from the schedules in scope, so adding a new year of data
+  // lights up the label automatically. When the real API replaces the
+  // fixtures the same helper keeps working against whatever list it gets.
+  const academicYear = academicYearLabel()
 
   return (
     <main className="mobile-index">
       <header className="mobile-index__header">
-        <h1 className="mobile-index__title">Schedules</h1>
-        <div className="mobile-index__subtitle">Academic year {academicYear}</div>
+        <div className="mobile-index__title-group">
+          <MobileBrandEyebrow />
+          <h1 className="mobile-index__title">Schedules</h1>
+          <div className="mobile-index__subtitle">Academic year {academicYear}</div>
+        </div>
+        <MobileThemeToggle />
       </header>
+
+      <UpstreamInvite />
 
       <ul className="mobile-index__list" role="list">
         {groups.map(group => (
@@ -64,9 +160,6 @@ export function PublishedIndex(props: PublishedIndexProps) {
         ))}
       </ul>
 
-      <footer className="mobile-index__footer">
-        <p>Editing is available on desktop. Open on a larger screen to tune and publish new versions.</p>
-      </footer>
     </main>
   )
 }
