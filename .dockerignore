@@ -6,8 +6,8 @@
 .vscode/
 .idea/
 # Note: .git/ is intentionally NOT excluded — the Vite build reads the
-# short SHA via `git rev-parse` so the VersionBadge shows the deployed
-# commit. See frontend/vite.config.ts.
+# short SHA via `git rev-parse` so the topbar About popover shows the
+# deployed commit. See frontend/vite.config.ts.
 
 # Claude / planning artifacts
 .claude/

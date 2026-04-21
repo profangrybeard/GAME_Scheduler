@@ -127,38 +127,28 @@
   letter-spacing: 0.26em;
 }
 
-.resume-rail__example {
+/* Loaded timestamp. Occupies the slot the "Try the example" button used to
+   sit in. Matches the resume button's vertical orientation but downplayed:
+   smaller, thinner, muted — data not a title. Will be reworked when we
+   redesign the rail; this is a holding pattern. */
+.resume-rail__loaded {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  color: inherit;
-  border: 0;
   border-top: 1px solid color-mix(in srgb, var(--bg) 20%, transparent);
   padding: 14px 0 10px;
-  cursor: pointer;
   opacity: 0.72;
-  transition: opacity 0.15s ease;
 }
 
-.resume-rail__example:hover {
-  opacity: 1;
-}
-
-.resume-rail__example-label {
+.resume-rail__loaded-label {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   white-space: nowrap;
-}
-
-.resume-rail__example-label::after {
-  content: " \2197";
-  display: inline;
+  font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 767px) {
@@ -178,11 +168,11 @@
     padding: 12px 0;
   }
   .resume-rail__label,
-  .resume-rail__example-label {
+  .resume-rail__loaded-label {
     writing-mode: horizontal-tb;
     transform: none;
   }
-  .resume-rail__example {
+  .resume-rail__loaded {
     border-top: 0;
     border-left: 1px solid color-mix(in srgb, var(--bg) 20%, transparent);
     padding: 12px 16px;
@@ -272,15 +262,11 @@
   cursor: not-allowed;
 }
 
-/* File input used by the settings menu's Restore action — kept visually
-   hidden since the trigger is a menu item, not the input itself. */
-.topbar-persist__input {
-  display: none;
-}
-
-/* ─── Topbar overflow menu (Backup / Restore / Commit / Version) ───
-   Low-frequency controls live behind an ⋯ trigger so the topbar's
-   right edge keeps Export + theme toggle as the primary actions. */
+/* ─── Topbar About popover ─────────────────────────────────────────
+   Replaces the older Backup/Restore/Commit overflow menu — those
+   actions belonged to the JSON-overlay persistence flow, now obsolete
+   under the workbook-as-source-of-truth model. The trigger is an
+   italic "i" and the popover surfaces app name, build info, contact. */
 .topbar-menu {
   position: relative;
   display: inline-flex;
@@ -308,6 +294,14 @@
 .topbar-menu__trigger[aria-expanded="true"] {
   color: var(--text);
   border-color: var(--text-faint);
+}
+
+.topbar-menu__trigger-glyph {
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .topbar-menu__popover {
@@ -363,48 +357,68 @@
 .topbar-menu__divider {
   height: 1px;
   background: var(--border);
-  margin: 4px 0;
+  margin: 6px 0;
 }
 
-.topbar-menu__footer {
+/* ─── About panel (content of the topbar About popover) ──────────── */
+
+.topbar-about {
+  padding: 8px 10px 10px;
+  min-width: 240px;
   display: flex;
-  justify-content: flex-end;
-  padding: 4px 6px 2px;
+  flex-direction: column;
+  gap: 4px;
 }
 
-/* ─── Version badge ─────────────────────────────────────────────── */
-
-.version-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  height: 28px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 0.72rem;
-  line-height: 1;
-  color: var(--text-muted);
-  text-decoration: none;
-  white-space: nowrap;
-  transition: color 0.15s ease, border-color 0.15s ease;
-}
-
-.version-badge:hover {
-  color: var(--text);
-  border-color: var(--text-faint);
-}
-
-.version-badge__mode {
+.topbar-about__title {
+  font-size: 0.95rem;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.topbar-about__meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.topbar-about__sha {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.topbar-about__sha:hover {
+  color: var(--text);
+}
+
+.topbar-about__dev {
+  margin-left: 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: var(--accent);
 }
 
-.version-badge__sha {
-  font-variant-numeric: tabular-nums;
+.topbar-about__contact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+.topbar-about__mailto {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.topbar-about__mailto:hover {
+  color: var(--accent);
 }
 
 /* ─── Theme toggle ─────────────────────────────────────────────── */

@@ -20,7 +20,7 @@ Visual conventions
 """
 
 from pathlib import Path
-from datetime import date
+from datetime import date, datetime
 import json
 
 import openpyxl
@@ -29,6 +29,19 @@ from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 from config import TIME_SLOTS, DAY_GROUPS
+
+
+# ---------------------------------------------------------------------------
+# Disaster-recovery backups
+# ---------------------------------------------------------------------------
+# Every xlsx written through write_excel() also lands a timestamped copy in
+# <backup_root>/.backups/. Keeps the BACKUP_RETENTION newest; older ones
+# prune automatically. Opt-in per-call: pass `backup_root=` to enable.
+# Hosted container's filesystem is ephemeral, so backups there are a no-op
+# in practice — only the local stack actually benefits.
+
+BACKUPS_DIRNAME  = ".backups"
+BACKUP_RETENTION = 10
 
 
 # ---------------------------------------------------------------------------
@@ -395,12 +408,23 @@ def _write_state_sheet(ws, draft_state: dict) -> None:
 # Main entry point
 # ---------------------------------------------------------------------------
 
-def write_excel(results: dict, output_dir: Path, draft_state: dict | None = None) -> Path:
+def write_excel(
+    results: dict,
+    output_dir: Path,
+    draft_state: dict | None = None,
+    backup_root: Path | None = None,
+) -> Path:
     """Write the workbook and return the file path.
 
     If ``draft_state`` is provided, a hidden ``_state`` sheet is appended
     carrying the user's working state (offerings, locks, mode, etc.) so
     the file can be re-uploaded later to resume editing.
+
+    If ``backup_root`` is provided, the written workbook is also copied into
+    ``<backup_root>/.backups/<stem>_<ISO>.xlsx`` and that directory is pruned
+    to the ``BACKUP_RETENTION`` newest entries. Backup failures are logged to
+    the exception, not re-raised — a disaster-recovery copy must never take
+    down the export itself.
     """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -427,4 +451,36 @@ def write_excel(results: dict, output_dir: Path, draft_state: dict | None = None
         _write_state_sheet(ws_state, draft_state)
 
     wb.save(path)
+
+    if backup_root is not None:
+        _save_backup(path, Path(backup_root))
+
     return path
+
+
+def _save_backup(src: Path, backup_root: Path) -> None:
+    """Copy ``src`` into ``backup_root/.backups/<stem>_<ISO>.xlsx`` and prune
+    the directory to the ``BACKUP_RETENTION`` most recent *.xlsx files.
+
+    Swallows every exception — if the disaster-recovery copy fails we'd
+    rather the user still gets their export than see a cryptic error.
+    """
+    try:
+        backups_dir = backup_root / BACKUPS_DIRNAME
+        backups_dir.mkdir(exist_ok=True)
+        iso = datetime.now().strftime("%Y%m%dT%H%M%S")
+        dest = backups_dir / f"{src.stem}_{iso}.xlsx"
+        dest.write_bytes(src.read_bytes())
+
+        surviving = sorted(
+            backups_dir.glob("*.xlsx"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        for stale in surviving[BACKUP_RETENTION:]:
+            try:
+                stale.unlink()
+            except OSError:
+                pass
+    except Exception:  # noqa: BLE001 — backup failure must not break export
+        pass

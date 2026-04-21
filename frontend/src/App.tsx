@@ -3,7 +3,6 @@ import {
   downloadBlob,
   parseDraftState,
   pingApi,
-  postCommit,
   postExportStream,
   postSolveStream,
   responseAssignmentToAssignment,
@@ -135,6 +134,24 @@ function applyEdits<T>(
   return result
 }
 
+// "Apr 21, 2026 · 3:14 PM" — the freshness signal rendered in the resume
+// rail. Split into date + time calls because toLocaleString's combined form
+// uses a comma separator we don't want.
+function formatLoadedTimestamp(ms: number): string {
+  const d = new Date(ms)
+  const date = d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
+  const time = d.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  })
+  return `${date} · ${time}`
+}
+
 function App() {
   const [state, setState] = useState<SchedulerState>(() => {
     const base = loadInitialState()
@@ -184,6 +201,10 @@ function App() {
   const [reloadWarnings, setReloadWarnings] = useState<string[] | null>(null)
   const [reloadError, setReloadError] = useState<string | null>(null)
   const [reloadFilename, setReloadFilename] = useState<string | null>(null)
+  // Workbook's last-modified epoch ms, read from the File object at load
+  // time. Surfaced in the resume-rail so the user can tell at a glance how
+  // fresh the file they're editing actually is.
+  const [reloadMtime, setReloadMtime] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   // ── Responsive UI state ──────────────────────────────────────────
@@ -761,31 +782,11 @@ function App() {
     fileInputRef.current?.click()
   }, [])
 
-  const loadExample = useCallback(async () => {
-    try {
-      // Vite serves `public/*` from the root, so this works for dev, preview,
-      // and GitHub Pages (same-origin fetch, no /api involved).
-      const base = import.meta.env.BASE_URL || "/"
-      const res = await fetch(`${base}example-schedule.xlsx`)
-      if (!res.ok) throw new Error(`example file missing (${res.status})`)
-      const blob = await res.blob()
-      const file = new File([blob], "example-schedule.xlsx", {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      })
-      await handleReloadFile(file)
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
-      setReloadError(msg)
-    }
-  // handleReloadFile is declared below; it only depends on stable callbacks,
-  // so exhaustive-deps flags the order but won't actually re-bind.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   const handleReloadFile = useCallback(async (file: File) => {
     setReloadError(null)
     setReloadWarnings(null)
     setReloadFilename(null)
+    setReloadMtime(null)
     try {
       const { state: draft, warnings } = await parseDraftState(file)
 
@@ -914,6 +915,7 @@ function App() {
 
       setReloadWarnings(warnings)
       setReloadFilename(file.name)
+      setReloadMtime(file.lastModified || null)
       setSolveProgress(synthesizedProgress)
       setSolveError(null)
       logChange("resume", file.name)
@@ -928,6 +930,7 @@ function App() {
     setReloadWarnings(null)
     setReloadError(null)
     setReloadFilename(null)
+    setReloadMtime(null)
   }, [])
 
   // ── Placement mode (tap-to-place alternative to DnD) ────────────
@@ -964,173 +967,6 @@ function App() {
     },
     [],
   )
-
-  // ── Overlay persistence (Backup / Restore / Commit) ──────────────
-  //
-  // The workspace stores edits in three localStorage overlays (prof, room,
-  // portraits). These three actions let the user move that overlay around:
-  //   Backup  — download the overlay as a portable JSON file (works
-  //             everywhere; survives PC swaps, Drive round-trips, etc.)
-  //   Restore — replace the current overlay from a backup file
-  //   Commit  — write the overlay into the canonical data/*.json files
-  //             on disk (local stack only; hosted filesystem is ephemeral)
-  //
-  // Commit is the "pre-ship" action for the dev/author; Backup/Restore is
-  // the portability path every chair eventually needs when they change PCs.
-
-  const importInputRef = useRef<HTMLInputElement>(null)
-
-  const exportOverlay = useCallback(() => {
-    // schema_version 3: both `professors` and `rooms` are full lists
-    // (Path B), not patch overlays. Restore also accepts v1 (legacy
-    // profEdits + roomEdits) and v2 (profEdits + rooms list) for back-compat
-    // with backups exported by older builds.
-    const snapshot = {
-      schema_version: 3,
-      kind: "scheduler-overlay",
-      exported_at: new Date().toISOString(),
-      professors: Object.values(state.professors),
-      rooms: Object.values(state.rooms),
-      portraits,
-    }
-    const blob = new Blob([JSON.stringify(snapshot, null, 2)], {
-      type: "application/json",
-    })
-    const date = new Date().toISOString().slice(0, 10)
-    downloadBlob(blob, `scheduler-overlay-${date}.json`)
-    logChange("backup", `scheduler-overlay-${date}.json`)
-  }, [state.professors, state.rooms, portraits, logChange])
-
-  const handleImportFile = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0]
-      // Reset so picking the same file twice still fires onChange
-      e.target.value = ""
-      if (!file) return
-
-      let snapshot: {
-        schema_version?: number
-        kind?: string
-        professors?: Professor[]
-        profEdits?: Record<string, Partial<Professor>> // legacy v1/v2
-        rooms?: Room[]
-        roomEdits?: Record<string, Partial<Room>> // legacy v1
-        portraits?: Record<string, string>
-      }
-      try {
-        snapshot = JSON.parse(await file.text())
-      } catch (err) {
-        alert(`Could not read file: ${err instanceof Error ? err.message : err}`)
-        return
-      }
-      const v = snapshot.schema_version
-      if (snapshot.kind !== "scheduler-overlay" ||
-          (v !== 1 && v !== 2 && v !== 3)) {
-        alert("Not a valid Scheduler overlay file.")
-        return
-      }
-
-      const baseline = loadInitialState()
-      const nextPortraits = snapshot.portraits ?? {}
-
-      // Resolve the professors list. v3 carries it explicitly; v1/v2 carry
-      // overlay patches, which we apply to baseline for migration.
-      let nextProfs: Professor[]
-      if (v === 3 && snapshot.professors) {
-        nextProfs = snapshot.professors
-      } else {
-        const edits = snapshot.profEdits ?? {}
-        nextProfs = Object.values(applyEdits(baseline.professors, edits))
-      }
-
-      // Resolve the rooms list. v2/v3 carry it explicitly; v1 carries overlay
-      // patches, which we apply to the current baseline just like the legacy
-      // loader would have. Either way, after restore the state.rooms IS the
-      // source of truth going forward.
-      let nextRooms: Room[]
-      if ((v === 2 || v === 3) && snapshot.rooms) {
-        nextRooms = snapshot.rooms
-      } else {
-        const edits = snapshot.roomEdits ?? {}
-        nextRooms = Object.values(applyEdits(baseline.rooms, edits))
-      }
-
-      const counts =
-        `${nextProfs.length} professors · ` +
-        `${nextRooms.length} rooms · ` +
-        `${Object.keys(nextPortraits).length} portraits`
-      if (!window.confirm(
-        `Restore overlay?\nThis replaces your current edits with:\n  ${counts}`
-      )) return
-
-      saveProfessors(nextProfs)
-      saveRooms(nextRooms)
-      try {
-        localStorage.setItem(PORTRAIT_STORAGE_KEY, JSON.stringify(nextPortraits))
-      } catch { /* full */ }
-
-      setPortraits(nextPortraits)
-
-      // Write both full lists straight into state. Offerings, solve state,
-      // selections, etc. stay put — overlay restore is scoped to ref data.
-      const profsMap = Object.fromEntries(nextProfs.map(p => [p.id, p]))
-      const roomsMap = Object.fromEntries(nextRooms.map(r => [r.id, r]))
-      setState(s => ({
-        ...s,
-        professors: profsMap,
-        rooms: roomsMap,
-      }))
-      logChange(
-        "restore",
-        `${nextProfs.length} profs · ${nextRooms.length} rooms`,
-      )
-    },
-    [logChange],
-  )
-
-  const commitToSource = useCallback(async () => {
-    const profsList = Object.values(state.professors)
-    const nProfs = profsList.length
-    const roomsList = Object.values(state.rooms)
-    const nRooms = roomsList.length
-    const nPortraits = Object.keys(portraits).length
-    // Both professors and rooms are written as full lists, so an empty deck
-    // IS a meaningful commit (= clear all). Only bail when literally every
-    // bucket is empty, which we treat as a no-op user misclick.
-    if (nProfs + nRooms + nPortraits === 0) {
-      alert("No edits to commit.")
-      return
-    }
-    if (!window.confirm(
-      `Write edits to source files on disk?\n\n` +
-      `  • data/professors.json  (${nProfs} professors, full replace)\n` +
-      `  • data/rooms.json  (${nRooms} rooms, full replace)\n` +
-      `  • data/portraits/  (${nPortraits} portraits)\n\n` +
-      `Canonical files will be modified. Commit them to git afterward.`
-    )) return
-
-    try {
-      const result = await postCommit({
-        professors: profsList,
-        rooms: roomsList,
-        portraits,
-      })
-      const head =
-        `Committed: ${result.professorsUpdated} profs · ` +
-        `${result.roomsUpdated} rooms · ` +
-        `${result.portraitsWritten} portraits.`
-      const tail = result.warnings.length > 0
-        ? `\n\nWarnings:\n${result.warnings.map(w => "• " + w).join("\n")}`
-        : ""
-      alert(head + tail)
-      logChange(
-        "commit",
-        `${result.professorsUpdated} profs · ${result.roomsUpdated} rooms`,
-      )
-    } catch (err) {
-      alert(`Commit failed: ${err instanceof Error ? err.message : err}`)
-    }
-  }, [state.professors, state.rooms, portraits, logChange])
 
   // Close the roster drawer when resizing up to desktop
   useEffect(() => {
@@ -1287,14 +1123,16 @@ function App() {
               e.target.value = ""
             }}
           />
-          <button
-            type="button"
-            className="resume-rail__example"
-            onClick={loadExample}
-            title="Load the bundled example-schedule.xlsx"
-          >
-            <span className="resume-rail__example-label">Try the example</span>
-          </button>
+          {reloadMtime !== null && (
+            <div
+              className="resume-rail__loaded"
+              title={`File last modified ${new Date(reloadMtime).toLocaleString()}`}
+            >
+              <span className="resume-rail__loaded-label">
+                Loaded {formatLoadedTimestamp(reloadMtime)}
+              </span>
+            </div>
+          )}
         </aside>
         <div className="scheduler__body">
         {placingOffering && placingCourse && (
@@ -1389,19 +1227,7 @@ function App() {
               {resolved === "dark" ? "\u263E" : "\u2600"}
               {theme === "system" && <span className="theme-toggle__auto">A</span>}
             </button>
-            <TopbarMenu
-              apiAvailable={apiAvailable}
-              onBackup={exportOverlay}
-              onRestore={() => importInputRef.current?.click()}
-              onCommit={commitToSource}
-            />
-            <input
-              ref={importInputRef}
-              type="file"
-              accept="application/json,.json"
-              className="topbar-persist__input"
-              onChange={handleImportFile}
-            />
+            <TopbarMenu />
           </div>
         </header>
         <main className="scheduler__canvas" data-active={activePanel}>

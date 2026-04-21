@@ -79,40 +79,6 @@ export async function pingApi(signal?: AbortSignal): Promise<boolean> {
 }
 
 // ---------------------------------------------------------------------------
-// Commit overlay to source JSON (local stack only)
-// ---------------------------------------------------------------------------
-
-export interface CommitSnapshot {
-  /** Full professors list — backend rewrites data/professors.json wholesale (Path B). */
-  professors: Professor[]
-  /** Full rooms list — backend rewrites data/rooms.json wholesale (Path B). */
-  rooms: Room[]
-  portraits: Record<string, string>
-}
-
-export interface CommitResult {
-  professorsUpdated: number
-  roomsUpdated: number
-  portraitsWritten: number
-  warnings: string[]
-}
-
-/** POST the overlay to /api/commit. Throws on HTTP failure — caller surfaces
- *  the error to the user. */
-export async function postCommit(snapshot: CommitSnapshot): Promise<CommitResult> {
-  const res = await fetch("/api/commit", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(snapshot),
-  })
-  if (!res.ok) {
-    const detail = await res.text().catch(() => "")
-    throw new Error(`Commit failed: ${res.status} ${detail || res.statusText}`)
-  }
-  return (await res.json()) as CommitResult
-}
-
-// ---------------------------------------------------------------------------
 // Streaming solve (SSE)
 // ---------------------------------------------------------------------------
 
