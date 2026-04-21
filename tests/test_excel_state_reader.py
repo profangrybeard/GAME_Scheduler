@@ -214,20 +214,20 @@ def test_nested_offering_fields_survive_roundtrip(tmp_path: Path) -> None:
 
 def test_validate_passes_through_when_all_refs_resolve() -> None:
     state = _sample_state()
-    cleaned, warnings = validate_against_local_data(
+    cleaned, errors = validate_against_local_data(
         state,
         catalog_ids={"ITGM-220", "ITGM-340"},
         prof_ids={"p_001"},
         room_ids={"r_101"},
     )
-    assert warnings == []
+    assert errors == []
     assert cleaned["offerings"] == state["offerings"]
     assert cleaned["locked_assignments"] == state["locked_assignments"]
 
 
 def test_validate_drops_offering_with_unknown_catalog_id() -> None:
     state = _sample_state()
-    cleaned, warnings = validate_against_local_data(
+    cleaned, errors = validate_against_local_data(
         state,
         catalog_ids={"ITGM-220"},  # missing ITGM-340
         prof_ids={"p_001"},
@@ -235,56 +235,73 @@ def test_validate_drops_offering_with_unknown_catalog_id() -> None:
     )
     assert len(cleaned["offerings"]) == 1
     assert cleaned["offerings"][0]["catalog_id"] == "ITGM-220"
-    assert len(warnings) == 1
-    assert "ITGM-340" in warnings[0]
-    assert "1 of 2 offerings" in warnings[0]
+    assert len(errors) == 1
+    err = errors[0]
+    assert err["sheet"] == "_data_offerings"
+    # Sample's 2nd offering (index 1) → sheet row 3 (header + 2 data rows).
+    assert err["row"] == 3
+    assert err["column"] == "catalog_id"
+    assert err["severity"] == "error"
+    assert "ITGM-340" in err["reason"]
 
 
 def test_validate_drops_lock_with_unknown_prof() -> None:
     state = _sample_state()
-    cleaned, warnings = validate_against_local_data(
+    cleaned, errors = validate_against_local_data(
         state,
         catalog_ids={"ITGM-220", "ITGM-340"},
         prof_ids=set(),  # p_001 not present
         room_ids={"r_101"},
     )
     assert cleaned["locked_assignments"] == []
-    assert len(warnings) == 1
-    assert "p_001" in warnings[0]
-    assert "professor" in warnings[0]
+    assert len(errors) == 1
+    err = errors[0]
+    assert err["sheet"] == "_data_locked_assignments"
+    assert err["row"] == 2
+    assert err["column"] == "prof_id"
+    assert err["severity"] == "error"
+    assert "p_001" in err["reason"]
 
 
 def test_validate_drops_lock_with_unknown_room() -> None:
     state = _sample_state()
-    cleaned, warnings = validate_against_local_data(
+    cleaned, errors = validate_against_local_data(
         state,
         catalog_ids={"ITGM-220", "ITGM-340"},
         prof_ids={"p_001"},
         room_ids=set(),  # r_101 not present
     )
     assert cleaned["locked_assignments"] == []
-    assert len(warnings) == 1
-    assert "r_101" in warnings[0]
-    assert "room" in warnings[0]
+    assert len(errors) == 1
+    err = errors[0]
+    assert err["sheet"] == "_data_locked_assignments"
+    assert err["row"] == 2
+    assert err["column"] == "room_id"
+    assert err["severity"] == "error"
+    assert "r_101" in err["reason"]
 
 
-def test_validate_collapses_long_drop_lists() -> None:
-    """Don't spam the user — sample first few, summarize the rest."""
+def test_validate_emits_one_error_per_dropped_record() -> None:
+    """Plan 1.2: partition, don't summarize — one error entry per bad record
+    so the Data Issues panel can list each clickable. No collapsing."""
     state = _sample_state()
     state["offerings"] = [
         {"catalog_id": f"GHOST-{i:03d}", "priority": "could_have", "sections": 1}
         for i in range(20)
     ]
-    cleaned, warnings = validate_against_local_data(
+    cleaned, errors = validate_against_local_data(
         state,
         catalog_ids={"ITGM-220"},  # none of the GHOSTs match
         prof_ids={"p_001"},
         room_ids={"r_101"},
     )
     assert cleaned["offerings"] == []
-    assert len(warnings) == 1
-    assert "20" in warnings[0]
-    assert "+15 more" in warnings[0]  # 20 dropped, sample 5, +15 more
+    assert len(errors) == 20
+    # Rows count up from 2 (header at row 1)
+    assert [e["row"] for e in errors] == list(range(2, 22))
+    # First error carries its specific ghost id
+    assert "GHOST-000" in errors[0]["reason"]
+    assert "GHOST-019" in errors[-1]["reason"]
 
 
 def test_validate_preserves_all_other_top_level_keys() -> None:
@@ -350,14 +367,14 @@ def test_round_trip_preserves_embedded_solver_results(tmp_path: Path) -> None:
 def test_validate_passes_solver_results_through_unchanged() -> None:
     """validate_against_local_data only filters offerings + locks. The
     solver_results key flows through verbatim — orphan-prevention is the
-    hydrate step's job (it drops solver_results when warnings are present)."""
+    hydrate step's job (it drops solver_results when errors are present)."""
     state = _sample_state()
     state["solver_results"] = {"modes": [{"mode": "balanced", "schedule": []}]}
-    cleaned, warnings = validate_against_local_data(
+    cleaned, errors = validate_against_local_data(
         state,
         catalog_ids={"ITGM-220", "ITGM-340"},
         prof_ids={"p_001"},
         room_ids={"r_101"},
     )
-    assert warnings == []
+    assert errors == []
     assert cleaned["solver_results"] == state["solver_results"]

@@ -197,7 +197,8 @@ def test_parse_round_trips_an_export(client, fake_run_schedule):
     assert res.status_code == 200
     body = res.json()
     assert "state" in body
-    assert "warnings" in body
+    assert "errors" in body
+    assert body["errors"] == []  # clean round-trip, no drift
     assert body["state"]["solver_mode"] == "time_pref_first"
     assert body["state"]["source"] == "react"
     assert len(body["state"]["offerings"]) == 2
@@ -282,9 +283,10 @@ def test_parse_422_when_marker_corrupted(client, tmp_path):
     assert "GAME Scheduler export" in res.json()["detail"]
 
 
-def test_parse_returns_warning_for_unknown_catalog_id(client, tmp_path):
+def test_parse_returns_structured_error_for_unknown_catalog_id(client, tmp_path):
     """Drift policy: drop offerings whose catalog_id isn't in the local
-    catalog, surface one summary warning per category."""
+    catalog, surface one structured error per dropped record (sheet / row /
+    column / reason / severity) so the Data Issues panel can render them."""
     fake_results = {
         "quarter": "fall", "year": 2026,
         "modes": [{
@@ -311,6 +313,11 @@ def test_parse_returns_warning_for_unknown_catalog_id(client, tmp_path):
     # Only the local-known offering survives
     assert len(body["state"]["offerings"]) == 1
     assert body["state"]["offerings"][0]["catalog_id"] == "GAME_120"
-    # Single warning summarizes the drop
-    assert len(body["warnings"]) == 1
-    assert "GHOST-999" in body["warnings"][0]
+    # One structured error per dropped record
+    assert len(body["errors"]) == 1
+    err = body["errors"][0]
+    assert err["sheet"] == "_data_offerings"
+    assert err["row"] == 3  # header + first offering = row 2, second offering = row 3
+    assert err["column"] == "catalog_id"
+    assert err["severity"] == "error"
+    assert "GHOST-999" in err["reason"]

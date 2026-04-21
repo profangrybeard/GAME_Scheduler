@@ -543,12 +543,16 @@ async def parse_state(file: UploadFile = File(...)) -> dict:
     """Parse a Scheduler-exported XLSX and return the embedded draft state.
 
     Returns:
-        ``{"state": <cleaned draft state>, "warnings": [<drift warnings>]}``
+        ``{"state": <cleaned draft state>, "errors": [<validation errors>]}``
+
+        Each error is a dict ``{sheet, row, column, reason, severity}`` —
+        one entry per dropped record. The Data Issues panel renders these
+        as clickable entries pointing at the offending sheet row.
 
     Status codes:
-        200 — parsed OK, may include warnings if local catalog/profs/rooms
-              don't recognize some referenced IDs (orphaned offerings/locks
-              are dropped from the returned state)
+        200 — parsed OK. ``errors`` may be non-empty if local catalog/
+              profs/rooms don't recognize some referenced IDs (orphaned
+              offerings/locks are dropped from the returned state).
         400 — uploaded file isn't a valid Excel workbook
         422 — file is XLSX but doesn't contain readable Scheduler draft state
               (missing _data_meta sheet, wrong marker, unsupported schema version,
@@ -603,14 +607,14 @@ async def parse_state(file: UploadFile = File(...)) -> dict:
         raise HTTPException(status_code=422, detail=f"Could not read Excel: {e}")
 
     catalog_ids, prof_ids, room_ids = _local_reference_ids()
-    cleaned, warnings = validate_against_local_data(
+    cleaned, errors = validate_against_local_data(
         state,
         catalog_ids=catalog_ids,
         prof_ids=prof_ids,
         room_ids=room_ids,
     )
 
-    return {"state": cleaned, "warnings": warnings}
+    return {"state": cleaned, "errors": errors}
 
 
 # ---------------------------------------------------------------------------

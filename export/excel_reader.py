@@ -10,12 +10,16 @@ Two public entry points:
   read_draft_state(file)
       Returns the parsed dict, or raises one of the typed exceptions
       below. UI code maps each exception to a specific user message.
+      Structural failures ("not our file", "schema too new") still
+      raise — there's nothing meaningful to partition at cell level.
 
   validate_against_local_data(state, catalog_ids, prof_ids, room_ids)
       Filters offerings/locks against the locally-loaded reference data
-      and returns (cleaned_state, warnings). Drift answer: drop the
-      affected items, surface a warning per category. Never silently
-      mutate, never refuse the whole file because of one bad ref.
+      and returns (cleaned_state, errors). Each dropped record emits
+      one structured error ``{sheet, row, column, reason, severity}``.
+      Partition, don't throw — never refuse the whole file because of
+      one bad ref. The Data Issues panel (Phase 3) renders these as a
+      clickable list so users can fix offending rows inline.
 """
 from __future__ import annotations
 
@@ -232,65 +236,75 @@ def validate_against_local_data(
     catalog_ids: set[str],
     prof_ids: set[str],
     room_ids: set[str],
-) -> tuple[dict, list[str]]:
+) -> tuple[dict, list[dict]]:
     """Filter draft state against local reference data.
 
-    Returns (cleaned_state, warnings). Offerings whose ``catalog_id`` isn't
-    in ``catalog_ids`` are dropped. Locks whose ``prof_id`` or ``room_id``
-    aren't local are dropped. Each category produces at most one warning
-    line — no spam if many items drop.
+    Returns ``(cleaned_state, errors)``. Offerings whose ``catalog_id``
+    isn't in ``catalog_ids`` are dropped. Locks whose ``prof_id`` or
+    ``room_id`` aren't local are dropped. Each dropped record emits one
+    structured error::
+
+        {"sheet": "_data_offerings",   # source _data_* sheet name
+         "row": 4,                      # 1-based sheet row (1 = header)
+         "column": "catalog_id",        # header field name
+         "reason": "Unknown …",         # user-facing detail
+         "severity": "error"}           # "error" | "warning" | "info"
+
+    ``row`` is derived from the list index in ``state`` — record N in the
+    parsed list lives at sheet row N+2 (+1 for the header row, +1 for
+    1-based indexing). ``column`` is the header name rather than an
+    Excel letter since the union-of-keys writer doesn't pin a column to
+    a field, and the Data Issues panel renders friendly names anyway.
 
     The cleaned state is a shallow copy with ``offerings`` and
     ``locked_assignments`` replaced; all other keys pass through.
     """
-    warnings: list[str] = []
+    errors: list[dict] = []
 
     raw_offerings = state.get("offerings", []) or []
     valid_offerings: list[dict] = []
-    dropped_cids: list[str] = []
-    for o in raw_offerings:
+    for idx, o in enumerate(raw_offerings):
         cid = o.get("catalog_id")
         if cid in catalog_ids:
             valid_offerings.append(o)
         else:
-            dropped_cids.append(cid if cid else "<unknown>")
-
-    if dropped_cids:
-        sample = ", ".join(dropped_cids[:5])
-        more = "" if len(dropped_cids) <= 5 else f" (+{len(dropped_cids) - 5} more)"
-        warnings.append(
-            f"Loaded {len(valid_offerings)} of {len(raw_offerings)} offerings — "
-            f"dropped {len(dropped_cids)} referencing courses not in your local "
-            f"catalog: {sample}{more}"
-        )
+            errors.append({
+                "sheet":    DATA_SHEET_OFFERINGS,
+                "row":      idx + 2,
+                "column":   "catalog_id",
+                "reason":   (
+                    f"Unknown catalog_id {cid!r} — not in your local catalog"
+                    if cid else "Missing catalog_id"
+                ),
+                "severity": "error",
+            })
 
     raw_locks = state.get("locked_assignments", []) or []
     valid_locks: list[dict] = []
-    dropped_lock_reasons: list[str] = []
-    for la in raw_locks:
+    for idx, la in enumerate(raw_locks):
         prof_id = la.get("prof_id")
         room_id = la.get("room_id")
         if prof_id not in prof_ids:
-            dropped_lock_reasons.append(
-                f"professor {prof_id!r} not on your roster"
-            )
+            errors.append({
+                "sheet":    DATA_SHEET_LOCKED,
+                "row":      idx + 2,
+                "column":   "prof_id",
+                "reason":   f"Unknown prof_id {prof_id!r} — not on your roster",
+                "severity": "error",
+            })
             continue
         if room_id not in room_ids:
-            dropped_lock_reasons.append(
-                f"room {room_id!r} not in your local rooms"
-            )
+            errors.append({
+                "sheet":    DATA_SHEET_LOCKED,
+                "row":      idx + 2,
+                "column":   "room_id",
+                "reason":   f"Unknown room_id {room_id!r} — not in your local rooms",
+                "severity": "error",
+            })
             continue
         valid_locks.append(la)
-
-    if dropped_lock_reasons:
-        sample = "; ".join(dropped_lock_reasons[:3])
-        more = "" if len(dropped_lock_reasons) <= 3 else f" (+{len(dropped_lock_reasons) - 3} more)"
-        warnings.append(
-            f"Loaded {len(valid_locks)} of {len(raw_locks)} locks — "
-            f"dropped {len(dropped_lock_reasons)}: {sample}{more}"
-        )
 
     cleaned = dict(state)
     cleaned["offerings"] = valid_offerings
     cleaned["locked_assignments"] = valid_locks
-    return cleaned, warnings
+    return cleaned, errors

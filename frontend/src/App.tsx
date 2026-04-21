@@ -9,6 +9,7 @@ import {
   type SolveEvent,
   type SolveModeResult,
   type SolveRequestBody,
+  type ValidationError,
 } from "./api"
 import { BrandEyebrow } from "./components/BrandEyebrow"
 import { CatalogueDrawer } from "./components/CatalogueDrawer"
@@ -198,7 +199,10 @@ function App() {
   const [clearArmed, setClearArmed] = useState(false)
 
   // ── Resume from Excel state ────────────────────────────────────
-  const [reloadWarnings, setReloadWarnings] = useState<string[] | null>(null)
+  // Structured validation errors from /api/state/parse. Each entry carries
+  // sheet / row / column / reason / severity — the Data Issues panel
+  // (phase 3) lists them clickable; today the reload banner renders reasons.
+  const [reloadErrors, setReloadErrors] = useState<ValidationError[] | null>(null)
   const [reloadError, setReloadError] = useState<string | null>(null)
   const [reloadFilename, setReloadFilename] = useState<string | null>(null)
   // Workbook's last-modified epoch ms, read from the File object at load
@@ -784,11 +788,11 @@ function App() {
 
   const handleReloadFile = useCallback(async (file: File) => {
     setReloadError(null)
-    setReloadWarnings(null)
+    setReloadErrors(null)
     setReloadFilename(null)
     setReloadMtime(null)
     try {
-      const { state: draft, warnings } = await parseDraftState(file)
+      const { state: draft, errors } = await parseDraftState(file)
 
       // Cache all modes from the embedded results so flipping the solveMode
       // chip post-reload re-applies without a fresh solve. Each mode's
@@ -913,7 +917,7 @@ function App() {
         saveTunedMix(mix)
       }
 
-      setReloadWarnings(warnings)
+      setReloadErrors(errors)
       setReloadFilename(file.name)
       setReloadMtime(file.lastModified || null)
       setSolveProgress(synthesizedProgress)
@@ -927,7 +931,7 @@ function App() {
   }, [])
 
   const dismissReloadBanner = useCallback(() => {
-    setReloadWarnings(null)
+    setReloadErrors(null)
     setReloadError(null)
     setReloadFilename(null)
     setReloadMtime(null)
@@ -1149,7 +1153,7 @@ function App() {
             </button>
           </div>
         )}
-        {(reloadError || reloadWarnings) && (
+        {(reloadError || reloadErrors) && (
           <div
             className={
               "reload-banner" +
@@ -1166,10 +1170,10 @@ function App() {
                   <strong>
                     Loaded draft{reloadFilename ? ` from ${reloadFilename}` : ""}
                   </strong>
-                  {reloadWarnings && reloadWarnings.length > 0 && (
+                  {reloadErrors && reloadErrors.length > 0 && (
                     <ul className="reload-banner__warnings">
-                      {reloadWarnings.map((w, i) => (
-                        <li key={i}>{w}</li>
+                      {reloadErrors.map((e, i) => (
+                        <li key={i}>{e.reason}</li>
                       ))}
                     </ul>
                   )}
