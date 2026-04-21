@@ -216,6 +216,11 @@ function App() {
   // restore in the error banner. Null = no snapshot available / banner
   // shouldn't offer recovery.
   const [reloadSnapshot, setReloadSnapshot] = useState<DraftSnapshot | null>(null)
+  // Tracks whether the current hydrated state came from a snapshot restore
+  // (true) vs a fresh parse (false). Drives the success-banner copy so we
+  // don't claim "Loaded draft from X.xlsx" when the user actually restored
+  // from last-saved snapshot because X.xlsx was broken.
+  const [reloadFromSnapshot, setReloadFromSnapshot] = useState(false)
   // Workbook's last-modified epoch ms, read from the File object at load
   // time. Surfaced in the resume-rail so the user can tell at a glance how
   // fresh the file they're editing actually is.
@@ -936,6 +941,7 @@ function App() {
     setReloadFilename(null)
     setReloadMtime(null)
     setReloadSnapshot(null)
+    setReloadFromSnapshot(false)
     try {
       const { state: draft, errors } = await parseDraftState(file)
       hydrateFromDraft(draft)
@@ -970,6 +976,7 @@ function App() {
     // that's when this data was actually fresh, which is the honest signal.
     setReloadMtime(reloadSnapshot.savedAt)
     setReloadSnapshot(null)
+    setReloadFromSnapshot(true)
     logChange("resume_snapshot", reloadFilename)
   }, [reloadSnapshot, reloadFilename, hydrateFromDraft])
 
@@ -979,6 +986,7 @@ function App() {
     setReloadFilename(null)
     setReloadMtime(null)
     setReloadSnapshot(null)
+    setReloadFromSnapshot(false)
   }, [])
 
   // ── Placement mode (tap-to-place alternative to DnD) ────────────
@@ -1226,6 +1234,13 @@ function App() {
                     </div>
                   )}
                 </>
+              ) : reloadFromSnapshot ? (
+                <strong>
+                  Restored from last-saved snapshot
+                  {reloadMtime !== null
+                    ? ` (${formatLoadedTimestamp(reloadMtime)})`
+                    : ""}
+                </strong>
               ) : (
                 <>
                   <strong>
