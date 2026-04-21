@@ -62,12 +62,17 @@ function effectiveSlot(o: Offering): Slot | null {
   return null
 }
 
+const QUARTER_OPTIONS: ReadonlyArray<string> = ["Fall", "Winter", "Spring", "Summer"]
+
 export interface QuarterScheduleProps {
   offerings: Offering[]
   selectedOfferingId: string | null
   catalog: Record<string, Course>
   professors: Record<string, Professor>
   rooms: Record<string, Room>
+  /** Current quarter label (e.g. "Fall"). Rendered in the panel title with an
+   *  inline <select> so the user can swap the header without leaving the grid. */
+  quarter: string
   solveStatus: SolveStatus
   solveMode: SolveMode
   placingId: string | null
@@ -84,6 +89,7 @@ export interface QuarterScheduleProps {
   onAdd: (catalog_id: string) => string | null
   onPinToSlot: (offering_id: string, slot: Slot | null) => void
   onSetSolveMode: (mode: SolveMode) => void
+  onSetQuarter: (quarter: string) => void
   onSolve: () => void
   onEmptyCalendar: () => void
   /** True when the Clear button is in stage-2 (next click also drops user
@@ -243,10 +249,27 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
     )
   }
 
+  const quarterValue = QUARTER_OPTIONS.includes(props.quarter) ? props.quarter : "Fall"
+
   return (
-    <section className="panel panel--schedule" aria-label="Quarter Schedule">
+    <section className="panel panel--schedule" aria-label={`${quarterValue} Schedule`}>
       <header className="panel__header">
-        <h2 className="panel__title">Quarter Schedule</h2>
+        <h2 className="panel__title">
+          <span className="panel__title-select-wrap">
+            <select
+              className="panel__title-select"
+              value={quarterValue}
+              onChange={e => props.onSetQuarter(e.target.value)}
+              aria-label="Quarter"
+            >
+              {QUARTER_OPTIONS.map(q => (
+                <option key={q} value={q}>{q}</option>
+              ))}
+            </select>
+            <span className="panel__title-select-caret" aria-hidden="true">▾</span>
+          </span>
+          {" "}Schedule
+        </h2>
         <div className="schedule__toolbar">
           {/* Mode selection moved to the SolveProgress mode cards — clicking
               an Affinity/Time Pref/Balanced card flips the calendar to that
