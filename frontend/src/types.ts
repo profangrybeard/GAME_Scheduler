@@ -394,7 +394,7 @@ export type CapacityState = "under" | "contract" | "overload" | "maxed"
  *  - under:    loaded < floor              (keep adding classes)
  *  - contract: loaded === floor            (hit the floor, overloads still open)
  *  - overload: floor < loaded < ceiling    (spending overload slots)
- *  - maxed:    loaded >= ceiling           (clip is full) */
+ *  - maxed:    loaded >= ceiling           (at cap) */
 export function capacityState(cap: RosterCapacity): CapacityState {
   if (cap.loaded >= cap.ceilingTotal) return "maxed"
   if (cap.loaded > cap.floorTotal) return "overload"
@@ -442,7 +442,7 @@ export function capacityChipTitle(
       return `${used} overload used, ${left} left.`
     }
     case "maxed":
-      return "Clip's full — nice work."
+      return "At cap — nice work."
   }
 }
 

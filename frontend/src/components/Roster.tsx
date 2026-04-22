@@ -332,7 +332,7 @@ function OfferingsList(props: OfferingsListProps) {
           {capState === "under" && "keep loading"}
           {capState === "contract" && "contract met"}
           {capState === "overload" && "in overload"}
-          {capState === "maxed" && "clip full"}
+          {capState === "maxed" && "at cap"}
         </span>
       </div>
       <div
@@ -622,7 +622,7 @@ function capacityNag(
     case "overload":
       return `Overload in use — ${overloadLeft} slot${overloadLeft === 1 ? "" : "s"} left.`
     case "maxed":
-      return "Clip's full — nice work."
+      return "At cap — nice work."
   }
 }
 
