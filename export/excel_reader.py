@@ -240,9 +240,13 @@ def validate_against_local_data(
     """Filter draft state against local reference data.
 
     Returns ``(cleaned_state, errors)``. Offerings whose ``catalog_id``
-    isn't in ``catalog_ids`` are dropped. Locks whose ``prof_id`` or
-    ``room_id`` aren't local are dropped. Each dropped record emits one
-    structured error::
+    isn't in ``catalog_ids`` are dropped (severity ``error``). Locks
+    whose ``prof_id`` or ``room_id`` aren't local are dropped
+    (``error``). Soft-preference fields on a kept offering
+    (``override_preferred_professors``, ``assigned_prof_id``,
+    ``assigned_room_id``) emit ``warning`` severity when they reference
+    an unknown ID — the offering still schedules, but the hint is lost.
+    Each entry looks like::
 
         {"sheet": "_data_offerings",   # source _data_* sheet name
          "row": 4,                      # 1-based sheet row (1 = header)
@@ -258,6 +262,8 @@ def validate_against_local_data(
 
     The cleaned state is a shallow copy with ``offerings`` and
     ``locked_assignments`` replaced; all other keys pass through.
+    Warning-only records are kept unchanged — the offering retains its
+    (stale) pref so Excel still reflects what the user typed.
     """
     errors: list[dict] = []
 
@@ -265,18 +271,63 @@ def validate_against_local_data(
     valid_offerings: list[dict] = []
     for idx, o in enumerate(raw_offerings):
         cid = o.get("catalog_id")
-        if cid in catalog_ids:
-            valid_offerings.append(o)
-        else:
+        row = idx + 2
+        if cid not in catalog_ids:
             errors.append({
                 "sheet":    DATA_SHEET_OFFERINGS,
-                "row":      idx + 2,
+                "row":      row,
                 "column":   "catalog_id",
                 "reason":   (
                     f"Unknown catalog_id {cid!r} — not in your local catalog"
                     if cid else "Missing catalog_id"
                 ),
                 "severity": "error",
+            })
+            continue
+        valid_offerings.append(o)
+
+        # Warnings: record is kept, but a soft-preference field references an
+        # ID we don't recognize. The solver treats unknown IDs as absent, so
+        # the offering still schedules — just without the user's hint.
+        prefs = o.get("override_preferred_professors") or []
+        unknown_prefs = [p for p in prefs if p and p not in prof_ids]
+        if unknown_prefs:
+            joined = ", ".join(repr(p) for p in unknown_prefs)
+            errors.append({
+                "sheet":    DATA_SHEET_OFFERINGS,
+                "row":      row,
+                "column":   "override_preferred_professors",
+                "reason":   (
+                    f"Preferred professor{'s' if len(unknown_prefs) != 1 else ''} "
+                    f"{joined} not on your roster — preference will be ignored"
+                ),
+                "severity": "warning",
+            })
+
+        apid = o.get("assigned_prof_id")
+        if apid and apid not in prof_ids:
+            errors.append({
+                "sheet":    DATA_SHEET_OFFERINGS,
+                "row":      row,
+                "column":   "assigned_prof_id",
+                "reason":   (
+                    f"Assigned professor {apid!r} not on your roster — "
+                    "will fall back to AUTO assignment"
+                ),
+                "severity": "warning",
+            })
+
+        arid = o.get("assigned_room_id")
+        if arid and arid not in room_ids:
+            errors.append({
+                "sheet":    DATA_SHEET_OFFERINGS,
+                "row":      row,
+                "column":   "assigned_room_id",
+                "reason":   (
+                    f"Assigned room {arid!r} not in your local rooms — "
+                    "will fall back to AUTO assignment"
+                ),
+                "severity": "warning",
             })
 
     raw_locks = state.get("locked_assignments", []) or []
