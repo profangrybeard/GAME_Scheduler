@@ -304,6 +304,100 @@ def test_validate_emits_one_error_per_dropped_record() -> None:
     assert "GHOST-019" in errors[-1]["reason"]
 
 
+def test_validate_warns_on_unknown_override_preferred_professors() -> None:
+    """Soft-preference: offering keeps its row, but an unknown prof in
+    override_preferred_professors emits a warning so the user can fix
+    the stale hint before it silently degrades scheduling quality."""
+    state = _sample_state()
+    state["offerings"] = [
+        {
+            "catalog_id": "ITGM-220",
+            "priority": "must_have",
+            "sections": 1,
+            "override_preferred_professors": ["p_001", "p_ghost", "p_002"],
+        }
+    ]
+    cleaned, errors = validate_against_local_data(
+        state,
+        catalog_ids={"ITGM-220"},
+        prof_ids={"p_001"},  # p_002 and p_ghost are unknown
+        room_ids={"r_101"},
+    )
+    # Record is still present — warning is soft, not dropping.
+    assert len(cleaned["offerings"]) == 1
+    warnings = [e for e in errors if e["severity"] == "warning"]
+    assert len(warnings) == 1
+    w = warnings[0]
+    assert w["sheet"] == "_data_offerings"
+    assert w["column"] == "override_preferred_professors"
+    assert "p_ghost" in w["reason"]
+    assert "p_002" in w["reason"]
+    assert "p_001" not in w["reason"]  # known prof shouldn't be flagged
+
+
+def test_validate_warns_on_unknown_assigned_prof_id() -> None:
+    state = _sample_state()
+    state["offerings"] = [
+        {"catalog_id": "ITGM-220", "priority": "must_have",
+         "sections": 1, "assigned_prof_id": "p_ghost"}
+    ]
+    cleaned, errors = validate_against_local_data(
+        state,
+        catalog_ids={"ITGM-220"},
+        prof_ids={"p_001"},
+        room_ids={"r_101"},
+    )
+    assert len(cleaned["offerings"]) == 1
+    assert len(errors) == 1
+    assert errors[0]["severity"] == "warning"
+    assert errors[0]["column"] == "assigned_prof_id"
+    assert "p_ghost" in errors[0]["reason"]
+
+
+def test_validate_warns_on_unknown_assigned_room_id() -> None:
+    state = _sample_state()
+    state["offerings"] = [
+        {"catalog_id": "ITGM-220", "priority": "must_have",
+         "sections": 1, "assigned_room_id": "r_ghost"}
+    ]
+    cleaned, errors = validate_against_local_data(
+        state,
+        catalog_ids={"ITGM-220"},
+        prof_ids={"p_001"},
+        room_ids={"r_101"},
+    )
+    assert len(cleaned["offerings"]) == 1
+    assert len(errors) == 1
+    assert errors[0]["severity"] == "warning"
+    assert errors[0]["column"] == "assigned_room_id"
+
+
+def test_validate_skips_soft_warnings_when_offering_dropped() -> None:
+    """A dropped offering (error on catalog_id) shouldn't also spawn
+    warnings for its soft-prefs — the record is gone, the hints are
+    moot, and doubling up would clutter the panel."""
+    state = _sample_state()
+    state["offerings"] = [
+        {
+            "catalog_id": "GHOST-999",  # unknown — will be dropped
+            "priority": "must_have",
+            "sections": 1,
+            "override_preferred_professors": ["p_ghost"],
+            "assigned_prof_id": "p_ghost",
+            "assigned_room_id": "r_ghost",
+        }
+    ]
+    _, errors = validate_against_local_data(
+        state,
+        catalog_ids={"ITGM-220"},
+        prof_ids={"p_001"},
+        room_ids={"r_101"},
+    )
+    assert len(errors) == 1
+    assert errors[0]["severity"] == "error"
+    assert errors[0]["column"] == "catalog_id"
+
+
 def test_validate_preserves_all_other_top_level_keys() -> None:
     state = _sample_state()
     state["custom_extension"] = {"future": "field"}
