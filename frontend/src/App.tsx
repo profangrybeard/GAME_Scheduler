@@ -21,6 +21,7 @@ import { BrandEyebrow } from "./components/BrandEyebrow"
 import { CatalogueDrawer } from "./components/CatalogueDrawer"
 import { ChangeLog, type ChangeLogEntry } from "./components/ChangeLog"
 import { Class } from "./components/Class"
+import { DataIssuesPanel } from "./components/DataIssuesPanel"
 import { PortraitContext } from "./components/PortraitContext"
 import { ProfessorContext } from "./components/ProfessorContext"
 import { ProfessorCard } from "./components/ProfessorCard"
@@ -1252,11 +1253,13 @@ function App() {
                     Loaded draft{reloadFilename ? ` from ${reloadFilename}` : ""}
                   </strong>
                   {reloadErrors && reloadErrors.length > 0 && (
-                    <ul className="reload-banner__warnings">
-                      {reloadErrors.map((e, i) => (
-                        <li key={i}>{e.reason}</li>
-                      ))}
-                    </ul>
+                    <span className="reload-banner__issues">
+                      {" — "}
+                      {reloadErrors.length} data issue{reloadErrors.length === 1 ? "" : "s"}
+                      {" (see "}
+                      <span className="reload-banner__issues-pointer">!</span>
+                      {" in the topbar)"}
+                    </span>
                   )}
                 </>
               )}
@@ -1312,6 +1315,7 @@ function App() {
               {resolved === "dark" ? "\u263E" : "\u2600"}
               {theme === "system" && <span className="theme-toggle__auto">A</span>}
             </button>
+            <DataIssuesPanel errors={reloadErrors} />
             <TopbarMenu />
           </div>
         </header>
