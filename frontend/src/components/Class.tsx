@@ -115,7 +115,19 @@ export function Class(props: ClassProps) {
             </span>
             <span className="class__credits">{course.credits} cr</span>
           </div>
-          <h3 className="class__name">{course.name}</h3>
+          <h3 className="class__name">
+            {course.name}
+            {course.description && (
+              <button
+                type="button"
+                className="class__info-badge"
+                title={course.description}
+                aria-label="Course description (hover for full text)"
+              >
+                i
+              </button>
+            )}
+          </h3>
           <div
             className={
               "class__prof-lockup" +
@@ -148,13 +160,20 @@ export function Class(props: ClassProps) {
               </div>
             </div>
           </div>
-          {course.description && (
-            <p className="class__desc">{course.description}</p>
-          )}
         </section>
 
         <section className="class__section">
-          <label className="class__label">Priority</label>
+          <label className="class__label">
+            Priority
+            <button
+              type="button"
+              className="class__info-badge"
+              title="MoSCoW-inspired soft weighting. Add &ldquo;would be nice&rdquo; classes freely — the solver drops the lowest priorities first when it can't fit them all."
+              aria-label="About priority levels (hover for explanation)"
+            >
+              ?
+            </button>
+          </label>
           <div className="class__segmented">
             {PRIORITIES.map(opt => (
               <button
@@ -173,11 +192,6 @@ export function Class(props: ClassProps) {
               </button>
             ))}
           </div>
-          <p className="class__hint">
-            MoSCoW-inspired soft weighting. Add “would be nice” classes
-            freely — the solver drops the lowest priorities first when it
-            can’t fit them all.
-          </p>
         </section>
 
         <section className="class__section">
