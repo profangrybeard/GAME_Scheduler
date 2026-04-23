@@ -1388,19 +1388,66 @@
 .class__remove {
   background: var(--surface);
   border: 1px solid var(--border);
-  color: var(--text);
+  color: var(--text-muted);
   font: inherit;
   font-size: 0.8rem;
   padding: 8px 12px;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.12s ease;
 }
 
-.class__remove { color: var(--text-muted); }
 .class__remove:hover {
   color: var(--danger);
   border-color: var(--danger);
+  transform: translateY(-1px);
+}
+
+.class__remove:active {
+  transform: translateY(0);
+}
+
+/* Collapsible reference info at the bottom of the Class panel — station type,
+ * seat count, legend glyphs. Modeled after prof-card__specs so the chevron
+ * rotation reads the same across both detail panels. */
+.class__details {
+  gap: 6px;
+}
+
+.class__details > summary {
+  cursor: pointer;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: color 0.12s ease;
+  width: fit-content;
+}
+
+.class__details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.class__details > summary::before {
+  content: "▸";
+  font-size: 0.7rem;
+  line-height: 1;
+  transition: transform 0.15s ease;
+  display: inline-block;
+}
+
+.class__details[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.class__details > summary:hover {
+  color: var(--text-muted);
 }
 
 /* ─── Quarter Schedule ──────────────────────────────────────────── */
@@ -1709,6 +1756,10 @@
 
 .roster__tab {
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   background: transparent;
   border: none;
   color: var(--text-muted);
@@ -1733,6 +1784,92 @@
   border-bottom-color: var(--accent);
 }
 
+/* Count badge — same on all tabs. Muted on inactive tabs, accent-tinted on
+ * the active one so the eye registers "current list size" at a glance. */
+.roster__tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--text-muted);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.roster__tab--active .roster__tab-count {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+}
+
+/* Warning dot — lives on a tab when its list has something the user should
+ * notice before clicking (e.g. dept in overload). Tooltip carries the detail. */
+.roster__tab-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--warn);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--warn) 30%, transparent);
+}
+
+/* Sub-tabs inside the Courses tab — switch between the quarter's unplaced
+ * roster and the full Browse catalogue. Lighter visual weight than the main
+ * tabs so the three-tab hierarchy stays legible. */
+.roster__subtabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px var(--space-md) 4px;
+  align-items: center;
+}
+
+.roster__subtab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.12s ease;
+}
+
+.roster__subtab:hover {
+  color: var(--text);
+  border-color: var(--border);
+  transform: translateY(-1px);
+}
+
+.roster__subtab:active {
+  transform: translateY(0);
+}
+
+.roster__subtab--active {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--accent);
+}
+
+.roster__subtab-count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 0.7rem;
+  opacity: 0.75;
+}
+
+.roster__subtab--active .roster__subtab-count {
+  opacity: 1;
+}
+
 .roster__add-btn {
   margin-left: auto;
   background: transparent;
@@ -1744,12 +1881,17 @@
   padding: 3px 10px;
   border-radius: 999px;
   cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease;
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
 }
 
 .roster__add-btn:hover {
   background: color-mix(in srgb, var(--accent) 10%, transparent);
   border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.roster__add-btn:active {
+  transform: translateY(0);
 }
 
 /* Sibling to roster__add-btn in Rooms / Profs tab — destructive tone. Loses
@@ -1764,13 +1906,18 @@
   padding: 3px 10px;
   border-radius: 999px;
   cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.12s ease;
 }
 
 .roster__clear-all-btn:hover:not(:disabled) {
   background: color-mix(in srgb, #c0392b 12%, transparent);
   border-color: #c0392b;
   color: #c0392b;
+  transform: translateY(-1px);
+}
+
+.roster__clear-all-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .roster__clear-all-btn:disabled {
@@ -2094,85 +2241,6 @@
 .prof-card__delete:hover {
   background: #c0392b;
   color: #fff;
-}
-
-/* ─── Catalogue drawer (slide-out overlay) ─────────────────────── */
-
-.catalogue-drawer__scrim {
-  position: fixed;
-  inset: 0;
-  background: var(--scrim);
-  z-index: 99;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-}
-
-.catalogue-drawer__scrim--visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.catalogue-drawer {
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 380px;
-  z-index: 100;
-  background: var(--bg);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  transform: translateX(-100%);
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.catalogue-drawer--open {
-  transform: translateX(0);
-}
-
-.catalogue-drawer__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-md) var(--space-lg);
-  border-bottom: 1px solid var(--border);
-  min-height: 48px;
-  flex-shrink: 0;
-}
-
-.catalogue-drawer__title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.catalogue-drawer__close {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  font: inherit;
-  font-size: 1rem;
-  width: var(--hit-min);
-  height: var(--hit-min);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: color 0.12s ease, border-color 0.12s ease;
-}
-
-.catalogue-drawer__close:hover {
-  color: var(--text);
-  border-color: var(--text-faint);
-}
-
-/* The Catalogue inside the drawer should fill remaining space */
-.catalogue-drawer .panel--catalogue {
-  flex: 1;
-  min-height: 0;
 }
 
 /* ─── Avatar hit targets (clickable wrappers) ──────────────────── */
@@ -2940,12 +3008,6 @@
   /* Class panel inputs: full-bleed */
   .class__seg { padding: 10px 8px; }
 
-  /* Catalogue drawer full-screen on phone */
-  .catalogue-drawer {
-    width: 100vw;
-    border-right: none;
-  }
-
   /* Toolbar in schedule panel header: stack */
   .schedule__toolbar {
     flex-direction: column;
@@ -3044,6 +3106,83 @@
 }
 
 .solve-progress__dismiss:hover { color: var(--text); background: var(--surface-hover); }
+
+/* Summary pill shown in the collapsed done-state header — replaces the
+ * three "OPTIMAL" pills that used to shout across the card grid. */
+.solve-progress__summary {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--success) 18%, transparent);
+  color: var(--success);
+  border: 1px solid color-mix(in srgb, var(--success) 40%, var(--border));
+  font-variant-numeric: tabular-nums;
+}
+
+/* Expand/collapse toggle for the per-mode cards. Subtle chevron rotates
+ * when open; the "Details" / "Hide" label keeps intent legible. */
+.solve-progress__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.12s ease;
+}
+
+.solve-progress__toggle:hover {
+  color: var(--text);
+  border-color: var(--text-faint);
+  transform: translateY(-1px);
+}
+
+.solve-progress__toggle:active {
+  transform: translateY(0);
+}
+
+.solve-progress__toggle-chevron {
+  display: inline-block;
+  font-size: 0.7rem;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.solve-progress__toggle-chevron--open {
+  transform: rotate(90deg);
+}
+
+/* Inline (header) variant of the tune gear — small and static, not the
+ * big absolute-positioned button that sits on the middle mode card. */
+.solve-progress__tune-btn--header {
+  position: static;
+  transform: none;
+  width: 28px;
+  height: 28px;
+  font-size: 1rem;
+  box-shadow: none;
+  border-width: 1px;
+  background: transparent;
+  color: var(--accent);
+  transition: background 0.12s ease, transform 0.18s ease, border-color 0.12s ease;
+}
+
+.solve-progress__tune-btn--header:hover {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  transform: rotate(60deg);
+  box-shadow: none;
+}
 
 .solve-progress__error-message {
   color: var(--danger);
@@ -3531,111 +3670,6 @@
     grid-template-columns: 1fr;
     gap: var(--space-lg);
   }
-}
-
-/* ─── Offerings-tab capacity strip (ammo counter above the list) ── */
-
-.roster__capacity {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 8px var(--space-md);
-  border-bottom: 1px solid var(--border);
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.05em;
-  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
-}
-
-.roster__capacity-count {
-  font-size: 1.1rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.roster__capacity-sep {
-  margin: 0 1px;
-  opacity: 0.55;
-  font-weight: 400;
-}
-
-.roster__capacity-overload {
-  font-size: 0.78rem;
-  font-weight: 600;
-  opacity: 0.85;
-}
-
-.roster__capacity-hint {
-  margin-left: auto;
-  text-transform: uppercase;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  opacity: 0.75;
-}
-
-.roster__capacity--under {
-  color: var(--warn);
-  background: color-mix(in srgb, var(--warn) 10%, transparent);
-  border-bottom-color: color-mix(in srgb, var(--warn) 45%, var(--border));
-}
-
-.roster__capacity--contract {
-  color: var(--success);
-  background: color-mix(in srgb, var(--success) 10%, transparent);
-  border-bottom-color: color-mix(in srgb, var(--success) 50%, var(--border));
-}
-
-.roster__capacity--overload {
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  border-bottom-color: color-mix(in srgb, var(--accent) 55%, var(--border));
-}
-
-.roster__capacity--maxed {
-  color: var(--accent-on);
-  background: var(--success);
-  border-bottom-color: var(--success);
-}
-
-/* ─── Roster nag (Profs-tab header) ───────────────────────────── */
-
-.roster__nag {
-  margin: 0 0 var(--space-sm);
-  padding: 6px 10px;
-  font-size: 0.78rem;
-  font-style: italic;
-  font-variant-numeric: tabular-nums;
-  border-radius: var(--radius-sm);
-  border-left: 2px solid var(--border);
-  color: var(--text-muted);
-}
-
-.roster__nag--under {
-  color: var(--warn);
-  border-left-color: var(--warn);
-  background: color-mix(in srgb, var(--warn) 8%, transparent);
-}
-
-.roster__nag--contract {
-  color: var(--success);
-  border-left-color: var(--success);
-  background: color-mix(in srgb, var(--success) 8%, transparent);
-}
-
-.roster__nag--overload {
-  color: var(--accent);
-  border-left-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-}
-
-.roster__nag--maxed {
-  color: var(--success);
-  border-left-color: var(--success);
-  background: color-mix(in srgb, var(--success) 14%, transparent);
-  font-weight: 600;
-  font-style: normal;
 }
 
 /* ─── Per-prof contract meter (Profs-tab card) ─────────────────── */

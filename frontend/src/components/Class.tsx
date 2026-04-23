@@ -237,9 +237,6 @@ export function Class(props: ClassProps) {
               </optgroup>
             )}
           </select>
-          {profCandidates.preferred.length > 0 && (
-            <p className="class__hint">★ = catalog-preferred for this course</p>
-          )}
         </section>
 
         <section className="class__section">
@@ -273,12 +270,6 @@ export function Class(props: ClassProps) {
               </optgroup>
             )}
           </select>
-          <p className="class__hint">
-            Station:{" "}
-            {prettyRoomType(offering.override_room_type || course.required_room_type)}
-            {" · seats "}
-            {offering.override_enrollment_cap ?? course.enrollment_cap}
-          </p>
         </section>
 
         <section className="class__section">
@@ -295,6 +286,19 @@ export function Class(props: ClassProps) {
             }
           />
         </section>
+
+        <details className="class__section class__details">
+          <summary className="class__details-summary">Details</summary>
+          <p className="class__hint">
+            Station:{" "}
+            {prettyRoomType(offering.override_room_type || course.required_room_type)}
+            {" · seats "}
+            {offering.override_enrollment_cap ?? course.enrollment_cap}
+          </p>
+          {profCandidates.preferred.length > 0 && (
+            <p className="class__hint">★ = catalog-preferred for this course</p>
+          )}
+        </details>
 
         <section className="class__footer">
           <button
