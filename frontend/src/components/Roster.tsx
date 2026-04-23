@@ -10,18 +10,19 @@ import {
   profLoadedCount,
   STATION_TYPE_LABELS,
 } from "../types"
+import { Catalogue } from "./Catalogue"
 import { ProfAvatar } from "./ProfAvatar"
 
 /**
  * The ROSTER panel — browsable index of everything the scheduler touches.
  *
  * Three tabs:
- *   - Offerings: unplaced courses (drag to grid)
- *   - Profs:     all professors (click to edit availability in detail panel)
- *   - Rooms:     all rooms      (click to edit availability in detail panel)
+ *   - Courses: unplaced courses (drag to grid)
+ *   - Profs:   all professors (click to edit availability in detail panel)
+ *   - Rooms:   all rooms      (click to edit availability in detail panel)
  *
  * Tab is local UI state. Selection lives in App.tsx (single source of truth).
- * Only the Offerings tab participates in drag-and-drop.
+ * Only the Courses tab participates in drag-and-drop.
  */
 
 /** DnD MIME for dragging an existing offering (payload: offering_id). The
@@ -29,16 +30,17 @@ import { ProfAvatar } from "./ProfAvatar"
  *  drops use a separate `application/x-course` MIME handled by QuarterSchedule. */
 const DND_MIME_OFFERING = "application/x-offering"
 
-type RosterTab = "offerings" | "profs" | "rooms"
+type RosterTab = "courses" | "profs" | "rooms"
+type CoursesMode = "roster" | "browse"
 
 export interface RosterProps {
   offerings: Offering[]
   catalog: Record<string, Course>
   professors: Record<string, Professor>
   rooms: Record<string, Room>
-  /** Department-wide contract capacity for the Profs-tab nag & per-card
-   *  meters. Computed in App.tsx so the topbar chip and the roster share
-   *  one source of truth. */
+  /** Department-wide contract capacity — drives the warning dot on the
+   *  Courses tab when the dept is past contract (adding more classes would
+   *  push profs into overload). */
   capacity: RosterCapacity
   selectedOfferingId: string | null
   selectedProfId: string | null
@@ -51,7 +53,9 @@ export interface RosterProps {
   /** Add another sibling (section) for this catalog_id. Siblings share
    *  catalog-level settings but pin independently. */
   onAddSectionOffering: (catalog_id: string) => void
-  onOpenCatalogue: () => void
+  /** Add a catalog_id as a new offering (no-op if already present). Returns
+   *  the resulting offering_id so Catalogue can chain a select. */
+  onAddOffering: (catalog_id: string) => string | null
   onStartPlacing: (offering_id: string) => void
   /** Called when a schedule card is dropped onto the offerings list —
    *  unpins it back to the unplaced roster. */
@@ -67,7 +71,11 @@ export interface RosterProps {
 }
 
 export function Roster(props: RosterProps) {
-  const [tab, setTab] = useState<RosterTab>("offerings")
+  const [tab, setTab] = useState<RosterTab>("courses")
+  // Sub-mode inside the Courses tab — Roster (this quarter's unplaced
+  // deck) vs. Browse (the full catalog, filtered). Local because the two
+  // modes share props: App.tsx doesn't care which is visible.
+  const [coursesMode, setCoursesMode] = useState<CoursesMode>("roster")
 
   const unplaced = useMemo(() => {
     return props.offerings
@@ -96,12 +104,11 @@ export function Roster(props: RosterProps) {
     )
   }, [props.rooms])
 
-  const count =
-    tab === "offerings"
-      ? `${unplaced.length} / ${props.offerings.length}`
-      : tab === "profs"
-        ? `${profList.length}`
-        : `${roomList.length}`
+  // Tab badges show the full count per list (not unplaced/total) so the
+  // number on the tab doesn't jump as cards get placed. Per-tab warning
+  // dots flag non-trivial state the user should know about before clicking.
+  const capState = capacityState(props.capacity)
+  const coursesWarning = capState === "overload" || capState === "maxed"
 
   const handleClearRooms = () => {
     const n = roomList.length
@@ -130,17 +137,6 @@ export function Roster(props: RosterProps) {
     <aside className="panel panel--roster" aria-label="Roster">
       <header className="panel__header">
         <h2 className="panel__title">Roster</h2>
-        <span className="panel__count">{count}</span>
-        {tab === "offerings" && (
-          <button
-            type="button"
-            className="roster__add-btn"
-            onClick={props.onOpenCatalogue}
-            title="Add courses from catalogue"
-          >
-            + Add
-          </button>
-        )}
         {tab === "profs" && (
           <>
             <button
@@ -189,13 +185,21 @@ export function Roster(props: RosterProps) {
         <button
           type="button"
           role="tab"
-          aria-selected={tab === "offerings"}
+          aria-selected={tab === "courses"}
           className={
-            "roster__tab" + (tab === "offerings" ? " roster__tab--active" : "")
+            "roster__tab" + (tab === "courses" ? " roster__tab--active" : "")
           }
-          onClick={() => setTab("offerings")}
+          onClick={() => setTab("courses")}
         >
-          Offerings
+          <span className="roster__tab-label">Courses</span>
+          <span className="roster__tab-count">{props.offerings.length}</span>
+          {coursesWarning && (
+            <span
+              className="roster__tab-dot"
+              aria-hidden="true"
+              title={capacityChipTitle(props.capacity, capState)}
+            />
+          )}
         </button>
         <button
           type="button"
@@ -206,7 +210,8 @@ export function Roster(props: RosterProps) {
           }
           onClick={() => setTab("profs")}
         >
-          Profs
+          <span className="roster__tab-label">Profs</span>
+          <span className="roster__tab-count">{profList.length}</span>
         </button>
         <button
           type="button"
@@ -217,15 +222,47 @@ export function Roster(props: RosterProps) {
           }
           onClick={() => setTab("rooms")}
         >
-          Rooms
+          <span className="roster__tab-label">Rooms</span>
         </button>
       </div>
 
-      {tab === "offerings" && (
+      {tab === "courses" && (
+        <div className="roster__subtabs" role="tablist" aria-label="Courses view">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={coursesMode === "roster"}
+            className={
+              "roster__subtab" +
+              (coursesMode === "roster" ? " roster__subtab--active" : "")
+            }
+            onClick={() => setCoursesMode("roster")}
+          >
+            <span>In roster</span>
+            <span className="roster__subtab-count">{unplaced.length}</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={coursesMode === "browse"}
+            className={
+              "roster__subtab" +
+              (coursesMode === "browse" ? " roster__subtab--active" : "")
+            }
+            onClick={() => setCoursesMode("browse")}
+          >
+            <span>Browse</span>
+            <span className="roster__subtab-count">
+              {Object.keys(props.catalog).length}
+            </span>
+          </button>
+        </div>
+      )}
+
+      {tab === "courses" && coursesMode === "roster" && (
         <OfferingsList
           unplaced={unplaced}
           totalCount={props.offerings.length}
-          capacity={props.capacity}
           catalog={props.catalog}
           professors={props.professors}
           selectedOfferingId={props.selectedOfferingId}
@@ -239,11 +276,21 @@ export function Roster(props: RosterProps) {
         />
       )}
 
+      {tab === "courses" && coursesMode === "browse" && (
+        <Catalogue
+          catalog={props.catalog}
+          offerings={props.offerings}
+          selectedOfferingId={props.selectedOfferingId}
+          onSelect={props.onSelect}
+          onAdd={props.onAddOffering}
+          onRemove={props.onRemove}
+        />
+      )}
+
       {tab === "profs" && (
         <ProfsList
           profs={profList}
           offerings={props.offerings}
-          capacity={props.capacity}
           selectedProfId={props.selectedProfId}
           onSelect={props.onSelectProfessor}
         />
@@ -265,9 +312,6 @@ export function Roster(props: RosterProps) {
 interface OfferingsListProps {
   unplaced: Offering[]
   totalCount: number
-  /** Department capacity so the sub-header chip sits in the placement flow,
-   *  not in the easily-ignored topbar. */
-  capacity: RosterCapacity
   catalog: Record<string, Course>
   professors: Record<string, Professor>
   selectedOfferingId: string | null
@@ -308,47 +352,8 @@ function OfferingsList(props: OfferingsListProps) {
     if (offeringId) props.onUnpinToRoster(offeringId)
   }
 
-  const capState = capacityState(props.capacity)
-  const overloadSlots = props.capacity.ceilingTotal - props.capacity.floorTotal
-
   return (
     <>
-      <div
-        className={`roster__capacity roster__capacity--${capState}`}
-        title={capacityChipTitle(props.capacity, capState)}
-        aria-label={capacityChipTitle(props.capacity, capState)}
-      >
-        <span className="roster__capacity-count">
-          {props.capacity.loaded}
-          <span className="roster__capacity-sep">/</span>
-          {props.capacity.floorTotal}
-        </span>
-        {overloadSlots > 0 && (
-          <span
-            className="roster__capacity-overload"
-            title={`${overloadSlots} overload slot${overloadSlots === 1 ? "" : "s"} — past contract, still under the hard cap.`}
-          >
-            +{overloadSlots} OL
-          </span>
-        )}
-        <span
-          className="roster__capacity-hint"
-          title={
-            capState === "under"
-              ? "Below contract — assign more classes to reach the minimum load."
-              : capState === "contract"
-                ? "Contract minimums met for every roster professor."
-                : capState === "overload"
-                  ? "One or more professors are past contract, into overload slots."
-                  : "At the hard cap — no professor can accept another class."
-          }
-        >
-          {capState === "under" && "keep loading"}
-          {capState === "contract" && "contract met"}
-          {capState === "overload" && "in overload"}
-          {capState === "maxed" && "at cap"}
-        </span>
-      </div>
       <div
         className={
           "panel__body roster__list" +
@@ -499,24 +504,17 @@ function OfferingsList(props: OfferingsListProps) {
 interface ProfsListProps {
   profs: Professor[]
   offerings: Offering[]
-  capacity: RosterCapacity
   selectedProfId: string | null
   onSelect: (id: string | null) => void
 }
 
 function ProfsList(props: ProfsListProps) {
-  const state = capacityState(props.capacity)
-  const nag = capacityNag(props.capacity, state)
-
   return (
     <div className="panel__body roster__list">
       {props.profs.length === 0 && (
         <p className="placeholder placeholder--empty">
           No professors yet.<br />Click <strong>+ Add</strong> to build your roster.
         </p>
-      )}
-      {props.profs.length > 0 && (
-        <p className={`roster__nag roster__nag--${state}`}>{nag}</p>
       )}
       {props.profs.map(p => {
         const isSelected = props.selectedProfId === p.id
@@ -617,27 +615,6 @@ function ProfMeter(props: {
       </span>
     </span>
   )
-}
-
-/** Three-state nag copy for the Profs-tab header — matches the "All placed
- *  — nice work" cadence on the Offerings tab. */
-function capacityNag(
-  cap: RosterCapacity,
-  state: "under" | "contract" | "overload" | "maxed",
-): string {
-  const gap = cap.floorTotal - cap.loaded
-  const overloadSlots = cap.ceilingTotal - cap.floorTotal
-  const overloadLeft = cap.ceilingTotal - cap.loaded
-  switch (state) {
-    case "under":
-      return `${gap} slot${gap === 1 ? "" : "s"} under contract — keep loading.`
-    case "contract":
-      return `Contract met. ${overloadSlots} overload slot${overloadSlots === 1 ? "" : "s"} open for MUSTs.`
-    case "overload":
-      return `Overload in use — ${overloadLeft} slot${overloadLeft === 1 ? "" : "s"} left.`
-    case "maxed":
-      return "At cap — nice work."
-  }
 }
 
 // ─── Rooms tab ─────────────────────────────────────────────────────

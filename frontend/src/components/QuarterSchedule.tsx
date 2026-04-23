@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState, type ReactNode } from "react"
+import { QUARTER_OPTIONS } from "../types"
 import type {
   Course,
   DayGroup,
@@ -62,7 +63,6 @@ function effectiveSlot(o: Offering): Slot | null {
   return null
 }
 
-export const QUARTER_OPTIONS: ReadonlyArray<string> = ["Fall", "Winter", "Spring", "Summer"]
 
 export interface QuarterScheduleProps {
   offerings: Offering[]

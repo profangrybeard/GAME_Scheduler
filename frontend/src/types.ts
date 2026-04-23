@@ -36,6 +36,11 @@ export const SCHOOL_ORDER: ReadonlyArray<Department> = [
   "game", "motion_media", "ai", "ixds", "iact", "digi", "adbr",
 ]
 
+/** Quarter labels used in the topbar select and the schedule header.
+ *  Lives here (not in QuarterSchedule.tsx) so the file can export only its
+ *  component — react-refresh/only-export-components otherwise errors. */
+export const QUARTER_OPTIONS: ReadonlyArray<string> = ["Fall", "Winter", "Spring", "Summer"]
+
 /** Short labels for each department — used in topbar context + chair chips. */
 export const SCHOOL_LABELS: Record<Department, string> = {
   game: "GAME",

@@ -18,14 +18,13 @@ import {
   saveDraftSnapshot,
 } from "./draftSnapshot"
 import { BrandEyebrow } from "./components/BrandEyebrow"
-import { CatalogueDrawer } from "./components/CatalogueDrawer"
 import { ChangeLog, type ChangeLogEntry } from "./components/ChangeLog"
 import { Class } from "./components/Class"
 import { DataIssuesPanel } from "./components/DataIssuesPanel"
 import { PortraitContext } from "./components/PortraitContext"
 import { ProfessorContext } from "./components/ProfessorContext"
 import { ProfessorCard } from "./components/ProfessorCard"
-import { QuarterSchedule, QUARTER_OPTIONS } from "./components/QuarterSchedule"
+import { QuarterSchedule } from "./components/QuarterSchedule"
 import { RoomCard } from "./components/RoomCard"
 import { Roster } from "./components/Roster"
 import { SolverTuning } from "./components/SolverTuning"
@@ -33,7 +32,7 @@ import { loadTunedMix, mixToSolverWeights, saveTunedMix, type Mix } from "./comp
 import { TopbarMenu } from "./components/TopbarMenu"
 import { loadInitialState } from "./data"
 import { useTheme } from "./hooks/useTheme"
-import { coalesceOfferingsForWire, expandOfferingsFromWire, mintOfferingId, profContractCeiling, profContractFloor } from "./types"
+import { coalesceOfferingsForWire, expandOfferingsFromWire, mintOfferingId, profContractCeiling, profContractFloor, QUARTER_OPTIONS } from "./types"
 import type { Assignment, Offering, Professor, RosterCapacity, Room, SchedulerState, Slot, SolveMode, SolveModeProgress, SolveProgressState, WireOffering } from "./types"
 import "./App.css"
 
@@ -178,7 +177,6 @@ function App() {
     }
   })
   const { theme, resolved, cycle: cycleTheme } = useTheme()
-  const [catalogueOpen, setCatalogueOpen] = useState(false)
   const [selectedProfId, setSelectedProfId] = useState<string | null>(null)
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
   const [portraits, setPortraits] = useState<Record<string, string>>(loadPortraits)
@@ -246,8 +244,6 @@ function App() {
   }, [])
   const clearChangeLog = useCallback(() => setChangeLog([]), [])
 
-  const openCatalogue = useCallback(() => setCatalogueOpen(true), [])
-  const closeCatalogue = useCallback(() => setCatalogueOpen(false), [])
   const openRosterDrawer = useCallback(() => setRosterDrawerOpen(true), [])
   const closeRosterDrawer = useCallback(() => setRosterDrawerOpen(false), [])
 
@@ -1085,7 +1081,7 @@ function App() {
       onSelectRoom={selectRoom}
       onRemove={removeOffering}
       onAddSectionOffering={addSectionOffering}
-      onOpenCatalogue={openCatalogue}
+      onAddOffering={addOffering}
       onStartPlacing={startPlacing}
       onUnpinToRoster={id => pinToSlot(id, null)}
       onAddProfessor={addProfessor}
@@ -1402,16 +1398,6 @@ function App() {
           {rosterPanel}
         </div>
 
-        <CatalogueDrawer
-          open={catalogueOpen}
-          onClose={closeCatalogue}
-          catalog={state.catalog}
-          offerings={state.offerings}
-          selectedOfferingId={state.selectedOfferingId}
-          onSelect={selectOffering}
-          onAdd={addOffering}
-          onRemove={removeOffering}
-        />
       </div>
       <SolverTuning
         open={tuningOpen}

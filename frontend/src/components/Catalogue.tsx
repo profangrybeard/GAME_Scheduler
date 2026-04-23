@@ -2,12 +2,15 @@ import { useMemo, useState } from "react"
 import type { Course, Department, Offering } from "../types"
 
 /**
- * The BROWSER panel — Catalogue.
+ * Catalogue — the Browse sub-mode of the Roster panel's Courses tab.
  *
  * Responsibility: show every course in the catalog. Filter by department,
  * search by ID/name. Clicking a row adds the course to the quarter's
  * offerings (if not already there) and selects it. Dragging a row onto a
  * cell in the Quarter Schedule adds + pins in one move.
+ *
+ * Renders content-only (filters + list) — the Roster panel provides the
+ * surrounding <aside> shell, so there's no duplicate header/title.
  *
  * Reads  (props):  catalog, offerings, selectedOfferingId
  * Writes (events): onSelect, onAdd, onRemove
@@ -80,12 +83,7 @@ export function Catalogue(props: CatalogueProps) {
   }, [props.catalog, query, dept])
 
   return (
-    <aside className="panel panel--catalogue" aria-label="Catalogue">
-      <header className="panel__header">
-        <h2 className="panel__title">Catalogue</h2>
-        <span className="panel__count">{rows.length}</span>
-      </header>
-
+    <>
       <div className="catalogue__filters">
         <input
           className="catalogue__search"
@@ -178,6 +176,6 @@ export function Catalogue(props: CatalogueProps) {
           )
         })}
       </div>
-    </aside>
+    </>
   )
 }

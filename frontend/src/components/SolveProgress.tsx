@@ -48,6 +48,31 @@ function statusLabel(mode: SolveModeProgress, liveElapsedMs: number | null): str
   return "Waiting"
 }
 
+/** Condense the three per-mode statuses into one header pill so the default
+ *  done-state view doesn't shout "OPTIMAL" three times in a row. Returns an
+ *  empty string if nothing is done yet (caller should hide the pill). */
+function computeSummary(modes: Record<string, SolveModeProgress>): string {
+  const done = Object.values(modes).filter(m => m.state === "done")
+  if (done.length === 0) return ""
+  const counts = { optimal: 0, feasible: 0, infeasible: 0, other: 0 }
+  for (const m of done) {
+    if (m.status === "optimal") counts.optimal++
+    else if (m.status === "feasible") counts.feasible++
+    else if (m.status === "infeasible") counts.infeasible++
+    else counts.other++
+  }
+  // All-same case reads cleaner as "3/3 optimal" than "3 optimal".
+  if (counts.optimal === done.length) return `${done.length}/${done.length} optimal`
+  if (counts.feasible === done.length) return `${done.length}/${done.length} feasible`
+  if (counts.infeasible === done.length) return `${done.length}/${done.length} infeasible`
+  const parts: string[] = []
+  if (counts.optimal)    parts.push(`${counts.optimal} optimal`)
+  if (counts.feasible)   parts.push(`${counts.feasible} feasible`)
+  if (counts.infeasible) parts.push(`${counts.infeasible} infeasible`)
+  if (counts.other)      parts.push(`${counts.other} other`)
+  return parts.join(" · ")
+}
+
 interface Props {
   progress: SolveProgressState | null
   /** true while `solveStatus === "running"` — used to keep the UI mounted
@@ -80,6 +105,12 @@ export function SolveProgress(props: Props) {
     return () => clearInterval(id)
   }, [progress, progress?.endedAt])
 
+  // Collapsed-by-default for done states: the summary pill ("3/3 optimal")
+  // is enough at a glance. Expanding reveals the per-mode metrics grid.
+  // During a running solve we force-show the cards — mid-flight numbers
+  // are the whole point.
+  const [expanded, setExpanded] = useState(false)
+
   if (!progress && !isSolving) return null
   if (!progress) {
     return (
@@ -103,6 +134,17 @@ export function SolveProgress(props: Props) {
   for (const k of Object.keys(progress.modes)) {
     if (!orderedKeys.includes(k)) orderedKeys.push(k)
   }
+
+  // Can the user collapse/expand? Yes when we're in a settled done state
+  // without an error. Mid-solve, writing, or error state → always show the
+  // cards (hiding them would lose actionable detail).
+  const isCollapsible =
+    !anyRunning &&
+    !progress.errorMessage &&
+    progress.phase !== "writing" &&
+    progress.phase !== "solving"
+  const showModes = !isCollapsible || expanded
+  const summaryText = isCollapsible ? computeSummary(progress.modes) : ""
 
   return (
     <div
@@ -133,6 +175,42 @@ export function SolveProgress(props: Props) {
         <span className="solve-progress__elapsed">
           {formatSeconds(Math.round(totalElapsedMs))}
         </span>
+        {summaryText && (
+          <span className="solve-progress__summary">{summaryText}</span>
+        )}
+        {isCollapsible && onOpenTuning && (
+          <button
+            type="button"
+            className="solve-progress__tune-btn solve-progress__tune-btn--header"
+            onClick={onOpenTuning}
+            aria-label="Tune solver weights"
+            title="Tune the solver's weight mix"
+          >
+            ⚙
+          </button>
+        )}
+        {isCollapsible && (
+          <button
+            type="button"
+            className="solve-progress__toggle"
+            onClick={() => setExpanded(v => !v)}
+            aria-expanded={expanded}
+            title={expanded ? "Hide per-mode metrics" : "Show per-mode metrics"}
+          >
+            <span className="solve-progress__toggle-label">
+              {expanded ? "Hide" : "Details"}
+            </span>
+            <span
+              className={
+                "solve-progress__toggle-chevron" +
+                (expanded ? " solve-progress__toggle-chevron--open" : "")
+              }
+              aria-hidden="true"
+            >
+              ▸
+            </span>
+          </button>
+        )}
         {/* Hide Dismiss while xlsx_writing is in flight — closing the panel
             would suggest the work is canceled, but the network call continues
             and the download fires either way. */}
@@ -152,6 +230,7 @@ export function SolveProgress(props: Props) {
         <div className="solve-progress__error-message">{progress.errorMessage}</div>
       )}
 
+      {showModes && (
       <div className="solve-progress__modes">
         {orderedKeys.map(key => {
           const m = progress.modes[key]
@@ -296,6 +375,7 @@ export function SolveProgress(props: Props) {
           )
         })}
       </div>
+      )}
     </div>
   )
 }
