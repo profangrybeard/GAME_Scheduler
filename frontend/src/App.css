@@ -272,6 +272,7 @@
 /* Export — secondary to Generate but still a real action. Gets a small
    accent glow and a 1px lift on hover, not the full plunger treatment. */
 .topbar-btn.topbar-btn--export {
+  position: relative;
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-on, #fff);
@@ -284,7 +285,8 @@
   transition:
     box-shadow 0.15s ease,
     transform 0.12s ease,
-    filter 0.15s ease;
+    filter 0.35s ease-out,
+    opacity 0.35s ease-out;
 }
 
 .topbar-btn.topbar-btn--export:hover:not(:disabled) {
@@ -307,6 +309,18 @@
   opacity: 0.45;
   cursor: not-allowed;
   box-shadow: none;
+}
+
+/* While the laser chaser is tracing the ring, keep the button fully lit
+   even if disabled state kicks in mid-animation — the 0.35s opacity
+   transition then fades the grey-out in after the chaser finishes. */
+.topbar-btn.topbar-btn--export.topbar-btn--export--chasing:disabled {
+  opacity: 1;
+  filter: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 1px 0 rgba(0, 0, 0, 0.08),
+    0 4px 12px -4px color-mix(in oklab, var(--accent) 60%, transparent);
 }
 
 /* ─── Topbar About popover ─────────────────────────────────────────
@@ -1001,7 +1015,7 @@
   inherits: false;
 }
 
-.btn-generate__chaser {
+.btn-chaser {
   position: absolute;
   inset: -2px;
   border-radius: inherit;
@@ -1052,7 +1066,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn-generate__chaser {
+  .btn-chaser {
     animation: btn-generate-chase-flash 0.4s ease-out 1 forwards;
     background: none;
     box-shadow: 0 0 0 2px rgba(255, 240, 200, 0.85);

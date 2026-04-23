@@ -295,7 +295,7 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
               {chaseKey > 0 && (
                 <span
                   key={chaseKey}
-                  className="btn-generate__chaser"
+                  className="btn-chaser"
                   aria-hidden="true"
                   onAnimationEnd={() => setChaseKey(0)}
                 />

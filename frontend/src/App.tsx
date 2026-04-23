@@ -212,6 +212,7 @@ function App() {
   const [reloadErrors, setReloadErrors] = useState<ValidationError[] | null>(null)
   const [reloadError, setReloadError] = useState<string | null>(null)
   const [reloadFilename, setReloadFilename] = useState<string | null>(null)
+  const [exportChaseKey, setExportChaseKey] = useState(0)
   // Phase 1.3 fallback: when a structural parse fails, check localStorage
   // for a last-known-good snapshot of this filename and offer one-click
   // restore in the error banner. Null = no snapshot available / banner
@@ -1292,8 +1293,14 @@ function App() {
           <div className="scheduler__topbar-right">
             <button
               type="button"
-              className="topbar-btn topbar-btn--export"
-              onClick={requestExport}
+              className={
+                "topbar-btn topbar-btn--export" +
+                (exportChaseKey > 0 ? " topbar-btn--export--chasing" : "")
+              }
+              onClick={() => {
+                setExportChaseKey(k => k + 1)
+                requestExport()
+              }}
               disabled={!(apiAvailable === true && state.solveStatus === "done")}
               title={
                 apiAvailable !== true
@@ -1303,6 +1310,14 @@ function App() {
                     : "Assemble a schedule first"
               }
             >
+              {exportChaseKey > 0 && (
+                <span
+                  key={exportChaseKey}
+                  className="btn-chaser"
+                  aria-hidden="true"
+                  onAnimationEnd={() => setExportChaseKey(0)}
+                />
+              )}
               Export
             </button>
             <button
