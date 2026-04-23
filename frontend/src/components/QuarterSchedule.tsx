@@ -43,7 +43,7 @@ const TIME_LABELS: Record<TimeSlot, string> = {
   "5:00PM": "5 PM",
 }
 
-const ALL_DAY_GROUPS: ReadonlyArray<{ key: DayGroup; label: string }> = [
+const DAY_GROUPS: ReadonlyArray<{ key: DayGroup; label: string }> = [
   { key: 1, label: "MW" },
   { key: 2, label: "TTh" },
   { key: 3, label: "F" },
@@ -107,17 +107,6 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null)
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [visibleDayGroup, setVisibleDayGroup] = useState<DayGroup>(1)
-
-  // Hide the Friday column unless a course actually uses it. GAME doesn't meet
-  // on Fridays, so the empty column is dead real estate; other departments
-  // (where Friday is live) will populate it and the column reappears.
-  const DAY_GROUPS = useMemo(() => {
-    const hasFriday = props.offerings.some(o => {
-      const slot = effectiveSlot(o)
-      return slot?.day_group === 3
-    })
-    return hasFriday ? ALL_DAY_GROUPS : ALL_DAY_GROUPS.filter(g => g.key !== 3)
-  }, [props.offerings])
 
   const isSolving = props.solveStatus === "running"
   const apiReady = props.apiAvailable === true
