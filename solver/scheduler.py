@@ -6,7 +6,7 @@ Usage:
     # results['modes'] is a list of 3 dicts, one per mode
 
 Each mode dict contains:
-    mode        — 'affinity_first', 'time_pref_first', or 'balanced'
+    mode        — 'cover_first', 'time_pref_first', or 'balanced'
     status      — 'optimal', 'feasible', 'infeasible', or 'unknown'
     objective   — int penalty score (None if infeasible/unknown)
     schedule    — list of assignment dicts (one per placed course-section)
@@ -38,9 +38,11 @@ from solver.objectives import build_objective, _affinity_level, _time_pref_penal
 
 
 # Per-mode ceiling. CP-SAT stops early when it proves optimal; this is just
-# the safety cap if a model genuinely gets hard. Deterministic parameters
-# (8 interleaved workers + fixed seed — see solver block below) mean real
-# solve time is usually 2–5s per mode regardless of host machine.
+# the safety cap if a model genuinely gets hard. Real solve time is usually
+# 2–5s per mode regardless of host machine (8 interleaved workers — see
+# solver block below). The random seed rotates per run so each ASSEMBLE
+# click explores differently when multiple near-optimal schedules exist —
+# the "die-roll feel" chairs expect for low-stakes tuning.
 _SOLVER_TIME_LIMIT = 20.0   # seconds per mode
 
 ProgressCallback = Callable[[dict], None]
@@ -286,7 +288,7 @@ def run_schedule(
         apply_hard_constraints(model, data)
 
         print(f"[{mode}] Building objective ...")
-        # tuned_weights only swaps in for the 'balanced' mode — Affinity-First
+        # tuned_weights only swaps in for the 'balanced' mode — Cover-First
         # and Time-First stay canonical so they remain the user's reference
         # comparison points. Other modes ignore the override.
         build_objective(
@@ -301,18 +303,20 @@ def run_schedule(
 
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = _SOLVER_TIME_LIMIT
-        # Fixed workers + seed + interleaved search = deterministic result,
-        # same objective on every platform. Previously we used
-        # num_search_workers=0 ("all cores"), which auto-detected 2 on CI and
-        # happened to pick two strategies that proved INFEASIBLE on a model
-        # that solves cleanly locally — a platform-dependent answer the user
-        # can never explain to a dean. Running 8 interleaved strategies
-        # regardless of core count avoids that trap; on a 2-vCPU VM they just
-        # round-robin. Single-threaded (workers=1) was considered but burned
-        # the full budget without proving optimality.
+        # Fixed 8 interleaved workers (not num_search_workers=0) so platform
+        # core count can't change the answer — a previous bug caused CI's
+        # 2-core detection to pick two strategies that proved INFEASIBLE on
+        # a model that solves cleanly locally. 8 interleaved strategies
+        # round-robin on a 2-vCPU VM without drama.
         solver.parameters.num_search_workers  = 8
         solver.parameters.interleave_search   = True
-        solver.parameters.random_seed         = 42
+        # Rotate seed per solve so each ASSEMBLE click explores a different
+        # region of the solution space. Same hard constraints + same weights
+        # means the solver still respects contracts, coverage, time prefs,
+        # and overload aversion — but near-equal alternatives (which prof
+        # takes the 9th MOME section? which day-group gets GAME_236?) flip
+        # from run to run. 32-bit range satisfies OR-Tools' parameter type.
+        solver.parameters.random_seed = int(time.time_ns() & 0x7FFFFFFF)
 
         print(f"[{mode}] Solving ...")
         started_at = time.time()

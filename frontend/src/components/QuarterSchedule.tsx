@@ -107,6 +107,9 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null)
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [visibleDayGroup, setVisibleDayGroup] = useState<DayGroup>(1)
+  // Ticks on each Assemble click so the gold chaser element re-mounts and
+  // re-plays its 1s perimeter trace. Cleared by the chaser's onAnimationEnd.
+  const [chaseKey, setChaseKey] = useState(0)
 
   const isSolving = props.solveStatus === "running"
   const apiReady = props.apiAvailable === true
@@ -119,8 +122,8 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
         : props.offerings.length === 0
           ? "Add offerings first"
           : isSolving
-            ? "Solving..."
-            : "Generate schedule"
+            ? "Assembling..."
+            : "Assemble the schedule"
 
   const placedByCell = useMemo(() => {
     const placed = new Map<string, Offering[]>()
@@ -279,9 +282,20 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
               type="button"
               className={"btn-generate" + (isSolving ? " btn-generate--solving" : "")}
               disabled={!canGenerate}
-              onClick={props.onSolve}
+              onClick={() => {
+                setChaseKey(k => k + 1)
+                props.onSolve()
+              }}
               title={generateTitle}
             >
+              {chaseKey > 0 && (
+                <span
+                  key={chaseKey}
+                  className="btn-generate__chaser"
+                  aria-hidden="true"
+                  onAnimationEnd={() => setChaseKey(0)}
+                />
+              )}
               {isSolving ? (
                 <span className="btn-generate__spinner" aria-hidden="true" />
               ) : (
@@ -296,7 +310,7 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
                   <path d="M13 2L4 14h7l-1 8 9-12h-7z" />
                 </svg>
               )}
-              {isSolving ? "Solving…" : "Generate"}
+              {isSolving ? "Assembling…" : "ASSEMBLE"}
             </button>
             <button
               className={
@@ -325,7 +339,7 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
               target="_blank"
               rel="noopener noreferrer"
               title={
-                "Generate runs Google OR-Tools CP-SAT locally — a constraint" +
+                "Assemble runs Google OR-Tools CP-SAT locally — a constraint" +
                 " solver, not AI. It enumerates schedules that respect every" +
                 " rule (rooms, professors, time slots) and picks the best fit." +
                 " Click to learn more."

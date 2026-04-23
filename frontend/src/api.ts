@@ -46,7 +46,7 @@ export interface SolveRequestBody {
   /** User-tuned weights for the "balanced" mode. When present, the server
    *  uses these in place of MODE_WEIGHTS["balanced"]. Field names mirror the
    *  Python config keys so the body passes through verbatim. */
-  tunedWeights?: { affinity: number; time_pref: number; overload: number }
+  tunedWeights?: { coverage: number; time_pref: number; overload: number }
 }
 
 /** Return a compact Assignment matching React's type shape. */
@@ -364,7 +364,7 @@ export interface DraftState {
   /** Tuned weights (percent-of-100 from the Tune gear). Written by the
    *  server in solver-shape (time_pref, not the Mix's `time`); callers
    *  translating to Mix must remap `time_pref` → `time`. */
-  tunedWeights?: { affinity: number; time_pref: number; overload: number } | null
+  tunedWeights?: { coverage: number; time_pref: number; overload: number } | null
   exported_at?: string
 }
 

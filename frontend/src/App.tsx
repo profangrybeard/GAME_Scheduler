@@ -69,7 +69,7 @@ type ActivePanel = "roster" | "schedule" | "detail"
 /** Display labels for the solver modes in the topbar context strip. Mirrors
  *  SolveProgress.MODE_LABELS so "Tune" reads consistently across the UI. */
 const SOLVE_MODE_LABELS: Record<string, string> = {
-  affinity_first:  "Affinity",
+  cover_first:     "Cover",
   time_pref_first: "Time Pref",
   balanced:        "Tune",
 }
@@ -757,7 +757,7 @@ function App() {
     void requestSolve(nextMix, "balanced")
     logChange(
       "tune",
-      `aff ${nextMix.affinity} · time ${nextMix.time} · overload ${nextMix.overload}`,
+      `cov ${nextMix.coverage} · time ${nextMix.time} · overload ${nextMix.overload}`,
     )
   }, [requestSolve, logChange])
 
@@ -828,7 +828,7 @@ function App() {
     // results have no UI surface (can't flip modes, can't re-tune). Missing
     // metrics (elapsedMs, solutionsFound) weren't persisted with the draft;
     // the progress component shows "—" for those gracefully.
-    const modeOrder = ["affinity_first", "balanced", "time_pref_first"] as const
+    const modeOrder = ["cover_first", "balanced", "time_pref_first"] as const
     const synthesizedProgress: SolveProgressState | null = draft.solver_results
       ? {
           startedAt:    null,
@@ -924,7 +924,7 @@ function App() {
     // modal uses so both sources write to the same localStorage key.
     if (draft.tunedWeights) {
       const mix: Mix = {
-        affinity: draft.tunedWeights.affinity,
+        coverage: draft.tunedWeights.coverage,
         time:     draft.tunedWeights.time_pref,
         overload: draft.tunedWeights.overload,
       }
@@ -1300,7 +1300,7 @@ function App() {
                   ? "Solver requires the local launcher"
                   : state.solveStatus === "done"
                     ? "Download Excel with all three modes + solver state (resume-able)"
-                    : "Generate a schedule first"
+                    : "Assemble a schedule first"
               }
             >
               Export

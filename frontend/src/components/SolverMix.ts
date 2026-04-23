@@ -7,7 +7,7 @@
  */
 
 export interface Mix {
-  affinity: number
+  coverage: number
   time:     number
   overload: number
 }
@@ -16,17 +16,17 @@ export interface Mix {
 export const TUNED_WEIGHTS_KEY = "tunedWeights"
 
 // Mirror config.MODE_WEIGHTS, expressed as percent of 100.
-// affinity_first  10/1/2   = 13   ->  77 / 8  / 15
-// time_pref_first 1/10/2   = 13   ->  8  / 77 / 15
-// balanced        10/4/3   = 17   ->  59 / 23 / 18
+// cover_first      10/1/1   = 12   ->  83 / 8  / 8
+// time_pref_first  3/10/2   = 15   ->  20 / 67 / 13
+// balanced         5/5/3    = 13   ->  38 / 38 / 23
 export const PRESETS: Record<string, Mix> = {
-  affinity_first:  { affinity: 77, time: 8,  overload: 15 },
-  time_pref_first: { affinity: 8,  time: 77, overload: 15 },
-  balanced:        { affinity: 59, time: 23, overload: 18 },
+  cover_first:     { coverage: 83, time: 8,  overload: 8  },
+  time_pref_first: { coverage: 20, time: 67, overload: 13 },
+  balanced:        { coverage: 38, time: 38, overload: 23 },
 }
 
 export const PRESET_LABELS: Record<string, string> = {
-  affinity_first:  "Affinity-First",
+  cover_first:     "Cover-First",
   time_pref_first: "Time-First",
   balanced:        "Balanced",
 }
@@ -40,11 +40,11 @@ export function loadTunedMix(): Mix {
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<Mix>
       if (
-        typeof parsed.affinity === "number" &&
+        typeof parsed.coverage === "number" &&
         typeof parsed.time     === "number" &&
         typeof parsed.overload === "number"
       ) {
-        return { affinity: parsed.affinity, time: parsed.time, overload: parsed.overload }
+        return { coverage: parsed.coverage, time: parsed.time, overload: parsed.overload }
       }
     }
   } catch { /* corrupted */ }
@@ -57,9 +57,9 @@ export function saveTunedMix(mix: Mix) {
 
 /** Convert the percent-of-100 Mix into the integer weights the solver uses
  *  (shape of MODE_WEIGHTS entries). */
-export function mixToSolverWeights(mix: Mix): { affinity: number; time_pref: number; overload: number } {
+export function mixToSolverWeights(mix: Mix): { coverage: number; time_pref: number; overload: number } {
   return {
-    affinity:  mix.affinity,
+    coverage:  mix.coverage,
     time_pref: mix.time,
     overload:  mix.overload,
   }

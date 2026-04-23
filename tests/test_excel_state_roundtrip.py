@@ -67,7 +67,7 @@ def _sample_draft_state() -> dict:
                 "time_slot": "8:00 AM",
             }
         ],
-        "solver_mode": "affinity_first",
+        "solver_mode": "cover_first",
     }
 
 
@@ -136,7 +136,7 @@ def test_data_sheets_roundtrip_draft_state(tmp_path: Path) -> None:
     assert loaded["schema_version"] == DATA_SCHEMA_VERSION
     assert loaded["quarter"] == "fall"
     assert loaded["year"] == 2026
-    assert loaded["solver_mode"] == "affinity_first"
+    assert loaded["solver_mode"] == "cover_first"
     assert loaded["exported_at"] == "2026-04-17T12:00:00"
     assert loaded["offerings"] == original["offerings"]
     assert loaded["locked_assignments"] == original["locked_assignments"]

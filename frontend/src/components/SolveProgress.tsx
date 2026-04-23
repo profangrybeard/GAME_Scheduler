@@ -14,17 +14,17 @@ import type { SolveModeProgress, SolveProgressState } from "../types"
  */
 
 const MODE_LABELS: Record<string, string> = {
-  affinity_first:  "Affinity",
+  cover_first:     "Cover",
   time_pref_first: "Time Pref",
   // The middle mode is user-tunable: clicking the gear opens SolverTuning,
   // which sends a fresh solve with the new mix as `tunedWeights`.
   balanced:        "Tune",
 }
 
-// Tune sits in the middle: extremes on the wings (Affinity-First, Time-First),
+// Tune sits in the middle: extremes on the wings (Cover-First, Time-First),
 // the user-tuned mix between them. The middle card is the one with the gear,
 // reinforcing that this column is the editable one.
-const MODE_ORDER = ["affinity_first", "balanced", "time_pref_first"] as const
+const MODE_ORDER = ["cover_first", "balanced", "time_pref_first"] as const
 
 function formatSeconds(ms: number): string {
   if (ms < 1000) return `${ms}ms`

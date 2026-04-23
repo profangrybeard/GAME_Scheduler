@@ -32,7 +32,7 @@ def test_imports():
     assert callable(write_excel)
     assert len(config.TIME_SLOTS) == 4
     assert set(config.DAY_GROUPS.keys()) == {1, 2, 3}
-    assert set(config.MODE_WEIGHTS.keys()) == {"affinity_first", "time_pref_first", "balanced"}
+    assert set(config.MODE_WEIGHTS.keys()) == {"cover_first", "time_pref_first", "balanced"}
     assert list(config.ROOM_COMPATIBILITY.keys())  # non-empty
 
 
@@ -118,7 +118,7 @@ def test_basic_solve_returns_three_modes():
     modes = results['modes']
     assert len(modes) == 3
     mode_names = {m['mode'] for m in modes}
-    assert mode_names == {'affinity_first', 'time_pref_first', 'balanced'}
+    assert mode_names == {'cover_first', 'time_pref_first', 'balanced'}
 
 
 def test_each_mode_has_required_keys():

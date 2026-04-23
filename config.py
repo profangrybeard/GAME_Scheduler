@@ -23,21 +23,37 @@ VALID_DEPARTMENTS = ["game", "motion_media", "ai"]
 AFFINITY_PENALTIES = {0: 0, 1: 1, 2: 3, 3: 10, "other": 10}
 TIME_PREF_PENALTIES = {"preferred": 0, "acceptable": 2, "not_preferred": 5}
 OVERLOAD_PENALTY = 8
-# Must exceed w_aff_max * AFFINITY_PENALTIES[2] (= 10 * 3 = 30) so that
-# affinity_first never chooses to drop a should_have rather than place it
-# with a non-preferred but eligible prof.
-SHOULD_HAVE_DROP_PENALTY = 35
+# Drop penalties get multiplied by the mode's coverage weight — high coverage
+# makes the solver fight harder to place should/could sections, low coverage
+# lets electives drop when the rest of the schedule is tight.
+SHOULD_HAVE_DROP_PENALTY = 20
 COULD_HAVE_DROP_PENALTY = 5
+# Fairness invariant — the solver should never leave one prof under-contract
+# while overloading another. Applied per missing class from a prof's floor
+# (chair=CHAIR_MAX, others=STANDARD_MAX). NOT mode-weighted: this is a rule,
+# not a preference. Value chosen to dominate the combined coverage + time
+# budget so the solver always prefers to level-load, even if it means placing
+# classes with non-preferred professors.
+UNDER_CONTRACT_PENALTY = 500
+# Affinity (prof-course specialization match) is always in the objective at
+# a fixed low weight — it's a nice-to-have that the solver tries its best on,
+# not a chair-tunable trade-off. Users tune coverage, time-pref, and overload;
+# affinity quietly breaks ties between otherwise-equivalent assignments.
+AFFINITY_WEIGHT = 1
 
 # === Optimization mode weight vectors ===
-# balanced is expert-leaning. With raw max penalties aff=3 and time=5, the
-# 10:4 ratio ties the worst trade-off (pref-prof@bad-slot 10+20=30 vs
-# elig-prof@good-slot 30+0=30) and tips toward the expert for every less
-# extreme case — e.g. pref@acceptable (1+8=9) beats elig@preferred (30+0=30).
+# Three axes:
+#   coverage   — how grimly we refuse to drop should/could sections
+#   time_pref  — how hard we honor prof time_preference
+#   overload   — how hard we resist pushing a prof above STANDARD_MAX
+#
+# Affinity floats in the objective at a fixed low weight (AFFINITY_WEIGHT)
+# — always tried, never tuned. The contract-min floor is a separate strong-
+# soft invariant (UNDER_CONTRACT_PENALTY), also not tuned.
 MODE_WEIGHTS = {
-    "affinity_first":    {"affinity": 10, "time_pref": 1, "overload": 2},
-    "time_pref_first":   {"affinity": 1,  "time_pref": 10, "overload": 2},
-    "balanced":          {"affinity": 10, "time_pref": 4,  "overload": 3},
+    "cover_first":       {"coverage": 10, "time_pref": 1,  "overload": 1},
+    "time_pref_first":   {"coverage": 3,  "time_pref": 10, "overload": 2},
+    "balanced":          {"coverage": 5,  "time_pref": 5,  "overload": 3},
 }
 
 # === Time preference full mapping ===

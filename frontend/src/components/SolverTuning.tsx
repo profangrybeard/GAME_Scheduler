@@ -8,28 +8,29 @@ import {
 /**
  * SolverTuning — dial in the middle ("Tune") mode's weight vector.
  *
- * Three gears share a budget of 100: Affinity, Time Pref, Overload. Dragging
- * one redistributes the other two with elastic friction (no hard clamp); the
- * gear spins faster and strains red as you push past what the others can
- * yield. Snapping to a preset applies one of the canonical modes.
+ * Three gears share a budget of 100: Coverage, Time Pref, Overload. Affinity
+ * stays fixed in the background as a tie-breaker — always on, never tuned.
+ * Dragging one redistributes the other two with elastic friction (no hard
+ * clamp); the gear spins faster and strains red as you push past what the
+ * others can yield. Snapping to a preset applies one of the canonical modes.
  *
  * Type + persistence live in SolverMix.ts so React Refresh keeps working
  * (lint rule: component files only export components).
  */
 
-type GearKey = "affinity" | "time" | "overload"
+type GearKey = "coverage" | "time" | "overload"
 
 const MIN_FLOOR = 5    // no dial can go below this
 const TOTAL     = 100
 
 const GEAR_LABELS: Record<GearKey, string> = {
-  affinity: "Affinity",
+  coverage: "Coverage",
   time:     "Time Pref",
   overload: "Overload",
 }
 
 const GEAR_HINTS: Record<GearKey, string> = {
-  affinity: "How much expertise matches matter",
+  coverage: "How hard we push to schedule every should/could-have",
   time:     "How much prof time-of-day matters",
   overload: "How much we punish overloading a prof",
 }
@@ -38,7 +39,7 @@ const GEAR_HINTS: Record<GearKey, string> = {
  *  hard-stop. The other two dials shrink to MIN_FLOOR; surplus drag becomes
  *  rubber-band tension that snaps back on release. */
 function applyDrag(prev: Mix, key: GearKey, rawTarget: number): { mix: Mix; tension: number } {
-  const others: GearKey[] = (["affinity", "time", "overload"] as GearKey[]).filter(k => k !== key)
+  const others: GearKey[] = (["coverage", "time", "overload"] as GearKey[]).filter(k => k !== key)
   const sumOthers = others.reduce((s, k) => s + prev[k], 0)
   const minOthers = MIN_FLOOR * others.length
   const maxAbsorbable = TOTAL - minOthers
@@ -75,46 +76,48 @@ function applyDrag(prev: Mix, key: GearKey, rawTarget: number): { mix: Mix; tens
 
 /** Snap to integers totaling exactly 100. Largest gets the residual. */
 function commit(mix: Mix): Mix {
-  const total = mix.affinity + mix.time + mix.overload
+  const total = mix.coverage + mix.time + mix.overload
   const scale = TOTAL / total
   const scaled: Mix = {
-    affinity: Math.round(mix.affinity * scale),
+    coverage: Math.round(mix.coverage * scale),
     time:     Math.round(mix.time * scale),
     overload: Math.round(mix.overload * scale),
   }
-  const sum = scaled.affinity + scaled.time + scaled.overload
+  const sum = scaled.coverage + scaled.time + scaled.overload
   if (sum !== TOTAL) {
     const drift = TOTAL - sum
     const biggest: GearKey =
-      scaled.affinity >= scaled.time && scaled.affinity >= scaled.overload ? "affinity" :
+      scaled.coverage >= scaled.time && scaled.coverage >= scaled.overload ? "coverage" :
       scaled.time >= scaled.overload ? "time" : "overload"
     scaled[biggest] += drift
   }
   return scaled
 }
 
-/** Generate the "what this means" copy from the live mix. */
+/** Generate the "what this means" copy from the live mix. Affinity is a fixed
+ *  background weight (always on, never tuned) so the copy describes the three
+ *  tradeoffs the user actually controls. */
 function describeMix(mix: Mix): string {
-  const w_aff  = mix.affinity * 0.17
-  const w_time = mix.time     * 0.17
-  const prefAtBad  = w_aff * 1 + w_time * 5
-  const eligAtGood = w_aff * 3 + w_time * 0
-  const margin     = eligAtGood - prefAtBad
-  const overWeight = mix.overload
+  const cov = mix.coverage
+  const tim = mix.time
+  const ovl = mix.overload
 
-  const expertVerdict =
-    margin > 6  ? "Experts win comfortably, even when the slot is bad."
-    : margin > 1 ? "Experts win the close calls — including bad time slots."
-    : margin > -1 ? "Roughly tied — neither expertise nor time-fit dominates."
-    : margin > -6 ? "Schedule fit usually wins; experts only beat random profs at preferred slots."
-    : "Schedule fit dominates — the right prof in the wrong slot is unwelcome."
+  const coverageVerdict =
+    cov >= 60 ? "Coverage dominates — the solver will bend time-of-day hard to place every should/could-have."
+    : cov >= 35 ? "Coverage matters, but not at any cost — expect a few should-haves to drop if slots get tight."
+    : "Coverage is a suggestion — the solver will drop optional sections before bending the rest of the schedule."
+
+  const timeVerdict =
+    tim >= 60 ? "Prof time prefs are near-sacred."
+    : tim >= 25 ? "Prof time prefs are honored when they don't block coverage."
+    : "Prof time prefs are barely considered — expect morning people on afternoon slots."
 
   const overVerdict =
-    overWeight >= 30 ? "Overloading a prof feels expensive."
-    : overWeight >= 15 ? "Mild resistance to overloading."
+    ovl >= 30 ? "Overloading a prof feels expensive."
+    : ovl >= 15 ? "Mild resistance to overloading."
     : "Overloading is barely penalized — expect a few profs to carry heavy quarters."
 
-  return `${expertVerdict} ${overVerdict}`
+  return `${coverageVerdict} ${timeVerdict} ${overVerdict}`
 }
 
 interface Props {
@@ -128,7 +131,7 @@ interface Props {
 export function SolverTuning(props: Props) {
   const { open, onClose, onApply } = props
   const [mix, setMixState] = useState<Mix>(() => loadTunedMix())
-  const [tension, setTension] = useState<Record<GearKey, number>>({ affinity: 0, time: 0, overload: 0 })
+  const [tension, setTension] = useState<Record<GearKey, number>>({ coverage: 0, time: 0, overload: 0 })
   const [draggingKey, setDraggingKey] = useState<GearKey | null>(null)
 
   // Persist on every committed mix change — this way dragging feels free, and
@@ -161,7 +164,7 @@ export function SolverTuning(props: Props) {
     if (!dragRef.current) return
     dragRef.current = null
     setDraggingKey(null)
-    setTension({ affinity: 0, time: 0, overload: 0 })
+    setTension({ coverage: 0, time: 0, overload: 0 })
     const snapped = commit(mix)
     setMix(snapped)
     saveTunedMix(snapped)
@@ -175,7 +178,7 @@ export function SolverTuning(props: Props) {
 
   const currentPreset = useMemo(() => {
     return Object.entries(PRESETS).find(([, p]) =>
-      p.affinity === mix.affinity && p.time === mix.time && p.overload === mix.overload
+      p.coverage === mix.coverage && p.time === mix.time && p.overload === mix.overload
     )?.[0] ?? null
   }, [mix])
 
@@ -210,14 +213,14 @@ export function SolverTuning(props: Props) {
           <div>
             <h2 className="solver-tune__title">Tune the Solver</h2>
             <p className="solver-tune__sub">
-              Shape the middle mode — Affinity vs. Time vs. Overload.
+              Shape the middle mode — Coverage vs. Time vs. Overload.
             </p>
           </div>
           <button type="button" className="solver-tune__close" onClick={onClose} aria-label="Close">×</button>
         </header>
 
         <div className="solver-tune__gears">
-          {(["affinity", "time", "overload"] as GearKey[]).map(key => {
+          {(["coverage", "time", "overload"] as GearKey[]).map(key => {
             const value = mix[key]
             const t = tension[key]
             const dragging = draggingKey === key

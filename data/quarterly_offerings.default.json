@@ -98,6 +98,36 @@
       "pinned": null
     },
     {
+      "catalog_id": "GAME_121",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "standard",
+      "override_preferred_professors": null,
+      "notes": "Foundations of Interactive Programming",
+      "pinned": null
+    },
+    {
+      "catalog_id": "GAME_326",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "standard",
+      "override_preferred_professors": null,
+      "notes": "Mid-level elective - Lindsey track",
+      "pinned": null
+    },
+    {
+      "catalog_id": "GAME_310",
+      "priority": "could_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "standard",
+      "override_preferred_professors": null,
+      "notes": "Mobile / interactive",
+      "pinned": null
+    },
+    {
       "catalog_id": "MOME_105",
       "priority": "must_have",
       "sections": 2,
@@ -108,13 +138,43 @@
       "pinned": null
     },
     {
+      "catalog_id": "MOME_115",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "mac_lab",
+      "override_preferred_professors": null,
+      "notes": "Survey of MM Design",
+      "pinned": null
+    },
+    {
       "catalog_id": "MOME_130",
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
       "override_room_type": "mac_lab",
       "override_preferred_professors": null,
-      "notes": null,
+      "notes": "Techniques I",
+      "pinned": null
+    },
+    {
+      "catalog_id": "MOME_206",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "mac_lab",
+      "override_preferred_professors": null,
+      "notes": "Techniques II - mid-level",
+      "pinned": null
+    },
+    {
+      "catalog_id": "MOME_221",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "mac_lab",
+      "override_preferred_professors": null,
+      "notes": "VR for Motion Media",
       "pinned": null
     },
     {
@@ -125,6 +185,26 @@
       "override_room_type": "mac_lab",
       "override_preferred_professors": null,
       "notes": "Senior project",
+      "pinned": null
+    },
+    {
+      "catalog_id": "MOME_305",
+      "priority": "could_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "mac_lab",
+      "override_preferred_professors": null,
+      "notes": "Projection - Imperato preferred",
+      "pinned": null
+    },
+    {
+      "catalog_id": "MOME_309",
+      "priority": "could_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "mac_lab",
+      "override_preferred_professors": null,
+      "notes": "Concepts in MM Design",
       "pinned": null
     },
     {
@@ -150,6 +230,16 @@
       "pinned": null
     },
     {
+      "catalog_id": "AI_101",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "pc_lab",
+      "override_preferred_professors": null,
+      "notes": "AI survey intro",
+      "pinned": null
+    },
+    {
       "catalog_id": "AI_201",
       "priority": "should_have",
       "sections": 1,
@@ -160,13 +250,33 @@
       "pinned": null
     },
     {
-      "catalog_id": "AI_101",
+      "catalog_id": "AI_250",
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
       "override_room_type": "pc_lab",
       "override_preferred_professors": null,
-      "notes": "AI survey intro",
+      "notes": "Second AI in sequence",
+      "pinned": null
+    },
+    {
+      "catalog_id": "AI_360",
+      "priority": "nice_to_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "pc_lab",
+      "override_preferred_professors": null,
+      "notes": "Advanced AI - would be nice",
+      "pinned": null
+    },
+    {
+      "catalog_id": "IACT_330",
+      "priority": "nice_to_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "standard",
+      "override_preferred_professors": null,
+      "notes": "Cross-dept elective - ambitious",
       "pinned": null
     }
   ]

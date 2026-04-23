@@ -66,7 +66,7 @@ def _sample_state() -> dict:
                 "time_slot": "8:00 AM",
             }
         ],
-        "solver_mode": "affinity_first",
+        "solver_mode": "cover_first",
     }
 
 
@@ -184,7 +184,7 @@ def test_professors_and_rooms_roundtrip_as_flat_tables(tmp_path: Path) -> None:
 
 def test_tuned_weights_roundtrip(tmp_path: Path) -> None:
     state = _sample_state()
-    state["tunedWeights"] = {"affinity": 50, "time_pref": 30, "overload": 20}
+    state["tunedWeights"] = {"coverage": 50, "time_pref": 30, "overload": 20}
     path = write_excel(_minimal_results(), tmp_path, draft_state=state)
     loaded = read_draft_state(path)
     assert loaded["tunedWeights"] == state["tunedWeights"]
@@ -408,7 +408,7 @@ def test_validate_preserves_all_other_top_level_keys() -> None:
         room_ids={"r_101"},
     )
     assert cleaned["custom_extension"] == {"future": "field"}
-    assert cleaned["solver_mode"] == "affinity_first"
+    assert cleaned["solver_mode"] == "cover_first"
     assert cleaned["schema_version"] == DATA_SCHEMA_VERSION
 
 

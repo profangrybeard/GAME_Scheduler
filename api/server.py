@@ -133,8 +133,12 @@ class TunedWeightsModel(BaseModel):
     """User-tuned weight vector for the 'balanced' (Tune) mode. Same shape as
     the entries in config.MODE_WEIGHTS, so the solver can swap it in directly.
     Carried as percent-of-100 from the gear UI; the solver uses these as raw
-    coefficients (relative magnitude is what matters)."""
-    affinity:  int
+    coefficients (relative magnitude is what matters).
+
+    Axes: coverage (fight-to-place should/could), time_pref (honor prof
+    time-of-day), overload (resist pushing a prof above STANDARD_MAX).
+    Affinity is off the tune surface — it's a fixed low background weight."""
+    coverage:  int
     time_pref: int
     overload:  int
 
@@ -150,7 +154,7 @@ class SolveRequest(BaseModel):
     professors: list[dict] = Field(default_factory=list)
     rooms: list[dict] = Field(default_factory=list)
     # When provided, replaces MODE_WEIGHTS["balanced"] for this run only.
-    # The other two modes (affinity_first, time_pref_first) stay canonical.
+    # The other two modes (cover_first, time_pref_first) stay canonical.
     tunedWeights: TunedWeightsModel | None = None
 
 

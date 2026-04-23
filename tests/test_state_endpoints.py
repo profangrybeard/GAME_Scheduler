@@ -124,14 +124,14 @@ def test_export_response_has_very_hidden_meta_sheet(client, fake_run_schedule):
 
 
 def test_export_embedded_state_carries_react_shape_fields(client, fake_run_schedule):
-    res = client.post("/api/export", json=_minimal_export_body(solve_mode="affinity_first"))
+    res = client.post("/api/export", json=_minimal_export_body(solve_mode="cover_first"))
     state = read_draft_state(res.content)
 
     assert state["schema_version"] == DATA_SCHEMA_VERSION
     assert state["source"] == "react"
     assert state["quarter"] == "fall"
     assert state["year"] == 2026
-    assert state["solver_mode"] == "affinity_first"
+    assert state["solver_mode"] == "cover_first"
 
     # Offerings come back in React shape, not solver-doc shape.
     assert len(state["offerings"]) == 2

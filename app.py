@@ -1184,7 +1184,7 @@ else:
     _solver_results_early = st.session_state.get("solver_results")
     _pending_now = 0
     if _solver_results_early and st.session_state.get("locked_assignments"):
-        _sr_mode_idx = {"affinity_first": 0, "time_pref_first": 1, "balanced": 2}.get(st.session_state.get("solver_mode", "balanced"), 2)
+        _sr_mode_idx = {"cover_first": 0, "time_pref_first": 1, "balanced": 2}.get(st.session_state.get("solver_mode", "balanced"), 2)
         _sr_schedule = _solver_results_early["modes"][_sr_mode_idx]["schedule"]
         _solved_map = {sa["cs_key"]: sa for sa in _sr_schedule}
         for _la in st.session_state["locked_assignments"]:
@@ -1601,14 +1601,14 @@ else:
                 locked_set.add(f"{_o['catalog_id']}__0")
 
         if has_results:
-            mode_idx = {"affinity_first": 0, "time_pref_first": 1, "balanced": 2}
+            mode_idx = {"cover_first": 0, "time_pref_first": 1, "balanced": 2}
             current_mode = st.session_state.get("solver_mode", "balanced")
             mode_data = solver_results["modes"][mode_idx[current_mode]]
 
             gc_m1, gc_m2, gc_m3, gc_exp = st.columns([1, 1, 1, 1])
             with gc_m1:
-                if st.button("Affinity", use_container_width=True, type="primary" if current_mode == "affinity_first" else "secondary"):
-                    st.session_state["solver_mode"] = "affinity_first"; st.rerun()
+                if st.button("Cover", use_container_width=True, type="primary" if current_mode == "cover_first" else "secondary"):
+                    st.session_state["solver_mode"] = "cover_first"; st.rerun()
             with gc_m2:
                 if st.button("Time Pref", use_container_width=True, type="primary" if current_mode == "time_pref_first" else "secondary"):
                     st.session_state["solver_mode"] = "time_pref_first"; st.rerun()

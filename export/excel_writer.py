@@ -7,7 +7,7 @@ Usage:
 Sheets
 ------
   1. Summary       — mode comparison table, quarter overview
-  2. Affinity First — schedule grid for affinity_first mode
+  2. Cover First   — schedule grid for cover_first mode
   3. Time Pref First — schedule grid for time_pref_first mode
   4. Balanced       — schedule grid for balanced mode
 
