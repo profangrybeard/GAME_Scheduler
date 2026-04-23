@@ -5,7 +5,7 @@ import type {
   Professor,
   Room,
 } from "../types"
-import { classifyOffering, PRIORITIES, prettyRoomType } from "../types"
+import { PRIORITIES, prettyRoomType } from "../types"
 
 /**
  * The DETAIL panel — Class.
@@ -80,9 +80,6 @@ export function Class(props: ClassProps) {
   if (!offering || !course) {
     return (
       <aside className="panel panel--class" aria-label="Class">
-        <header className="panel__header">
-          <h2 className="panel__title">Class</h2>
-        </header>
         <div className="panel__body">
           <p className="placeholder placeholder--empty">
             No offering selected.
@@ -94,15 +91,8 @@ export function Class(props: ClassProps) {
     )
   }
 
-  const state = classifyOffering(offering)
-
   return (
     <aside className="panel panel--class" aria-label="Class">
-      <header className="panel__header">
-        <h2 className="panel__title">Class</h2>
-        <span className={"class__state class__state--" + state}>{state}</span>
-      </header>
-
       <div className="panel__body class__body">
         <section className="class__hero">
           <div className="class__hero-row">
