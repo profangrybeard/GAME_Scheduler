@@ -13,6 +13,7 @@ import type {
   TimeSlot,
 } from "../types"
 import { ProfAvatar } from "./ProfAvatar"
+import { ScheduleMenu } from "./ScheduleMenu"
 import { SolveProgress } from "./SolveProgress"
 
 /**
@@ -304,27 +305,11 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
               )}
               {isSolving ? "Assembling…" : "ASSEMBLE"}
             </button>
-            <button
-              className={
-                "btn-empty-calendar" +
-                (props.clearArmed ? " btn-empty-calendar--armed" : "")
-              }
+            <ScheduleMenu
+              onEmptyCalendar={props.onEmptyCalendar}
+              clearArmed={props.clearArmed}
               disabled={isSolving}
-              onClick={props.onEmptyCalendar}
-              title={
-                props.clearArmed
-                  ? "Click again to also clear your manually placed cards."
-                  : "Clear solver results and start over. User-placed cards stay."
-              }
-            >
-              Empty Calendar
-              {props.clearArmed && (
-                <span
-                  className="btn-empty-calendar__armed-dot"
-                  aria-hidden="true"
-                />
-              )}
-            </button>
+            />
             <a
               className="solver-badge"
               href="https://developers.google.com/optimization/cp/cp_solver"
