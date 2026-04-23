@@ -1748,10 +1748,21 @@
 
 .roster__tabs {
   display: flex;
+  align-items: center;
   gap: 2px;
-  padding: 0 var(--space-md);
+  padding: 6px var(--space-md) 0;
   margin: 0 0 var(--space-xs);
   border-bottom: 1px solid var(--border);
+}
+
+/* Action cluster (+ Add / Clear All) on its own row just under the tabs,
+ * replacing the old panel header. Renders only for Profs / Rooms tabs —
+ * Courses has no header controls (Browse sub-tab is its entry point). */
+.roster__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 6px var(--space-md) 2px;
 }
 
 .roster__tab {
@@ -1871,7 +1882,6 @@
 }
 
 .roster__add-btn {
-  margin-left: auto;
   background: transparent;
   border: 1px solid var(--border);
   color: var(--accent);
@@ -3107,21 +3117,6 @@
 
 .solve-progress__dismiss:hover { color: var(--text); background: var(--surface-hover); }
 
-/* Summary pill shown in the collapsed done-state header — replaces the
- * three "OPTIMAL" pills that used to shout across the card grid. */
-.solve-progress__summary {
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  background: color-mix(in srgb, var(--success) 18%, transparent);
-  color: var(--success);
-  border: 1px solid color-mix(in srgb, var(--success) 40%, var(--border));
-  font-variant-numeric: tabular-nums;
-}
-
 /* Expand/collapse toggle for the per-mode cards. Subtle chevron rotates
  * when open; the "Details" / "Hide" label keeps intent legible. */
 .solve-progress__toggle {
@@ -3161,27 +3156,6 @@
 
 .solve-progress__toggle-chevron--open {
   transform: rotate(90deg);
-}
-
-/* Inline (header) variant of the tune gear — small and static, not the
- * big absolute-positioned button that sits on the middle mode card. */
-.solve-progress__tune-btn--header {
-  position: static;
-  transform: none;
-  width: 28px;
-  height: 28px;
-  font-size: 1rem;
-  box-shadow: none;
-  border-width: 1px;
-  background: transparent;
-  color: var(--accent);
-  transition: background 0.12s ease, transform 0.18s ease, border-color 0.12s ease;
-}
-
-.solve-progress__tune-btn--header:hover {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  transform: rotate(60deg);
-  box-shadow: none;
 }
 
 .solve-progress__error-message {

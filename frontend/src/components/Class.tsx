@@ -5,8 +5,7 @@ import type {
   Professor,
   Room,
 } from "../types"
-import { classifyOffering, PRIORITIES, prettyRoomType, profRoleText } from "../types"
-import { ProfAvatar } from "./ProfAvatar"
+import { classifyOffering, PRIORITIES, prettyRoomType } from "../types"
 
 /**
  * The DETAIL panel — Class.
@@ -96,9 +95,6 @@ export function Class(props: ClassProps) {
   }
 
   const state = classifyOffering(offering)
-  const assignedProf = offering.assigned_prof_id
-    ? props.professors[offering.assigned_prof_id]
-    : null
 
   return (
     <aside className="panel panel--class" aria-label="Class">
@@ -128,38 +124,6 @@ export function Class(props: ClassProps) {
               </button>
             )}
           </h3>
-          <div
-            className={
-              "class__prof-lockup" +
-              (assignedProf ? " class__prof-lockup--clickable" : "")
-            }
-            role={assignedProf ? "button" : undefined}
-            tabIndex={assignedProf ? 0 : undefined}
-            onClick={() => {
-              if (assignedProf) props.onSelectProfessor(assignedProf.id)
-            }}
-            onKeyDown={e => {
-              if (assignedProf && (e.key === "Enter" || e.key === " ")) {
-                e.preventDefault()
-                props.onSelectProfessor(assignedProf.id)
-              }
-            }}
-          >
-            <ProfAvatar
-              profId={offering.assigned_prof_id}
-              name={assignedProf?.name}
-              size={36}
-              className="class__prof-avatar"
-            />
-            <div className="class__prof-text">
-              <div className="class__prof-name">
-                {assignedProf?.name ?? "AUTO professor"}
-              </div>
-              <div className="class__prof-sub">
-                {assignedProf ? profRoleText(assignedProf) : "Solver will pick"}
-              </div>
-            </div>
-          </div>
         </section>
 
         <section className="class__section">
