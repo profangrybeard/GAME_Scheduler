@@ -71,9 +71,12 @@ export interface QuarterScheduleProps {
   catalog: Record<string, Course>
   professors: Record<string, Professor>
   rooms: Record<string, Room>
-  /** Current quarter label (e.g. "Fall"). Rendered in the panel title with an
-   *  inline <select> so the user can swap the header without leaving the grid. */
+  /** Current quarter label (e.g. "Fall"). Rendered as an inline <select>
+   *  in the grid's top-left corner so the context sits on the calendar
+   *  itself instead of floating in the topbar. */
   quarter: string
+  /** Setter for the quarter label. Fires from the corner-cell select. */
+  onSetQuarter: (quarter: string) => void
   solveStatus: SolveStatus
   solveMode: SolveMode
   placingId: string | null
@@ -376,7 +379,21 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
           }
           role="grid"
         >
-          <div className="schedule-grid__corner" aria-hidden="true" />
+          <div className="schedule-grid__corner">
+            <span className="schedule-grid__quarter-wrap">
+              <select
+                className="schedule-grid__quarter-select"
+                value={quarterValue}
+                onChange={e => props.onSetQuarter(e.target.value)}
+                aria-label="Quarter"
+              >
+                {QUARTER_OPTIONS.map(q => (
+                  <option key={q} value={q}>{q}</option>
+                ))}
+              </select>
+              <span className="schedule-grid__quarter-caret" aria-hidden="true">▾</span>
+            </span>
+          </div>
           {DAY_GROUPS.map(g => (
             <div
               key={`h-${g.key}`}
