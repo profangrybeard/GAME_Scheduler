@@ -25,7 +25,7 @@ import { DataIssuesPanel } from "./components/DataIssuesPanel"
 import { PortraitContext } from "./components/PortraitContext"
 import { ProfessorContext } from "./components/ProfessorContext"
 import { ProfessorCard } from "./components/ProfessorCard"
-import { QuarterSchedule } from "./components/QuarterSchedule"
+import { QuarterSchedule, QUARTER_OPTIONS } from "./components/QuarterSchedule"
 import { RoomCard } from "./components/RoomCard"
 import { Roster } from "./components/Roster"
 import { SolverTuning } from "./components/SolverTuning"
@@ -1114,7 +1114,6 @@ function App() {
       onAdd={addOffering}
       onPinToSlot={pinToSlot}
       onSetSolveMode={setSolveMode}
-      onSetQuarter={setQuarter}
       onSolve={() => { void requestSolve() }}
       onEmptyCalendar={emptyCalendar}
       clearArmed={clearArmed}
@@ -1122,6 +1121,38 @@ function App() {
       onDismissError={() => setSolveError(null)}
       onDismissProgress={() => setSolveProgress(null)}
       onOpenTuning={() => setTuningOpen(true)}
+      inputSlot={
+        <div className="schedule__input">
+          <button
+            type="button"
+            className="topbar-btn topbar-btn--resume"
+            onClick={triggerReloadPicker}
+            title="Pick a previously exported schedule to resume editing"
+          >
+            Resume from Excel
+          </button>
+          {reloadMtime !== null && (
+            <span
+              className="schedule__input-loaded"
+              title={`File last modified ${new Date(reloadMtime).toLocaleString()}`}
+            >
+              {reloadFilename ? `${reloadFilename} · ` : ""}
+              Loaded {formatLoadedTimestamp(reloadMtime)}
+            </span>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) handleReloadFile(f)
+              e.target.value = ""
+            }}
+          />
+        </div>
+      }
     />
   )
 
@@ -1246,39 +1277,27 @@ function App() {
             >
               ☰
             </button>
+            <span className="topbar-quarter">
+              <span className="topbar-quarter__select-wrap">
+                <select
+                  className="topbar-quarter__select"
+                  value={QUARTER_OPTIONS.includes(state.quarter) ? state.quarter : "Fall"}
+                  onChange={e => setQuarter(e.target.value)}
+                  aria-label="Quarter"
+                >
+                  {QUARTER_OPTIONS.map(q => (
+                    <option key={q} value={q}>{q}</option>
+                  ))}
+                </select>
+                <span className="topbar-quarter__caret" aria-hidden="true">▾</span>
+              </span>
+              {" "}Schedule
+            </span>
+          </div>
+          <div className="scheduler__topbar-center">
             <div className="scheduler__title-group">
               <BrandEyebrow />
               <h1 className="scheduler__title">Course Planner</h1>
-            </div>
-            <div className="topbar-resume">
-              <button
-                type="button"
-                className="topbar-btn topbar-btn--resume"
-                onClick={triggerReloadPicker}
-                title="Pick a previously exported schedule to resume editing"
-              >
-                Resume from Excel
-              </button>
-              {reloadMtime !== null && (
-                <span
-                  className="topbar-resume__loaded"
-                  title={`File last modified ${new Date(reloadMtime).toLocaleString()}`}
-                >
-                  {reloadFilename ? `${reloadFilename} · ` : ""}
-                  Loaded {formatLoadedTimestamp(reloadMtime)}
-                </span>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                style={{ display: "none" }}
-                onChange={(e) => {
-                  const f = e.target.files?.[0]
-                  if (f) handleReloadFile(f)
-                  e.target.value = ""
-                }}
-              />
             </div>
           </div>
           <div className="scheduler__topbar-right">
