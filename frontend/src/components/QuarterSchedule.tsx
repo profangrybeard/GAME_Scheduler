@@ -43,7 +43,7 @@ const TIME_LABELS: Record<TimeSlot, string> = {
   "5:00PM": "5 PM",
 }
 
-const DAY_GROUPS: ReadonlyArray<{ key: DayGroup; label: string }> = [
+const ALL_DAY_GROUPS: ReadonlyArray<{ key: DayGroup; label: string }> = [
   { key: 1, label: "MW" },
   { key: 2, label: "TTh" },
   { key: 3, label: "F" },
@@ -107,6 +107,17 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null)
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [visibleDayGroup, setVisibleDayGroup] = useState<DayGroup>(1)
+
+  // Hide the Friday column unless a course actually uses it. GAME doesn't meet
+  // on Fridays, so the empty column is dead real estate; other departments
+  // (where Friday is live) will populate it and the column reappears.
+  const DAY_GROUPS = useMemo(() => {
+    const hasFriday = props.offerings.some(o => {
+      const slot = effectiveSlot(o)
+      return slot?.day_group === 3
+    })
+    return hasFriday ? ALL_DAY_GROUPS : ALL_DAY_GROUPS.filter(g => g.key !== 3)
+  }, [props.offerings])
 
   const isSolving = props.solveStatus === "running"
   const apiReady = props.apiAvailable === true
@@ -275,21 +286,6 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
               an Affinity/Time Pref/Balanced card flips the calendar to that
               mode's cached results. The redundant chip row was removed. */}
           <div className="panel__actions">
-            <a
-              className="solver-badge"
-              href="https://developers.google.com/optimization/cp/cp_solver"
-              target="_blank"
-              rel="noopener noreferrer"
-              title={
-                "Generate runs Google OR-Tools CP-SAT locally — a constraint" +
-                " solver, not AI. It enumerates schedules that respect every" +
-                " rule (rooms, professors, time slots) and picks the best fit." +
-                " Click to learn more."
-              }
-              aria-label="Learn about the OR-Tools constraint solver"
-            >
-              <span className="solver-badge__label">OR</span>
-            </a>
             <button
               type="button"
               className={"btn-generate" + (isSolving ? " btn-generate--solving" : "")}
@@ -334,6 +330,21 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
                 />
               )}
             </button>
+            <a
+              className="solver-badge"
+              href="https://developers.google.com/optimization/cp/cp_solver"
+              target="_blank"
+              rel="noopener noreferrer"
+              title={
+                "Generate runs Google OR-Tools CP-SAT locally — a constraint" +
+                " solver, not AI. It enumerates schedules that respect every" +
+                " rule (rooms, professors, time slots) and picks the best fit." +
+                " Click to learn more."
+              }
+              aria-label="Learn about the OR-Tools constraint solver"
+            >
+              <span className="solver-badge__label">OR</span>
+            </a>
           </div>
         </div>
       </header>

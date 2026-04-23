@@ -5,7 +5,7 @@ import type {
   Professor,
   Room,
 } from "../types"
-import { classifyOffering, PRIORITIES, profRoleText } from "../types"
+import { classifyOffering, PRIORITIES, prettyRoomType, profRoleText } from "../types"
 import { ProfAvatar } from "./ProfAvatar"
 
 /**
@@ -260,7 +260,9 @@ export function Class(props: ClassProps) {
             )}
           </select>
           <p className="class__hint">
-            Required: <code>{course.required_room_type}</code> · cap{" "}
+            Station:{" "}
+            {prettyRoomType(offering.override_room_type || course.required_room_type)}
+            {" · seats "}
             {offering.override_enrollment_cap ?? course.enrollment_cap}
           </p>
         </section>

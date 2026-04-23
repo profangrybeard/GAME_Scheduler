@@ -324,11 +324,25 @@ function OfferingsList(props: OfferingsListProps) {
           {props.capacity.floorTotal}
         </span>
         {overloadSlots > 0 && (
-          <span className="roster__capacity-overload">
+          <span
+            className="roster__capacity-overload"
+            title={`${overloadSlots} overload slot${overloadSlots === 1 ? "" : "s"} — past contract, still under the hard cap.`}
+          >
             +{overloadSlots} OL
           </span>
         )}
-        <span className="roster__capacity-hint">
+        <span
+          className="roster__capacity-hint"
+          title={
+            capState === "under"
+              ? "Below contract — assign more classes to reach the minimum load."
+              : capState === "contract"
+                ? "Contract minimums met for every roster professor."
+                : capState === "overload"
+                  ? "One or more professors are past contract, into overload slots."
+                  : "At the hard cap — no professor can accept another class."
+          }
+        >
           {capState === "under" && "keep loading"}
           {capState === "contract" && "contract met"}
           {capState === "overload" && "in overload"}
@@ -425,7 +439,7 @@ function OfferingsList(props: OfferingsListProps) {
                 <span className="roster-card__name">{course.name}</span>
               </span>
               <span className="roster-card__prof">
-                {prof ? prof.name.split(" ").pop() : "AUTO"}
+                {prof ? prof.name.split(" ").pop() : null}
               </span>
               <span
                 className={`roster-card__status roster-card__status--${state}`}
