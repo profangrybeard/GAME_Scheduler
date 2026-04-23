@@ -17,201 +17,24 @@
   min-height: 0;
 }
 
-/* ─── Resume-from-Excel editorial rail ────────────────────────────
-   Vertical bookend on the left edge, full viewport height. Intentionally
-   inverse-theme (dark chip in light mode, light chip in dark mode) so it
-   reads like a magazine tab: you start here, everything else flows from
-   your click. Text is sideways (writing-mode vertical-rl + 180deg flip)
-   so it reads bottom-to-top like a book spine. */
-.resume-rail {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: space-between;
-  width: 56px;
-  flex-shrink: 0;
-  background: var(--text);
-  color: var(--bg);
-  border-right: 1px solid var(--border);
-  padding: 18px 0;
-  gap: 8px;
-  user-select: none;
-}
-
-.resume-rail__btn {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  width: 100%;
-  min-height: 0;
-  background: transparent;
-  color: inherit;
-  border: 0;
-  padding: 24px 0;
-  cursor: pointer;
-  transition: background 0.2s ease, letter-spacing 0.25s ease;
-}
-
-/* Bee anchors the label as a pop of color. It sits in the same flex
-   column as the rotated text with a fixed gap, so no matter how the rail
-   stretches, the two move as one block. Emoji keeps its natural yellow
-   across both themes; the drop-shadow flips per theme because the rail
-   background inverts. */
-.resume-rail__mark {
-  font-size: 1.46rem;
-  line-height: 1;
-  transition: filter 0.25s ease;
-  transform-origin: center;
-}
-
-/* Buzzzzz on hover — fires only when the cursor is on the bee itself, not
-   the whole rail button. Small rapid jitter with a hint of rotation so it
-   reads as a live wingbeat. */
-@keyframes bee-buzz {
-  0%   { transform: translate(0, 0)        rotate(0deg);  }
-  15%  { transform: translate(-0.8px, -1px) rotate(-4deg); }
-  30%  { transform: translate(1px,   1.2px) rotate(5deg);  }
-  45%  { transform: translate(-1.2px, 0.5px) rotate(-3deg); }
-  60%  { transform: translate(1.1px, -0.8px) rotate(4deg);  }
-  75%  { transform: translate(-0.6px, 1px)  rotate(-5deg); }
-  100% { transform: translate(0, 0)        rotate(0deg);  }
-}
-
-.resume-rail__mark:hover {
-  animation: bee-buzz 0.18s linear infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .resume-rail__mark:hover { animation: none; }
-}
-
-:root[data-theme="dark"] .resume-rail__mark {
-  /* Dark mode → rail bg is light → bee needs a subtle grounding shadow */
-  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.18));
-}
-
-:root[data-theme="light"] .resume-rail__mark {
-  /* Light mode → rail bg is dark → bee needs a warm glow */
-  filter: drop-shadow(0 0 6px rgba(255, 200, 0, 0.45));
-}
-
-
-.resume-rail__btn:hover {
-  background: color-mix(in srgb, var(--bg) 14%, transparent);
-}
-
-.resume-rail__btn:active {
-  background: color-mix(in srgb, var(--bg) 22%, transparent);
-}
-
-.resume-rail__btn:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -4px;
-}
-
-.resume-rail__label {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  font-size: 1.05rem;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  line-height: 1;
-}
-
-.resume-rail__btn:hover .resume-rail__label {
-  letter-spacing: 0.26em;
-}
-
-/* Loaded timestamp. Occupies the slot the "Try the example" button used to
-   sit in. Matches the resume button's vertical orientation but downplayed:
-   smaller, thinner, muted — data not a title. Will be reworked when we
-   redesign the rail; this is a holding pattern. */
-.resume-rail__loaded {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-top: 1px solid color-mix(in srgb, var(--bg) 20%, transparent);
-  padding: 14px 0 10px;
-  opacity: 0.72;
-}
-
-.resume-rail__loaded {
-  flex-direction: column;
-  gap: 6px;
-}
-
-.resume-rail__loaded-filename {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  /* Filenames can exceed the rail height — clamp vertical length so the
-     timestamp below still has a place to live without overflowing the rail. */
-  max-height: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--text);
-}
-
-.resume-rail__loaded-label {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  font-size: 0.7rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-
-@media (max-width: 767px) {
-  /* On phones, the rail eats too much of the already-tight canvas. Park it
-     at the top as a horizontal bar instead. */
-  .scheduler {
-    flex-direction: column;
-  }
-  .resume-rail {
-    flex-direction: row;
-    width: 100%;
-    padding: 0;
-    border-right: 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .resume-rail__btn {
-    padding: 12px 0;
-  }
-  .resume-rail__label,
-  .resume-rail__loaded-label,
-  .resume-rail__loaded-filename {
-    writing-mode: horizontal-tb;
-    transform: none;
-    max-height: none;
-  }
-  .resume-rail__loaded {
-    border-top: 0;
-    border-left: 1px solid color-mix(in srgb, var(--bg) 20%, transparent);
-    padding: 12px 16px;
-    flex-direction: row;
-    align-items: baseline;
-    gap: 10px;
-  }
-}
-
+/* Topbar is a 3-column grid so the Course Planner title can sit dead-center
+   while the left zone (hamburger + quarter selector) and the right zone
+   (Export + theme + About) hug their respective edges. */
 .scheduler__topbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   padding: var(--space-md) var(--space-lg);
   border-bottom: 1px solid var(--border);
   background: var(--bg);
   min-height: 52px;
+  gap: var(--space-md);
+}
+
+.scheduler__topbar-center {
+  justify-self: center;
+  min-width: 0;
+  text-align: center;
 }
 
 .scheduler__title-group {
@@ -220,6 +43,7 @@
   gap: 2px;
   min-width: 0;
   line-height: 1.1;
+  align-items: center;
 }
 
 .scheduler__title {
@@ -260,6 +84,7 @@
   gap: var(--space-sm);
   min-width: 0;
   flex-shrink: 1;
+  justify-self: start;
 }
 
 .scheduler__topbar-right {
@@ -267,11 +92,66 @@
   align-items: center;
   gap: var(--space-sm);
   flex-shrink: 0;
+  justify-self: end;
+}
+
+/* Quarter selector in the topbar's left zone. "Fall ▾ Schedule" reads as the
+   active context for the whole workspace, so it lives up top instead of
+   inside the schedule panel header. Uppercase eyebrow treatment pairs with
+   the SCAD:Prototype eyebrow visually — both are context-chrome, not title. */
+.topbar-quarter {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.topbar-quarter__select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  color: var(--accent);
+}
+
+.topbar-quarter__select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0 14px 0 0;
+  margin: 0;
+  font: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.topbar-quarter__select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.topbar-quarter__caret {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-45%);
+  font-size: 1.2em;
+  line-height: 1;
+  pointer-events: none;
 }
 
 /* Export — secondary to Generate but still a real action. Gets a small
    accent glow and a 1px lift on hover, not the full plunger treatment. */
 .topbar-btn.topbar-btn--export {
+  position: relative;
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-on, #fff);
@@ -284,7 +164,8 @@
   transition:
     box-shadow 0.15s ease,
     transform 0.12s ease,
-    filter 0.15s ease;
+    filter 0.35s ease-out,
+    opacity 0.35s ease-out;
 }
 
 .topbar-btn.topbar-btn--export:hover:not(:disabled) {
@@ -307,6 +188,18 @@
   opacity: 0.45;
   cursor: not-allowed;
   box-shadow: none;
+}
+
+/* While the laser chaser is tracing the ring, keep the button fully lit
+   even if disabled state kicks in mid-animation — the 0.35s opacity
+   transition then fades the grey-out in after the chaser finishes. */
+.topbar-btn.topbar-btn--export.topbar-btn--export--chasing:disabled {
+  opacity: 1;
+  filter: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 1px 0 rgba(0, 0, 0, 0.08),
+    0 4px 12px -4px color-mix(in oklab, var(--accent) 60%, transparent);
 }
 
 /* ─── Topbar About popover ─────────────────────────────────────────
@@ -745,50 +638,6 @@
   color: var(--text-muted);
 }
 
-/* Inline <select> inside a panel title (used by Quarter Schedule). The
-   wrapper lets us layer a caret glyph on top of the native <select>
-   without losing native keyboard/screen-reader behavior. */
-.panel__title-select-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: baseline;
-  color: var(--accent);
-}
-
-.panel__title-select {
-  appearance: none;
-  -webkit-appearance: none;
-  background: transparent;
-  border: 0;
-  padding: 0 14px 0 0;
-  margin: 0;
-  font: inherit;
-  font-size: inherit;
-  font-weight: 700;
-  letter-spacing: inherit;
-  text-transform: inherit;
-  color: inherit;
-  cursor: pointer;
-  line-height: 1;
-}
-
-.panel__title-select:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-radius: 2px;
-}
-
-.panel__title-select-caret {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-45%);
-  font-size: 1.2em;
-  line-height: 1;
-  pointer-events: none;
-  color: var(--accent);
-}
-
 .panel__count {
   font-size: 0.78rem;
   color: var(--text-faint);
@@ -867,7 +716,8 @@
   transition:
     box-shadow 0.18s ease,
     transform 0.12s ease,
-    filter 0.15s ease;
+    filter 0.35s ease-out,
+    opacity  0.35s ease-out;
 }
 
 .panel__actions button.btn-generate:hover:not(:disabled) {
@@ -907,6 +757,22 @@
   cursor: not-allowed;
   box-shadow: none;
   filter: saturate(0.7);
+}
+
+/* While the chaser is lapping, keep the button fully lit even if the solve
+   flipped us into :disabled. When the chaser ends and this class lifts, the
+   0.35s opacity/filter transitions on the base rule give a smooth fade into
+   the greyed "Assembling…" state — instead of a hard flip that buries the
+   gold arc behind a 0.45-opacity parent. */
+.panel__actions button.btn-generate.btn-generate--chasing:disabled {
+  opacity: 1;
+  filter: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+    0 1px 0 rgba(0, 0, 0, 0.12),
+    0 6px 16px -4px color-mix(in oklab, var(--accent) 65%, transparent),
+    0 12px 24px -10px rgba(0, 0, 0, 0.35);
 }
 
 .btn-generate__icon {
@@ -967,57 +833,79 @@
   to { transform: rotate(360deg); }
 }
 
-/* Gold chaser — one-shot arc that laps the Assemble button's perimeter on
-   click. Mounted by QuarterSchedule under a changing React key so every
-   click re-mounts + re-runs. `@property` lets us animate the conic angle;
-   the two-layer mask (full / content-box, XOR'd) keeps only the border
-   ring visible — classic "gradient border" technique. Reduced-motion
-   collapses it to a brief overall glow instead. */
+/* Laser chaser — a white-hot "carving" arc that laps the Assemble button's
+   perimeter on click. Think Iron Man unibeam cutting a thin line into steel:
+   blinding white leading tip, incandescent orange wake cooling into deep red
+   ember before it vanishes. Four-layer drop-shadow makes the molten channel
+   illuminate the surrounding surface, not just paint on top of it.
+
+   Mounted by QuarterSchedule under a changing React key so every click
+   re-mounts + re-runs. `@property` lets us animate the conic angle; the
+   two-layer mask (full / content-box, XOR'd) keeps only the border ring
+   visible — classic gradient-border technique. Reduced-motion collapses
+   it to a brief non-spinning flash instead. */
 @property --chase-angle {
   syntax: "<angle>";
   initial-value: 0deg;
   inherits: false;
 }
 
-.btn-generate__chaser {
+.btn-chaser {
   position: absolute;
   inset: -2px;
   border-radius: inherit;
   padding: 2px;
   pointer-events: none;
+  /* Stack above the spinner + label + any disabled-state fade, so the arc
+     never gets visually eaten by the "Assembling…" state transitioning in
+     underneath it. */
+  z-index: 2;
   background: conic-gradient(
     from var(--chase-angle),
-    transparent           0%,
-    rgba(255, 223, 128, 0)  3%,
-    #ffe27a              7%,
-    #fffbe0              9%,
-    #ffd24a              11%,
-    rgba(255, 223, 128, 0) 16%,
-    transparent          22%,
-    transparent         100%
+    /* 0-4% is the blinding tip — the point of contact */
+    #ffffff              0%,
+    #fff4d0              2%,
+    #ffd880              4%,
+    /* 4-11% is the molten channel, hot yellow into deep orange */
+    #ffa020              6%,
+    #ff6a10              9%,
+    /* 11-18% is the cooling wake — red ember */
+    #d92800             12%,
+    #7a1400             16%,
+    rgba(60, 0, 0, 0.35) 19%,
+    /* The rest of the ring is unlit steel */
+    transparent         22%,
+    transparent        100%
   );
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  animation: btn-generate-chase 0.9s cubic-bezier(0.25, 0.1, 0.25, 1) 1 forwards;
-  /* Soft glow that tracks the arc */
-  filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.55));
+  animation: btn-generate-chase 0.8s linear 1 forwards;
+  /* Four-layer incandescence: tight white core → warm molten bloom → hot
+     orange flare → deep red ambient. Each layer reads as a different
+     "distance" from the cut, which is how real molten metal looks. */
+  filter:
+    drop-shadow(0  0  2px rgba(255, 255, 255, 0.95))
+    drop-shadow(0  0  6px rgba(255, 190,  80, 0.85))
+    drop-shadow(0  0 14px rgba(255,  90,  20, 0.70))
+    drop-shadow(0  0 24px rgba(255,  30,   0, 0.40));
   opacity: 0;
 }
 
 @keyframes btn-generate-chase {
   0%   { --chase-angle:   0deg; opacity: 1; }
-  85%  {                         opacity: 1; }
+  90%  {                         opacity: 1; }
   100% { --chase-angle: 360deg; opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn-generate__chaser {
+  .btn-chaser {
     animation: btn-generate-chase-flash 0.4s ease-out 1 forwards;
     background: none;
-    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.7);
+    box-shadow: 0 0 0 2px rgba(255, 240, 200, 0.85);
+    filter: drop-shadow(0 0 8px rgba(255, 140, 40, 0.65));
   }
   @keyframes btn-generate-chase-flash {
     0%   { opacity: 1; }
@@ -2703,26 +2591,66 @@
   border-color: var(--text-faint);
 }
 
-/* ─── Bee emoji next to the title ─────────────────────────────────
-   Drop-shadow tuned per theme so the yellow doesn't glare on light or
-   wash out against dark. aria-hidden in markup — purely decorative. */
-.scheduler__bee {
-  display: inline-block;
-  font-size: 1.05em;
-  vertical-align: -0.05em;
-  transition: filter 0.2s ease, transform 0.2s ease;
+/* Resume from Excel — the session's data ingress. Sits in the schedule
+   panel's header row as the left-justified "input" of the Resume → Assemble
+   flow (Assemble lives in the same row on the right). Surface-filled rather
+   than transparent so it reads as a real CTA, not a faded link. */
+.schedule__input {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+  flex-shrink: 1;
 }
 
-:root[data-theme="dark"] .scheduler__bee {
-  filter: drop-shadow(0 0 3px rgba(255, 200, 0, 0.35));
+.topbar-btn.topbar-btn--resume {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+  font-weight: 600;
+  padding: 0 14px;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.12s ease;
 }
 
-:root[data-theme="light"] .scheduler__bee {
-  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.18));
+.topbar-btn.topbar-btn--resume:hover {
+  background: var(--surface-hover, color-mix(in srgb, var(--text) 6%, var(--surface)));
+  border-color: var(--text-faint);
+  color: var(--text);
+  transform: translateY(-1px);
 }
 
-.scheduler__title:hover .scheduler__bee {
-  transform: rotate(-8deg);
+.topbar-btn.topbar-btn--resume:active {
+  transform: translateY(0);
+}
+
+.topbar-btn.topbar-btn--resume:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Small muted line next to the button: filename + "Loaded 3 min ago".
+   Truncates before it crowds the schedule toolbar on narrower widths. */
+.schedule__input-loaded {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  /* On phones the schedule header is already tight; the loaded line drops
+     off and the filename lives in the button's tooltip instead. */
+  .schedule__input-loaded {
+    display: none;
+  }
 }
 
 /* ─── Reload-from-Excel result banner ───────────────────────────── */
@@ -2901,6 +2829,27 @@
 /* ─── Portrait breakpoint (< 768px) ─────────────────────────────── */
 
 @media (max-width: 767px) {
+  /* The 3-col topbar grid (left / centered title / right) would shatter on
+     a phone. Collapse to a two-row stack: title on top, actions row below,
+     with the action zones wrapping within the row. */
+  .scheduler__topbar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-sm);
+  }
+
+  .scheduler__topbar-left,
+  .scheduler__topbar-right {
+    justify-self: auto;
+    flex-wrap: wrap;
+  }
+
+  .scheduler__topbar-center {
+    justify-self: auto;
+    order: -1;
+  }
+
   .scheduler__canvas {
     display: flex;
     flex-direction: column;
