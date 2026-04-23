@@ -32,7 +32,7 @@ import { loadTunedMix, mixToSolverWeights, saveTunedMix, type Mix } from "./comp
 import { TopbarMenu } from "./components/TopbarMenu"
 import { loadInitialState } from "./data"
 import { useTheme } from "./hooks/useTheme"
-import { coalesceOfferingsForWire, expandOfferingsFromWire, mintOfferingId, profContractCeiling, profContractFloor, QUARTER_OPTIONS } from "./types"
+import { coalesceOfferingsForWire, expandOfferingsFromWire, mintOfferingId, profContractCeiling, profContractFloor } from "./types"
 import type { Assignment, Offering, Professor, RosterCapacity, Room, SchedulerState, Slot, SolveMode, SolveModeProgress, SolveProgressState, WireOffering } from "./types"
 import "./App.css"
 
@@ -1099,6 +1099,7 @@ function App() {
       professors={state.professors}
       rooms={state.rooms}
       quarter={state.quarter}
+      onSetQuarter={setQuarter}
       solveStatus={state.solveStatus}
       solveMode={state.solveMode}
       placingId={placingId}
@@ -1273,27 +1274,9 @@ function App() {
             >
               ☰
             </button>
-            <span className="topbar-quarter">
-              <span className="topbar-quarter__select-wrap">
-                <select
-                  className="topbar-quarter__select"
-                  value={QUARTER_OPTIONS.includes(state.quarter) ? state.quarter : "Fall"}
-                  onChange={e => setQuarter(e.target.value)}
-                  aria-label="Quarter"
-                >
-                  {QUARTER_OPTIONS.map(q => (
-                    <option key={q} value={q}>{q}</option>
-                  ))}
-                </select>
-                <span className="topbar-quarter__caret" aria-hidden="true">▾</span>
-              </span>
-              {" "}Schedule
-            </span>
-          </div>
-          <div className="scheduler__topbar-center">
             <div className="scheduler__title-group">
               <BrandEyebrow />
-              <h1 className="scheduler__title">Course Planner</h1>
+              <h1 className="scheduler__title">Course Scheduler</h1>
             </div>
           </div>
           <div className="scheduler__topbar-right">
