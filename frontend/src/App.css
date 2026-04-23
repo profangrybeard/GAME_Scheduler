@@ -1451,13 +1451,14 @@
 }
 
 /* Corner cell holds the quarter selector — the "context chip" for the
-   whole grid. Accent color so it reads as interactive. */
+   whole grid. Accent color so it reads as interactive. Tight padding
+   because the first grid column is only 72px wide. */
 .schedule-grid__corner {
   background: var(--surface);
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  padding: var(--space-xs) var(--space-md);
+  justify-content: center;
+  padding: 4px 6px;
 }
 
 .schedule-grid__quarter-wrap {
@@ -1465,23 +1466,32 @@
   display: inline-flex;
   align-items: baseline;
   color: var(--accent);
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 0.74rem;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
+  max-width: 100%;
 }
 
+/* Native select sizes itself to the widest option ("Winter" / "Spring"),
+   so we size the box around that and let the selected value + caret sit
+   inside. Explicit width keeps the overflow from clipping the short
+   values ("Fall") off-center. */
 .schedule-grid__quarter-select {
   appearance: none;
   -webkit-appearance: none;
   background: transparent;
   border: 0;
-  padding: 0 14px 0 0;
+  padding: 0 12px 0 0;
   margin: 0;
   font: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
   color: inherit;
   cursor: pointer;
   line-height: 1;
+  max-width: 100%;
 }
 
 .schedule-grid__quarter-select:focus-visible {
@@ -1495,7 +1505,7 @@
   right: 0;
   top: 50%;
   transform: translateY(-45%);
-  font-size: 1.1em;
+  font-size: 1em;
   line-height: 1;
   pointer-events: none;
 }
@@ -2161,6 +2171,42 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
+}
+
+/* Children of a sibling group get extra left padding so the indent signals
+   "these belong to the same course" at a glance. The S1/S2 chip (see
+   .roster-card__section-chip below) rides in the indent. */
+.roster-card--sectioned {
+  padding-left: 28px;
+  position: relative;
+}
+
+/* Rectangular S-chip at the top-left of each sectioned card. Small but
+   unambiguous — "this is section N of the parent course." */
+.roster-card__section-chip {
+  position: absolute;
+  top: 50%;
+  left: 6px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+  color: var(--text-muted);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.roster-card--sectioned.roster-card--selected .roster-card__section-chip {
+  background: color-mix(in srgb, var(--accent) 24%, transparent);
+  color: var(--accent);
 }
 
 /* ─── Roster person/room rows (Profs + Rooms tabs) ─────────────── */

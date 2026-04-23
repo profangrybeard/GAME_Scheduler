@@ -374,7 +374,7 @@ function OfferingsList(props: OfferingsListProps) {
           if (tail && tail[0].catalog_id === o.catalog_id) tail.push(o)
           else groups.push([o])
         }
-        const renderCard = (offering: Offering) => {
+        const renderCard = (offering: Offering, sectionIndex?: number) => {
           const course = props.catalog[offering.catalog_id]
           if (!course) return null
           const state = classifyOffering(offering)
@@ -383,6 +383,7 @@ function OfferingsList(props: OfferingsListProps) {
             : null
           const isSelected = props.selectedOfferingId === offering.offering_id
           const isPlacing = props.placingId === offering.offering_id
+          const isSectioned = sectionIndex !== undefined
           return (
             <div
               key={offering.offering_id}
@@ -393,7 +394,8 @@ function OfferingsList(props: OfferingsListProps) {
                 "roster-card" +
                 ` dept--${course.department}` +
                 (isSelected ? " roster-card--selected" : "") +
-                (isPlacing ? " roster-card--placing" : "")
+                (isPlacing ? " roster-card--placing" : "") +
+                (isSectioned ? " roster-card--sectioned" : "")
               }
               onClick={() => {
                 props.onSelect(offering.offering_id)
@@ -411,6 +413,14 @@ function OfferingsList(props: OfferingsListProps) {
                 e.dataTransfer.effectAllowed = "move"
               }}
             >
+              {isSectioned && (
+                <span
+                  className="roster-card__section-chip"
+                  aria-label={`Section ${sectionIndex + 1}`}
+                >
+                  {`S${sectionIndex + 1}`}
+                </span>
+              )}
               <span
                 className="roster-card__avatar-hit"
                 role="button"
@@ -480,7 +490,7 @@ function OfferingsList(props: OfferingsListProps) {
               className={"roster-card-group" + (course ? ` dept--${course.department}` : "")}
               aria-label={`${group.length} sections of ${cid}`}
             >
-              {group.map(renderCard)}
+              {group.map((offering, i) => renderCard(offering, i))}
             </div>
           )
         })
