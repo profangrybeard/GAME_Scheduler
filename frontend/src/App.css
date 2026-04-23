@@ -839,6 +839,7 @@
    shadow, and a real mechanical press-in on :active. Keep it louder than
    anything else in the toolbar. */
 .panel__actions button.btn-generate {
+  position: relative;
   background:
     linear-gradient(
       180deg,
@@ -964,6 +965,64 @@
 
 @keyframes btn-generate-spin {
   to { transform: rotate(360deg); }
+}
+
+/* Gold chaser — one-shot arc that laps the Assemble button's perimeter on
+   click. Mounted by QuarterSchedule under a changing React key so every
+   click re-mounts + re-runs. `@property` lets us animate the conic angle;
+   the two-layer mask (full / content-box, XOR'd) keeps only the border
+   ring visible — classic "gradient border" technique. Reduced-motion
+   collapses it to a brief overall glow instead. */
+@property --chase-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.btn-generate__chaser {
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--chase-angle),
+    transparent           0%,
+    rgba(255, 223, 128, 0)  3%,
+    #ffe27a              7%,
+    #fffbe0              9%,
+    #ffd24a              11%,
+    rgba(255, 223, 128, 0) 16%,
+    transparent          22%,
+    transparent         100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: btn-generate-chase 0.9s cubic-bezier(0.25, 0.1, 0.25, 1) 1 forwards;
+  /* Soft glow that tracks the arc */
+  filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.55));
+  opacity: 0;
+}
+
+@keyframes btn-generate-chase {
+  0%   { --chase-angle:   0deg; opacity: 1; }
+  85%  {                         opacity: 1; }
+  100% { --chase-angle: 360deg; opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-generate__chaser {
+    animation: btn-generate-chase-flash 0.4s ease-out 1 forwards;
+    background: none;
+    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.7);
+  }
+  @keyframes btn-generate-chase-flash {
+    0%   { opacity: 1; }
+    100% { opacity: 0; }
+  }
 }
 
 /* Circular "OR" tell sitting at the left of the Generate/Empty-Calendar
