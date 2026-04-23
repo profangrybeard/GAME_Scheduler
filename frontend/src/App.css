@@ -984,12 +984,17 @@
   to { transform: rotate(360deg); }
 }
 
-/* Gold chaser — one-shot arc that laps the Assemble button's perimeter on
-   click. Mounted by QuarterSchedule under a changing React key so every
-   click re-mounts + re-runs. `@property` lets us animate the conic angle;
-   the two-layer mask (full / content-box, XOR'd) keeps only the border
-   ring visible — classic "gradient border" technique. Reduced-motion
-   collapses it to a brief overall glow instead. */
+/* Laser chaser — a white-hot "carving" arc that laps the Assemble button's
+   perimeter on click. Think Iron Man unibeam cutting a thin line into steel:
+   blinding white leading tip, incandescent orange wake cooling into deep red
+   ember before it vanishes. Four-layer drop-shadow makes the molten channel
+   illuminate the surrounding surface, not just paint on top of it.
+
+   Mounted by QuarterSchedule under a changing React key so every click
+   re-mounts + re-runs. `@property` lets us animate the conic angle; the
+   two-layer mask (full / content-box, XOR'd) keeps only the border ring
+   visible — classic gradient-border technique. Reduced-motion collapses
+   it to a brief non-spinning flash instead. */
 @property --chase-angle {
   syntax: "<angle>";
   initial-value: 0deg;
@@ -1002,35 +1007,47 @@
   border-radius: inherit;
   padding: 2px;
   pointer-events: none;
-  /* Stack above the spinner + label + any disabled-state fade, so the gold
-     arc never gets visually eaten by the "Assembling…" state transitioning
-     in underneath it. */
+  /* Stack above the spinner + label + any disabled-state fade, so the arc
+     never gets visually eaten by the "Assembling…" state transitioning in
+     underneath it. */
   z-index: 2;
   background: conic-gradient(
     from var(--chase-angle),
-    transparent           0%,
-    rgba(255, 223, 128, 0)  3%,
-    #ffe27a              7%,
-    #fffbe0              9%,
-    #ffd24a              11%,
-    rgba(255, 223, 128, 0) 16%,
-    transparent          22%,
-    transparent         100%
+    /* 0-4% is the blinding tip — the point of contact */
+    #ffffff              0%,
+    #fff4d0              2%,
+    #ffd880              4%,
+    /* 4-11% is the molten channel, hot yellow into deep orange */
+    #ffa020              6%,
+    #ff6a10              9%,
+    /* 11-18% is the cooling wake — red ember */
+    #d92800             12%,
+    #7a1400             16%,
+    rgba(60, 0, 0, 0.35) 19%,
+    /* The rest of the ring is unlit steel */
+    transparent         22%,
+    transparent        100%
   );
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  animation: btn-generate-chase 0.9s cubic-bezier(0.25, 0.1, 0.25, 1) 1 forwards;
-  /* Soft glow that tracks the arc */
-  filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.55));
+  animation: btn-generate-chase 0.8s linear 1 forwards;
+  /* Four-layer incandescence: tight white core → warm molten bloom → hot
+     orange flare → deep red ambient. Each layer reads as a different
+     "distance" from the cut, which is how real molten metal looks. */
+  filter:
+    drop-shadow(0  0  2px rgba(255, 255, 255, 0.95))
+    drop-shadow(0  0  6px rgba(255, 190,  80, 0.85))
+    drop-shadow(0  0 14px rgba(255,  90,  20, 0.70))
+    drop-shadow(0  0 24px rgba(255,  30,   0, 0.40));
   opacity: 0;
 }
 
 @keyframes btn-generate-chase {
   0%   { --chase-angle:   0deg; opacity: 1; }
-  85%  {                         opacity: 1; }
+  90%  {                         opacity: 1; }
   100% { --chase-angle: 360deg; opacity: 0; }
 }
 
@@ -1038,7 +1055,8 @@
   .btn-generate__chaser {
     animation: btn-generate-chase-flash 0.4s ease-out 1 forwards;
     background: none;
-    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.7);
+    box-shadow: 0 0 0 2px rgba(255, 240, 200, 0.85);
+    filter: drop-shadow(0 0 8px rgba(255, 140, 40, 0.65));
   }
   @keyframes btn-generate-chase-flash {
     0%   { opacity: 1; }
