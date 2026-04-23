@@ -224,8 +224,8 @@ function App() {
   // from last-saved snapshot because X.xlsx was broken.
   const [reloadFromSnapshot, setReloadFromSnapshot] = useState(false)
   // Workbook's last-modified epoch ms, read from the File object at load
-  // time. Surfaced in the resume-rail so the user can tell at a glance how
-  // fresh the file they're editing actually is.
+  // time. Shown next to the topbar Resume button so the user can tell at a
+  // glance how fresh the file they're editing actually is.
   const [reloadMtime, setReloadMtime] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -1158,45 +1158,6 @@ function App() {
     <PortraitContext.Provider value={portraits}>
      <ProfessorContext.Provider value={state.professors}>
       <div className="scheduler">
-        <aside className="resume-rail" aria-label="Resume from an exported schedule">
-          <button
-            type="button"
-            className="resume-rail__btn"
-            onClick={triggerReloadPicker}
-            title="Pick a previously exported schedule to resume editing"
-          >
-            <span className="resume-rail__mark" aria-hidden="true">🐝</span>
-            <span className="resume-rail__label">Resume from Excel</span>
-          </button>
-          {/* Hidden native file input — reset .value so picking the same
-              file twice still fires onChange (browsers de-dupe by default). */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            style={{ display: "none" }}
-            onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (f) handleReloadFile(f)
-              e.target.value = ""
-            }}
-          />
-          {reloadMtime !== null && (
-            <div
-              className="resume-rail__loaded"
-              title={`File last modified ${new Date(reloadMtime).toLocaleString()}`}
-            >
-              {reloadFilename && (
-                <span className="resume-rail__loaded-filename">
-                  {reloadFilename}
-                </span>
-              )}
-              <span className="resume-rail__loaded-label">
-                Loaded {formatLoadedTimestamp(reloadMtime)}
-              </span>
-            </div>
-          )}
-        </aside>
         <div className="scheduler__body">
         {placingOffering && placingCourse && (
           <div className="placement-banner placement-banner--visible">
@@ -1288,6 +1249,36 @@ function App() {
             <div className="scheduler__title-group">
               <BrandEyebrow />
               <h1 className="scheduler__title">Course Planner</h1>
+            </div>
+            <div className="topbar-resume">
+              <button
+                type="button"
+                className="topbar-btn topbar-btn--resume"
+                onClick={triggerReloadPicker}
+                title="Pick a previously exported schedule to resume editing"
+              >
+                Resume from Excel
+              </button>
+              {reloadMtime !== null && (
+                <span
+                  className="topbar-resume__loaded"
+                  title={`File last modified ${new Date(reloadMtime).toLocaleString()}`}
+                >
+                  {reloadFilename ? `${reloadFilename} · ` : ""}
+                  Loaded {formatLoadedTimestamp(reloadMtime)}
+                </span>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (f) handleReloadFile(f)
+                  e.target.value = ""
+                }}
+              />
             </div>
           </div>
           <div className="scheduler__topbar-right">

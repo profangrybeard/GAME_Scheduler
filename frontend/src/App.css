@@ -17,193 +17,6 @@
   min-height: 0;
 }
 
-/* ─── Resume-from-Excel editorial rail ────────────────────────────
-   Vertical bookend on the left edge, full viewport height. Intentionally
-   inverse-theme (dark chip in light mode, light chip in dark mode) so it
-   reads like a magazine tab: you start here, everything else flows from
-   your click. Text is sideways (writing-mode vertical-rl + 180deg flip)
-   so it reads bottom-to-top like a book spine. */
-.resume-rail {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: space-between;
-  width: 56px;
-  flex-shrink: 0;
-  background: var(--text);
-  color: var(--bg);
-  border-right: 1px solid var(--border);
-  padding: 18px 0;
-  gap: 8px;
-  user-select: none;
-}
-
-.resume-rail__btn {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  width: 100%;
-  min-height: 0;
-  background: transparent;
-  color: inherit;
-  border: 0;
-  padding: 24px 0;
-  cursor: pointer;
-  transition: background 0.2s ease, letter-spacing 0.25s ease;
-}
-
-/* Bee anchors the label as a pop of color. It sits in the same flex
-   column as the rotated text with a fixed gap, so no matter how the rail
-   stretches, the two move as one block. Emoji keeps its natural yellow
-   across both themes; the drop-shadow flips per theme because the rail
-   background inverts. */
-.resume-rail__mark {
-  font-size: 1.46rem;
-  line-height: 1;
-  transition: filter 0.25s ease;
-  transform-origin: center;
-}
-
-/* Buzzzzz on hover — fires only when the cursor is on the bee itself, not
-   the whole rail button. Small rapid jitter with a hint of rotation so it
-   reads as a live wingbeat. */
-@keyframes bee-buzz {
-  0%   { transform: translate(0, 0)        rotate(0deg);  }
-  15%  { transform: translate(-0.8px, -1px) rotate(-4deg); }
-  30%  { transform: translate(1px,   1.2px) rotate(5deg);  }
-  45%  { transform: translate(-1.2px, 0.5px) rotate(-3deg); }
-  60%  { transform: translate(1.1px, -0.8px) rotate(4deg);  }
-  75%  { transform: translate(-0.6px, 1px)  rotate(-5deg); }
-  100% { transform: translate(0, 0)        rotate(0deg);  }
-}
-
-.resume-rail__mark:hover {
-  animation: bee-buzz 0.18s linear infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .resume-rail__mark:hover { animation: none; }
-}
-
-:root[data-theme="dark"] .resume-rail__mark {
-  /* Dark mode → rail bg is light → bee needs a subtle grounding shadow */
-  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.18));
-}
-
-:root[data-theme="light"] .resume-rail__mark {
-  /* Light mode → rail bg is dark → bee needs a warm glow */
-  filter: drop-shadow(0 0 6px rgba(255, 200, 0, 0.45));
-}
-
-
-.resume-rail__btn:hover {
-  background: color-mix(in srgb, var(--bg) 14%, transparent);
-}
-
-.resume-rail__btn:active {
-  background: color-mix(in srgb, var(--bg) 22%, transparent);
-}
-
-.resume-rail__btn:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -4px;
-}
-
-.resume-rail__label {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  font-size: 1.05rem;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  line-height: 1;
-}
-
-.resume-rail__btn:hover .resume-rail__label {
-  letter-spacing: 0.26em;
-}
-
-/* Loaded timestamp. Occupies the slot the "Try the example" button used to
-   sit in. Matches the resume button's vertical orientation but downplayed:
-   smaller, thinner, muted — data not a title. Will be reworked when we
-   redesign the rail; this is a holding pattern. */
-.resume-rail__loaded {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-top: 1px solid color-mix(in srgb, var(--bg) 20%, transparent);
-  padding: 14px 0 10px;
-  opacity: 0.72;
-}
-
-.resume-rail__loaded {
-  flex-direction: column;
-  gap: 6px;
-}
-
-.resume-rail__loaded-filename {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  /* Filenames can exceed the rail height — clamp vertical length so the
-     timestamp below still has a place to live without overflowing the rail. */
-  max-height: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--text);
-}
-
-.resume-rail__loaded-label {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  font-size: 0.7rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-
-@media (max-width: 767px) {
-  /* On phones, the rail eats too much of the already-tight canvas. Park it
-     at the top as a horizontal bar instead. */
-  .scheduler {
-    flex-direction: column;
-  }
-  .resume-rail {
-    flex-direction: row;
-    width: 100%;
-    padding: 0;
-    border-right: 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .resume-rail__btn {
-    padding: 12px 0;
-  }
-  .resume-rail__label,
-  .resume-rail__loaded-label,
-  .resume-rail__loaded-filename {
-    writing-mode: horizontal-tb;
-    transform: none;
-    max-height: none;
-  }
-  .resume-rail__loaded {
-    border-top: 0;
-    border-left: 1px solid color-mix(in srgb, var(--bg) 20%, transparent);
-    padding: 12px 16px;
-    flex-direction: row;
-    align-items: baseline;
-    gap: 10px;
-  }
-}
-
 .scheduler__topbar {
   display: flex;
   align-items: center;
@@ -2756,26 +2569,66 @@
   border-color: var(--text-faint);
 }
 
-/* ─── Bee emoji next to the title ─────────────────────────────────
-   Drop-shadow tuned per theme so the yellow doesn't glare on light or
-   wash out against dark. aria-hidden in markup — purely decorative. */
-.scheduler__bee {
-  display: inline-block;
-  font-size: 1.05em;
-  vertical-align: -0.05em;
-  transition: filter 0.2s ease, transform 0.2s ease;
+/* Resume from Excel — the entry point to the whole session. Lives in the
+   topbar's left side so it stays visible (the old sideways rail hid it).
+   Surface-filled rather than transparent so it reads as a real CTA, not a
+   faded link. */
+.topbar-resume {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+  flex-shrink: 1;
 }
 
-:root[data-theme="dark"] .scheduler__bee {
-  filter: drop-shadow(0 0 3px rgba(255, 200, 0, 0.35));
+.topbar-btn.topbar-btn--resume {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+  font-weight: 600;
+  padding: 0 14px;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.12s ease;
 }
 
-:root[data-theme="light"] .scheduler__bee {
-  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.18));
+.topbar-btn.topbar-btn--resume:hover {
+  background: var(--surface-hover, color-mix(in srgb, var(--text) 6%, var(--surface)));
+  border-color: var(--text-faint);
+  color: var(--text);
+  transform: translateY(-1px);
 }
 
-.scheduler__title:hover .scheduler__bee {
-  transform: rotate(-8deg);
+.topbar-btn.topbar-btn--resume:active {
+  transform: translateY(0);
+}
+
+.topbar-btn.topbar-btn--resume:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Small muted line next to the button: filename + "Loaded 3 min ago".
+   Truncates before it crowds the title group on narrower widths. */
+.topbar-resume__loaded {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  /* On phones the topbar is already tight; the loaded line drops off and
+     the filename lives in the button's tooltip instead. */
+  .topbar-resume__loaded {
+    display: none;
+  }
 }
 
 /* ─── Reload-from-Excel result banner ───────────────────────────── */
