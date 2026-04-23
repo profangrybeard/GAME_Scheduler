@@ -1,35 +1,6 @@
 import { useMemo } from "react"
-import type { Course, Department, Offering } from "../types"
-
-/** Filter value shared between the Courses tab's "In Roster" and "Browse"
- *  sub-modes. `"all"` is the no-dept-selected state. Exported so Roster can
- *  hold the state and pass it into both sub-views. */
-export type DeptFilter = Department | "all"
-
-/** Dept chips rendered above both Courses sub-modes. Order is intentional:
- *  GAME first (host dept), then alpha-ish grouping. Exported so Roster owns
- *  rendering. */
-export const DEPT_CHIPS: ReadonlyArray<{ key: DeptFilter; label: string }> = [
-  { key: "all", label: "All" },
-  { key: "game", label: "GAME" },
-  { key: "motion_media", label: "MOME" },
-  { key: "ai", label: "AI" },
-  { key: "ixds", label: "IXDS" },
-  { key: "iact", label: "IACT" },
-  { key: "digi", label: "DIGI" },
-  { key: "adbr", label: "ADBR" },
-]
-
-/** Match a course against a lowercase search query. Query matches if the
- *  course's ID or name contains the substring. Empty query matches all.
- *  Exported so the In Roster list can share filter semantics with Browse. */
-export function courseMatchesQuery(course: Course, q: string): boolean {
-  if (q === "") return true
-  return (
-    course.id.toLowerCase().includes(q) ||
-    course.name.toLowerCase().includes(q)
-  )
-}
+import type { Course, Offering } from "../types"
+import { courseMatchesQuery, type DeptFilter } from "./courseFilter"
 
 /**
  * Catalogue — the Browse sub-mode of the Roster panel's Courses tab.

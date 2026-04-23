@@ -8,7 +8,8 @@ import {
   profLoadedCount,
   STATION_TYPE_LABELS,
 } from "../types"
-import { Catalogue, DEPT_CHIPS, courseMatchesQuery, type DeptFilter } from "./Catalogue"
+import { Catalogue } from "./Catalogue"
+import { DEPT_CHIPS, courseMatchesQuery, type DeptFilter } from "./courseFilter"
 import { ProfAvatar } from "./ProfAvatar"
 
 /**
