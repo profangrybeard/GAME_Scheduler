@@ -107,6 +107,15 @@ export function TopbarMenu() {
             </div>
             <div className="topbar-about__meta">Built {builtAt}</div>
             <div className="topbar-menu__divider" role="separator" />
+            <a
+              className="topbar-about__action"
+              href="/roadmap.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="What's shipped, what's next, and how the tool scales beyond GAME"
+            >
+              View roadmap &rarr;
+            </a>
             <button
               type="button"
               className="topbar-about__action"

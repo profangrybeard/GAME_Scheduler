@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>GAME Scheduler — Roadmap</title>
+<meta name="description" content="What's shipped, what's next, and how the tool scales to other SCAD programs and campuses." />
+<style>
+  :root {
+    --bg: #0e1014;
+    --bg-elev: #161a20;
+    --bg-callout: #1a2028;
+    --fg: #e7e9ee;
+    --fg-muted: #9aa1ab;
+    --fg-soft: #c2c7d0;
+    --rule: #262c35;
+    --rule-soft: #1c2128;
+    --accent: #fcd34d;
+    --accent-dim: #a97b14;
+    --ok: #4ade80;
+    --next: #60a5fa;
+    --soon: #c084fc;
+    --horizon: #9aa1ab;
+    --spike: #f87171;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    --serif: "Iowan Old Style", "Source Serif Pro", Georgia, "Times New Roman", serif;
+    --measure: 68ch;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f6f5f1;
+      --bg-elev: #ffffff;
+      --bg-callout: #fdf6e3;
+      --fg: #1a1a1a;
+      --fg-muted: #5a5f69;
+      --fg-soft: #2e3238;
+      --rule: #d9d6cf;
+      --rule-soft: #ece9e3;
+      --accent: #b45309;
+      --accent-dim: #f5cf7a;
+      --ok: #15803d;
+      --next: #1d4ed8;
+      --soon: #7c3aed;
+      --horizon: #5a5f69;
+      --spike: #b91c1c;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  main {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 56px 28px 120px;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    margin: 0 0 18px;
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+  }
+  .eyebrow .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 1px;
+    transform: translateY(-1px);
+  }
+  h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 44px;
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    margin: 0 0 22px;
+  }
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .lede {
+    font-family: var(--serif);
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--fg-soft);
+    max-width: var(--measure);
+    margin: 0 0 14px;
+  }
+  .meta {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fg-muted);
+    margin: 28px 0 0;
+  }
+  .meta a {
+    color: var(--fg-muted);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--fg-muted);
+  }
+  .meta a:hover { color: var(--fg); border-color: var(--fg); }
+
+  .rule {
+    border: 0;
+    border-top: 1px solid var(--rule);
+    margin: 48px 0 40px;
+  }
+
+  .callout {
+    background: var(--bg-callout);
+    border-left: 3px solid var(--accent);
+    padding: 22px 26px;
+    margin: 36px 0 0;
+    border-radius: 2px;
+  }
+  .callout h2 {
+    font-family: var(--sans);
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 10px;
+    font-weight: 700;
+  }
+  .callout p {
+    margin: 0 0 10px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--fg-soft);
+  }
+  .callout p:last-child { margin-bottom: 0; }
+
+  section {
+    margin-top: 56px;
+  }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin: 0 0 24px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .section-head h2 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 28px;
+    letter-spacing: -0.005em;
+    margin: 0;
+  }
+  .section-head .tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    color: var(--fg-muted);
+  }
+  .tag.ok      { color: var(--ok);      border-color: color-mix(in srgb, var(--ok) 40%, var(--rule)); }
+  .tag.next    { color: var(--next);    border-color: color-mix(in srgb, var(--next) 40%, var(--rule)); }
+  .tag.soon    { color: var(--soon);    border-color: color-mix(in srgb, var(--soon) 40%, var(--rule)); }
+  .tag.horizon { color: var(--horizon); border-color: var(--rule); }
+  .section-head .lede {
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--fg-muted);
+    margin: 0 0 0 auto;
+    max-width: 32ch;
+    text-align: right;
+  }
+
+  .cluster {
+    margin: 28px 0 0;
+  }
+  .cluster h3 {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    margin: 0 0 10px;
+  }
+
+  .item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px 24px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .item:last-child { border-bottom: none; }
+  .item .title {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--fg);
+    margin: 0;
+  }
+  .item .why {
+    grid-column: 1 / -1;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--fg-soft);
+    margin: 0;
+    max-width: var(--measure);
+  }
+  .item .why em {
+    color: var(--fg-muted);
+    font-style: normal;
+    display: block;
+    font-size: 13px;
+    margin-top: 4px;
+  }
+  .est {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fg-muted);
+    white-space: nowrap;
+    align-self: start;
+    padding-top: 2px;
+  }
+  .est.spike { color: var(--spike); }
+
+  .shipped {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px 24px;
+  }
+  .shipped li {
+    padding: 14px 16px;
+    background: var(--bg-elev);
+    border: 1px solid var(--rule-soft);
+    border-radius: 3px;
+  }
+  .shipped strong {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 4px;
+    color: var(--fg);
+  }
+  .shipped span {
+    font-size: 13px;
+    color: var(--fg-muted);
+    line-height: 1.5;
+  }
+
+  .legend {
+    margin-top: 56px;
+    padding-top: 28px;
+    border-top: 1px solid var(--rule-soft);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px 32px;
+    font-size: 13px;
+    color: var(--fg-muted);
+    line-height: 1.55;
+  }
+  .legend strong { color: var(--fg-soft); font-weight: 600; display: block; margin-bottom: 4px; }
+
+  footer {
+    margin-top: 72px;
+    padding-top: 28px;
+    border-top: 1px solid var(--rule-soft);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fg-muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 28px;
+    justify-content: space-between;
+  }
+  footer a {
+    color: var(--fg-muted);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--fg-muted);
+  }
+  footer a:hover { color: var(--fg); border-color: var(--fg); }
+
+  .back {
+    display: inline-block;
+    margin-top: 28px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    text-decoration: none;
+    border: 1px solid var(--rule);
+    padding: 8px 14px;
+    border-radius: 999px;
+  }
+  .back:hover { color: var(--fg); border-color: var(--fg); }
+
+  @media (max-width: 600px) {
+    main { padding: 40px 20px 80px; }
+    h1 { font-size: 34px; }
+    .lede { font-size: 17px; }
+    .section-head { flex-wrap: wrap; }
+    .section-head .lede { text-align: left; margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <p class="eyebrow"><span class="dot"></span> SCAD : Prototype &nbsp;·&nbsp; Roadmap &nbsp;·&nbsp; Updated 2026-04-22</p>
+  <h1>GAME Scheduler — <em>what&rsquo;s next</em>.</h1>
+  <p class="lede">
+    A quarterly course&nbsp;scheduler currently tuned to SCAD&rsquo;s Game department.
+    The faculty, rooms, and offerings you see in the demo workbook are <strong>Eric Allen&rsquo;s
+    real data</strong> &mdash; treat them as sample input, not a commitment.
+  </p>
+  <p class="lede">
+    The tool is Excel-native: your workbook is the single source of truth, edits
+    round-trip, and every export writes a dated backup. This page is the honest
+    answer to &ldquo;can we add <em>our</em> program / campus / faculty?&rdquo;
+  </p>
+  <p class="meta">
+    Maintained by Tim Lindsey &middot; <a href="mailto:tlindsey@scad.edu">tlindsey@scad.edu</a> &middot;
+    Solo-built with occasional AI pair-programming sessions.
+  </p>
+
+  <div class="callout">
+    <h2>How do I add my program?</h2>
+    <p>
+      <strong>Short answer:</strong> today the tool ships with GAME / ITGM / MOME course
+      catalogs and seven Ivy Hall rooms. Swapping in your program is a <em>deliberate
+      onboarding pass</em>, not a copy-paste &mdash; we&rsquo;d scrape your catalog, define the
+      specialization tags that drive affinity, pick a color palette, and do a first
+      solve on your real data together.
+    </p>
+    <p>
+      <strong>Rough effort per program:</strong> 1&ndash;2 weeks of my time for a well-scoped
+      single-department pilot; longer if you want multiple departments or
+      cross-campus scheduling. See &ldquo;Scale beyond GAME&rdquo; below for the specifics.
+    </p>
+    <p>
+      <strong>If you&rsquo;re curious, not committed:</strong> the hosted demo is fine to poke at.
+      Export a backup whenever you make changes &mdash; your workbook is yours, and
+      nothing you do here affects anyone else&rsquo;s file.
+    </p>
+  </div>
+
+  <hr class="rule" />
+
+  <!-- NOW -->
+  <section>
+    <div class="section-head">
+      <h2>Now</h2>
+      <span class="tag ok">Shipped</span>
+      <p class="lede">What&rsquo;s live on the hosted build today.</p>
+    </div>
+
+    <ul class="shipped">
+      <li><strong>Excel as source of truth</strong><span>Your workbook holds everything. Hidden <code>_data_*</code> sheets store state; visible sheets are printouts.</span></li>
+      <li><strong>Three solve modes + Tune gear</strong><span>Affinity-first, Time-pref-first, Balanced. Live progress stream with a custom weight tuner.</span></li>
+      <li><strong>Live validation</strong><span>Structured Data Issues panel calls out bad rows with sheet / row / reason. Fix in Excel, reload.</span></li>
+      <li><strong>Auto-backup on export</strong><span>Every export drops a timestamped copy in <code>.backups/</code>. Ten most recent kept automatically.</span></li>
+      <li><strong>Responsive across 3 breakpoints</strong><span>Desktop, tablet, phone. Schedule grid stays readable; mobile gets a single-column tap-to-place flow.</span></li>
+      <li><strong>Mobile read-only viewer</strong><span>Published schedules render at any size. Useful for handing a phone to a colleague mid-meeting.</span></li>
+      <li><strong>Per-browser persistence</strong><span>Edit professors, upload portraits, swap rooms &mdash; everything survives reload via <code>localStorage</code>.</span></li>
+      <li><strong>Cloudflare-gated hosting</strong><span>Access policy limits <code>@scad.edu</code> addresses; login is a one-time emailed PIN.</span></li>
+    </ul>
+  </section>
+
+  <!-- NEXT -->
+  <section>
+    <div class="section-head">
+      <h2>Next</h2>
+      <span class="tag next">Committed</span>
+      <p class="lede">Targeted for the weeks after the May&nbsp;1 AI conference.</p>
+    </div>
+
+    <div class="cluster">
+      <h3>Workbook trust (Phase 4)</h3>
+
+      <div class="item">
+        <p class="title">First-run empty state</p>
+        <span class="est">3&ndash;4 days</span>
+        <p class="why">
+          A chair opening the tool with no workbook today sees a cold start.
+          We&rsquo;d add a &ldquo;start from template&rdquo; flow: pick a department shape,
+          download a seeded <code>.xlsx</code>, land on a usable (if empty) schedule.
+          <em>Blocks serious onboarding for any new chair.</em>
+        </p>
+      </div>
+
+      <div class="item">
+        <p class="title">Formula-driven printout sheets</p>
+        <span class="est">3&ndash;5 days</span>
+        <p class="why">
+          The human-readable sheets in your workbook are currently static
+          snapshots. We&rsquo;d rewrite them as formulas over the <code>_data_*</code> tables
+          so edits to the printout round-trip into the app on reload.
+          <em>Makes &ldquo;live in Excel, visit the app to solve&rdquo; a real workflow.</em>
+        </p>
+      </div>
+
+      <div class="item">
+        <p class="title">Copy-cell-reference shortcut</p>
+        <span class="est">0.5 day</span>
+        <p class="why">
+          Today Data Issues tells you the bad cell (e.g. <code>_data_offerings!C3</code>).
+          One click should put that on your clipboard so you can paste into
+          Excel&rsquo;s Name Box and land exactly there. Tiny, high-leverage.
+          <em>80% of the benefit of a full in-app fix modal, 5% of the cost.</em>
+        </p>
+      </div>
+
+      <div class="item">
+        <p class="title">Rescue flow for unreadable workbooks</p>
+        <span class="est">1&ndash;2 days</span>
+        <p class="why">
+          If the hidden sheets get corrupted, today you&rsquo;re stuck. We&rsquo;d detect
+          the failure, offer to restore from the latest local backup or the
+          <code>localStorage</code> snapshot, and explain what happened.
+          <em>Cheap insurance against the one scenario that would burn trust.</em>
+        </p>
+      </div>
+    </div>
+
+    <div class="cluster">
+      <h3>Admin ergonomics</h3>
+
+      <div class="item">
+        <p class="title">Portrait export / import</p>
+        <span class="est">1&ndash;2 days</span>
+        <p class="why">
+          Right now portraits live in your browser only. We&rsquo;d embed them in the
+          workbook so they travel with your file and appear for anyone you share it with.
+        </p>
+      </div>
+
+      <div class="item">
+        <p class="title">Print-ready schedule view</p>
+        <span class="est">1&ndash;2 days</span>
+        <p class="why">
+          Browser-print CSS that produces a one-page grid suitable for handing
+          to a dean or pinning in a hallway. No more Excel-then-screenshot.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOON -->
+  <section>
+    <div class="section-head">
+      <h2>Soon</h2>
+      <span class="tag soon">Summer / Fall 2026</span>
+      <p class="lede">Bigger lifts, scoped but not yet scheduled.</p>
+    </div>
+
+    <div class="cluster">
+      <h3>Scale beyond GAME</h3>
+
+      <div class="item">
+        <p class="title">Load another college (FASH, ADVE, SFA&hellip;)</p>
+        <span class="est">1&ndash;2 weeks per college</span>
+        <p class="why">
+          Scrape the program&rsquo;s catalog, define specialization tags that drive
+          affinity matching, pick a department color palette, and run the solver
+          against a real quarter of their data. First college is research-heavy;
+          subsequent colleges get faster as the pattern solidifies.
+          <em>This is the &ldquo;yes, we can add your program&rdquo; answer.</em>
+        </p>
+      </div>
+
+      <div class="item">
+        <p class="title">Multi-campus support</p>
+        <span class="est">~1 week</span>
+        <p class="why">
+          SCAD runs Savannah, Atlanta, and Lacoste. Today rooms are implicitly
+          Atlanta. We&rsquo;d add a campus attribute on rooms and professors, a campus
+          filter in the roster, and a rule that a professor can&rsquo;t teach two
+          campuses in the same slot. Cross-campus solves become a mode.
+        </p>
+      </div>
+
+      <div class="item">
+        <p class="title">Multi-department in one workbook</p>
+        <span class="est">3&ndash;5 days</span>
+        <p class="why">
+          The solver already handles mixed departments. The UI currently assumes
+          a single department leads the roster. Small lift to add a dept filter
+          and per-dept sub-views without breaking the single-schedule output.
+        </p>
+      </div>
+    </div>
+
+    <div class="cluster">
+      <h3>Chair-to-chair sharing</h3>
+
+      <div class="item">
+        <p class="title">Template / starter-pack export</p>
+        <span class="est">3&ndash;5 days</span>
+        <p class="why">
+          Export a de-personalized version of your workbook (rooms, course
+          structure, preferences; no assignments) so another chair can start
+          from your shape without inheriting your data.
+        </p>
+      </div>
+
+      <div class="item">
+        <p class="title">Published snapshot library</p>
+        <span class="est">~1 week</span>
+        <p class="why">
+          The mobile viewer is already scaffolded for read-only schedules.
+          We&rsquo;d finish the publish side: mark a solve as official, save it to
+          a shareable index, let colleagues browse past quarters without
+          needing the full app.
+        </p>
+      </div>
+
+      <div class="item">
+        <p class="title">Prior-quarter diff view</p>
+        <span class="est">~3 days</span>
+        <p class="why">
+          &ldquo;What changed from Fall 2025?&rdquo; Side-by-side of two published
+          schedules, highlighting added / moved / dropped courses and prof
+          reassignments. Depends on the snapshot library landing first.
+        </p>
+      </div>
+    </div>
+
+    <div class="cluster">
+      <h3>UX&thinsp;/&thinsp;polish</h3>
+
+      <div class="item">
+        <p class="title">Keyboard shortcuts</p>
+        <span class="est">~2 days</span>
+        <p class="why">
+          Grid navigation (arrow keys to move between slots), <code>/</code> to
+          search, <code>⌘S</code> for export. The power-user affordance a chair
+          grows into after a quarter of use.
+        </p>
+      </div>
+
+      <div class="item">
+        <p class="title">Onboarding tour</p>
+        <span class="est">3&ndash;4 days</span>
+        <p class="why">
+          First-load tooltip walkthrough: &ldquo;this is your roster, here&rsquo;s the
+          grid, this button solves.&rdquo; Dismissible, re-openable from About.
+          Blocked on the first-run empty state landing first.
+        </p>
+      </div>
+
+      <div class="item">
+        <p class="title">Undo / redo</p>
+        <span class="est">~1 week</span>
+        <p class="why">
+          Ctrl-Z over placements, removals, and roster edits. Requires a small
+          state-machine refactor but a big confidence gain for new users.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HORIZON -->
+  <section>
+    <div class="section-head">
+      <h2>Horizon</h2>
+      <span class="tag horizon">Deferred / Research</span>
+      <p class="lede">Worth doing if a real user asks for them. Not scoped yet.</p>
+    </div>
+
+    <div class="cluster">
+      <h3>Solver sophistication</h3>
+
+      <div class="item">
+        <p class="title">Section pairing&thinsp;/&thinsp;co-requisite timing</p>
+        <span class="est">~1 week</span>
+        <p class="why">
+          &ldquo;Section A meets right before Section B, same room.&rdquo; Useful for
+          labs paired to lectures, studios tied to crits. Solver constraint
+          exists in theory; needs a UI affordance to author them.
+        </p>
+      </div>
+
+      <div class="item">
+        <p class="title">Multi-quarter solve (annual planning)</p>
+        <span class="est">2&ndash;3 weeks</span>
+        <p class="why">
+          Instead of one quarter at a time, plan a full academic year with
+          rotating offerings and professor sabbatical windows. Large scope,
+          new UI surface.
+        </p>
+      </div>
+
+      <div class="item">
+        <p class="title">Historical enrollment fit</p>
+        <span class="est spike">Research spike</span>
+        <p class="why">
+          Use past enrollment data to suggest section counts or predict
+          over-subscription. Requires a data pipeline that doesn&rsquo;t exist yet
+          and a trust conversation with whoever owns enrollment data.
+        </p>
+      </div>
+
+      <div class="item">
+        <p class="title">Custom constraint authoring</p>
+        <span class="est spike">Research spike</span>
+        <p class="why">
+          Let chairs write their own hard and soft rules without code.
+          Interesting but philosophically risky &mdash; most &ldquo;custom rules&rdquo;
+          requests are better served by a setting we&rsquo;d add anyway.
+        </p>
+      </div>
+    </div>
+
+    <div class="cluster">
+      <h3>Cross-chair</h3>
+
+      <div class="item">
+        <p class="title">Cross-chair comparison</p>
+        <span class="est spike">Research spike</span>
+        <p class="why">
+          &ldquo;How did the other GAME chair schedule this last year?&rdquo; Requires
+          institutional buy-in on what&rsquo;s shareable and a story for
+          permissions that doesn&rsquo;t exist today.
+        </p>
+      </div>
+
+      <div class="item">
+        <p class="title">Institutional hosting</p>
+        <span class="est spike">Research spike</span>
+        <p class="why">
+          Today the app runs on a personal Fly.io account with Cloudflare
+          Access gated to <code>@scad.edu</code>. Real institutional adoption
+          would want IT-owned hosting, SSO, and an audit trail. Conversation
+          precedes implementation.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEGEND -->
+  <section class="legend">
+    <div>
+      <strong>Estimates</strong>
+      One &ldquo;day&rdquo; is ~4&ndash;6 focused hours of solo work, including tests and
+      docs. Ranges are honest. &ldquo;Research spike&rdquo; means I&rsquo;d need a few days
+      of discovery before I&rsquo;d trust an estimate.
+    </div>
+    <div>
+      <strong>Prioritization</strong>
+      &ldquo;Next&rdquo; items are committed because they unblock onboarding. &ldquo;Soon&rdquo;
+      is scoped but will shift based on which chair asks first. &ldquo;Horizon&rdquo;
+      only moves if a real user pulls it forward.
+    </div>
+    <div>
+      <strong>What can change this</strong>
+      A real pilot with another program will re-order everything. Prefer
+      asking for a thing over asking for an estimate &mdash; the former gets it on
+      the list.
+    </div>
+  </section>
+
+  <a href="/" class="back">&larr; Back to the app</a>
+
+  <footer>
+    <span>GAME Scheduler &middot; Roadmap page v1</span>
+    <span>Last updated 2026-04-22</span>
+    <span><a href="mailto:tlindsey@scad.edu">tlindsey@scad.edu</a></span>
+  </footer>
+
+</main>
+</body>
+</html>

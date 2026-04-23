@@ -457,6 +457,11 @@
   padding: 6px 10px;
   cursor: pointer;
   font: inherit;
+  text-decoration: none;
+}
+
+.topbar-about__action + .topbar-about__action {
+  margin-top: 6px;
 }
 
 .topbar-about__action:hover {
