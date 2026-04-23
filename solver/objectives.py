@@ -10,6 +10,10 @@ Soft objectives
   SO3  Overload penalty    — penalty if prof teaches > STANDARD_MAX sections
   SO4  should_have drop    — penalty if a should_have section goes unscheduled
   SO5  could_have drop     — penalty if a could_have section goes unscheduled
+  SO6  Under-contract      — penalty per missing class below the prof's floor
+                             (chair=CHAIR_MAX, others=STANDARD_MAX). Dominates
+                             SO1-SO3 so the solver never under-loads one prof
+                             to overload another.
 
 Affinity levels
 ---------------
@@ -32,7 +36,8 @@ from ortools.sat.python import cp_model
 from config import (
     AFFINITY_PENALTIES, TIME_PREF_MAP, TIME_PREF_PENALTIES,
     OVERLOAD_PENALTY, SHOULD_HAVE_DROP_PENALTY, COULD_HAVE_DROP_PENALTY,
-    MODE_WEIGHTS, STANDARD_MAX,
+    UNDER_CONTRACT_PENALTY,
+    MODE_WEIGHTS, STANDARD_MAX, CHAIR_MAX,
 )
 
 
@@ -160,9 +165,11 @@ def build_objective(
             obj_coefs.append(int(coef))
 
     # ------------------------------------------------------------------
-    # SO3: Overload penalty
-    # For each professor, create an IntVar tracking assignments beyond
-    # STANDARD_MAX. Minimizing the objective drives it to max(0, load - MAX).
+    # SO3 + SO6: Per-professor load-based penalties
+    #
+    # Both the overload penalty (load above STANDARD_MAX) and the
+    # under-contract penalty (load below the prof's contract floor) key
+    # off the same prof_load IntVar, so build it once per prof.
     # ------------------------------------------------------------------
     for prof in professors:
         pid = prof["id"]
@@ -170,24 +177,29 @@ def build_objective(
         if not vs:
             continue
 
+        prof_load = model.NewIntVar(0, len(vs), f"load_{pid}")
+        model.Add(prof_load == sum(vs))
+
+        # --- SO6: Under-contract penalty ---------------------------------
+        # Floor: chair = CHAIR_MAX (2); everyone else = STANDARD_MAX (4).
+        # Skip profs whose eligible-var count is below the floor — the miss
+        # is forced by data, not a solver choice, so penalizing it is noise.
+        contract_min = CHAIR_MAX if prof.get("is_chair") else STANDARD_MAX
+        if len(vs) >= contract_min:
+            under_slack = model.NewIntVar(0, contract_min, f"under_{pid}")
+            model.Add(under_slack >= contract_min - prof_load)
+            obj_vars.append(under_slack)
+            obj_coefs.append(UNDER_CONTRACT_PENALTY)
+
+        # --- SO3: Overload penalty ---------------------------------------
         # Chairs are hard-capped at CHAIR_MAX (HC4); no overload concept.
-        if prof.get("is_chair"):
+        # Non-overloaders are hard-capped at STANDARD_MAX (HC4); nothing to soft-penalize.
+        if prof.get("is_chair") or not prof.get("can_overload"):
             continue
 
-        # Professors who cannot overload are hard-capped at STANDARD_MAX (HC4);
-        # the constraint already prevents over-assignment, so no soft penalty.
-        if not prof.get("can_overload"):
-            continue
-
-        # This professor can overload. Create a soft penalty for doing so.
-        # overload_var >= prof_load - STANDARD_MAX, overload_var >= 0
-        # Minimizing the objective will drive overload_var to max(0, load - STANDARD_MAX).
         max_possible_overload = len(vs) - STANDARD_MAX
         if max_possible_overload <= 0:
             continue
-
-        prof_load = model.NewIntVar(0, len(vs), f"load_{pid}")
-        model.Add(prof_load == sum(vs))
 
         overload_var = model.NewIntVar(0, max_possible_overload, f"overload_{pid}")
         model.Add(overload_var >= prof_load - STANDARD_MAX)

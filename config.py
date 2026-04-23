@@ -28,6 +28,13 @@ OVERLOAD_PENALTY = 8
 # with a non-preferred but eligible prof.
 SHOULD_HAVE_DROP_PENALTY = 35
 COULD_HAVE_DROP_PENALTY = 5
+# Fairness invariant — the solver should never leave one prof under-contract
+# while overloading another. Applied per missing class from a prof's floor
+# (chair=CHAIR_MAX, others=STANDARD_MAX). NOT mode-weighted: this is a rule,
+# not a preference. Value chosen to dominate the combined affinity + time
+# budget so the solver always prefers to level-load, even if it means placing
+# classes with non-preferred professors.
+UNDER_CONTRACT_PENALTY = 500
 
 # === Optimization mode weight vectors ===
 # balanced is expert-leaning. With raw max penalties aff=3 and time=5, the
