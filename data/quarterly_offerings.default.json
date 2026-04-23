@@ -168,6 +168,106 @@
       "override_preferred_professors": null,
       "notes": "AI survey intro",
       "pinned": null
+    },
+    {
+      "catalog_id": "GAME_121",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "standard",
+      "override_preferred_professors": null,
+      "notes": "Foundations of Interactive Programming",
+      "pinned": null
+    },
+    {
+      "catalog_id": "GAME_326",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "standard",
+      "override_preferred_professors": null,
+      "notes": "Mid-level elective - Lindsey track",
+      "pinned": null
+    },
+    {
+      "catalog_id": "GAME_310",
+      "priority": "could_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "standard",
+      "override_preferred_professors": null,
+      "notes": "Mobile / interactive",
+      "pinned": null
+    },
+    {
+      "catalog_id": "GAME_277",
+      "priority": "could_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "standard",
+      "override_preferred_professors": null,
+      "notes": "Cross-dept elective - if Spencer has room",
+      "pinned": null
+    },
+    {
+      "catalog_id": "GAME_351",
+      "priority": "nice_to_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "standard",
+      "override_preferred_professors": null,
+      "notes": "Advanced elective - would be nice",
+      "pinned": null
+    },
+    {
+      "catalog_id": "MOME_221",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "mac_lab",
+      "override_preferred_professors": null,
+      "notes": "Mid-level motion",
+      "pinned": null
+    },
+    {
+      "catalog_id": "MOME_305",
+      "priority": "could_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "mac_lab",
+      "override_preferred_professors": null,
+      "notes": "Animation elective",
+      "pinned": null
+    },
+    {
+      "catalog_id": "AI_250",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "pc_lab",
+      "override_preferred_professors": null,
+      "notes": "Second AI in sequence",
+      "pinned": null
+    },
+    {
+      "catalog_id": "AI_360",
+      "priority": "nice_to_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "pc_lab",
+      "override_preferred_professors": null,
+      "notes": "Advanced AI - would be nice",
+      "pinned": null
+    },
+    {
+      "catalog_id": "IACT_330",
+      "priority": "nice_to_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "standard",
+      "override_preferred_professors": null,
+      "notes": "Cross-dept elective - ambitious",
+      "pinned": null
     }
   ]
 }
