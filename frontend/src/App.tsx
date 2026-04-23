@@ -1300,7 +1300,7 @@ function App() {
                   ? "Solver requires the local launcher"
                   : state.solveStatus === "done"
                     ? "Download Excel with all three modes + solver state (resume-able)"
-                    : "Generate a schedule first"
+                    : "Assemble a schedule first"
               }
             >
               Export

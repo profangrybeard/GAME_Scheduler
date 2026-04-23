@@ -119,8 +119,8 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
         : props.offerings.length === 0
           ? "Add offerings first"
           : isSolving
-            ? "Solving..."
-            : "Generate schedule"
+            ? "Assembling..."
+            : "Assemble the schedule"
 
   const placedByCell = useMemo(() => {
     const placed = new Map<string, Offering[]>()
@@ -296,7 +296,7 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
                   <path d="M13 2L4 14h7l-1 8 9-12h-7z" />
                 </svg>
               )}
-              {isSolving ? "Solving…" : "Generate"}
+              {isSolving ? "Assembling…" : "ASSEMBLE"}
             </button>
             <button
               className={
@@ -325,7 +325,7 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
               target="_blank"
               rel="noopener noreferrer"
               title={
-                "Generate runs Google OR-Tools CP-SAT locally — a constraint" +
+                "Assemble runs Google OR-Tools CP-SAT locally — a constraint" +
                 " solver, not AI. It enumerates schedules that respect every" +
                 " rule (rooms, professors, time slots) and picks the best fit." +
                 " Click to learn more."

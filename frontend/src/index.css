@@ -14,8 +14,10 @@
   --text-muted: #9ca3af;
   --text-faint: #6b7280;
 
-  /* Accent */
-  --accent: #818cf8;
+  /* Accent — "Avengers blue." Bright enough to stay readable with dark
+     text on dark surfaces (preserves the light-accent/dark-ink pattern
+     the buttons are tuned for). */
+  --accent: #60A5FA;
   --accent-on: #0f1012;   /* text on accent backgrounds */
 
   /* Status */
@@ -92,7 +94,7 @@
   --text-muted: #6b7280;
   --text-faint: #9ca3af;
 
-  --accent: #6366f1;
+  --accent: #2563EB;
   --accent-on: #ffffff;
 
   --success: #059669;
