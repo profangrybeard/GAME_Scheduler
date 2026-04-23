@@ -25,7 +25,7 @@ import { DataIssuesPanel } from "./components/DataIssuesPanel"
 import { PortraitContext } from "./components/PortraitContext"
 import { ProfessorContext } from "./components/ProfessorContext"
 import { ProfessorCard } from "./components/ProfessorCard"
-import { QuarterSchedule } from "./components/QuarterSchedule"
+import { QuarterSchedule, QUARTER_OPTIONS } from "./components/QuarterSchedule"
 import { RoomCard } from "./components/RoomCard"
 import { Roster } from "./components/Roster"
 import { SolverTuning } from "./components/SolverTuning"
@@ -212,6 +212,7 @@ function App() {
   const [reloadErrors, setReloadErrors] = useState<ValidationError[] | null>(null)
   const [reloadError, setReloadError] = useState<string | null>(null)
   const [reloadFilename, setReloadFilename] = useState<string | null>(null)
+  const [exportChaseKey, setExportChaseKey] = useState(0)
   // Phase 1.3 fallback: when a structural parse fails, check localStorage
   // for a last-known-good snapshot of this filename and offer one-click
   // restore in the error banner. Null = no snapshot available / banner
@@ -223,8 +224,8 @@ function App() {
   // from last-saved snapshot because X.xlsx was broken.
   const [reloadFromSnapshot, setReloadFromSnapshot] = useState(false)
   // Workbook's last-modified epoch ms, read from the File object at load
-  // time. Surfaced in the resume-rail so the user can tell at a glance how
-  // fresh the file they're editing actually is.
+  // time. Shown next to the topbar Resume button so the user can tell at a
+  // glance how fresh the file they're editing actually is.
   const [reloadMtime, setReloadMtime] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -1113,7 +1114,6 @@ function App() {
       onAdd={addOffering}
       onPinToSlot={pinToSlot}
       onSetSolveMode={setSolveMode}
-      onSetQuarter={setQuarter}
       onSolve={() => { void requestSolve() }}
       onEmptyCalendar={emptyCalendar}
       clearArmed={clearArmed}
@@ -1121,6 +1121,38 @@ function App() {
       onDismissError={() => setSolveError(null)}
       onDismissProgress={() => setSolveProgress(null)}
       onOpenTuning={() => setTuningOpen(true)}
+      inputSlot={
+        <div className="schedule__input">
+          <button
+            type="button"
+            className="topbar-btn topbar-btn--resume"
+            onClick={triggerReloadPicker}
+            title="Pick a previously exported schedule to resume editing"
+          >
+            Resume from Excel
+          </button>
+          {reloadMtime !== null && (
+            <span
+              className="schedule__input-loaded"
+              title={`File last modified ${new Date(reloadMtime).toLocaleString()}`}
+            >
+              {reloadFilename ? `${reloadFilename} · ` : ""}
+              Loaded {formatLoadedTimestamp(reloadMtime)}
+            </span>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) handleReloadFile(f)
+              e.target.value = ""
+            }}
+          />
+        </div>
+      }
     />
   )
 
@@ -1157,45 +1189,6 @@ function App() {
     <PortraitContext.Provider value={portraits}>
      <ProfessorContext.Provider value={state.professors}>
       <div className="scheduler">
-        <aside className="resume-rail" aria-label="Resume from an exported schedule">
-          <button
-            type="button"
-            className="resume-rail__btn"
-            onClick={triggerReloadPicker}
-            title="Pick a previously exported schedule to resume editing"
-          >
-            <span className="resume-rail__mark" aria-hidden="true">🐝</span>
-            <span className="resume-rail__label">Resume from Excel</span>
-          </button>
-          {/* Hidden native file input — reset .value so picking the same
-              file twice still fires onChange (browsers de-dupe by default). */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            style={{ display: "none" }}
-            onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (f) handleReloadFile(f)
-              e.target.value = ""
-            }}
-          />
-          {reloadMtime !== null && (
-            <div
-              className="resume-rail__loaded"
-              title={`File last modified ${new Date(reloadMtime).toLocaleString()}`}
-            >
-              {reloadFilename && (
-                <span className="resume-rail__loaded-filename">
-                  {reloadFilename}
-                </span>
-              )}
-              <span className="resume-rail__loaded-label">
-                Loaded {formatLoadedTimestamp(reloadMtime)}
-              </span>
-            </div>
-          )}
-        </aside>
         <div className="scheduler__body">
         {placingOffering && placingCourse && (
           <div className="placement-banner placement-banner--visible">
@@ -1284,6 +1277,24 @@ function App() {
             >
               ☰
             </button>
+            <span className="topbar-quarter">
+              <span className="topbar-quarter__select-wrap">
+                <select
+                  className="topbar-quarter__select"
+                  value={QUARTER_OPTIONS.includes(state.quarter) ? state.quarter : "Fall"}
+                  onChange={e => setQuarter(e.target.value)}
+                  aria-label="Quarter"
+                >
+                  {QUARTER_OPTIONS.map(q => (
+                    <option key={q} value={q}>{q}</option>
+                  ))}
+                </select>
+                <span className="topbar-quarter__caret" aria-hidden="true">▾</span>
+              </span>
+              {" "}Schedule
+            </span>
+          </div>
+          <div className="scheduler__topbar-center">
             <div className="scheduler__title-group">
               <BrandEyebrow />
               <h1 className="scheduler__title">Course Planner</h1>
@@ -1292,8 +1303,14 @@ function App() {
           <div className="scheduler__topbar-right">
             <button
               type="button"
-              className="topbar-btn topbar-btn--export"
-              onClick={requestExport}
+              className={
+                "topbar-btn topbar-btn--export" +
+                (exportChaseKey > 0 ? " topbar-btn--export--chasing" : "")
+              }
+              onClick={() => {
+                setExportChaseKey(k => k + 1)
+                requestExport()
+              }}
               disabled={!(apiAvailable === true && state.solveStatus === "done")}
               title={
                 apiAvailable !== true
@@ -1303,6 +1320,14 @@ function App() {
                     : "Assemble a schedule first"
               }
             >
+              {exportChaseKey > 0 && (
+                <span
+                  key={exportChaseKey}
+                  className="btn-chaser"
+                  aria-hidden="true"
+                  onAnimationEnd={() => setExportChaseKey(0)}
+                />
+              )}
               Export
             </button>
             <button

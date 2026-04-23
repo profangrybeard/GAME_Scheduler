@@ -24,18 +24,9 @@ interface PublishedIndexProps {
  *  deliberate "reading" mode and gives the user a one-tap way to carry the
  *  URL over to a desktop browser — either via the clipboard or a prefilled
  *  email. Without this, the landing reads as a dead-end (published list +
- *  quiet footer); with it, continuing on mobile feels like a choice.
- *
- *  The bee lives in the card's top-right: it's both a brand eye-grabber for
- *  the card and the trigger for an orange rim-glow chase around the "Email
- *  it to me" button. Keeping it inside the card (rather than in the page
- *  header) frees the header for the theme toggle, which stays in the same
- *  place on both mobile screens. */
+ *  quiet footer); with it, continuing on mobile feels like a choice. */
 function UpstreamInvite() {
   const [copied, setCopied] = useState(false)
-  // Chase auto-clears after ~1.6s — one full loop of the rim-chase
-  // keyframe plus a beat so the arc completes at least one orbit.
-  const [chasing, setChasing] = useState(false)
 
   const url = typeof window !== "undefined" ? window.location.href : ""
 
@@ -50,11 +41,6 @@ function UpstreamInvite() {
     }
   }
 
-  function triggerChase() {
-    setChasing(true)
-    window.setTimeout(() => setChasing(false), 1600)
-  }
-
   const mailBody = `Open on a larger screen for the full workspace:\n\n${url}\n`
   const mailHref =
     "mailto:?subject=" + encodeURIComponent("GAME Scheduler — open on desktop") +
@@ -62,17 +48,7 @@ function UpstreamInvite() {
 
   return (
     <aside className="mobile-invite" aria-label="Open on desktop">
-      <div className="mobile-invite__top">
-        <div className="mobile-invite__eyebrow">Reading view</div>
-        <button
-          type="button"
-          className={"mobile-invite__bee" + (chasing ? " mobile-invite__bee--chasing" : "")}
-          onClick={triggerChase}
-          aria-label="Buzz the email button"
-        >
-          <span aria-hidden="true">🐝</span>
-        </button>
-      </div>
+      <div className="mobile-invite__eyebrow">Reading view</div>
       <h2 className="mobile-invite__headline">The workspace lives on desktop.</h2>
       <p className="mobile-invite__body">
         Here you can read the published schedules. Tuning, solving, and publishing
@@ -88,10 +64,7 @@ function UpstreamInvite() {
           {copied ? "Link copied" : "Copy link"}
         </button>
         <a
-          className={
-            "mobile-invite__btn mobile-invite__btn--secondary" +
-            (chasing ? " mobile-invite__btn--chasing" : "")
-          }
+          className="mobile-invite__btn mobile-invite__btn--secondary"
           href={mailHref}
         >
           Email it to me
