@@ -135,52 +135,6 @@ export function Roster(props: RosterProps) {
 
   return (
     <aside className="panel panel--roster" aria-label="Roster">
-      <header className="panel__header">
-        <h2 className="panel__title">Roster</h2>
-        {tab === "profs" && (
-          <>
-            <button
-              type="button"
-              className="roster__add-btn"
-              onClick={props.onAddProfessor}
-              title="Add a new professor to your dept's roster"
-            >
-              + Add
-            </button>
-            <button
-              type="button"
-              className="roster__clear-all-btn"
-              onClick={handleClearProfs}
-              disabled={profList.length === 0}
-              title="Remove every professor and start from scratch"
-            >
-              Clear All
-            </button>
-          </>
-        )}
-        {tab === "rooms" && (
-          <>
-            <button
-              type="button"
-              className="roster__add-btn"
-              onClick={props.onAddRoom}
-              title="Add a new room to your dept's list"
-            >
-              + Add
-            </button>
-            <button
-              type="button"
-              className="roster__clear-all-btn"
-              onClick={handleClearRooms}
-              disabled={roomList.length === 0}
-              title="Remove every room and start from scratch"
-            >
-              Clear All
-            </button>
-          </>
-        )}
-      </header>
-
       <div className="roster__tabs" role="tablist" aria-label="Roster view">
         <button
           type="button"
@@ -225,6 +179,49 @@ export function Roster(props: RosterProps) {
           <span className="roster__tab-label">Rooms</span>
         </button>
       </div>
+
+      {tab === "profs" && (
+        <div className="roster__actions">
+          <button
+            type="button"
+            className="roster__add-btn"
+            onClick={props.onAddProfessor}
+            title="Add a new professor to your dept's roster"
+          >
+            + Add
+          </button>
+          <button
+            type="button"
+            className="roster__clear-all-btn"
+            onClick={handleClearProfs}
+            disabled={profList.length === 0}
+            title="Remove every professor and start from scratch"
+          >
+            Clear All
+          </button>
+        </div>
+      )}
+      {tab === "rooms" && (
+        <div className="roster__actions">
+          <button
+            type="button"
+            className="roster__add-btn"
+            onClick={props.onAddRoom}
+            title="Add a new room to your dept's list"
+          >
+            + Add
+          </button>
+          <button
+            type="button"
+            className="roster__clear-all-btn"
+            onClick={handleClearRooms}
+            disabled={roomList.length === 0}
+            title="Remove every room and start from scratch"
+          >
+            Clear All
+          </button>
+        </div>
+      )}
 
       {tab === "courses" && (
         <div className="roster__subtabs" role="tablist" aria-label="Courses view">

@@ -48,31 +48,6 @@ function statusLabel(mode: SolveModeProgress, liveElapsedMs: number | null): str
   return "Waiting"
 }
 
-/** Condense the three per-mode statuses into one header pill so the default
- *  done-state view doesn't shout "OPTIMAL" three times in a row. Returns an
- *  empty string if nothing is done yet (caller should hide the pill). */
-function computeSummary(modes: Record<string, SolveModeProgress>): string {
-  const done = Object.values(modes).filter(m => m.state === "done")
-  if (done.length === 0) return ""
-  const counts = { optimal: 0, feasible: 0, infeasible: 0, other: 0 }
-  for (const m of done) {
-    if (m.status === "optimal") counts.optimal++
-    else if (m.status === "feasible") counts.feasible++
-    else if (m.status === "infeasible") counts.infeasible++
-    else counts.other++
-  }
-  // All-same case reads cleaner as "3/3 optimal" than "3 optimal".
-  if (counts.optimal === done.length) return `${done.length}/${done.length} optimal`
-  if (counts.feasible === done.length) return `${done.length}/${done.length} feasible`
-  if (counts.infeasible === done.length) return `${done.length}/${done.length} infeasible`
-  const parts: string[] = []
-  if (counts.optimal)    parts.push(`${counts.optimal} optimal`)
-  if (counts.feasible)   parts.push(`${counts.feasible} feasible`)
-  if (counts.infeasible) parts.push(`${counts.infeasible} infeasible`)
-  if (counts.other)      parts.push(`${counts.other} other`)
-  return parts.join(" · ")
-}
-
 interface Props {
   progress: SolveProgressState | null
   /** true while `solveStatus === "running"` — used to keep the UI mounted
@@ -144,7 +119,6 @@ export function SolveProgress(props: Props) {
     progress.phase !== "writing" &&
     progress.phase !== "solving"
   const showModes = !isCollapsible || expanded
-  const summaryText = isCollapsible ? computeSummary(progress.modes) : ""
 
   return (
     <div
@@ -175,20 +149,6 @@ export function SolveProgress(props: Props) {
         <span className="solve-progress__elapsed">
           {formatSeconds(Math.round(totalElapsedMs))}
         </span>
-        {summaryText && (
-          <span className="solve-progress__summary">{summaryText}</span>
-        )}
-        {isCollapsible && onOpenTuning && (
-          <button
-            type="button"
-            className="solve-progress__tune-btn solve-progress__tune-btn--header"
-            onClick={onOpenTuning}
-            aria-label="Tune solver weights"
-            title="Tune the solver's weight mix"
-          >
-            ⚙
-          </button>
-        )}
         {isCollapsible && (
           <button
             type="button"
@@ -281,9 +241,11 @@ export function SolveProgress(props: Props) {
                 <span className="solve-progress__mode-name">
                   {MODE_LABELS[key] ?? key}
                 </span>
-                <span className={`solve-progress__pill solve-progress__pill--${m.state}`}>
-                  {statusLabel(m, liveElapsedMs)}
-                </span>
+                {!(m.state === "done" && m.status === "optimal") && (
+                  <span className={`solve-progress__pill solve-progress__pill--${m.state}`}>
+                    {statusLabel(m, liveElapsedMs)}
+                  </span>
+                )}
               </div>
               <div className="solve-progress__metrics">
                 <span
