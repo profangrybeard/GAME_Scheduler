@@ -280,7 +280,11 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
           <div className="panel__actions">
             <button
               type="button"
-              className={"btn-generate" + (isSolving ? " btn-generate--solving" : "")}
+              className={
+                "btn-generate" +
+                (isSolving ? " btn-generate--solving" : "") +
+                (chaseKey > 0 ? " btn-generate--chasing" : "")
+              }
               disabled={!canGenerate}
               onClick={() => {
                 setChaseKey(k => k + 1)
