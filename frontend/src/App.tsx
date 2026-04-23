@@ -1293,7 +1293,7 @@ function App() {
           <div className="scheduler__topbar-center">
             <div className="scheduler__title-group">
               <BrandEyebrow />
-              <h1 className="scheduler__title">Course Planner</h1>
+              <h1 className="scheduler__title">Course Scheduler</h1>
             </div>
           </div>
           <div className="scheduler__topbar-right">

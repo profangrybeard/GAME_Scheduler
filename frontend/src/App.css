@@ -40,37 +40,37 @@
 .scheduler__title-group {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
-  line-height: 1.1;
+  line-height: 1.05;
   align-items: center;
 }
 
+/* Course Scheduler — kicker under the SCAD brand. Uppercase + letter-spacing
+   reads as a product label, subordinate to the dominant wordmark above. */
 .scheduler__title {
   margin: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--text);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
   min-width: 0;
 }
 
-/* Brand eyebrow — SCAD wordmark + ":Prototype" tag. The tag keeps
-   capitalization (not uppercased) and stays orange so the "under
-   construction" status reads quickly regardless of theme. */
+/* Brand wordmark — SCAD + ":Prototype" tag. This is the dominant title
+   in the topbar; Course Scheduler reads as its subtitle. The :Prototype
+   tag stays orange across themes as an "under construction" signal. */
 .brand-eyebrow {
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
   line-height: 1;
 }
 
 .brand-eyebrow__tag {
-  text-transform: none;
-  letter-spacing: 0;
-  font-weight: 600;
+  font-weight: 700;
   color: #c2410c;
 }
 
@@ -3030,7 +3030,7 @@
   /* Hamburger not needed on portrait — tab bar handles navigation */
   .topbar-hamburger { display: none; }
 
-  .scheduler__title { font-size: 0.95rem; }
+  .scheduler__title { font-size: 0.65rem; }
 
   .bottom-tabs { display: flex; }
 
