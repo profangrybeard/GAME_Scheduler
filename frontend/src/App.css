@@ -629,6 +629,14 @@
   gap: var(--space-md);
 }
 
+/* Schedule header: Resume (left input) + toolbar (Assemble / Empty / OR /
+   mode chips) read as one action cluster, not two opposed sides. Center
+   them horizontally so the user's eye lands on the whole ingress→action
+   flow at once. */
+.panel--schedule .panel__header {
+  justify-content: center;
+}
+
 .panel__title {
   margin: 0;
   font-size: 0.72rem;
