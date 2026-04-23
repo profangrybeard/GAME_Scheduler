@@ -3211,18 +3211,63 @@
   font-variant-numeric: tabular-nums;
 }
 
-.solve-progress__dismiss {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-size: 1rem;
-  line-height: 1;
-  padding: 2px 6px;
-  cursor: pointer;
-  border-radius: 3px;
+/* Inline mode chips live in the collapsed bar — one per generated
+ * calendar (Cover / Tune / Time Pref). Clicking a chip flips the board
+ * to that mode's cached schedule. Active chip is accent-tinted so the
+ * "you are here" signifier matches the Roster tabs pattern. */
+.solve-progress__mode-chips {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
-.solve-progress__dismiss:hover { color: var(--text); background: var(--surface-hover); }
+.solve-progress__mode-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease,
+    transform 0.12s ease;
+}
+
+.solve-progress__mode-chip:hover {
+  color: var(--text);
+  border-color: var(--text-faint);
+  transform: translateY(-1px);
+}
+
+.solve-progress__mode-chip:active {
+  transform: translateY(0);
+}
+
+.solve-progress__mode-chip--active {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--accent);
+}
+
+.solve-progress__mode-chip-count {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+.solve-progress__mode-chip--active .solve-progress__mode-chip-count {
+  opacity: 1;
+}
 
 /* Expand/collapse toggle for the per-mode cards. Subtle chevron rotates
  * when open; the "Details" / "Hide" label keeps intent legible. */
