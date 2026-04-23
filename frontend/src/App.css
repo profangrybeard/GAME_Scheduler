@@ -563,25 +563,6 @@
   gap: var(--space-md);
 }
 
-/* Schedule panel's header uses a 3-column grid so the quarter title sits
-   dead-center, independent of how wide the right-hand toolbar (ASSEMBLE,
-   Empty Calendar, OR, Export) grows. Left column stays empty; title grid-
-   column:2 centers; toolbar grid-column:3 hugs the right edge. */
-.panel--schedule .panel__header {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-}
-
-.panel--schedule .panel__title {
-  grid-column: 2;
-  justify-self: center;
-}
-
-.panel--schedule .schedule__toolbar {
-  grid-column: 3;
-  justify-self: end;
-}
-
 .panel__title {
   margin: 0;
   font-size: 0.72rem;
@@ -2931,17 +2912,10 @@
   }
 
   .panel--schedule .panel__header {
-    display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: var(--space-sm);
     padding: var(--space-sm) var(--space-md);
-  }
-  /* Undo desktop grid placement — children flow linearly on mobile. */
-  .panel--schedule .panel__title,
-  .panel--schedule .schedule__toolbar {
-    grid-column: auto;
-    justify-self: stretch;
   }
 
   /* Chips slightly larger */

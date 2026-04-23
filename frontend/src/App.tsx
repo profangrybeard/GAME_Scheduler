@@ -1122,37 +1122,6 @@ function App() {
       onDismissError={() => setSolveError(null)}
       onDismissProgress={() => setSolveProgress(null)}
       onOpenTuning={() => setTuningOpen(true)}
-      exportSlot={
-        <button
-          type="button"
-          className={
-            "topbar-btn topbar-btn--export" +
-            (exportChaseKey > 0 ? " topbar-btn--export--chasing" : "")
-          }
-          onClick={() => {
-            setExportChaseKey(k => k + 1)
-            requestExport()
-          }}
-          disabled={!(apiAvailable === true && state.solveStatus === "done")}
-          title={
-            apiAvailable !== true
-              ? "Solver requires the local launcher"
-              : state.solveStatus === "done"
-                ? "Download Excel with all three modes + solver state (resume-able)"
-                : "Assemble a schedule first"
-          }
-        >
-          {exportChaseKey > 0 && (
-            <span
-              key={exportChaseKey}
-              className="btn-chaser"
-              aria-hidden="true"
-              onAnimationEnd={() => setExportChaseKey(0)}
-            />
-          )}
-          Export
-        </button>
-      }
     />
   )
 
@@ -1313,6 +1282,35 @@ function App() {
             </div>
           </div>
           <div className="scheduler__topbar-right">
+            <button
+              type="button"
+              className={
+                "topbar-btn topbar-btn--export" +
+                (exportChaseKey > 0 ? " topbar-btn--export--chasing" : "")
+              }
+              onClick={() => {
+                setExportChaseKey(k => k + 1)
+                requestExport()
+              }}
+              disabled={!(apiAvailable === true && state.solveStatus === "done")}
+              title={
+                apiAvailable !== true
+                  ? "Solver requires the local launcher"
+                  : state.solveStatus === "done"
+                    ? "Download Excel with all three modes + solver state (resume-able)"
+                    : "Assemble a schedule first"
+              }
+            >
+              {exportChaseKey > 0 && (
+                <span
+                  key={exportChaseKey}
+                  className="btn-chaser"
+                  aria-hidden="true"
+                  onAnimationEnd={() => setExportChaseKey(0)}
+                />
+              )}
+              Export
+            </button>
             <button
               type="button"
               className="theme-toggle"
