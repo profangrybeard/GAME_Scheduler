@@ -53,12 +53,14 @@ interface Props {
   /** true while `solveStatus === "running"` — used to keep the UI mounted
    *  even if no events have arrived yet (e.g., solve_started just fired). */
   isSolving: boolean
-  onDismiss: () => void
-  /** Currently shown mode (highlights the corresponding card). */
+  /** Accepted but no longer wired — the bar now persists until the next
+   *  solve (no dismiss X). Kept on the interface so call sites don't need
+   *  to change. */
+  onDismiss?: () => void
+  /** Currently shown mode (highlights the corresponding card / chip). */
   activeMode?: string
-  /** Click on a `done` mode card flips the calendar to that mode's cached
-   *  schedule — same effect the now-removed Affinity/Time Pref/Balanced
-   *  chip buttons in QuarterSchedule used to have. */
+  /** Click on a `done` mode chip (collapsed) or card (expanded) flips the
+   *  calendar to that mode's cached schedule. */
   onSelectMode?: (mode: string) => void
   /** Open the SolverTuning modal. When provided, the middle (Tune) card
    *  surfaces a gear button next to its status pill. */
@@ -66,7 +68,7 @@ interface Props {
 }
 
 export function SolveProgress(props: Props) {
-  const { progress, isSolving, onDismiss, activeMode, onSelectMode, onOpenTuning } = props
+  const { progress, isSolving, activeMode, onSelectMode, onOpenTuning } = props
 
   // `now` is driven by a 250ms interval while a solve is in flight. Using
   // state (instead of calling performance.now() during render) keeps the
@@ -119,6 +121,10 @@ export function SolveProgress(props: Props) {
     progress.phase !== "writing" &&
     progress.phase !== "solving"
   const showModes = !isCollapsible || expanded
+  // Inline chips let the user flip between the three generated calendars
+  // without expanding Details. Only rendered in the collapsed done state;
+  // expanded view has the full mode cards for the same action.
+  const showModeChips = isCollapsible && !expanded && !!onSelectMode
 
   return (
     <div
@@ -149,6 +155,50 @@ export function SolveProgress(props: Props) {
         <span className="solve-progress__elapsed">
           {formatSeconds(Math.round(totalElapsedMs))}
         </span>
+        {showModeChips && (
+          <div
+            className="solve-progress__mode-chips"
+            role="tablist"
+            aria-label="Solve mode"
+          >
+            {orderedKeys.map(key => {
+              const m = progress.modes[key]
+              if (m.state !== "done") return null
+              const isActive = activeMode === key
+              const placed =
+                m.nPlaced !== null && m.nTotal !== null
+                  ? `${m.nPlaced}/${m.nTotal}`
+                  : null
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  className={
+                    "solve-progress__mode-chip" +
+                    (isActive ? " solve-progress__mode-chip--active" : "")
+                  }
+                  onClick={() => onSelectMode?.(key)}
+                  title={
+                    isActive
+                      ? `${MODE_LABELS[key] ?? key} — currently shown on the board`
+                      : `Show ${MODE_LABELS[key] ?? key} on the board`
+                  }
+                >
+                  <span className="solve-progress__mode-chip-label">
+                    {MODE_LABELS[key] ?? key}
+                  </span>
+                  {placed && (
+                    <span className="solve-progress__mode-chip-count">
+                      {placed}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        )}
         {isCollapsible && (
           <button
             type="button"
@@ -169,19 +219,6 @@ export function SolveProgress(props: Props) {
             >
               ▸
             </span>
-          </button>
-        )}
-        {/* Hide Dismiss while xlsx_writing is in flight — closing the panel
-            would suggest the work is canceled, but the network call continues
-            and the download fires either way. */}
-        {!anyRunning && progress.phase !== "writing" && (
-          <button
-            type="button"
-            className="solve-progress__dismiss"
-            onClick={onDismiss}
-            aria-label="Dismiss solve progress"
-          >
-            ×
           </button>
         )}
       </div>
