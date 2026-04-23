@@ -8,7 +8,7 @@ import {
   profLoadedCount,
   STATION_TYPE_LABELS,
 } from "../types"
-import { Catalogue } from "./Catalogue"
+import { Catalogue, DEPT_CHIPS, courseMatchesQuery, type DeptFilter } from "./Catalogue"
 import { ProfAvatar } from "./ProfAvatar"
 
 /**
@@ -74,10 +74,22 @@ export function Roster(props: RosterProps) {
   // deck) vs. Browse (the full catalog, filtered). Local because the two
   // modes share props: App.tsx doesn't care which is visible.
   const [coursesMode, setCoursesMode] = useState<CoursesMode>("roster")
+  // Search + dept filters are shared by both sub-modes so they persist when
+  // toggling In Roster ↔ Browse. Essential once a dept has 17+ profs/courses
+  // and the unplaced list needs narrowing.
+  const [query, setQuery] = useState("")
+  const [dept, setDept] = useState<DeptFilter>("all")
 
   const unplaced = useMemo(() => {
+    const q = query.trim().toLowerCase()
     return props.offerings
       .filter(o => classifyOffering(o) !== "placed")
+      .filter(o => {
+        const course = props.catalog[o.catalog_id]
+        if (!course) return false
+        if (dept !== "all" && course.department !== dept) return false
+        return courseMatchesQuery(course, q)
+      })
       .sort((a, b) => {
         const pa = PRIORITY_INDEX[a.priority] ?? 9
         const pb = PRIORITY_INDEX[b.priority] ?? 9
@@ -88,7 +100,14 @@ export function Roster(props: RosterProps) {
         if (byCid !== 0) return byCid
         return a.offering_id.localeCompare(b.offering_id)
       })
-  }, [props.offerings])
+  }, [props.offerings, props.catalog, query, dept])
+
+  /** Unplaced count before filters — used for the "In roster" subtab badge so
+   *  the badge reflects the true deck size even when filters hide everything. */
+  const unplacedTotal = useMemo(
+    () => props.offerings.filter(o => classifyOffering(o) !== "placed").length,
+    [props.offerings],
+  )
 
   const profList = useMemo(() => {
     return Object.values(props.professors).sort((a, b) =>
@@ -230,7 +249,7 @@ export function Roster(props: RosterProps) {
             onClick={() => setCoursesMode("roster")}
           >
             <span>In roster</span>
-            <span className="roster__subtab-count">{unplaced.length}</span>
+            <span className="roster__subtab-count">{unplacedTotal}</span>
           </button>
           <button
             type="button"
@@ -250,10 +269,39 @@ export function Roster(props: RosterProps) {
         </div>
       )}
 
+      {tab === "courses" && (
+        <div className="catalogue__filters">
+          <input
+            className="catalogue__search"
+            type="search"
+            placeholder="Search ID or name…"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            aria-label="Search courses by ID or name"
+          />
+          <div className="catalogue__chips" role="tablist" aria-label="Filter by department">
+            {DEPT_CHIPS.map(chip => (
+              <button
+                key={chip.key}
+                role="tab"
+                aria-selected={dept === chip.key}
+                className={
+                  "chip" + (dept === chip.key ? " chip--active" : "")
+                }
+                onClick={() => setDept(chip.key)}
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {tab === "courses" && coursesMode === "roster" && (
         <OfferingsList
           unplaced={unplaced}
           totalCount={props.offerings.length}
+          hasActiveFilter={query.trim() !== "" || dept !== "all"}
           catalog={props.catalog}
           professors={props.professors}
           selectedOfferingId={props.selectedOfferingId}
@@ -272,6 +320,8 @@ export function Roster(props: RosterProps) {
           catalog={props.catalog}
           offerings={props.offerings}
           selectedOfferingId={props.selectedOfferingId}
+          query={query}
+          dept={dept}
           onSelect={props.onSelect}
           onAdd={props.onAddOffering}
           onRemove={props.onRemove}
@@ -303,6 +353,9 @@ export function Roster(props: RosterProps) {
 interface OfferingsListProps {
   unplaced: Offering[]
   totalCount: number
+  /** True when search or dept filter narrows the deck. Changes the empty-state
+   *  copy from "all placed" to "no matches". */
+  hasActiveFilter: boolean
   catalog: Record<string, Course>
   professors: Record<string, Professor>
   selectedOfferingId: string | null
@@ -360,7 +413,9 @@ function OfferingsList(props: OfferingsListProps) {
               ? <>No offerings yet.<br />Click <strong>+ Add</strong> to pick courses.</>
               : isDragOver
                 ? "Drop here to unpin"
-                : "All placed — nice work."}
+                : props.hasActiveFilter
+                  ? "No matches."
+                  : "All placed — nice work."}
           </p>
         )}
       {(() => {
