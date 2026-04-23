@@ -32,8 +32,8 @@ import { loadTunedMix, mixToSolverWeights, saveTunedMix, type Mix } from "./comp
 import { TopbarMenu } from "./components/TopbarMenu"
 import { loadInitialState } from "./data"
 import { useTheme } from "./hooks/useTheme"
-import { coalesceOfferingsForWire, expandOfferingsFromWire, mintOfferingId, profContractCeiling, profContractFloor } from "./types"
-import type { Assignment, Offering, Professor, RosterCapacity, Room, SchedulerState, Slot, SolveMode, SolveModeProgress, SolveProgressState, WireOffering } from "./types"
+import { coalesceOfferingsForWire, collectEquipmentTags, expandOfferingsFromWire, mintOfferingId, profContractCeiling, profContractFloor } from "./types"
+import type { Assignment, Course, Offering, Professor, RosterCapacity, Room, SchedulerState, Slot, SolveMode, SolveModeProgress, SolveProgressState, WireOffering } from "./types"
 import "./App.css"
 
 /**
@@ -61,6 +61,12 @@ const PROF_EDITS_LEGACY_KEY = "professor-edits"
 const ROOMS_STORAGE_KEY = "rooms"
 /** Pre-Path-B overlay key. One-shot migrated on load then deleted. */
 const ROOM_EDITS_LEGACY_KEY = "room-edits"
+/** Sparse overlay for Course edits (equipment tags, etc). Unlike rooms and
+ *  professors where the full list is per-chair, the course catalog is shared
+ *  baseline data; chairs only nudge a handful of entries. Stored as
+ *  `{ [course_id]: Partial<Course> }` and applied to the in-memory catalog
+ *  at load time. */
+const CATALOG_EDITS_KEY = "catalog-edits"
 
 
 type ActivePanel = "roster" | "schedule" | "detail"
@@ -130,6 +136,18 @@ function saveRooms(rooms: Room[]) {
   try { localStorage.setItem(ROOMS_STORAGE_KEY, JSON.stringify(rooms)) } catch { /* full */ }
 }
 
+function loadCatalogEdits(): Record<string, Partial<Course>> {
+  try {
+    const raw = localStorage.getItem(CATALOG_EDITS_KEY)
+    if (raw) return JSON.parse(raw) as Record<string, Partial<Course>>
+  } catch { /* corrupted */ }
+  return {}
+}
+
+function saveCatalogEdits(edits: Record<string, Partial<Course>>) {
+  try { localStorage.setItem(CATALOG_EDITS_KEY, JSON.stringify(edits)) } catch { /* full */ }
+}
+
 function applyEdits<T>(
   base: Record<string, T>,
   edits: Record<string, Partial<T>>,
@@ -170,8 +188,11 @@ function App() {
     const rooms = savedRooms
       ? Object.fromEntries(savedRooms.map(r => [r.id, r]))
       : base.rooms
+    const catalogEdits = loadCatalogEdits()
+    const catalog = applyEdits(base.catalog, catalogEdits)
     return {
       ...base,
+      catalog,
       professors,
       rooms,
     }
@@ -444,6 +465,27 @@ function App() {
         }
         saveRooms(Object.values(next))
         return { ...s, rooms: next }
+      })
+    },
+    [],
+  )
+
+  /** Edit a course in the working catalog. Persists as a sparse overlay in
+   *  localStorage (CATALOG_EDITS_KEY) so a chair's equipment-tag tweaks
+   *  survive refresh without forking the shared catalog JSON. The solver
+   *  reads the in-memory catalog on the next solve. */
+  const updateCourse = useCallback(
+    (course_id: string, changes: Partial<Course>) => {
+      setState(s => {
+        if (!s.catalog[course_id]) return s
+        const next = {
+          ...s.catalog,
+          [course_id]: { ...s.catalog[course_id], ...changes },
+        }
+        const edits = loadCatalogEdits()
+        edits[course_id] = { ...(edits[course_id] ?? {}), ...changes }
+        saveCatalogEdits(edits)
+        return { ...s, catalog: next }
       })
     },
     [],
@@ -1153,9 +1195,15 @@ function App() {
     />
   )
 
+  const knownEquipmentTags = useMemo(
+    () => collectEquipmentTags(state.catalog, state.rooms),
+    [state.catalog, state.rooms],
+  )
+
   const detailPanel = selectedRoom ? (
     <RoomCard
       room={selectedRoom}
+      knownEquipmentTags={knownEquipmentTags}
       onUpdate={updateRoom}
       onDelete={removeRoom}
       onClose={() => setSelectedRoomId(null)}
@@ -1176,7 +1224,9 @@ function App() {
       catalog={state.catalog}
       professors={state.professors}
       rooms={state.rooms}
+      knownEquipmentTags={knownEquipmentTags}
       onUpdate={updateOffering}
+      onUpdateCourse={updateCourse}
       onRemove={removeOffering}
       onSelectProfessor={selectProfessor}
     />

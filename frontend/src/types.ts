@@ -104,6 +104,14 @@ export interface Course {
   prerequisites?: string[]
   source?: string
   usual_quarters?: string[]
+  /** Equipment tags a room MUST have for this course to run there. Hard
+   *  constraint in the solver: room.equipment_tags ⊇ course.required_equipment.
+   *  Missing/empty means "no equipment requirement beyond room_type". */
+  required_equipment?: string[]
+  /** Equipment tags the course PREFERS but doesn't require. Soft bonus in
+   *  the solver — rooms missing preferred tags take a small penalty per
+   *  missing tag. Missing/empty means "no preference". */
+  preferred_equipment?: string[]
 }
 
 export interface Professor {
@@ -139,6 +147,13 @@ export interface Room {
   /** Per-quarter availability. `undefined` means available (default).
    *  Set to `false` when a room is offline for the quarter. */
   available?: boolean
+  /** Free-form equipment tags. Vocabulary is chair-authored: anything the
+   *  chair wants to match against Course.required_equipment /
+   *  preferred_equipment. Chips auto-suggest from tags already in use in
+   *  the document — no canonical list. Missing/empty means the room has
+   *  none of the chair's tagged capabilities (still eligible for courses
+   *  with no required_equipment). */
+  equipment_tags?: string[]
 }
 
 // ─── Mutable working state ────────────────────────────────────────
@@ -471,6 +486,38 @@ export const ROOM_TYPE_ORDER: ReadonlyArray<string> = [
 /** Human-readable room_type. Falls back to snake→space for unknown keys. */
 export function prettyRoomType(type: string): string {
   return ROOM_TYPE_LABELS[type] ?? type.replace(/_/g, " ")
+}
+
+// ─── Equipment tag helpers ────────────────────────────────────────
+
+/** Normalize a free-typed tag to the storage form: trimmed, lowercased,
+ *  whitespace collapsed to underscores. Empty after normalization → "". */
+export function normalizeEquipmentTag(raw: string): string {
+  return raw.trim().toLowerCase().replace(/\s+/g, "_")
+}
+
+/** Human-readable display form: underscores back to spaces. */
+export function prettyEquipmentTag(tag: string): string {
+  return tag.replace(/_/g, " ")
+}
+
+/** Collect every equipment tag already in use in the current document —
+ *  unioned across all rooms + catalog. Used to drive the in-doc autocomplete
+ *  on the equipment chip editors so chairs avoid typo-drift within a doc
+ *  without a canonical vocabulary file. Sorted alphabetically. */
+export function collectEquipmentTags(
+  catalog: Record<string, Course>,
+  rooms: Record<string, Room>,
+): string[] {
+  const seen = new Set<string>()
+  for (const c of Object.values(catalog)) {
+    for (const t of c.required_equipment ?? []) seen.add(t)
+    for (const t of c.preferred_equipment ?? []) seen.add(t)
+  }
+  for (const r of Object.values(rooms)) {
+    for (const t of r.equipment_tags ?? []) seen.add(t)
+  }
+  return Array.from(seen).sort()
 }
 
 // ─── Station vocabulary ───────────────────────────────────────────

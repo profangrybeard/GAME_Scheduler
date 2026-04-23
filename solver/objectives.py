@@ -17,6 +17,10 @@ Soft objectives
                              (chair=CHAIR_MAX, others=STANDARD_MAX). Dominates
                              SO1-SO5 so the solver never under-loads one prof
                              to overload another. Not mode-tuned.
+  SO7  Preferred-equipment — penalty per course-preferred tag the assigned
+                             room lacks. Small, fixed weight — tiebreaker
+                             between otherwise-equivalent rooms, not a gate
+                             (required_equipment is the hard gate in HC11).
 
 Affinity levels
 ---------------
@@ -37,7 +41,7 @@ from ortools.sat.python import cp_model
 from config import (
     AFFINITY_PENALTIES, AFFINITY_WEIGHT, TIME_PREF_MAP, TIME_PREF_PENALTIES,
     OVERLOAD_PENALTY, SHOULD_HAVE_DROP_PENALTY, COULD_HAVE_DROP_PENALTY,
-    UNDER_CONTRACT_PENALTY,
+    UNDER_CONTRACT_PENALTY, PREFERRED_EQUIPMENT_PENALTY,
     MODE_WEIGHTS, STANDARD_MAX, CHAIR_MAX,
 )
 
@@ -72,6 +76,25 @@ def _time_pref_penalty(prof: dict, ts: str) -> int:
     """Return time preference penalty for assigning prof to time slot ts."""
     label = TIME_PREF_MAP.get((prof["time_preference"], ts), "not_preferred")
     return TIME_PREF_PENALTIES[label]
+
+
+def _preferred_equipment_penalty(course: dict, room: dict) -> int:
+    """Return soft penalty for missing preferred equipment on this room.
+
+    Counts how many of the course's preferred_equipment tags the room lacks,
+    multiplied by PREFERRED_EQUIPMENT_PENALTY. Zero when preferred_equipment
+    is empty (no preference) or the room has everything the course wants.
+
+    Unlike required_equipment (a hard-filter in _eligible_rooms), this is a
+    tiebreaker — if two rooms are otherwise equivalent, the one with more
+    matching preferred tags wins.
+    """
+    preferred = course.get("preferred_equipment") or []
+    if not preferred:
+        return 0
+    room_tags = set(room.get("equipment_tags") or [])
+    missing = sum(1 for t in preferred if t not in room_tags)
+    return missing * PREFERRED_EQUIPMENT_PENALTY
 
 
 # ---------------------------------------------------------------------------
@@ -140,6 +163,7 @@ def build_objective(
     cs_by_key     = data["cs_by_key"]
     professors    = data["professors"]
     profs_by_id   = data["profs_by_id"]
+    rooms_by_id   = data["rooms_by_id"]
     vars_by_cs    = data["vars_by_cs"]
     vars_by_prof  = data["vars_by_prof"]
 
@@ -147,19 +171,24 @@ def build_objective(
     obj_coefs: list = []
 
     # ------------------------------------------------------------------
-    # SO1 + SO2: Per-assignment affinity and time-preference penalties
-    # Both are constants (determined by which variable is chosen), so they
-    # become linear coefficients on the BoolVar.
+    # SO1 + SO2 + SO7: Per-assignment affinity, time-pref, and preferred-
+    # equipment penalties. All three are constants (determined by which
+    # variable is chosen), so they collapse into one linear coefficient
+    # on the BoolVar. SO7 is the room-side analogue of SO1 — a small,
+    # always-on tiebreaker that steers the solver toward rooms whose tags
+    # match the course's preferred_equipment list.
     # ------------------------------------------------------------------
     for (cs_key, prof_id, room_id, dg, ts), var in assignments.items():
         cs_info = cs_by_key[cs_key]
         prof    = profs_by_id[prof_id]
+        room    = rooms_by_id[room_id]
 
         aff_pen  = AFFINITY_PENALTIES.get(_affinity_level(cs_info, prof_id, prof),
                                            AFFINITY_PENALTIES["other"])
         time_pen = _time_pref_penalty(prof, ts)
+        eq_pen   = _preferred_equipment_penalty(cs_info["course"], room)
 
-        coef = AFFINITY_WEIGHT * aff_pen + w_time * time_pen
+        coef = AFFINITY_WEIGHT * aff_pen + w_time * time_pen + eq_pen
         if coef != 0:
             obj_vars.append(var)
             obj_coefs.append(int(coef))

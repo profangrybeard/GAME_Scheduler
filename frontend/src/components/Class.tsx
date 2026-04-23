@@ -1,11 +1,16 @@
-import { useMemo } from "react"
+import { useId, useMemo, useState } from "react"
 import type {
   Course,
   Offering,
   Professor,
   Room,
 } from "../types"
-import { PRIORITIES, prettyRoomType } from "../types"
+import {
+  normalizeEquipmentTag,
+  prettyEquipmentTag,
+  PRIORITIES,
+  prettyRoomType,
+} from "../types"
 
 /**
  * The DETAIL panel — Class.
@@ -32,7 +37,14 @@ export interface ClassProps {
   catalog: Record<string, Course>
   professors: Record<string, Professor>
   rooms: Record<string, Room>
+  /** In-doc equipment tag vocabulary — union of tags already used on any
+   *  room + any course. Powers chip autocomplete here and on RoomCard. */
+  knownEquipmentTags: ReadonlyArray<string>
   onUpdate: (offering_id: string, changes: Partial<Offering>) => void
+  /** Edit the catalog entry. Used by the equipment chip editors; course tags
+   *  are authored at catalog level (not per-offering) so one edit reaches
+   *  every section the chair schedules this quarter and next. */
+  onUpdateCourse: (course_id: string, changes: Partial<Course>) => void
   onRemove: (offering_id: string) => void
   onSelectProfessor: (id: string | null) => void
 }
@@ -42,6 +54,11 @@ export function Class(props: ClassProps) {
     ? props.offerings.find(o => o.offering_id === props.selectedOfferingId)
     : null
   const course = offering ? props.catalog[offering.catalog_id] : null
+
+  const [reqDraft, setReqDraft] = useState("")
+  const [prefDraft, setPrefDraft] = useState("")
+  const reqListId = useId()
+  const prefListId = useId()
 
   // Tiered dropdown: every roster prof is pickable. Groups mirror the solver's
   // affinity tiers so the label the user sees matches what the solver will
@@ -226,6 +243,58 @@ export function Class(props: ClassProps) {
           </select>
         </section>
 
+        <EquipmentChips
+          label="Required equipment"
+          hint="Rooms MUST have all of these tags to host this course. Edits apply to every offering of this course."
+          placeholder="e.g. pen_display"
+          tags={course.required_equipment ?? []}
+          draft={reqDraft}
+          setDraft={setReqDraft}
+          listId={reqListId}
+          knownTags={props.knownEquipmentTags}
+          onCommit={() => {
+            const normalized = normalizeEquipmentTag(reqDraft)
+            setReqDraft("")
+            const current = course.required_equipment ?? []
+            if (!normalized || current.includes(normalized)) return
+            props.onUpdateCourse(course.id, {
+              required_equipment: [...current, normalized],
+            })
+          }}
+          onRemove={tag => {
+            const current = course.required_equipment ?? []
+            props.onUpdateCourse(course.id, {
+              required_equipment: current.filter(t => t !== tag),
+            })
+          }}
+        />
+
+        <EquipmentChips
+          label="Preferred equipment"
+          hint="Soft bonus when the assigned room has these tags. Missing tags don't block scheduling, just cost a little."
+          placeholder="e.g. large_display, vr"
+          tags={course.preferred_equipment ?? []}
+          draft={prefDraft}
+          setDraft={setPrefDraft}
+          listId={prefListId}
+          knownTags={props.knownEquipmentTags}
+          onCommit={() => {
+            const normalized = normalizeEquipmentTag(prefDraft)
+            setPrefDraft("")
+            const current = course.preferred_equipment ?? []
+            if (!normalized || current.includes(normalized)) return
+            props.onUpdateCourse(course.id, {
+              preferred_equipment: [...current, normalized],
+            })
+          }}
+          onRemove={tag => {
+            const current = course.preferred_equipment ?? []
+            props.onUpdateCourse(course.id, {
+              preferred_equipment: current.filter(t => t !== tag),
+            })
+          }}
+        />
+
         <section className="class__section">
           <label className="class__label">Notes</label>
           <textarea
@@ -265,5 +334,70 @@ export function Class(props: ClassProps) {
         </section>
       </div>
     </aside>
+  )
+}
+
+// Shared chip editor for the Required/Preferred equipment rows. Kept inline
+// because it's specific to this panel's prose/hint structure — if a third
+// tag surface appears, hoist it to its own file.
+interface EquipmentChipsProps {
+  label: string
+  hint: string
+  placeholder: string
+  tags: ReadonlyArray<string>
+  draft: string
+  setDraft: (v: string) => void
+  listId: string
+  knownTags: ReadonlyArray<string>
+  onCommit: () => void
+  onRemove: (tag: string) => void
+}
+
+function EquipmentChips(p: EquipmentChipsProps) {
+  return (
+    <details className="class__section prof-card__specs" open={p.tags.length > 0}>
+      <summary className="prof-card__specs-summary">
+        <span>{p.label}</span>
+        {p.tags.length > 0 && (
+          <span className="prof-card__specs-count">{p.tags.length}</span>
+        )}
+      </summary>
+      <div className="prof-card__tags">
+        {p.tags.map(tag => (
+          <span key={tag} className="prof-card__spec">
+            {prettyEquipmentTag(tag)}
+            <button
+              type="button"
+              className="prof-card__spec-remove"
+              aria-label={`Remove ${tag}`}
+              onClick={() => p.onRemove(tag)}
+            >
+              ×
+            </button>
+          </span>
+        ))}
+        <input
+          type="text"
+          className="prof-card__spec-input"
+          list={p.listId}
+          placeholder={p.tags.length ? "Add…" : p.placeholder}
+          value={p.draft}
+          onChange={e => p.setDraft(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === "Enter") {
+              e.preventDefault()
+              p.onCommit()
+            }
+          }}
+          onBlur={p.onCommit}
+        />
+        <datalist id={p.listId}>
+          {p.knownTags.map(t => (
+            <option key={t} value={prettyEquipmentTag(t)} />
+          ))}
+        </datalist>
+      </div>
+      <p className="class__hint">{p.hint}</p>
+    </details>
   )
 }
