@@ -86,7 +86,7 @@ def build_example() -> tuple[dict, dict]:
         "quarter": "fall",
         "year":    2026,
         "modes": [
-            {**mode_result, "mode": "affinity_first"},
+            {**mode_result, "mode": "cover_first"},
             {**mode_result, "mode": "time_pref_first"},
             {**mode_result, "mode": "balanced"},
         ],
@@ -130,7 +130,7 @@ def build_example() -> tuple[dict, dict]:
         "offerings":      offerings,
         "solver_results": {
             "modes": [
-                {"mode": "affinity_first",  "assignments": response_assignments},
+                {"mode": "cover_first",  "assignments": response_assignments},
                 {"mode": "time_pref_first", "assignments": response_assignments},
                 {"mode": "balanced",        "assignments": response_assignments},
             ],

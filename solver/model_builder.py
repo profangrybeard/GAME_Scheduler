@@ -120,7 +120,7 @@ def build_model(
     quarter : str
         Must match the quarter field in quarterly_offerings.json.
     mode : str
-        Optimization mode — 'affinity_first', 'time_pref_first', or 'balanced'.
+        Optimization mode — 'cover_first', 'time_pref_first', or 'balanced'.
         Stored in data dict and read by objectives.py.
     locked : list | None
         Optional list of assignment dicts (each with cs_key, prof_id, room_id,

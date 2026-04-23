@@ -46,7 +46,7 @@ export const SCHOOL_LABELS: Record<Department, string> = {
   digi: "DIGI",
   adbr: "ADBR",
 }
-export type SolveMode = "affinity_first" | "time_pref_first" | "balanced"
+export type SolveMode = "cover_first" | "time_pref_first" | "balanced"
 export type SolveStatus = "idle" | "running" | "done" | "error"
 
 /** Live progress for one mode during streaming solve. Populated from SSE

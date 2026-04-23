@@ -74,19 +74,19 @@ def test_stream_emits_ordered_progress_sequence(monkeypatch, client):
     def fake_run_schedule(quarter, *, progress_callback: Callable, **kwargs):
         assert progress_callback is not None, "endpoint must pass a callback"
 
-        progress_callback({"type": "mode_started", "mode": "affinity_first", "index": 1, "total": 3})
+        progress_callback({"type": "mode_started", "mode": "cover_first", "index": 1, "total": 3})
         progress_callback({
-            "type": "solution_found", "mode": "affinity_first",
+            "type": "solution_found", "mode": "cover_first",
             "objective": 100, "best_bound": 50, "n_placed": 5, "n_total": 10,
             "elapsed_ms": 120, "solution_index": 1,
         })
         progress_callback({
-            "type": "solution_found", "mode": "affinity_first",
+            "type": "solution_found", "mode": "cover_first",
             "objective": 80, "best_bound": 60, "n_placed": 8, "n_total": 10,
             "elapsed_ms": 400, "solution_index": 2,
         })
         progress_callback({
-            "type": "mode_complete", "mode": "affinity_first",
+            "type": "mode_complete", "mode": "cover_first",
             "status": "optimal", "objective": 80, "n_placed": 8, "n_total": 10,
             "elapsed_ms": 500, "unscheduled_count": 2,
         })
@@ -95,7 +95,7 @@ def test_stream_emits_ordered_progress_sequence(monkeypatch, client):
             "quarter": quarter,
             "year": 2026,
             "modes": [{
-                "mode": "affinity_first",
+                "mode": "cover_first",
                 "status": "optimal",
                 "objective": 80,
                 "schedule": [],
@@ -139,7 +139,7 @@ def test_stream_emits_ordered_progress_sequence(monkeypatch, client):
     assert complete["quarter"] == "fall"
     assert complete["year"] == 2026
     assert len(complete["modes"]) == 1
-    assert complete["modes"][0]["mode"] == "affinity_first"
+    assert complete["modes"][0]["mode"] == "cover_first"
 
 
 def test_stream_surfaces_solver_exception_as_error_event(monkeypatch, client):
@@ -148,7 +148,7 @@ def test_stream_surfaces_solver_exception_as_error_event(monkeypatch, client):
     time the solver runs."""
 
     def fake_run_schedule(quarter, *, progress_callback, **kwargs):
-        progress_callback({"type": "mode_started", "mode": "affinity_first", "index": 1, "total": 3})
+        progress_callback({"type": "mode_started", "mode": "cover_first", "index": 1, "total": 3})
         raise RuntimeError("simulated solver crash")
 
     monkeypatch.setattr("solver.scheduler.run_schedule", fake_run_schedule)

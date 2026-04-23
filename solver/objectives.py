@@ -6,14 +6,17 @@ Sets model.Minimize(total_weighted_penalty) in-place.
 Soft objectives
 ---------------
   SO1  Affinity penalty    — how well prof specializations match course tags
+                             (fixed weight AFFINITY_WEIGHT, not mode-tuned)
   SO2  Time-pref penalty   — how well time slot matches prof time_preference
   SO3  Overload penalty    — penalty if prof teaches > STANDARD_MAX sections
   SO4  should_have drop    — penalty if a should_have section goes unscheduled
+                             (scaled by coverage weight)
   SO5  could_have drop     — penalty if a could_have section goes unscheduled
+                             (scaled by coverage weight)
   SO6  Under-contract      — penalty per missing class below the prof's floor
                              (chair=CHAIR_MAX, others=STANDARD_MAX). Dominates
-                             SO1-SO3 so the solver never under-loads one prof
-                             to overload another.
+                             SO1-SO5 so the solver never under-loads one prof
+                             to overload another. Not mode-tuned.
 
 Affinity levels
 ---------------
@@ -22,19 +25,17 @@ Affinity levels
   2  Professor in course department, not preferred           → AFFINITY_PENALTIES[2] = 3
   3  Professor outside course department (fallback tier)     → AFFINITY_PENALTIES[3] = 10
 
-Mode weights (from config.MODE_WEIGHTS)
----------------------------------------
-  affinity_first  : affinity*10  time_pref*1   overload*2
-  time_pref_first : affinity*1   time_pref*10  overload*2
-  balanced        : affinity*10  time_pref*4   overload*3   (expert-leaning)
-
-Drop penalties are NOT mode-weighted — they reflect schedule completeness, not quality.
+Mode weights (from config.MODE_WEIGHTS — three tunable axes)
+------------------------------------------------------------
+  cover_first     : coverage*10  time_pref*1   overload*1
+  time_pref_first : coverage*3   time_pref*10  overload*2
+  balanced        : coverage*5   time_pref*5   overload*3
 """
 
 from ortools.sat.python import cp_model
 
 from config import (
-    AFFINITY_PENALTIES, TIME_PREF_MAP, TIME_PREF_PENALTIES,
+    AFFINITY_PENALTIES, AFFINITY_WEIGHT, TIME_PREF_MAP, TIME_PREF_PENALTIES,
     OVERLOAD_PENALTY, SHOULD_HAVE_DROP_PENALTY, COULD_HAVE_DROP_PENALTY,
     UNDER_CONTRACT_PENALTY,
     MODE_WEIGHTS, STANDARD_MAX, CHAIR_MAX,
@@ -77,16 +78,15 @@ def _time_pref_penalty(prof: dict, ts: str) -> int:
 # Weight scaling
 # ---------------------------------------------------------------------------
 
-# Canonical MODE_WEIGHTS top out at 10 (affinity_first, time_pref_first).
-# Per-assignment penalty coefs scale as w * pen, so a weight of 10 with the
-# worst time_pref penalty (5) gives coef 50. Inputs from the gear UI live on
-# a percent-of-100 scale, so an extreme mix like {5, 90, 5} yields a coef of
-# 450 — ~9x the canonical ceiling. CP-SAT's search heuristic is sensitive to
-# objective scale: at that magnitude, on Fly's shared-cpu-1x, balanced/Tune
-# mode timed out at UNKNOWN with zero feasible solutions found, while the
-# (small-weighted) affinity_first and time_pref_first modes solved fine.
-# Rescaling so the max weight equals the canonical ceiling preserves the
-# user's intended ratio without blowing up the heuristic.
+# Canonical MODE_WEIGHTS top out at 10. Per-assignment penalty coefs scale
+# as w * pen, so a weight of 10 with the worst time_pref penalty (5) gives
+# coef 50. Inputs from the gear UI live on a percent-of-100 scale, so an
+# extreme mix like {5, 90, 5} would yield a coef of 450 — ~9x the canonical
+# ceiling. CP-SAT's search heuristic is sensitive to objective scale: at
+# that magnitude, on Fly's shared-cpu-1x, balanced/Tune mode timed out at
+# UNKNOWN with zero feasible solutions found. Rescaling so the max weight
+# equals the canonical ceiling preserves the user's intended ratio without
+# blowing up the heuristic.
 _CANONICAL_MAX_WEIGHT = 10
 
 
@@ -94,12 +94,12 @@ def _normalize_weights(weights: dict) -> dict:
     """Rescale a weight vector so its max equals _CANONICAL_MAX_WEIGHT,
     preserving ratios. No-op for canonical MODE_WEIGHTS (already on this
     scale). All-zero input is returned as-is — Minimize(0) handles it."""
-    max_w = max(weights["affinity"], weights["time_pref"], weights["overload"])
+    max_w = max(weights["coverage"], weights["time_pref"], weights["overload"])
     if max_w <= _CANONICAL_MAX_WEIGHT:
         return weights
     scale = _CANONICAL_MAX_WEIGHT / max_w
     return {
-        "affinity":  max(1, round(weights["affinity"]  * scale)),
+        "coverage":  max(1, round(weights["coverage"]  * scale)),
         "time_pref": max(1, round(weights["time_pref"] * scale)),
         "overload":  max(1, round(weights["overload"]  * scale)),
     }
@@ -131,7 +131,7 @@ def build_objective(
     mode    = data.get("mode", "balanced")
     weights = tuned_weights if tuned_weights is not None else MODE_WEIGHTS[mode]
     weights = _normalize_weights(weights)
-    w_aff   = weights["affinity"]
+    w_cov   = weights["coverage"]
     w_time  = weights["time_pref"]
     w_over  = weights["overload"]
 
@@ -159,7 +159,7 @@ def build_objective(
                                            AFFINITY_PENALTIES["other"])
         time_pen = _time_pref_penalty(prof, ts)
 
-        coef = w_aff * aff_pen + w_time * time_pen
+        coef = AFFINITY_WEIGHT * aff_pen + w_time * time_pen
         if coef != 0:
             obj_vars.append(var)
             obj_coefs.append(int(coef))
@@ -234,7 +234,7 @@ def build_objective(
             model.Add(is_dropped == 1)
 
         obj_vars.append(is_dropped)
-        obj_coefs.append(dp)
+        obj_coefs.append(int(w_cov * dp))
 
     # ------------------------------------------------------------------
     # Set objective
