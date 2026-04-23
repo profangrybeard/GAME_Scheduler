@@ -98,78 +98,6 @@
       "pinned": null
     },
     {
-      "catalog_id": "MOME_105",
-      "priority": "must_have",
-      "sections": 2,
-      "override_enrollment_cap": null,
-      "override_room_type": "mac_lab",
-      "override_preferred_professors": null,
-      "notes": "Intro - high demand",
-      "pinned": null
-    },
-    {
-      "catalog_id": "MOME_130",
-      "priority": "must_have",
-      "sections": 1,
-      "override_enrollment_cap": null,
-      "override_room_type": "mac_lab",
-      "override_preferred_professors": null,
-      "notes": null,
-      "pinned": null
-    },
-    {
-      "catalog_id": "MOME_400",
-      "priority": "must_have",
-      "sections": 1,
-      "override_enrollment_cap": null,
-      "override_room_type": "mac_lab",
-      "override_preferred_professors": null,
-      "notes": "Senior project",
-      "pinned": null
-    },
-    {
-      "catalog_id": "MOME_719",
-      "priority": "should_have",
-      "sections": 1,
-      "override_enrollment_cap": 16,
-      "override_room_type": "mac_lab",
-      "override_preferred_professors": [
-        "prof_imperato"
-      ],
-      "notes": "Grad media theory",
-      "pinned": null
-    },
-    {
-      "catalog_id": "ITGM_705",
-      "priority": "must_have",
-      "sections": 1,
-      "override_enrollment_cap": 16,
-      "override_room_type": "standard",
-      "override_preferred_professors": null,
-      "notes": "Grad ITGM core",
-      "pinned": null
-    },
-    {
-      "catalog_id": "AI_201",
-      "priority": "should_have",
-      "sections": 1,
-      "override_enrollment_cap": 20,
-      "override_room_type": "pc_lab",
-      "override_preferred_professors": null,
-      "notes": "Applied AI",
-      "pinned": null
-    },
-    {
-      "catalog_id": "AI_101",
-      "priority": "should_have",
-      "sections": 1,
-      "override_enrollment_cap": null,
-      "override_room_type": "pc_lab",
-      "override_preferred_professors": null,
-      "notes": "AI survey intro",
-      "pinned": null
-    },
-    {
       "catalog_id": "GAME_121",
       "priority": "should_have",
       "sections": 1,
@@ -200,23 +128,43 @@
       "pinned": null
     },
     {
-      "catalog_id": "GAME_277",
-      "priority": "could_have",
-      "sections": 1,
+      "catalog_id": "MOME_105",
+      "priority": "must_have",
+      "sections": 2,
       "override_enrollment_cap": null,
-      "override_room_type": "standard",
+      "override_room_type": "mac_lab",
       "override_preferred_professors": null,
-      "notes": "Cross-dept elective - if Spencer has room",
+      "notes": "Intro - high demand",
       "pinned": null
     },
     {
-      "catalog_id": "GAME_351",
-      "priority": "nice_to_have",
+      "catalog_id": "MOME_115",
+      "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "standard",
+      "override_room_type": "mac_lab",
       "override_preferred_professors": null,
-      "notes": "Advanced elective - would be nice",
+      "notes": "Survey of MM Design",
+      "pinned": null
+    },
+    {
+      "catalog_id": "MOME_130",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "mac_lab",
+      "override_preferred_professors": null,
+      "notes": "Techniques I",
+      "pinned": null
+    },
+    {
+      "catalog_id": "MOME_206",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "mac_lab",
+      "override_preferred_professors": null,
+      "notes": "Techniques II - mid-level",
       "pinned": null
     },
     {
@@ -226,7 +174,17 @@
       "override_enrollment_cap": null,
       "override_room_type": "mac_lab",
       "override_preferred_professors": null,
-      "notes": "Mid-level motion",
+      "notes": "VR for Motion Media",
+      "pinned": null
+    },
+    {
+      "catalog_id": "MOME_400",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "mac_lab",
+      "override_preferred_professors": null,
+      "notes": "Senior project",
       "pinned": null
     },
     {
@@ -236,7 +194,59 @@
       "override_enrollment_cap": null,
       "override_room_type": "mac_lab",
       "override_preferred_professors": null,
-      "notes": "Animation elective",
+      "notes": "Projection - Imperato preferred",
+      "pinned": null
+    },
+    {
+      "catalog_id": "MOME_309",
+      "priority": "could_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "mac_lab",
+      "override_preferred_professors": null,
+      "notes": "Concepts in MM Design",
+      "pinned": null
+    },
+    {
+      "catalog_id": "MOME_719",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": 16,
+      "override_room_type": "mac_lab",
+      "override_preferred_professors": [
+        "prof_imperato"
+      ],
+      "notes": "Grad media theory",
+      "pinned": null
+    },
+    {
+      "catalog_id": "ITGM_705",
+      "priority": "must_have",
+      "sections": 1,
+      "override_enrollment_cap": 16,
+      "override_room_type": "standard",
+      "override_preferred_professors": null,
+      "notes": "Grad ITGM core",
+      "pinned": null
+    },
+    {
+      "catalog_id": "AI_101",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": null,
+      "override_room_type": "pc_lab",
+      "override_preferred_professors": null,
+      "notes": "AI survey intro",
+      "pinned": null
+    },
+    {
+      "catalog_id": "AI_201",
+      "priority": "should_have",
+      "sections": 1,
+      "override_enrollment_cap": 20,
+      "override_room_type": "pc_lab",
+      "override_preferred_professors": null,
+      "notes": "Applied AI",
       "pinned": null
     },
     {
