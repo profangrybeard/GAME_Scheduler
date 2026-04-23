@@ -1,8 +1,6 @@
 import { useMemo, useState } from "react"
 import type { Course, Offering, Professor, Room, RosterCapacity } from "../types"
 import {
-  capacityChipTitle,
-  capacityState,
   classifyOffering,
   PRIORITY_INDEX,
   profContractCeiling,
@@ -104,12 +102,8 @@ export function Roster(props: RosterProps) {
     )
   }, [props.rooms])
 
-  // Tab badges show the full count per list (not unplaced/total) so the
-  // number on the tab doesn't jump as cards get placed. Per-tab warning
-  // dots flag non-trivial state the user should know about before clicking.
-  const capState = capacityState(props.capacity)
-  const coursesWarning = capState === "overload" || capState === "maxed"
-
+  // Count badge shows only on the active tab — doubles as the "you are
+  // here" signifier so inactive tabs stay visually quiet.
   const handleClearRooms = () => {
     const n = roomList.length
     if (n === 0) return
@@ -146,13 +140,8 @@ export function Roster(props: RosterProps) {
           onClick={() => setTab("courses")}
         >
           <span className="roster__tab-label">Courses</span>
-          <span className="roster__tab-count">{props.offerings.length}</span>
-          {coursesWarning && (
-            <span
-              className="roster__tab-dot"
-              aria-hidden="true"
-              title={capacityChipTitle(props.capacity, capState)}
-            />
+          {tab === "courses" && (
+            <span className="roster__tab-count">{props.offerings.length}</span>
           )}
         </button>
         <button
@@ -165,7 +154,9 @@ export function Roster(props: RosterProps) {
           onClick={() => setTab("profs")}
         >
           <span className="roster__tab-label">Profs</span>
-          <span className="roster__tab-count">{profList.length}</span>
+          {tab === "profs" && (
+            <span className="roster__tab-count">{profList.length}</span>
+          )}
         </button>
         <button
           type="button"
@@ -177,6 +168,9 @@ export function Roster(props: RosterProps) {
           onClick={() => setTab("rooms")}
         >
           <span className="roster__tab-label">Rooms</span>
+          {tab === "rooms" && (
+            <span className="roster__tab-count">{roomList.length}</span>
+          )}
         </button>
       </div>
 
