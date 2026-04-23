@@ -275,21 +275,6 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
               an Affinity/Time Pref/Balanced card flips the calendar to that
               mode's cached results. The redundant chip row was removed. */}
           <div className="panel__actions">
-            <a
-              className="solver-badge"
-              href="https://developers.google.com/optimization/cp/cp_solver"
-              target="_blank"
-              rel="noopener noreferrer"
-              title={
-                "Generate runs Google OR-Tools CP-SAT locally — a constraint" +
-                " solver, not AI. It enumerates schedules that respect every" +
-                " rule (rooms, professors, time slots) and picks the best fit." +
-                " Click to learn more."
-              }
-              aria-label="Learn about the OR-Tools constraint solver"
-            >
-              <span className="solver-badge__label">OR</span>
-            </a>
             <button
               type="button"
               className={"btn-generate" + (isSolving ? " btn-generate--solving" : "")}
@@ -334,6 +319,21 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
                 />
               )}
             </button>
+            <a
+              className="solver-badge"
+              href="https://developers.google.com/optimization/cp/cp_solver"
+              target="_blank"
+              rel="noopener noreferrer"
+              title={
+                "Generate runs Google OR-Tools CP-SAT locally — a constraint" +
+                " solver, not AI. It enumerates schedules that respect every" +
+                " rule (rooms, professors, time slots) and picks the best fit." +
+                " Click to learn more."
+              }
+              aria-label="Learn about the OR-Tools constraint solver"
+            >
+              <span className="solver-badge__label">OR</span>
+            </a>
           </div>
         </div>
       </header>
