@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react"
+import { Fragment, useMemo, useState, type ReactNode } from "react"
 import type {
   Course,
   DayGroup,
@@ -101,6 +101,10 @@ export interface QuarterScheduleProps {
   onDismissProgress: () => void
   /** Open the SolverTuning modal — forwarded to the Tune mode card. */
   onOpenTuning: () => void
+  /** Optional action rendered on the right of the schedule header, after the
+   *  OR badge. Used by App.tsx to co-locate Export with ASSEMBLE so the whole
+   *  action bar reads as one row. */
+  exportSlot?: ReactNode
 }
 
 export function QuarterSchedule(props: QuarterScheduleProps) {
@@ -352,6 +356,7 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
             >
               <span className="solver-badge__label">OR</span>
             </a>
+            {props.exportSlot}
           </div>
         </div>
       </header>
