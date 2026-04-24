@@ -418,7 +418,7 @@ function BuildingCombobox(props: BuildingComboboxProps) {
   return (
     <div className="combobox" ref={rootRef}>
       <input
-        className="class__input"
+        className="class__input combobox__input"
         type="text"
         value={props.value}
         placeholder="Montgomery Hall"
@@ -447,6 +447,19 @@ function BuildingCombobox(props: BuildingComboboxProps) {
           }
         }}
       />
+      <button
+        type="button"
+        className={"combobox__toggle" + (open ? " combobox__toggle--open" : "")}
+        aria-label={open ? "Hide building suggestions" : "Show building suggestions"}
+        tabIndex={-1}
+        onMouseDown={e => {
+          // mousedown (not click) so we beat the input's focus/blur dance
+          e.preventDefault()
+          setOpen(o => !o)
+        }}
+      >
+        ▾
+      </button>
       {open && filtered.length > 0 && (
         <ul className="combobox__list" role="listbox" ref={listRef}>
           {filtered.map((s, i) => (
