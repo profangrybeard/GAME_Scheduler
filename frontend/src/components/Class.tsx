@@ -98,6 +98,15 @@ export function Class(props: ClassProps) {
     }
   }, [course, props.rooms])
 
+  /** Pre-solve warning: if required_equipment is non-empty AND no room in the
+   *  current roster satisfies the subset, the solver will drop this section as
+   *  infeasible. Surface it on the class card so the chair fixes the tag (or
+   *  adds a room) rather than hunting a silent drop after Assemble. */
+  const unmatchableRequirement =
+    course !== null &&
+    (course.required_equipment?.length ?? 0) > 0 &&
+    roomCandidates.matching.length === 0
+
   if (!offering || !course) {
     return (
       <aside className="panel panel--class" aria-label="Class">
@@ -278,6 +287,18 @@ export function Class(props: ClassProps) {
             })
           }}
         />
+
+        {unmatchableRequirement && (
+          <div className="class__tag-warning" role="alert">
+            <span className="class__tag-warning-icon" aria-hidden>!</span>
+            <span className="class__tag-warning-text">
+              No room in your roster has all required tags (
+              {(course.required_equipment ?? []).map(prettyEquipmentTag).join(", ")}
+              ). This section will fail to place until a tag is removed or a
+              matching room is added.
+            </span>
+          </div>
+        )}
 
         <EquipmentChips
           label="Preferred equipment"
