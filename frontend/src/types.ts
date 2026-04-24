@@ -645,13 +645,34 @@ function seedLegacyCourseEquipment(c: LegacyCourseShape): string[] {
   return [rt]
 }
 
+/** Extract a room-number-ish token from a display name.
+ *
+ *    "Room 263 – PC Game Lab" → "263"
+ *    "B114 Studio"            → "B114"
+ *    "Adler Hall"             → undefined  (no digit run)
+ *
+ *  Used by `migrateRoomsEquipment` to back-fill pre-structured-location
+ *  rooms whose chair-stored state lacks a `room_number` but encodes it in
+ *  the free-text name. Accepts an optional leading letter and optional
+ *  trailing letter (e.g. "B114", "114A") because building numbering
+ *  varies across SCAD campuses. */
+export function deriveRoomNumberFromName(name: string): string | undefined {
+  if (!name) return undefined
+  const m = name.match(/\b([A-Za-z]?\d{2,4}[A-Za-z]?)\b/)
+  return m ? m[1] : undefined
+}
+
 /** One-shot localStorage migration for a rooms map. Strips legacy
  *  `room_type` / `station_type` fields, seeds `equipment_tags` from them
- *  when absent, and defaults `campus` to "Savannah" for rooms predating
- *  the structured-location split. Idempotent — already-migrated rooms
- *  pass through. */
+ *  when absent, defaults `campus` to "Savannah" for rooms predating the
+ *  structured-location split, and — when `baseline` is supplied —
+ *  back-fills missing `building` / `room_number` from the canonical
+ *  `rooms.json` entry keyed by id. Falls back to name parsing for
+ *  `room_number` when the baseline doesn't have one either.
+ *  Idempotent — already-migrated rooms pass through. */
 export function migrateRoomsEquipment(
   rooms: Record<string, LegacyRoomShape>,
+  baseline?: Record<string, Room>,
 ): Record<string, Room> {
   const out: Record<string, Room> = {}
   for (const [id, raw] of Object.entries(rooms)) {
@@ -660,7 +681,20 @@ export function migrateRoomsEquipment(
     delete rest.station_type
     const tags = raw.equipment_tags ?? seedLegacyRoomTags(raw)
     const campus: Campus = raw.campus ?? "Savannah"
-    out[id] = { ...(rest as unknown as Room), equipment_tags: tags, campus }
+    const ref = baseline?.[id]
+    const building = raw.building || ref?.building || ""
+    const room_number =
+      raw.room_number ||
+      ref?.room_number ||
+      deriveRoomNumberFromName(raw.name ?? "") ||
+      undefined
+    out[id] = {
+      ...(rest as unknown as Room),
+      equipment_tags: tags,
+      campus,
+      building,
+      room_number,
+    }
   }
   return out
 }

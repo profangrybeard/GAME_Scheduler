@@ -123,7 +123,7 @@ function loadRooms(baseline: Record<string, Room>): Room[] | null {
     if (raw) {
       const parsed = JSON.parse(raw) as Array<Record<string, unknown>>
       const byId = Object.fromEntries(parsed.map(r => [r.id as string, r]))
-      return Object.values(migrateRoomsEquipment(byId))
+      return Object.values(migrateRoomsEquipment(byId, baseline))
     }
     const legacy = localStorage.getItem(ROOM_EDITS_LEGACY_KEY)
     if (legacy) {

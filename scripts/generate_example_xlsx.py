@@ -127,6 +127,10 @@ def build_example() -> tuple[dict, dict]:
         "year":           2026,
         "solver_mode":    "balanced",
         "offerings":      offerings,
+        # Ship the canonical rooms in the example so "Resume from Excel"
+        # hydrates the rooms deck with structured-location fields
+        # (campus / building / room_number) — matches chair-export shape.
+        "rooms":          list(rooms.values()),
         "solver_results": {
             "modes": [
                 {"mode": "cover_first",  "assignments": response_assignments},
