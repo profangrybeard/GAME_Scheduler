@@ -88,25 +88,33 @@ def _eligible_rooms(course: dict, rooms: list[dict]) -> list[str]:
 
     Enforces:
       HC5  room.capacity >= enrollment_cap
-      HC6  room.equipment_tags ⊇ course.required_equipment (tag-subset check)
+      HC6  room.equipment_tags ⊇ course.required_equipment (tag-subset check),
+           *with a capacity-only fallback when no room satisfies the tags*.
 
     Rooms advertise what they have (`equipment_tags`), courses demand what they
-    need (`required_equipment`). Empty/missing required_equipment means "no
-    equipment requirement" — the course runs in any capacity-adequate room.
+    need (`required_equipment`). When at least one room is both cap-adequate
+    AND tag-matching, only those are returned — tagged rooms always win. When
+    NO room satisfies the tag subset (misconfigured data, unusual requirement),
+    the solver falls back to every cap-adequate room rather than leaving the
+    course infeasible. The onus is on the chair to tag correctly; the solver's
+    job is to keep assembling a schedule.
     """
     cap = course.get("enrollment_cap", 1)
     required_equipment = set(course.get("required_equipment") or [])
 
-    def equipment_ok(r: dict) -> bool:
-        if not required_equipment:
-            return True
-        return required_equipment.issubset(set(r.get("equipment_tags") or []))
+    cap_ok = [r for r in rooms if r["capacity"] >= cap]
+    if not required_equipment:
+        return [r["id"] for r in cap_ok]
 
-    return [
-        r["id"]
-        for r in rooms
-        if r["capacity"] >= cap and equipment_ok(r)
+    matched = [
+        r for r in cap_ok
+        if required_equipment.issubset(set(r.get("equipment_tags") or []))
     ]
+    if matched:
+        return [r["id"] for r in matched]
+
+    # No tagged match — fall back to capacity-only so the course still places.
+    return [r["id"] for r in cap_ok]
 
 
 # ---------------------------------------------------------------------------
