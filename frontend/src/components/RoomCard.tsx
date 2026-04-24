@@ -41,7 +41,7 @@ export function RoomCard(props: RoomCardProps) {
   const tags = r.equipment_tags ?? []
   const [tagDraft, setTagDraft] = useState("")
   const tagListId = useId()
-  const campus: Campus = r.campus ?? "Savannah"
+  const campus: Campus = r.campus ?? "Atlanta"
   const buildingSuggestions = props.knownBuildingsByCampus[campus] ?? []
 
   const commitTag = () => {
