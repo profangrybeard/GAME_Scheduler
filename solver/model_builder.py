@@ -93,6 +93,11 @@ def _eligible_rooms(course: dict, rooms: list[dict]) -> list[str]:
     Rooms advertise what they have (`equipment_tags`), courses demand what they
     need (`required_equipment`). Empty/missing required_equipment means "no
     equipment requirement" — the course runs in any capacity-adequate room.
+
+    Unmatchable requirements produce an empty list, which the caller logs as
+    "no eligible rooms — model will be infeasible". The React workspace
+    surfaces the same gap pre-solve as a warning on the class card so the
+    chair fixes the tag rather than hunting a silent drop.
     """
     cap = course.get("enrollment_cap", 1)
     required_equipment = set(course.get("required_equipment") or [])
