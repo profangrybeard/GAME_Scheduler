@@ -3,7 +3,7 @@
   "title": "Room",
   "type": "object",
   "required": [
-    "id", "name", "room_type", "station_count", "station_type", "capacity"
+    "id", "name", "station_count", "capacity"
   ],
   "properties": {
     "id": {
@@ -11,16 +11,15 @@
       "pattern": "^room_[a-z0-9_]+$"
     },
     "name": { "type": "string" },
-    "room_type": {
-      "type": "string",
-      "enum": ["pc_lab", "large_game_lab", "mac_lab", "flex_studio", "lecture_flex"]
-    },
+    "building": { "type": "string" },
     "station_count": { "type": "integer", "minimum": 0 },
-    "station_type": {
-      "type": ["string", "null"],
-      "enum": ["pc", "mac", null]
-    },
+    "display_count": { "type": "integer", "minimum": 0 },
     "capacity": { "type": "integer", "minimum": 1 },
+    "available": { "type": "boolean" },
+    "equipment_tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
     "notes": { "type": "string" }
   },
   "additionalProperties": false

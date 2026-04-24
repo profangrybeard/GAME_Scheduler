@@ -101,7 +101,6 @@ def build_example() -> tuple[dict, dict]:
             "priority":                      a["priority"],
             "sections":                      1,
             "override_enrollment_cap":       None,
-            "override_room_type":            None,
             "override_preferred_professors": None,
             "notes":                         None,
             "assigned_prof_id":              a["prof_id"],

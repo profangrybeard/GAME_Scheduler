@@ -18,7 +18,6 @@ Cross-reference integrity
   • Every catalog_id in quarterly_offerings exists in course_catalog
   • Every prof ID in course_catalog.preferred_professors exists in professors
   • Every prof ID in offerings.override_preferred_professors exists in professors
-  • course_catalog.required_room_type values are valid (in ROOM_COMPATIBILITY)
   • course_catalog.specialization_tags are in VALID_SPECIALIZATIONS
 
 Warnings (non-fatal)
@@ -32,7 +31,7 @@ from pathlib import Path
 
 import jsonschema
 
-from config import ROOM_COMPATIBILITY, VALID_SPECIALIZATIONS
+from config import VALID_SPECIALIZATIONS
 
 BASE = Path(__file__).resolve().parent.parent
 
@@ -50,7 +49,6 @@ SCHEMAS = {
     "quarterly_offerings": BASE / "schemas" / "quarterly_offering.schema.json",
 }
 
-VALID_ROOM_TYPES = set(ROOM_COMPATIBILITY.keys())
 VALID_TAGS = set(VALID_SPECIALIZATIONS)
 
 # ---------------------------------------------------------------------------
@@ -123,7 +121,7 @@ def validate_professors(professors: list[dict]) -> None:
 
 
 def validate_course_catalog(catalog: list[dict]) -> None:
-    """Validate each course against its schema plus room type and tag controlled vocabularies."""
+    """Validate each course against its schema plus the specialization-tag controlled vocabulary."""
     print("\nValidating course catalog ...")
     schema = _load_schema(SCHEMAS["course_catalog"])
     if schema is None:
@@ -131,11 +129,6 @@ def validate_course_catalog(catalog: list[dict]) -> None:
     for course in catalog:
         cid = course.get("id", "?")
         _validate_item(course, schema, f"course {cid}")
-
-        # Room type validity
-        rtype = course.get("required_room_type")
-        if rtype and rtype not in VALID_ROOM_TYPES:
-            error(f"course {cid}: unknown required_room_type '{rtype}'")
 
         # Specialization tag validity
         for tag in course.get("specialization_tags", []):

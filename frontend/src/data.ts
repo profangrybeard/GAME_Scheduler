@@ -104,7 +104,6 @@ export function loadInitialState(): SchedulerState {
     priority: raw.priority,
     sections: raw.sections,
     override_enrollment_cap: raw.override_enrollment_cap ?? null,
-    override_room_type: raw.override_room_type ?? null,
     override_preferred_professors: raw.override_preferred_professors ?? null,
     notes: raw.notes ?? null,
     assigned_prof_id: null,

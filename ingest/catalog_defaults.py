@@ -2,12 +2,15 @@
 
 Given raw scraped course data, fills in:
   - department (from prefix)
-  - required_room_type (from department default)
   - enrollment_cap (heuristic)
   - specialization_tags (keyword matching against VALID_SPECIALIZATIONS)
   - preferred_professors (match tags to professor specializations)
   - teaching_order (sequential)
   - source
+
+Equipment requirements (required_equipment / preferred_equipment) are not
+inferred — the chair authors them on the course card when a course has real
+hardware needs. The solver treats missing/empty as "no equipment requirement."
 """
 
 import json
@@ -15,7 +18,6 @@ import re
 from pathlib import Path
 from config import (
     PREFIX_TO_DEPT,
-    DEPT_DEFAULT_ROOM,
     VALID_SPECIALIZATIONS,
 )
 
@@ -34,11 +36,6 @@ for spec in VALID_SPECIALIZATIONS:
 def infer_department(prefix: str) -> str:
     """Map a course prefix (GAME, ITGM, MOME, AI) to a department."""
     return PREFIX_TO_DEPT.get(prefix.upper(), "game")
-
-
-def infer_room_type(department: str) -> str:
-    """Default room type for a department."""
-    return DEPT_DEFAULT_ROOM.get(department, "standard")
 
 
 def infer_enrollment_cap(is_graduate: bool, department: str) -> int:
@@ -132,7 +129,8 @@ def apply_defaults(
             "department": dept,
             "is_graduate": is_grad,
             "credits": credits,
-            "required_room_type": raw.get("required_room_type", infer_room_type(dept)),
+            "required_equipment": raw.get("required_equipment", []),
+            "preferred_equipment": raw.get("preferred_equipment", []),
             "specialization_tags": tags,
             "preferred_professors": prefs,
             "enrollment_cap": raw.get("enrollment_cap", infer_enrollment_cap(is_grad, dept)),

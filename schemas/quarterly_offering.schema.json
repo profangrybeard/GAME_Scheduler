@@ -24,10 +24,6 @@
           "override_enrollment_cap": {
             "type": ["integer", "null"]
           },
-          "override_room_type": {
-            "type": ["string", "null"],
-            "enum": ["pc_lab", "large_game_lab", "mac_lab", "flex_studio", "lecture_flex", "any_lab", "standard", null]
-          },
           "override_preferred_professors": {
             "type": ["array", "null"],
             "items": { "type": "string" }

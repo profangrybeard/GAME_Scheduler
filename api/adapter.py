@@ -48,7 +48,6 @@ def react_offerings_to_doc(
             "priority":    first["priority"],
             "sections":    len(group),
             "override_enrollment_cap":         first.get("override_enrollment_cap"),
-            "override_room_type":              first.get("override_room_type"),
             "override_preferred_professors":   first.get("override_preferred_professors"),
             "notes":                           first.get("notes"),
             "assigned_prof_id":                first.get("assigned_prof_id"),

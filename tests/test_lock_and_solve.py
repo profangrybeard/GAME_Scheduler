@@ -33,34 +33,33 @@ def test_imports():
     assert len(config.TIME_SLOTS) == 4
     assert set(config.DAY_GROUPS.keys()) == {1, 2, 3}
     assert set(config.MODE_WEIGHTS.keys()) == {"cover_first", "time_pref_first", "balanced"}
-    assert list(config.ROOM_COMPATIBILITY.keys())  # non-empty
 
 
 # ---------------------------------------------------------------------------
-# Config room types vs rooms.json
+# Equipment-tag coverage: surface which courses have a required_equipment
+# tag set that no room can satisfy. Non-fatal — the same gap existed in the
+# room_type era (solver would drop the course with "no compatible room"), so
+# flagging it here as a warning matches the prior contract.
 # ---------------------------------------------------------------------------
 
-def test_config_room_types():
-    """
-    Part A: every room_type in rooms.json must have a ROOM_COMPATIBILITY entry.
-    Part B: warn (non-fatal) about required_room_type values in catalog not in config.
-    """
+def test_required_equipment_has_coverage():
     rooms_data   = json.loads((PROJECT_ROOT / "data" / "rooms.json").read_text(encoding="utf-8"))
     catalog_data = json.loads((PROJECT_ROOT / "data" / "course_catalog.json").read_text(encoding="utf-8"))
 
-    config_keys    = set(config.ROOM_COMPATIBILITY.keys())
-    physical_types = {r["room_type"] for r in rooms_data if r.get("room_type")}
-    uncovered      = physical_types - config_keys
-    assert not uncovered, (
-        f"room_type(s) in rooms.json missing from ROOM_COMPATIBILITY: {sorted(uncovered)}"
-    )
-
-    catalog_required  = {c.get("required_room_type", "standard") for c in catalog_data}
-    unknown_in_catalog = catalog_required - config_keys
-    if unknown_in_catalog:
+    room_tag_sets = [set(r.get("equipment_tags") or []) for r in rooms_data]
+    uncovered = []
+    for c in catalog_data:
+        req = set(c.get("required_equipment") or [])
+        if not req:
+            continue
+        if not any(req.issubset(rt) for rt in room_tag_sets):
+            uncovered.append((c["id"], sorted(req)))
+    if uncovered:
         print(
-            f"\n[WARN] required_room_type value(s) in catalog not in ROOM_COMPATIBILITY "
-            f"(solver falls back to 'any room'): {sorted(unknown_in_catalog)}"
+            f"\n[WARN] {len(uncovered)} course(s) have required_equipment no "
+            f"room can satisfy (solver will drop them): "
+            + ", ".join(f"{cid}={tags}" for cid, tags in uncovered[:10])
+            + (" ..." if len(uncovered) > 10 else "")
         )
 
 

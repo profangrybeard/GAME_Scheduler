@@ -8,7 +8,7 @@ Hard constraints
 Structural (enforced at variable-creation time in model_builder — no CP-SAT
 constraint needed):
   HC5   Room capacity >= enrollment cap
-  HC6   Room type compatible with course required_room_type
+  HC6   Room equipment_tags ⊇ course required_equipment (tag-subset check)
   HC7   Professor must be in teaching_departments for course department
   HC8   Professor must be available this quarter
   HC9   Graduate courses require has_masters or masters_in_progress

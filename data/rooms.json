@@ -3,77 +3,97 @@
     "id": "room_263",
     "name": "Room 263 \u2013 PC Game Lab",
     "building": "Montgomery Hall",
-    "room_type": "pc_lab",
     "station_count": 20,
-    "station_type": "pc",
     "display_count": 2,
     "capacity": 20,
-    "notes": "PC game lab \u2013 20 PCs, 2 displays"
+    "notes": "PC game lab \u2013 20 PCs, 2 displays",
+    "equipment_tags": [
+      "lab",
+      "pc",
+      "pc_lab"
+    ]
   },
   {
     "id": "room_261",
     "name": "Room 261 \u2013 PC Game Lab",
     "building": "Montgomery Hall",
-    "room_type": "pc_lab",
     "station_count": 20,
-    "station_type": "pc",
     "display_count": 2,
     "capacity": 20,
-    "notes": "PC game lab \u2013 20 PCs, 2 displays"
+    "notes": "PC game lab \u2013 20 PCs, 2 displays",
+    "equipment_tags": [
+      "lab",
+      "pc",
+      "pc_lab"
+    ]
   },
   {
     "id": "room_260",
     "name": "Room 260 \u2013 Mac Design Lab",
     "building": "Montgomery Hall",
-    "room_type": "mac_lab",
     "station_count": 20,
-    "station_type": "mac",
     "display_count": 1,
     "capacity": 20,
-    "notes": "Mac design lab \u2013 20 Macs, 1 display. Motion media use."
+    "notes": "Mac design lab \u2013 20 Macs, 1 display. Motion media use.",
+    "equipment_tags": [
+      "lab",
+      "mac",
+      "mac_lab"
+    ]
   },
   {
     "id": "room_259",
     "name": "Room 259 \u2013 PC Design Lab",
     "building": "Montgomery Hall",
-    "room_type": "pc_lab",
     "station_count": 20,
-    "station_type": "pc",
     "display_count": 1,
     "capacity": 20,
-    "notes": "PC design lab \u2013 20 PCs, 1 display. Verify full game software suite."
+    "notes": "PC design lab \u2013 20 PCs, 1 display. Verify full game software suite.",
+    "equipment_tags": [
+      "lab",
+      "pc",
+      "pc_lab"
+    ]
   },
   {
     "id": "room_258",
     "name": "Room 258 \u2013 Teacher Station",
     "building": "Montgomery Hall",
-    "room_type": "lecture_flex",
     "station_count": 1,
-    "station_type": "pc",
     "display_count": 1,
     "capacity": 24,
-    "notes": "Teacher station only \u2013 1 PC, 1 display. Lecture/discussion/Zoom use."
+    "notes": "Teacher station only \u2013 1 PC, 1 display. Lecture/discussion/Zoom use.",
+    "equipment_tags": [
+      "lecture_flex",
+      "pc"
+    ]
   },
   {
     "id": "room_257",
     "name": "Room 257 \u2013 Teacher Station",
     "building": "Montgomery Hall",
-    "room_type": "lecture_flex",
     "station_count": 1,
-    "station_type": "pc",
     "display_count": 1,
     "capacity": 24,
-    "notes": "Teacher station only \u2013 1 PC, 1 display. Lecture/discussion/Zoom use."
+    "notes": "Teacher station only \u2013 1 PC, 1 display. Lecture/discussion/Zoom use.",
+    "equipment_tags": [
+      "lecture_flex",
+      "pc"
+    ]
   },
   {
     "id": "room_156",
     "name": "Room 156 \u2013 Game Lab",
     "building": "Montgomery Hall",
-    "room_type": "large_game_lab",
     "station_count": 10,
-    "station_type": "pc",
     "display_count": 1,
     "capacity": 20,
-    "notes": "The Game Lab \u2013 10 PCs, 1 display, teacher station. Large studio for senior/thesis classes."
+    "notes": "The Game Lab \u2013 10 PCs, 1 display, teacher station. Large studio for senior/thesis classes.",
+    "equipment_tags": [
+      "lab",
+      "large_game_lab",
+      "lecture_flex",
+      "pc"
+    ]
   }
 ]

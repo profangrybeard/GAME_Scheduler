@@ -32,7 +32,7 @@ import { loadTunedMix, mixToSolverWeights, saveTunedMix, type Mix } from "./comp
 import { TopbarMenu } from "./components/TopbarMenu"
 import { loadInitialState } from "./data"
 import { useTheme } from "./hooks/useTheme"
-import { coalesceOfferingsForWire, collectEquipmentTags, expandOfferingsFromWire, mintOfferingId, profContractCeiling, profContractFloor } from "./types"
+import { coalesceOfferingsForWire, collectEquipmentTags, expandOfferingsFromWire, migrateCatalogEquipment, migrateRoomsEquipment, mintOfferingId, profContractCeiling, profContractFloor } from "./types"
 import type { Assignment, Course, Offering, Professor, RosterCapacity, Room, SchedulerState, Slot, SolveMode, SolveModeProgress, SolveProgressState, WireOffering } from "./types"
 import "./App.css"
 
@@ -114,11 +114,17 @@ function saveProfessors(profs: Professor[]) {
 
 /** Return the saved full-list rooms, or null if no saved list exists.
  *  If only the legacy `room-edits` overlay is present, migrate by applying
- *  it to baseline, saving as the new format, and dropping the old key. */
+ *  it to baseline, saving as the new format, and dropping the old key.
+ *  Also runs the legacy room_type / station_type → equipment_tags
+ *  cutover so a pre-cutover saved list loads cleanly. */
 function loadRooms(baseline: Record<string, Room>): Room[] | null {
   try {
     const raw = localStorage.getItem(ROOMS_STORAGE_KEY)
-    if (raw) return JSON.parse(raw) as Room[]
+    if (raw) {
+      const parsed = JSON.parse(raw) as Array<Record<string, unknown>>
+      const byId = Object.fromEntries(parsed.map(r => [r.id as string, r]))
+      return Object.values(migrateRoomsEquipment(byId))
+    }
     const legacy = localStorage.getItem(ROOM_EDITS_LEGACY_KEY)
     if (legacy) {
       const edits = JSON.parse(legacy) as Record<string, Partial<Room>>
@@ -189,7 +195,7 @@ function App() {
       ? Object.fromEntries(savedRooms.map(r => [r.id, r]))
       : base.rooms
     const catalogEdits = loadCatalogEdits()
-    const catalog = applyEdits(base.catalog, catalogEdits)
+    const catalog = migrateCatalogEquipment(applyEdits(base.catalog, catalogEdits))
     return {
       ...base,
       catalog,
@@ -328,7 +334,6 @@ function App() {
         priority: "should_have",
         sections: 1,
         override_enrollment_cap: null,
-        override_room_type: null,
         override_preferred_professors: null,
         notes: null,
         assigned_prof_id: null,
@@ -370,7 +375,6 @@ function App() {
         priority: template?.priority ?? "should_have",
         sections: 1,
         override_enrollment_cap: template?.override_enrollment_cap ?? null,
-        override_room_type: template?.override_room_type ?? null,
         override_preferred_professors:
           template?.override_preferred_professors ?? null,
         notes: template?.notes ?? null,
@@ -499,11 +503,10 @@ function App() {
       id: newId,
       name: "New Room",
       building: "",
-      room_type: "pc_lab",
       station_count: 20,
-      station_type: "pc",
       display_count: 1,
       capacity: 20,
+      equipment_tags: [],
     }
     setState(s => {
       const next = { ...s.rooms, [newId]: fresh }
@@ -919,7 +922,6 @@ function App() {
       priority:                      o.priority,
       sections:                      o.sections ?? 1,
       override_enrollment_cap:       o.override_enrollment_cap ?? null,
-      override_room_type:            o.override_room_type ?? null,
       override_preferred_professors: o.override_preferred_professors ?? null,
       notes:                         o.notes ?? null,
       assigned_prof_id:              o.assigned_prof_id ?? null,
