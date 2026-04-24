@@ -138,6 +138,61 @@ export interface Professor {
 export const CAMPUSES = ["Savannah", "Atlanta", "Lacoste"] as const
 export type Campus = typeof CAMPUSES[number]
 
+/** Canonical list of teaching/academic buildings per SCAD campus. Seeds the
+ *  RoomCard building datalist so chairs on a fresh doc see real options before
+ *  any rooms exist. Still free-text — chairs can type new buildings and they
+ *  get unioned in via `collectBuildingsByCampus`. Sourced from SCAD's public
+ *  facilities pages and campus maps (scad.edu/life/buildings-and-facilities).
+ *  Residence-only buildings are intentionally omitted since classes don't
+ *  meet there. */
+export const BUILDINGS_BY_CAMPUS: Readonly<Record<Campus, ReadonlyArray<string>>> = {
+  Savannah: [
+    "Adler Hall",
+    "Alexander Hall",
+    "Anderson Hall",
+    "Arnold Hall",
+    "Bergen Hall",
+    "Bradley Hall",
+    "Clark Hall",
+    "Crites Hall",
+    "Eckburg Hall",
+    "Granite Hall",
+    "Gulfstream Center",
+    "Habersham Hall",
+    "Hamilton Hall",
+    "Jen Library",
+    "Keys Hall",
+    "Kiah Hall",
+    "Lai Wa Hall",
+    "Montgomery Hall",
+    "Pepe Hall",
+    "Poetter Hall",
+    "SCAD Museum of Art",
+    "Trustees Theater",
+    "Wallin Hall",
+  ],
+  Atlanta: [
+    "Digital Media Center",
+    "FORTY FIVE",
+    "Ivy Hall",
+    "SCAD Atlanta",
+    "SCAD FASH Museum of Fashion + Film",
+    "SCAD Film Studios Atlanta",
+    "SCADshow",
+  ],
+  Lacoste: [
+    "Atelier de Gravure",
+    "La Galerie Bleue",
+    "Lacoste Library",
+    "Maison Basse",
+    "Maison Fortunee",
+    "Maison Murier",
+    "Maison Olivier",
+    "Maison Pitot",
+    "Maison Renard",
+  ],
+}
+
 export interface Room {
   id: string
   name: string
@@ -518,27 +573,30 @@ export function collectEquipmentTags(
   return Array.from(seen).sort()
 }
 
-/** Buildings in use, grouped by campus. Powers the RoomCard's building
- *  datalist: typing narrows to buildings already in use on the selected
- *  campus. Returns a fully-populated record so the UI can index without
- *  null checks; empty campuses give an empty array. */
+/** Buildings grouped by campus for the RoomCard's building datalist. Unions
+ *  the canonical SCAD list (`BUILDINGS_BY_CAMPUS`) with any chair-added
+ *  buildings already in use, so the dropdown always offers real campus
+ *  options even on a fresh doc, while still surfacing one-off building
+ *  names a chair has typed. Sorted case-insensitively per campus. */
 export function collectBuildingsByCampus(
   rooms: Record<string, Room>,
 ): Record<Campus, string[]> {
   const seen: Record<Campus, Set<string>> = {
-    Savannah: new Set(),
-    Atlanta: new Set(),
-    Lacoste: new Set(),
+    Savannah: new Set(BUILDINGS_BY_CAMPUS.Savannah),
+    Atlanta: new Set(BUILDINGS_BY_CAMPUS.Atlanta),
+    Lacoste: new Set(BUILDINGS_BY_CAMPUS.Lacoste),
   }
   for (const r of Object.values(rooms)) {
     const campus: Campus = r.campus ?? "Savannah"
     const b = r.building?.trim()
     if (b) seen[campus].add(b)
   }
+  const sorted = (s: Set<string>) =>
+    Array.from(s).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }))
   return {
-    Savannah: Array.from(seen.Savannah).sort(),
-    Atlanta: Array.from(seen.Atlanta).sort(),
-    Lacoste: Array.from(seen.Lacoste).sort(),
+    Savannah: sorted(seen.Savannah),
+    Atlanta: sorted(seen.Atlanta),
+    Lacoste: sorted(seen.Lacoste),
   }
 }
 
