@@ -1,6 +1,7 @@
 import { useId, useState } from "react"
-import type { Room } from "../types"
+import type { Campus, Room } from "../types"
 import {
+  CAMPUSES,
   normalizeEquipmentTag,
   prettyEquipmentTag,
 } from "../types"
@@ -26,6 +27,9 @@ export interface RoomCardProps {
   /** Tag vocabulary collected from the current document (rooms + catalog).
    *  Powers the in-doc autocomplete on the equipment chip input. */
   knownEquipmentTags: ReadonlyArray<string>
+  /** Buildings already in use, grouped by campus. Powers the Building
+   *  datalist — typing narrows to buildings on the selected campus. */
+  knownBuildingsByCampus: Readonly<Record<Campus, ReadonlyArray<string>>>
   onUpdate: (room_id: string, changes: Partial<Room>) => void
   onDelete: (room_id: string) => void
   onClose: () => void
@@ -37,6 +41,9 @@ export function RoomCard(props: RoomCardProps) {
   const tags = r.equipment_tags ?? []
   const [tagDraft, setTagDraft] = useState("")
   const tagListId = useId()
+  const buildingListId = useId()
+  const campus: Campus = r.campus ?? "Savannah"
+  const buildingSuggestions = props.knownBuildingsByCampus[campus] ?? []
 
   const commitTag = () => {
     const normalized = normalizeEquipmentTag(tagDraft)
@@ -81,7 +88,8 @@ export function RoomCard(props: RoomCardProps) {
           <div className="prof-card__identity">
             <h3 className="prof-card__name">{r.name || "(untitled room)"}</h3>
             <span className="prof-card__role">
-              {r.building ? `${r.building} · ` : ""}
+              {[campus, r.building, r.room_number].filter(Boolean).join(" · ")}
+              {(campus || r.building || r.room_number) ? " · " : ""}
               {r.station_count} stations · cap {r.capacity}
             </span>
           </div>
@@ -102,17 +110,58 @@ export function RoomCard(props: RoomCardProps) {
         </section>
 
         <section className="class__section">
+          <label className="class__label">Campus</label>
+          <select
+            className="class__input"
+            value={campus}
+            onChange={e =>
+              props.onUpdate(r.id, { campus: e.target.value as Campus })
+            }
+          >
+            {CAMPUSES.map(c => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+          <p className="class__hint">
+            Which SCAD campus the room lives on.
+          </p>
+        </section>
+
+        <section className="class__section">
           <label className="class__label">Building</label>
           <input
             className="class__input"
             type="text"
+            list={buildingListId}
             value={r.building}
             placeholder="Montgomery Hall"
             onChange={e => props.onUpdate(r.id, { building: e.target.value })}
           />
+          <datalist id={buildingListId}>
+            {buildingSuggestions.map(b => (
+              <option key={b} value={b} />
+            ))}
+          </datalist>
           <p className="class__hint">
-            SCAD runs campuses in Savannah, Atlanta, and Lacoste — name the
-            building so colleagues know where to find the room.
+            Start typing — suggestions match buildings already in use on {campus}.
+          </p>
+        </section>
+
+        <section className="class__section">
+          <label className="class__label">Room Number</label>
+          <input
+            className="class__input"
+            type="text"
+            value={r.room_number ?? ""}
+            placeholder="263"
+            onChange={e =>
+              props.onUpdate(r.id, {
+                room_number: e.target.value || undefined,
+              })
+            }
+          />
+          <p className="class__hint">
+            Free text — room numbers can be alphanumeric (e.g. "B114").
           </p>
         </section>
 
