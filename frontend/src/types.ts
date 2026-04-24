@@ -549,7 +549,7 @@ export function migrateRoomsEquipment(
     delete rest.room_type
     delete rest.station_type
     const tags = raw.equipment_tags ?? seedLegacyRoomTags(raw)
-    out[id] = { ...(rest as Room), equipment_tags: tags }
+    out[id] = { ...(rest as unknown as Room), equipment_tags: tags }
   }
   return out
 }
@@ -565,7 +565,7 @@ export function migrateCatalogEquipment(
     const rest: Record<string, unknown> = { ...raw }
     delete rest.required_room_type
     const req = raw.required_equipment ?? seedLegacyCourseEquipment(raw)
-    out[id] = { ...(rest as Course), required_equipment: req }
+    out[id] = { ...(rest as unknown as Course), required_equipment: req }
   }
   return out
 }
