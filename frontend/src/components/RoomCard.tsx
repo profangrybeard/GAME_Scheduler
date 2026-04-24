@@ -1,4 +1,4 @@
-import { useId, useState } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import type { Campus, Room } from "../types"
 import {
   CAMPUSES,
@@ -41,7 +41,6 @@ export function RoomCard(props: RoomCardProps) {
   const tags = r.equipment_tags ?? []
   const [tagDraft, setTagDraft] = useState("")
   const tagListId = useId()
-  const buildingListId = useId()
   const campus: Campus = r.campus ?? "Savannah"
   const buildingSuggestions = props.knownBuildingsByCampus[campus] ?? []
 
@@ -129,21 +128,13 @@ export function RoomCard(props: RoomCardProps) {
 
         <section className="class__section">
           <label className="class__label">Building</label>
-          <input
-            className="class__input"
-            type="text"
-            list={buildingListId}
+          <BuildingCombobox
             value={r.building}
-            placeholder="Montgomery Hall"
-            onChange={e => props.onUpdate(r.id, { building: e.target.value })}
+            suggestions={buildingSuggestions}
+            onChange={next => props.onUpdate(r.id, { building: next })}
           />
-          <datalist id={buildingListId}>
-            {buildingSuggestions.map(b => (
-              <option key={b} value={b} />
-            ))}
-          </datalist>
           <p className="class__hint">
-            Start typing — suggestions match buildings already in use on {campus}.
+            Start typing — suggestions narrow to buildings on {campus}.
           </p>
         </section>
 
@@ -365,5 +356,119 @@ export function RoomCard(props: RoomCardProps) {
         </section>
       </div>
     </aside>
+  )
+}
+
+interface BuildingComboboxProps {
+  value: string
+  suggestions: ReadonlyArray<string>
+  onChange: (next: string) => void
+}
+
+/**
+ * Small building picker: free-text input + a scrollable suggestion popover.
+ * Replaces native <datalist> because the browser-rendered popup can't be
+ * scrolled reliably on short viewports when the canonical list is long
+ * (Savannah ships ~23 buildings). Substring-filters as the user types; arrow
+ * keys / Enter / Escape / outside-click behave like a standard combobox.
+ */
+function BuildingCombobox(props: BuildingComboboxProps) {
+  const [open, setOpen] = useState(false)
+  const [rawHighlight, setRawHighlight] = useState(0)
+  const rootRef = useRef<HTMLDivElement | null>(null)
+  const listRef = useRef<HTMLUListElement | null>(null)
+
+  const q = props.value.trim().toLowerCase()
+  // Drop any suggestion that exactly matches the current input — the field's
+  // value is stamped onto the room on every keystroke, so otherwise the
+  // in-progress text echoes back as a suggestion of itself.
+  const pool = q
+    ? props.suggestions.filter(s => s.toLowerCase() !== q)
+    : props.suggestions
+  const filtered = q
+    ? pool.filter(s => s.toLowerCase().includes(q))
+    : pool
+  // Clamp on read instead of via an effect — filtered shrinks when the user
+  // types, and we want the active row to stay valid without a cascading render.
+  const highlight = filtered.length === 0
+    ? 0
+    : Math.min(rawHighlight, filtered.length - 1)
+
+  useEffect(() => {
+    if (!open) return
+    function onDocClick(e: MouseEvent) {
+      if (!rootRef.current) return
+      if (!rootRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", onDocClick)
+    return () => document.removeEventListener("mousedown", onDocClick)
+  }, [open])
+
+  useEffect(() => {
+    if (!open || !listRef.current) return
+    const el = listRef.current.children[highlight] as HTMLElement | undefined
+    el?.scrollIntoView({ block: "nearest" })
+  }, [highlight, open])
+
+  const pick = (s: string) => {
+    props.onChange(s)
+    setOpen(false)
+  }
+
+  return (
+    <div className="combobox" ref={rootRef}>
+      <input
+        className="class__input"
+        type="text"
+        value={props.value}
+        placeholder="Montgomery Hall"
+        role="combobox"
+        aria-expanded={open}
+        aria-autocomplete="list"
+        onChange={e => {
+          props.onChange(e.target.value)
+          setOpen(true)
+          setRawHighlight(0)
+        }}
+        onFocus={() => setOpen(true)}
+        onKeyDown={e => {
+          if (e.key === "ArrowDown") {
+            e.preventDefault()
+            setOpen(true)
+            setRawHighlight(h => Math.min(filtered.length - 1, h + 1))
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault()
+            setRawHighlight(h => Math.max(0, h - 1))
+          } else if (e.key === "Enter" && open && filtered[highlight]) {
+            e.preventDefault()
+            pick(filtered[highlight])
+          } else if (e.key === "Escape") {
+            setOpen(false)
+          }
+        }}
+      />
+      {open && filtered.length > 0 && (
+        <ul className="combobox__list" role="listbox" ref={listRef}>
+          {filtered.map((s, i) => (
+            <li
+              key={s}
+              role="option"
+              aria-selected={i === highlight}
+              className={
+                "combobox__item" +
+                (i === highlight ? " combobox__item--active" : "")
+              }
+              onMouseDown={e => {
+                e.preventDefault()
+                pick(s)
+              }}
+              onMouseEnter={() => setRawHighlight(i)}
+            >
+              {s}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }
