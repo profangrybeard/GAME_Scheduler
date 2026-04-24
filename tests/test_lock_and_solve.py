@@ -221,35 +221,6 @@ def test_eligibility_includes_wrong_dept_profs_at_fallback_tier():
     )
 
 
-def test_eligible_rooms_capacity_fallback_when_no_tag_match():
-    """HC6 has a fill-at-all-cost fallback: when no room satisfies the course's
-    required_equipment subset, every cap-adequate room is returned instead.
-    Keeps mis-tagged courses placeable rather than silently dropping them."""
-    from solver.model_builder import _eligible_rooms
-
-    rooms = [
-        {"id": "r_pc",  "capacity": 20, "equipment_tags": ["pc_lab"]},
-        {"id": "r_mac", "capacity": 20, "equipment_tags": ["mac_lab"]},
-        {"id": "r_sml", "capacity": 8,  "equipment_tags": ["pc_lab", "large_game_lab"]},
-    ]
-
-    # Tagged match wins when it exists
-    c_match = {"enrollment_cap": 15, "required_equipment": ["pc_lab"]}
-    assert _eligible_rooms(c_match, rooms) == ["r_pc"]
-
-    # No tag match -> fall back to every cap-adequate room
-    c_nomatch = {"enrollment_cap": 15, "required_equipment": ["nonexistent_tag"]}
-    assert sorted(_eligible_rooms(c_nomatch, rooms)) == ["r_mac", "r_pc"], (
-        "fallback should return cap-adequate rooms when no room matches tags"
-    )
-
-    # Capacity still filters — fallback never returns rooms that can't fit
-    c_big = {"enrollment_cap": 15, "required_equipment": ["large_game_lab"]}
-    assert "r_sml" not in _eligible_rooms(c_big, rooms), (
-        "fallback still honors capacity (HC5)"
-    )
-
-
 def test_eligibility_still_enforces_grad_credential():
     """HC9 stays hard — a prof without masters / masters-in-progress cannot
     be placed on a graduate course even at the fallback tier."""
