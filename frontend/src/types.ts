@@ -133,9 +133,10 @@ export interface Professor {
 
 /** SCAD's active physical campuses. Fixed enum — the real world doesn't
  *  grow new campuses often, and a hard list gives the UI a clean dropdown
- *  without maintaining a separate lookup file. Legacy rooms loaded without
- *  a campus field are migrated to "Savannah" (the main campus). */
-export const CAMPUSES = ["Savannah", "Atlanta", "Lacoste"] as const
+ *  without maintaining a separate lookup file. Atlanta is listed first
+ *  because that's where the GAME department lives; it's also the fallback
+ *  for legacy rooms loaded without a campus field. */
+export const CAMPUSES = ["Atlanta", "Savannah", "Lacoste"] as const
 export type Campus = typeof CAMPUSES[number]
 
 /** Canonical list of teaching/academic buildings per SCAD campus. Seeds the
@@ -587,7 +588,7 @@ export function collectBuildingsByCampus(
     Lacoste: new Set(BUILDINGS_BY_CAMPUS.Lacoste),
   }
   for (const r of Object.values(rooms)) {
-    const campus: Campus = r.campus ?? "Savannah"
+    const campus: Campus = r.campus ?? "Atlanta"
     const b = r.building?.trim()
     if (b) seen[campus].add(b)
   }
@@ -664,7 +665,7 @@ export function deriveRoomNumberFromName(name: string): string | undefined {
 
 /** One-shot localStorage migration for a rooms map. Strips legacy
  *  `room_type` / `station_type` fields, seeds `equipment_tags` from them
- *  when absent, defaults `campus` to "Savannah" for rooms predating the
+ *  when absent, defaults `campus` to "Atlanta" for rooms predating the
  *  structured-location split, and — when `baseline` is supplied —
  *  back-fills missing `building` / `room_number` from the canonical
  *  `rooms.json` entry keyed by id. Falls back to name parsing for
@@ -680,7 +681,7 @@ export function migrateRoomsEquipment(
     delete rest.room_type
     delete rest.station_type
     const tags = raw.equipment_tags ?? seedLegacyRoomTags(raw)
-    const campus: Campus = raw.campus ?? "Savannah"
+    const campus: Campus = raw.campus ?? "Atlanta"
     const ref = baseline?.[id]
     const building = raw.building || ref?.building || ""
     const room_number =

@@ -520,7 +520,8 @@ function App() {
     const fresh: Room = {
       id: newId,
       name: "New Room",
-      building: "",
+      campus: "Atlanta",
+      building: "FORTY FIVE",
       station_count: 20,
       display_count: 1,
       capacity: 20,
