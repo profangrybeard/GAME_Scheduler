@@ -32,7 +32,7 @@ import { loadTunedMix, mixToSolverWeights, saveTunedMix, type Mix } from "./comp
 import { TopbarMenu } from "./components/TopbarMenu"
 import { loadInitialState } from "./data"
 import { useTheme } from "./hooks/useTheme"
-import { coalesceOfferingsForWire, collectEquipmentTags, expandOfferingsFromWire, migrateCatalogEquipment, migrateRoomsEquipment, mintOfferingId, profContractCeiling, profContractFloor } from "./types"
+import { coalesceOfferingsForWire, collectBuildingsByCampus, collectEquipmentTags, expandOfferingsFromWire, migrateCatalogEquipment, migrateRoomsEquipment, mintOfferingId, profContractCeiling, profContractFloor } from "./types"
 import type { Assignment, Course, Offering, Professor, RosterCapacity, Room, SchedulerState, Slot, SolveMode, SolveModeProgress, SolveProgressState, WireOffering } from "./types"
 import "./App.css"
 
@@ -1202,10 +1202,16 @@ function App() {
     [state.catalog, state.rooms],
   )
 
+  const knownBuildingsByCampus = useMemo(
+    () => collectBuildingsByCampus(state.rooms),
+    [state.rooms],
+  )
+
   const detailPanel = selectedRoom ? (
     <RoomCard
       room={selectedRoom}
       knownEquipmentTags={knownEquipmentTags}
+      knownBuildingsByCampus={knownBuildingsByCampus}
       onUpdate={updateRoom}
       onDelete={removeRoom}
       onClose={() => setSelectedRoomId(null)}

@@ -11,7 +11,12 @@
       "pattern": "^room_[a-z0-9_]+$"
     },
     "name": { "type": "string" },
+    "campus": {
+      "type": "string",
+      "enum": ["Savannah", "Atlanta", "Lacoste"]
+    },
     "building": { "type": "string" },
+    "room_number": { "type": "string" },
     "station_count": { "type": "integer", "minimum": 0 },
     "display_count": { "type": "integer", "minimum": 0 },
     "capacity": { "type": "integer", "minimum": 1 },

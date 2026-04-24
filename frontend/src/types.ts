@@ -131,12 +131,25 @@ export interface Professor {
   notes?: string
 }
 
+/** SCAD's active physical campuses. Fixed enum — the real world doesn't
+ *  grow new campuses often, and a hard list gives the UI a clean dropdown
+ *  without maintaining a separate lookup file. Legacy rooms loaded without
+ *  a campus field are migrated to "Savannah" (the main campus). */
+export const CAMPUSES = ["Savannah", "Atlanta", "Lacoste"] as const
+export type Campus = typeof CAMPUSES[number]
+
 export interface Room {
   id: string
   name: string
-  /** Free-text building name. SCAD runs campuses in Savannah, Atlanta, and
-   *  Lacoste; buildings are department-specific, so this stays unstructured. */
+  /** Which SCAD campus the room lives on. */
+  campus?: Campus
+  /** Building name within the campus. Free-text so chairs can add new
+   *  buildings without shipping a directory, but the RoomCard autocompletes
+   *  from buildings already in use on the selected campus. */
   building: string
+  /** Room number within the building (e.g. "263", "B114"). Free string to
+   *  accommodate alphanumeric numbering schemes across buildings. */
+  room_number?: string
   station_count: number
   display_count: number
   capacity: number
@@ -492,6 +505,30 @@ export function collectEquipmentTags(
   return Array.from(seen).sort()
 }
 
+/** Buildings in use, grouped by campus. Powers the RoomCard's building
+ *  datalist: typing narrows to buildings already in use on the selected
+ *  campus. Returns a fully-populated record so the UI can index without
+ *  null checks; empty campuses give an empty array. */
+export function collectBuildingsByCampus(
+  rooms: Record<string, Room>,
+): Record<Campus, string[]> {
+  const seen: Record<Campus, Set<string>> = {
+    Savannah: new Set(),
+    Atlanta: new Set(),
+    Lacoste: new Set(),
+  }
+  for (const r of Object.values(rooms)) {
+    const campus: Campus = r.campus ?? "Savannah"
+    const b = r.building?.trim()
+    if (b) seen[campus].add(b)
+  }
+  return {
+    Savannah: Array.from(seen.Savannah).sort(),
+    Atlanta: Array.from(seen.Atlanta).sort(),
+    Lacoste: Array.from(seen.Lacoste).sort(),
+  }
+}
+
 // ─── localStorage migration: legacy room_type → equipment_tags ────
 //
 // Prior to the equipment-tag cutover, rooms were typed via `room_type`
@@ -538,8 +575,10 @@ function seedLegacyCourseEquipment(c: LegacyCourseShape): string[] {
 }
 
 /** One-shot localStorage migration for a rooms map. Strips legacy
- *  `room_type` / `station_type` fields and seeds `equipment_tags` from them
- *  when absent. Idempotent — already-migrated rooms pass through. */
+ *  `room_type` / `station_type` fields, seeds `equipment_tags` from them
+ *  when absent, and defaults `campus` to "Savannah" for rooms predating
+ *  the structured-location split. Idempotent — already-migrated rooms
+ *  pass through. */
 export function migrateRoomsEquipment(
   rooms: Record<string, LegacyRoomShape>,
 ): Record<string, Room> {
@@ -549,7 +588,8 @@ export function migrateRoomsEquipment(
     delete rest.room_type
     delete rest.station_type
     const tags = raw.equipment_tags ?? seedLegacyRoomTags(raw)
-    out[id] = { ...(rest as unknown as Room), equipment_tags: tags }
+    const campus: Campus = raw.campus ?? "Savannah"
+    out[id] = { ...(rest as unknown as Room), equipment_tags: tags, campus }
   }
   return out
 }
