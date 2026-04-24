@@ -193,6 +193,15 @@ export interface Offering {
   assigned_prof_id: string | null // null = AUTO
   assigned_room_id: string | null // null = AUTO
 
+  // Chair-pinned provenance: true once the chair explicitly picks a prof/room
+  // (in Kit Station pre-solve or on a solved card). Persisted in the exported
+  // workbook so the signal survives reload, and used by the UI to show which
+  // values the chair intentionally chose vs. which came from the solver.
+  // Auto-managed by `updateOffering` — setting assigned_*_id non-null flips
+  // the stamp on, setting it to null flips it off. Solver never writes these.
+  chair_pinned_prof: boolean
+  chair_pinned_room: boolean
+
   // Board writes this
   pinned: Slot | null
 
@@ -288,6 +297,8 @@ export function expandOfferingsFromWire(
         notes: w.notes,
         assigned_prof_id: w.assigned_prof_id,
         assigned_room_id: w.assigned_room_id,
+        chair_pinned_prof: w.chair_pinned_prof ?? false,
+        chair_pinned_room: w.chair_pinned_room ?? false,
         pinned: k === 0 ? w.pinned : null,
         assignment: null,
       })
@@ -312,6 +323,8 @@ export function coalesceOfferingsForWire(
     notes: o.notes,
     assigned_prof_id: o.assigned_prof_id,
     assigned_room_id: o.assigned_room_id,
+    chair_pinned_prof: o.chair_pinned_prof,
+    chair_pinned_room: o.chair_pinned_room,
     pinned: o.pinned,
   }))
 }

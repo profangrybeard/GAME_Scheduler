@@ -37,7 +37,15 @@ const rawOfferingsDoc = offeringsJson as unknown as {
   quarter: string
   year: number
   offerings: Array<
-    Omit<Offering, "assigned_prof_id" | "assigned_room_id" | "pinned" | "assignment"> & {
+    Omit<
+      Offering,
+      | "assigned_prof_id"
+      | "assigned_room_id"
+      | "chair_pinned_prof"
+      | "chair_pinned_room"
+      | "pinned"
+      | "assignment"
+    > & {
       pinned?: Slot | null
       locked?: Slot | null // legacy — folded into `pinned` on load (see below)
     }
@@ -108,6 +116,8 @@ export function loadInitialState(): SchedulerState {
     notes: raw.notes ?? null,
     assigned_prof_id: null,
     assigned_room_id: null,
+    chair_pinned_prof: false,
+    chair_pinned_room: false,
     // Legacy `locked` slot collapses into `pinned` — they were the same
     // information post-solver-collapse. See Record of Resistance.
     pinned: raw.pinned ?? raw.locked ?? null,

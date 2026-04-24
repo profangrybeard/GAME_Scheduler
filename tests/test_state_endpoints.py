@@ -283,6 +283,57 @@ def test_parse_422_when_marker_corrupted(client, tmp_path):
     assert "GAME Scheduler export" in res.json()["detail"]
 
 
+def test_chair_pinned_stamps_survive_export_then_parse_roundtrip(
+    client, fake_run_schedule,
+):
+    """End-to-end contract for the provenance stamps added in the chair-edit
+    feature: the React client puts `chair_pinned_prof` / `chair_pinned_room`
+    on an offering; those booleans must survive /api/export → the xlsx bytes
+    → /api/state/parse without being silently dropped.
+
+    Regression guard: Pydantic v2 ignores unknown fields by default. If
+    OfferingModel stops declaring these two booleans, the client's chair-
+    pinned state is swallowed at the API boundary — the chair reloads the
+    workbook and all their "I tuned this" signals vanish. This test fails
+    in exactly that scenario.
+    """
+    body = _minimal_export_body()
+    # Offering [0] — chair explicitly picked both prof AND room.
+    body["offerings"][0]["assigned_prof_id"] = "prof_allen"
+    body["offerings"][0]["assigned_room_id"] = "room_263"
+    body["offerings"][0]["chair_pinned_prof"] = True
+    body["offerings"][0]["chair_pinned_room"] = True
+    # Offering [1] — chair picked a prof but not a room (partial tune). The
+    # False on room matters: the reader must preserve the explicit False, not
+    # treat it as absent. See test_chair_pinned_stamps_roundtrip for the
+    # writer-level version of that same guarantee.
+    body["offerings"][1]["assigned_prof_id"] = "prof_lindsey"
+    body["offerings"][1]["chair_pinned_prof"] = True
+    body["offerings"][1]["chair_pinned_room"] = False
+
+    exp = client.post("/api/export", json=body)
+    assert exp.status_code == 200, exp.text
+
+    res = _post_parse(client, exp.content, "schedule_fall_2026.xlsx")
+    assert res.status_code == 200, res.text
+    parsed = res.json()
+    assert parsed["errors"] == [], parsed["errors"]
+
+    offerings_by_catalog = {o["catalog_id"]: o for o in parsed["state"]["offerings"]}
+
+    fully_pinned = offerings_by_catalog["GAME_120"]
+    assert fully_pinned["assigned_prof_id"] == "prof_allen"
+    assert fully_pinned["assigned_room_id"] == "room_263"
+    assert fully_pinned["chair_pinned_prof"] is True
+    assert fully_pinned["chair_pinned_room"] is True
+
+    partially_pinned = offerings_by_catalog["GAME_121"]
+    assert partially_pinned["assigned_prof_id"] == "prof_lindsey"
+    assert partially_pinned.get("assigned_room_id") in (None, "")
+    assert partially_pinned["chair_pinned_prof"] is True
+    assert partially_pinned["chair_pinned_room"] is False
+
+
 def test_parse_returns_structured_error_for_unknown_catalog_id(client, tmp_path):
     """Drift policy: drop offerings whose catalog_id isn't in the local
     catalog, surface one structured error per dropped record (sheet / row /

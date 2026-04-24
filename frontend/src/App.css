@@ -1330,6 +1330,45 @@
   border-color: var(--accent);
 }
 
+.class__select--pinned {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.class__chair-pin {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--accent);
+  background: var(--accent-subtle, color-mix(in srgb, var(--accent) 14%, transparent));
+  padding: 1px 6px;
+  border-radius: 999px;
+  margin-left: 4px;
+}
+
+.class__reset-pin {
+  background: transparent;
+  border: none;
+  color: var(--text-faint);
+  font: inherit;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  padding: 0 4px;
+  margin-left: auto;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
+.class__reset-pin:hover {
+  color: var(--text);
+}
+
 .class__textarea {
   resize: vertical;
   min-height: 48px;

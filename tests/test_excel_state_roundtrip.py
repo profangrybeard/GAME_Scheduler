@@ -142,6 +142,50 @@ def test_data_sheets_roundtrip_draft_state(tmp_path: Path) -> None:
     assert loaded["locked_assignments"] == original["locked_assignments"]
 
 
+def test_chair_pinned_stamps_roundtrip(tmp_path: Path) -> None:
+    """The chair_pinned_prof / chair_pinned_room booleans stamp whether the
+    chair explicitly chose an assigned_prof_id / assigned_room_id. They must
+    survive export → reload so the "I tuned this" provenance in the UI
+    (badge + chair-dot) stays accurate after a chair closes and reopens
+    the workbook. Missing columns (pre-stamp exports) are treated as absent
+    on the read side, so legacy fixtures still load without stamps set."""
+    from export.excel_reader import read_draft_state
+    state = _sample_draft_state()
+    state["offerings"] = [
+        {
+            "catalog_id": "ITGM-220",
+            "priority": "must_have",
+            "sections": 1,
+            "assigned_prof_id": "p_001",
+            "assigned_room_id": "r_101",
+            "chair_pinned_prof": True,
+            "chair_pinned_room": True,
+        },
+        {
+            "catalog_id": "ITGM-300",
+            "priority": "should_have",
+            "sections": 1,
+            "chair_pinned_prof": False,
+            "chair_pinned_room": False,
+        },
+    ]
+    path = write_excel(_minimal_results(), tmp_path, draft_state=state)
+    loaded = read_draft_state(path)
+
+    stamped = loaded["offerings"][0]
+    assert stamped["chair_pinned_prof"] is True
+    assert stamped["chair_pinned_room"] is True
+    assert stamped["assigned_prof_id"] == "p_001"
+    assert stamped["assigned_room_id"] == "r_101"
+
+    # Second offering's stamps were False — the writer serializes False as a
+    # Boolean cell, and the reader preserves it (unlike missing columns which
+    # the union-of-keys reader treats as absent).
+    unstamped = loaded["offerings"][1]
+    assert unstamped["chair_pinned_prof"] is False
+    assert unstamped["chair_pinned_room"] is False
+
+
 def test_solver_results_chunked_cleanly_when_large(tmp_path: Path) -> None:
     """A solver_results payload big enough to exceed Excel's 32,767-char
     single-cell limit must still roundtrip via chunking."""
