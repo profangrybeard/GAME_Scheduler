@@ -338,6 +338,8 @@ function App() {
         notes: null,
         assigned_prof_id: null,
         assigned_room_id: null,
+        chair_pinned_prof: false,
+        chair_pinned_room: false,
         pinned: null,
         assignment: null,
       }
@@ -380,6 +382,8 @@ function App() {
         notes: template?.notes ?? null,
         assigned_prof_id: null,
         assigned_room_id: null,
+        chair_pinned_prof: false,
+        chair_pinned_room: false,
         pinned: null,
         assignment: null,
       }
@@ -387,13 +391,27 @@ function App() {
     })
   }, [])
 
+  // Auto-manage the chair_pinned_* stamps alongside assigned_prof_id /
+  // assigned_room_id. Any chair-initiated write to those fields flows through
+  // here (Class inspector dropdowns today; anything else we add later too), so
+  // centralizing the rule means every call site gets provenance tracking for
+  // free. Callers can still override by passing the stamp explicitly — useful
+  // for tests and for "Reset to AUTO" which clears value + stamp together.
   const updateOffering = useCallback(
     (offering_id: string, changes: Partial<Offering>) => {
       setState(s => ({
         ...s,
-        offerings: s.offerings.map(o =>
-          o.offering_id === offering_id ? { ...o, ...changes } : o,
-        ),
+        offerings: s.offerings.map(o => {
+          if (o.offering_id !== offering_id) return o
+          const next: Offering = { ...o, ...changes }
+          if ("assigned_prof_id" in changes && !("chair_pinned_prof" in changes)) {
+            next.chair_pinned_prof = changes.assigned_prof_id !== null
+          }
+          if ("assigned_room_id" in changes && !("chair_pinned_room" in changes)) {
+            next.chair_pinned_room = changes.assigned_room_id !== null
+          }
+          return next
+        }),
       }))
     },
     [],
@@ -926,6 +944,8 @@ function App() {
       notes:                         o.notes ?? null,
       assigned_prof_id:              o.assigned_prof_id ?? null,
       assigned_room_id:              o.assigned_room_id ?? null,
+      chair_pinned_prof:             o.chair_pinned_prof ?? false,
+      chair_pinned_room:             o.chair_pinned_room ?? false,
       pinned:                        o.pinned ?? null,
     }))
     const expanded = expandOfferingsFromWire(wireOfferings).map(o => ({

@@ -194,6 +194,22 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
     // and solver-assigned (prof came from the solver, drops on drag).
     const profIsTentative = !o.assigned_prof_id
 
+    // One red dot for any chair touch. Tooltip enumerates which dimensions
+    // are pinned (slot / professor / room). The inspector keeps per-field
+    // ★ pinned badges; this is the card-level rollup.
+    const pinParts: string[] = []
+    if (o.pinned !== null) pinParts.push("slot")
+    if (o.chair_pinned_prof) pinParts.push("professor")
+    if (o.chair_pinned_room) pinParts.push("room")
+    const hasAnyPin = pinParts.length > 0
+    const pinPhrase =
+      pinParts.length === 1
+        ? pinParts[0]
+        : pinParts.length === 2
+          ? `${pinParts[0]} and ${pinParts[1]}`
+          : `${pinParts[0]}, ${pinParts[1]}, and ${pinParts[2]}`
+    const pinTitle = hasAnyPin ? `You pinned the ${pinPhrase}.` : ""
+
     return (
       <button
         key={o.offering_id}
@@ -248,11 +264,11 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
         <span className="schedule-card__room">
           {room ? room.name.split("–")[0].trim().replace("Room ", "") : "—"}
         </span>
-        {o.pinned !== null && (
+        {hasAnyPin && (
           <span
             className="schedule-card__pin-dot"
-            aria-label="Manually placed by you"
-            title="You placed this card. Use Empty Calendar twice to remove it."
+            aria-label={pinTitle}
+            title={pinTitle}
           />
         )}
       </button>

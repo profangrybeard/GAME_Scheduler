@@ -124,6 +124,15 @@ class OfferingModel(BaseModel):
     notes: str | None = None
     assigned_prof_id: str | None = None
     assigned_room_id: str | None = None
+    # Provenance stamps — True means the chair explicitly picked this prof/room,
+    # False means the value is a solver suggestion (or absent). The React UI
+    # auto-manages these in updateOffering; the solver ignores them (it only
+    # reads assigned_*). They exist to round-trip "I tuned this" intent across
+    # export → reload so the ★ pinned badges and Reset links keep working.
+    # Default False so pre-chair-stamp clients (and any test fixture that omits
+    # them) parse cleanly.
+    chair_pinned_prof: bool = False
+    chair_pinned_room: bool = False
     pinned: SlotModel | None = None
     assignment: AssignmentModel | None = None
 

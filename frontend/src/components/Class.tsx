@@ -179,9 +179,37 @@ export function Class(props: ClassProps) {
         </section>
 
         <section className="class__section">
-          <label className="class__label">Professor</label>
+          <label className="class__label">
+            Professor
+            {offering.chair_pinned_prof && (
+              <>
+                <span
+                  className="class__chair-pin"
+                  title="Chair-pinned — the solver will honor this pick on the next Generate."
+                  aria-label="Chair-pinned"
+                >
+                  ★ pinned
+                </span>
+                <button
+                  type="button"
+                  className="class__reset-pin"
+                  title="Clear this pick and let the solver choose next time."
+                  onClick={() =>
+                    props.onUpdate(offering.offering_id, {
+                      assigned_prof_id: null,
+                    })
+                  }
+                >
+                  Reset
+                </button>
+              </>
+            )}
+          </label>
           <select
-            className="class__select"
+            className={
+              "class__select" +
+              (offering.chair_pinned_prof ? " class__select--pinned" : "")
+            }
             value={offering.assigned_prof_id ?? "AUTO"}
             onChange={e =>
               props.onUpdate(offering.offering_id, {
@@ -224,9 +252,37 @@ export function Class(props: ClassProps) {
         </section>
 
         <section className="class__section">
-          <label className="class__label">Room</label>
+          <label className="class__label">
+            Room
+            {offering.chair_pinned_room && (
+              <>
+                <span
+                  className="class__chair-pin"
+                  title="Chair-pinned — the solver will honor this pick on the next Generate."
+                  aria-label="Chair-pinned"
+                >
+                  ★ pinned
+                </span>
+                <button
+                  type="button"
+                  className="class__reset-pin"
+                  title="Clear this pick and let the solver choose next time."
+                  onClick={() =>
+                    props.onUpdate(offering.offering_id, {
+                      assigned_room_id: null,
+                    })
+                  }
+                >
+                  Reset
+                </button>
+              </>
+            )}
+          </label>
           <select
-            className="class__select"
+            className={
+              "class__select" +
+              (offering.chair_pinned_room ? " class__select--pinned" : "")
+            }
             value={offering.assigned_room_id ?? "AUTO"}
             onChange={e =>
               props.onUpdate(offering.offering_id, {
