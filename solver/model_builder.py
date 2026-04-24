@@ -88,13 +88,31 @@ def _eligible_professors(
 def _eligible_rooms(course: dict, rooms: list[dict]) -> list[str]:
     """Return IDs of rooms compatible with course room type and enrollment cap.
 
-    Enforces HC5 (room.capacity >= enrollment_cap) and
-    HC6 (room type must satisfy ROOM_COMPATIBILITY check).
+    Enforces:
+      HC5  room.capacity >= enrollment_cap
+      HC6  room type must satisfy ROOM_COMPATIBILITY check
+      HC11 room.equipment_tags ⊇ course.required_equipment (when set)
+
+    HC11 is a chair-authored tag-subset check: rooms advertise what they have
+    (`equipment_tags`), courses demand what they need (`required_equipment`).
+    Empty/missing required_equipment means "no equipment requirement beyond
+    room_type" — same eligibility as before the feature landed.
     """
     required = course.get("required_room_type", "standard")
     compat = ROOM_COMPATIBILITY.get(required, lambda r: True)
     cap = course.get("enrollment_cap", 1)
-    return [r["id"] for r in rooms if compat(r) and r["capacity"] >= cap]
+    required_equipment = set(course.get("required_equipment") or [])
+
+    def equipment_ok(r: dict) -> bool:
+        if not required_equipment:
+            return True
+        return required_equipment.issubset(set(r.get("equipment_tags") or []))
+
+    return [
+        r["id"]
+        for r in rooms
+        if compat(r) and r["capacity"] >= cap and equipment_ok(r)
+    ]
 
 
 # ---------------------------------------------------------------------------

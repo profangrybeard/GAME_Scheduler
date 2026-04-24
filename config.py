@@ -40,6 +40,11 @@ UNDER_CONTRACT_PENALTY = 500
 # not a chair-tunable trade-off. Users tune coverage, time-pref, and overload;
 # affinity quietly breaks ties between otherwise-equivalent assignments.
 AFFINITY_WEIGHT = 1
+# Per-missing-preferred-equipment-tag penalty. Small so it acts as a
+# tiebreaker between otherwise-equivalent rooms, not a coarse eligibility
+# gate (that's what required_equipment is for). Applied once per assignment
+# per tag the course prefers that the room lacks.
+PREFERRED_EQUIPMENT_PENALTY = 2
 
 # === Optimization mode weight vectors ===
 # Three axes:

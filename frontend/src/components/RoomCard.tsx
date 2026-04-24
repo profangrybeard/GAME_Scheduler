@@ -1,5 +1,8 @@
+import { useId, useState } from "react"
 import type { Room } from "../types"
 import {
+  normalizeEquipmentTag,
+  prettyEquipmentTag,
   prettyRoomType,
   ROOM_TYPE_LABELS,
   ROOM_TYPE_ORDER,
@@ -25,6 +28,9 @@ import {
 
 export interface RoomCardProps {
   room: Room
+  /** Tag vocabulary collected from the current document (rooms + catalog).
+   *  Powers the in-doc autocomplete on the equipment chip input. */
+  knownEquipmentTags: ReadonlyArray<string>
   onUpdate: (room_id: string, changes: Partial<Room>) => void
   onDelete: (room_id: string) => void
   onClose: () => void
@@ -35,6 +41,22 @@ export function RoomCard(props: RoomCardProps) {
   const isAvailable = r.available !== false
   const stationLabel =
     STATION_TYPE_LABELS[r.station_type] ?? r.station_type.toUpperCase()
+  const tags = r.equipment_tags ?? []
+  const [tagDraft, setTagDraft] = useState("")
+  const tagListId = useId()
+
+  const commitTag = () => {
+    const normalized = normalizeEquipmentTag(tagDraft)
+    setTagDraft("")
+    if (!normalized || tags.includes(normalized)) return
+    props.onUpdate(r.id, { equipment_tags: [...tags, normalized] })
+  }
+
+  const removeTag = (tag: string) => {
+    props.onUpdate(r.id, {
+      equipment_tags: tags.filter(t => t !== tag),
+    })
+  }
 
   const handleDelete = () => {
     const label = r.name || r.id
@@ -266,6 +288,55 @@ export function RoomCard(props: RoomCardProps) {
             {r.station_count} stations · {r.capacity} seats
           </p>
         </section>
+
+        <details className="class__section prof-card__specs" open={tags.length > 0}>
+          <summary className="prof-card__specs-summary">
+            <span>Equipment</span>
+            {tags.length > 0 && (
+              <span className="prof-card__specs-count">{tags.length}</span>
+            )}
+          </summary>
+          <div className="prof-card__tags">
+            {tags.map(tag => (
+              <span key={tag} className="prof-card__spec">
+                {prettyEquipmentTag(tag)}
+                <button
+                  type="button"
+                  className="prof-card__spec-remove"
+                  aria-label={`Remove ${tag}`}
+                  onClick={() => removeTag(tag)}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+            <input
+              type="text"
+              className="prof-card__spec-input"
+              list={tagListId}
+              placeholder={tags.length ? "Add…" : "e.g. pen_display, vr, motion_capture"}
+              value={tagDraft}
+              onChange={e => setTagDraft(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  commitTag()
+                }
+              }}
+              onBlur={commitTag}
+            />
+            <datalist id={tagListId}>
+              {props.knownEquipmentTags.map(t => (
+                <option key={t} value={prettyEquipmentTag(t)} />
+              ))}
+            </datalist>
+          </div>
+          <p className="class__hint">
+            Free-form tags describing what this room has. Courses with matching
+            <code> required_equipment</code> can schedule here;
+            <code> preferred_equipment</code> matches give a soft bonus.
+          </p>
+        </details>
 
         <section className="class__section">
           <label className="class__label">Notes</label>
