@@ -4,7 +4,7 @@
   "type": "object",
   "required": [
     "id", "name", "department", "is_graduate", "credits",
-    "required_room_type", "specialization_tags", "preferred_professors",
+    "specialization_tags", "preferred_professors",
     "enrollment_cap", "teaching_order", "source"
   ],
   "properties": {
@@ -16,9 +16,13 @@
     },
     "is_graduate": { "type": "boolean" },
     "credits": { "type": "integer" },
-    "required_room_type": {
-      "type": "string",
-      "enum": ["pc_lab", "large_game_lab", "mac_lab", "flex_studio", "lecture_flex", "any_lab", "standard"]
+    "required_equipment": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "preferred_equipment": {
+      "type": "array",
+      "items": { "type": "string" }
     },
     "specialization_tags": {
       "type": "array",

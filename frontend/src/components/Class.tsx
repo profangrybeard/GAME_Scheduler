@@ -9,7 +9,6 @@ import {
   normalizeEquipmentTag,
   prettyEquipmentTag,
   PRIORITIES,
-  prettyRoomType,
 } from "../types"
 
 /**
@@ -86,13 +85,18 @@ export function Class(props: ClassProps) {
 
   const roomCandidates = useMemo(() => {
     if (!course) return { matching: [], other: [] }
-    const requiredType = offering?.override_room_type || course.required_room_type
+    const required = course.required_equipment ?? []
     const all = Object.values(props.rooms)
-    return {
-      matching: all.filter(r => r.room_type === requiredType),
-      other: all.filter(r => r.room_type !== requiredType),
+    if (required.length === 0) return { matching: all, other: [] }
+    const matches = (r: Room) => {
+      const have = new Set(r.equipment_tags ?? [])
+      return required.every(t => have.has(t))
     }
-  }, [course, offering, props.rooms])
+    return {
+      matching: all.filter(matches),
+      other: all.filter(r => !matches(r)),
+    }
+  }, [course, props.rooms])
 
   if (!offering || !course) {
     return (
@@ -223,7 +227,13 @@ export function Class(props: ClassProps) {
           >
             <option value="AUTO">AUTO — let the solver choose</option>
             {roomCandidates.matching.length > 0 && (
-              <optgroup label={`Matching (${course.required_room_type})`}>
+              <optgroup
+                label={
+                  (course.required_equipment?.length ?? 0) > 0
+                    ? `Matching (${(course.required_equipment ?? []).map(prettyEquipmentTag).join(", ")})`
+                    : "All rooms"
+                }
+              >
                 {roomCandidates.matching.map(r => (
                   <option key={r.id} value={r.id}>
                     {r.name}
@@ -232,7 +242,7 @@ export function Class(props: ClassProps) {
               </optgroup>
             )}
             {roomCandidates.other.length > 0 && (
-              <optgroup label="Other rooms">
+              <optgroup label="Other rooms (missing required equipment)">
                 {roomCandidates.other.map(r => (
                   <option key={r.id} value={r.id}>
                     {r.name}
@@ -313,8 +323,9 @@ export function Class(props: ClassProps) {
         <details className="class__section class__details">
           <summary className="class__details-summary">Details</summary>
           <p className="class__hint">
-            Station:{" "}
-            {prettyRoomType(offering.override_room_type || course.required_room_type)}
+            {(course.required_equipment?.length ?? 0) > 0
+              ? `Needs: ${(course.required_equipment ?? []).map(prettyEquipmentTag).join(", ")}`
+              : "Any room"}
             {" · seats "}
             {offering.override_enrollment_cap ?? course.enrollment_cap}
           </p>

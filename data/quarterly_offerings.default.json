@@ -7,7 +7,6 @@
       "priority": "must_have",
       "sections": 2,
       "override_enrollment_cap": null,
-      "override_room_type": "standard",
       "override_preferred_professors": null,
       "notes": "Intro - always high demand",
       "pinned": {
@@ -20,7 +19,6 @@
       "priority": "must_have",
       "sections": 2,
       "override_enrollment_cap": null,
-      "override_room_type": "standard",
       "override_preferred_professors": null,
       "notes": "Core Programming - 2 sections",
       "pinned": null
@@ -30,7 +28,6 @@
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "standard",
       "override_preferred_professors": null,
       "notes": null,
       "pinned": null
@@ -40,7 +37,6 @@
       "priority": "must_have",
       "sections": 2,
       "override_enrollment_cap": null,
-      "override_room_type": "standard",
       "override_preferred_professors": null,
       "notes": "Dodson preferred",
       "pinned": null
@@ -50,7 +46,6 @@
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "standard",
       "override_preferred_professors": null,
       "notes": null,
       "pinned": null
@@ -60,7 +55,6 @@
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "standard",
       "override_preferred_professors": null,
       "notes": null,
       "pinned": null
@@ -70,7 +64,6 @@
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "standard",
       "override_preferred_professors": null,
       "notes": "Capstone entry",
       "pinned": null
@@ -80,7 +73,6 @@
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "standard",
       "override_preferred_professors": null,
       "notes": null,
       "pinned": null
@@ -90,7 +82,6 @@
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": 16,
-      "override_room_type": "standard",
       "override_preferred_professors": [
         "prof_dodson"
       ],
@@ -102,7 +93,6 @@
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "standard",
       "override_preferred_professors": null,
       "notes": "Foundations of Interactive Programming",
       "pinned": null
@@ -112,7 +102,6 @@
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "standard",
       "override_preferred_professors": null,
       "notes": "Mid-level elective - Lindsey track",
       "pinned": null
@@ -122,7 +111,6 @@
       "priority": "could_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "standard",
       "override_preferred_professors": null,
       "notes": "Mobile / interactive",
       "pinned": null
@@ -132,7 +120,6 @@
       "priority": "must_have",
       "sections": 2,
       "override_enrollment_cap": null,
-      "override_room_type": "mac_lab",
       "override_preferred_professors": null,
       "notes": "Intro - high demand",
       "pinned": null
@@ -142,7 +129,6 @@
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "mac_lab",
       "override_preferred_professors": null,
       "notes": "Survey of MM Design",
       "pinned": null
@@ -152,7 +138,6 @@
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "mac_lab",
       "override_preferred_professors": null,
       "notes": "Techniques I",
       "pinned": null
@@ -162,7 +147,6 @@
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "mac_lab",
       "override_preferred_professors": null,
       "notes": "Techniques II - mid-level",
       "pinned": null
@@ -172,7 +156,6 @@
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "mac_lab",
       "override_preferred_professors": null,
       "notes": "VR for Motion Media",
       "pinned": null
@@ -182,7 +165,6 @@
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "mac_lab",
       "override_preferred_professors": null,
       "notes": "Senior project",
       "pinned": null
@@ -192,7 +174,6 @@
       "priority": "could_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "mac_lab",
       "override_preferred_professors": null,
       "notes": "Projection - Imperato preferred",
       "pinned": null
@@ -202,7 +183,6 @@
       "priority": "could_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "mac_lab",
       "override_preferred_professors": null,
       "notes": "Concepts in MM Design",
       "pinned": null
@@ -212,7 +192,6 @@
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": 16,
-      "override_room_type": "mac_lab",
       "override_preferred_professors": [
         "prof_imperato"
       ],
@@ -224,7 +203,6 @@
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": 16,
-      "override_room_type": "standard",
       "override_preferred_professors": null,
       "notes": "Grad ITGM core",
       "pinned": null
@@ -234,7 +212,6 @@
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "pc_lab",
       "override_preferred_professors": null,
       "notes": "AI survey intro",
       "pinned": null
@@ -244,7 +221,6 @@
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": 20,
-      "override_room_type": "pc_lab",
       "override_preferred_professors": null,
       "notes": "Applied AI",
       "pinned": null
@@ -254,7 +230,6 @@
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "pc_lab",
       "override_preferred_professors": null,
       "notes": "Second AI in sequence",
       "pinned": null
@@ -264,7 +239,6 @@
       "priority": "nice_to_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "pc_lab",
       "override_preferred_professors": null,
       "notes": "Advanced AI - would be nice",
       "pinned": null
@@ -274,7 +248,6 @@
       "priority": "nice_to_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": "standard",
       "override_preferred_professors": null,
       "notes": "Cross-dept elective - ambitious",
       "pinned": null

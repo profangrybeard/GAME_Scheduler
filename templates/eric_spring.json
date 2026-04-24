@@ -44,7 +44,6 @@
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": null,
       "override_preferred_professors": null,
       "notes": null
     },
@@ -53,7 +52,6 @@
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": null,
       "override_preferred_professors": null,
       "notes": null
     },
@@ -62,7 +60,6 @@
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": null,
       "override_preferred_professors": null,
       "notes": "NOT IN CATALOG - needs to be added. Ethics of Emerging Tech"
     },
@@ -71,7 +68,6 @@
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": null,
       "override_preferred_professors": null,
       "notes": null
     },
@@ -80,7 +76,6 @@
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": null,
       "override_preferred_professors": null,
       "notes": null
     },
@@ -89,7 +84,6 @@
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": null,
       "override_preferred_professors": null,
       "notes": null
     },
@@ -98,7 +92,6 @@
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": null,
       "override_preferred_professors": null,
       "notes": null
     },
@@ -107,7 +100,6 @@
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": null,
       "override_preferred_professors": null,
       "notes": null
     },
@@ -116,7 +108,6 @@
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": null,
       "override_preferred_professors": null,
       "notes": null
     },
@@ -125,7 +116,6 @@
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": null,
       "override_preferred_professors": null,
       "notes": null
     },
@@ -134,7 +124,6 @@
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": null,
       "override_preferred_professors": null,
       "notes": null
     },
@@ -143,7 +132,6 @@
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": null,
       "override_preferred_professors": null,
       "notes": null
     },
@@ -152,7 +140,6 @@
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": null,
       "override_preferred_professors": null,
       "notes": null
     },
@@ -161,7 +148,6 @@
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": null,
       "override_preferred_professors": [
         "prof_avenali"
       ],
@@ -172,7 +158,6 @@
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": null,
       "override_preferred_professors": [
         "prof_allen"
       ],
@@ -183,7 +168,6 @@
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": null,
       "override_preferred_professors": null,
       "notes": "Assigned to David (Morn) in Eric's schedule"
     },
@@ -192,7 +176,6 @@
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": null,
       "override_preferred_professors": null,
       "notes": "NOT IN CATALOG - needs to be added. IACT 315"
     },
@@ -201,7 +184,6 @@
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": null,
       "override_preferred_professors": [
         "prof_dodson"
       ],
@@ -212,7 +194,6 @@
       "priority": "must_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": null,
       "override_preferred_professors": [
         "prof_lindsey"
       ],
@@ -223,7 +204,6 @@
       "priority": "should_have",
       "sections": 1,
       "override_enrollment_cap": null,
-      "override_room_type": null,
       "override_preferred_professors": null,
       "notes": "NOT IN CATALOG - needs to be added. IXDS 709"
     }

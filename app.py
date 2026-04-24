@@ -1361,7 +1361,7 @@ else:
                         )
                     with _qa2:
                         if st.button("ADD", key=f"qa_add_{_qc['id']}", use_container_width=True):
-                            active_project["offerings"].append({"catalog_id": _qc["id"], "priority": "must_have", "sections": 1, "override_enrollment_cap": None, "override_room_type": None, "override_preferred_professors": None, "notes": None})
+                            active_project["offerings"].append({"catalog_id": _qc["id"], "priority": "must_have", "sections": 1, "override_enrollment_cap": None, "override_preferred_professors": None, "notes": None})
                             add_log("DRAFT", f"Added {_qc['id']}")
                             st.rerun()
                 if len(_qa_matches) > 5:
@@ -1459,8 +1459,8 @@ else:
                 _prof_avatar = prof_avatar_html(_prof_id_for_badge, _prof_display, size=16)
                 _sec_count = o.get("sections", 1)
                 _lock = o.get("locked")
-                _room = o.get("override_room_type") or course.get("required_room_type", "standard")
-                _room_label = _room.replace("_", " ").title()
+                _req_equip = course.get("required_equipment") or []
+                _room_label = ", ".join(t.replace("_", " ") for t in _req_equip) if _req_equip else "Any room"
 
                 # Badges HTML
                 _badges = f'<span class="badge {_pri_class}">{_pri_label}</span>'
@@ -1561,12 +1561,9 @@ else:
                                     add_log("ASSIGN", f"Assigned {prof_labels[new_prof]} to {cid}")
                                 st.rerun()
                         with p2:
-                            room_opts = config.VALID_ROOM_TYPES
-                            current_room = o.get("override_room_type") or course.get("required_room_type", "standard")
-                            if current_room not in room_opts:
-                                current_room = "standard"
-                            new_room = st.selectbox("Room Type", room_opts, format_func=lambda x: x.replace("_", " ").title(), index=room_opts.index(current_room), key=f"board_room_{idx}")
-                            active_project["offerings"][idx]["override_room_type"] = new_room
+                            _req_equip_list = course.get("required_equipment") or []
+                            _req_equip_txt = ", ".join(t.replace("_", " ") for t in _req_equip_list) if _req_equip_list else "— any room —"
+                            st.text_input("Required equipment", value=_req_equip_txt, disabled=True, key=f"board_equip_{idx}")
 
                         # Row 3: Priority + Sections
                         s1, s2 = st.columns(2)
@@ -1790,12 +1787,10 @@ else:
                                             if _ep_prof_default not in prof_options:
                                                 _ep_prof_default = "Auto-Draft"
                                             _ep_new_prof = st.selectbox("Professor", prof_options, format_func=lambda x: prof_labels[x], index=prof_options.index(_ep_prof_default), key=f"ep_prof_{a['cs_key']}_{dg}_{ts}")
-                                            # Room Type
-                                            _ep_room_opts = config.VALID_ROOM_TYPES
-                                            _ep_cur_room = _eo.get("override_room_type") or catalog_lookup.get(a["catalog_id"], {}).get("required_room_type", "standard")
-                                            if _ep_cur_room not in _ep_room_opts:
-                                                _ep_cur_room = "standard"
-                                            _ep_new_room = st.selectbox("Room Type", _ep_room_opts, format_func=lambda x: x.replace("_", " ").title(), index=_ep_room_opts.index(_ep_cur_room), key=f"ep_room_{a['cs_key']}_{dg}_{ts}")
+                                            # Required equipment (read-only summary; chairs author on the course card)
+                                            _ep_req_equip = catalog_lookup.get(a["catalog_id"], {}).get("required_equipment") or []
+                                            _ep_req_txt = ", ".join(t.replace("_", " ") for t in _ep_req_equip) if _ep_req_equip else "— any room —"
+                                            st.text_input("Required equipment", value=_ep_req_txt, disabled=True, key=f"ep_equip_{a['cs_key']}_{dg}_{ts}")
                                             # Day / Time — pure selectboxes, no auto-commit
                                             _ep_dt1, _ep_dt2 = st.columns(2)
                                             with _ep_dt1:
@@ -1813,7 +1808,6 @@ else:
                                                     offerings[_edit_idx]["override_preferred_professors"] = None
                                                 else:
                                                     offerings[_edit_idx]["override_preferred_professors"] = [_ep_new_prof]
-                                                offerings[_edit_idx]["override_room_type"] = _ep_new_room
                                                 # Determine which professor id to lock
                                                 _lock_prof = _ep_new_prof if _ep_new_prof != "Auto-Draft" else a["prof_id"]
                                                 # Remove any existing lock for this section, replace with new
@@ -1885,7 +1879,8 @@ else:
                     _cid = u["catalog_id"]; _course = catalog_lookup.get(_cid, {}); _name = _course.get("name", _cid)
                     _dept = _course.get("department", "game"); _dot = DEPT_DOT.get(_dept, "#666")
                     _pri = u["priority"]; _pri_label = PRIORITY_LABELS.get(_pri, _pri); _pri_color = pri_colors.get(_pri, TXT_MUTED)
-                    _room_type = _course.get("required_room_type", "any").replace("_", " ")
+                    _req_equip_u = _course.get("required_equipment") or []
+                    _equip_label = ", ".join(t.replace("_", " ") for t in _req_equip_u) if _req_equip_u else "any room"
 
                     # Compute drop reason from solver data
                     _cs_key = u.get("cs_key", "")
@@ -1904,7 +1899,7 @@ else:
 
                     uc1, uc2, uc3 = st.columns([4, 1.5, 1])
                     with uc1: st.markdown(f'<div style="font-size:0.72rem; padding:3px 0;"><span class="dept-dot" style="background:{_dot};"></span><span style="color:{TXT_ACCENT}; font-weight:600;">{_cid}</span> <span style="color:{TXT_SECONDARY};">{_name}</span><br/><span style="font-size:0.65rem; color:{TXT_MUTED};">{_drop_reason}</span></div>', unsafe_allow_html=True)
-                    with uc2: st.markdown(f'<div style="font-size:0.65rem; padding:5px 0;"><span style="color:{_pri_color}; font-weight:600;">{_pri_label}</span> <span style="color:{TXT_MUTED};">&middot; {_room_type}</span></div>', unsafe_allow_html=True)
+                    with uc2: st.markdown(f'<div style="font-size:0.65rem; padding:5px 0;"><span style="color:{_pri_color}; font-weight:600;">{_pri_label}</span> <span style="color:{TXT_MUTED};">&middot; {_equip_label}</span></div>', unsafe_allow_html=True)
                     with uc3:
                         if st.button("Lock", key=f"force_lock_{_cid}_{u.get('section_idx',0)}", use_container_width=True):
                             for _oi, _oo in enumerate(offerings):
@@ -1971,13 +1966,14 @@ else:
                         add_log("DROP", f"Removed {c['id']}"); st.rerun()
                 else:
                     if st.button("ADD", key=f"add_scout_{c['id']}", use_container_width=True):
-                        active_project["offerings"].append({"catalog_id": c["id"], "priority": "must_have", "sections": 1, "override_enrollment_cap": None, "override_room_type": None, "override_preferred_professors": None, "notes": None})
+                        active_project["offerings"].append({"catalog_id": c["id"], "priority": "must_have", "sections": 1, "override_enrollment_cap": None, "override_preferred_professors": None, "notes": None})
                         add_log("DRAFT", f"Added {c['id']}"); st.rerun()
 
             # Inline preview below selected course
             if is_inspected:
                 _desc = html.escape(c.get("description", "No description available."))
-                _room = c.get("required_room_type", "Any").replace("_", " ").title()
+                _req_eq = c.get("required_equipment") or []
+                _room = ", ".join(t.replace("_", " ").title() for t in _req_eq) if _req_eq else "Any"
                 _profs = c.get("preferred_professors", [])
                 _prof_str = ", ".join(p.replace("prof_", "").replace("_", " ").title() for p in _profs[:3]) if _profs else "—"
                 _grad = f'<span style="font-size:0.55rem; background:{BG_HOVER}; border:1px solid {BORDER}; border-radius:3px; padding:1px 5px; margin-left:4px; color:{TXT_MUTED};">GRAD</span>' if c.get("is_graduate") else ""

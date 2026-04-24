@@ -248,7 +248,6 @@ def test_stream_real_solver_emits_solutions(client):
             "priority": o.get("priority", "should_have"),
             "sections": o.get("sections", 1),
             "override_enrollment_cap": None,
-            "override_room_type": None,
             "override_preferred_professors": None,
             "notes": None,
             "assigned_prof_id": None,

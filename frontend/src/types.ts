@@ -95,7 +95,6 @@ export interface Course {
   department: Department
   credits: number
   description?: string
-  required_room_type: string
   enrollment_cap: number
   specialization_tags: string[]
   is_graduate: boolean
@@ -106,7 +105,7 @@ export interface Course {
   usual_quarters?: string[]
   /** Equipment tags a room MUST have for this course to run there. Hard
    *  constraint in the solver: room.equipment_tags ⊇ course.required_equipment.
-   *  Missing/empty means "no equipment requirement beyond room_type". */
+   *  Missing/empty means "no equipment requirement". */
   required_equipment?: string[]
   /** Equipment tags the course PREFERS but doesn't require. Soft bonus in
    *  the solver — rooms missing preferred tags take a small penalty per
@@ -138,9 +137,7 @@ export interface Room {
   /** Free-text building name. SCAD runs campuses in Savannah, Atlanta, and
    *  Lacoste; buildings are department-specific, so this stays unstructured. */
   building: string
-  room_type: string
   station_count: number
-  station_type: string
   display_count: number
   capacity: number
   notes?: string
@@ -189,7 +186,6 @@ export interface Offering {
   priority: Priority
   sections: number
   override_enrollment_cap: number | null
-  override_room_type: string | null
   override_preferred_professors: string[] | null
   notes: string | null
 
@@ -288,7 +284,6 @@ export function expandOfferingsFromWire(
         priority: w.priority,
         sections: 1,
         override_enrollment_cap: w.override_enrollment_cap,
-        override_room_type: w.override_room_type,
         override_preferred_professors: w.override_preferred_professors,
         notes: w.notes,
         assigned_prof_id: w.assigned_prof_id,
@@ -313,7 +308,6 @@ export function coalesceOfferingsForWire(
     priority: o.priority,
     sections: 1,
     override_enrollment_cap: o.override_enrollment_cap,
-    override_room_type: o.override_room_type,
     override_preferred_professors: o.override_preferred_professors,
     notes: o.notes,
     assigned_prof_id: o.assigned_prof_id,
@@ -466,28 +460,6 @@ export function capacityChipTitle(
   }
 }
 
-// ─── Room type vocabulary ─────────────────────────────────────────
-
-/** Display labels for each room_type key. Values are natural-cased;
- *  callers uppercase at the UI boundary if context calls for it. */
-export const ROOM_TYPE_LABELS: Record<string, string> = {
-  pc_lab:         "PC Lab",
-  mac_lab:        "Mac Lab",
-  lecture_flex:   "Lecture Flex",
-  large_game_lab: "Large Game Lab",
-  itgm_suite:     "ITGM Suite",
-}
-
-/** Canonical order of room_type keys for UI listings (selects, filters). */
-export const ROOM_TYPE_ORDER: ReadonlyArray<string> = [
-  "pc_lab", "mac_lab", "lecture_flex", "large_game_lab", "itgm_suite",
-]
-
-/** Human-readable room_type. Falls back to snake→space for unknown keys. */
-export function prettyRoomType(type: string): string {
-  return ROOM_TYPE_LABELS[type] ?? type.replace(/_/g, " ")
-}
-
 // ─── Equipment tag helpers ────────────────────────────────────────
 
 /** Normalize a free-typed tag to the storage form: trimmed, lowercased,
@@ -520,14 +492,83 @@ export function collectEquipmentTags(
   return Array.from(seen).sort()
 }
 
-// ─── Station vocabulary ───────────────────────────────────────────
+// ─── localStorage migration: legacy room_type → equipment_tags ────
+//
+// Prior to the equipment-tag cutover, rooms were typed via `room_type`
+// (e.g. "pc_lab") + `station_type` ("pc"/"mac"), and courses declared a
+// `required_room_type`. A user's Path-B rooms override saved in
+// localStorage may still carry those legacy fields. These helpers read
+// those shapes on load, project them into equipment_tags, and strip the
+// legacy keys so the app only ever sees the unified shape.
 
-export const STATION_TYPE_LABELS: Record<string, string> = {
-  pc:  "PC",
-  mac: "Mac",
+/** Subset of legacy-room fields we may still encounter in a saved override. */
+type LegacyRoomShape = Partial<Room> & {
+  room_type?: string
+  station_type?: string
 }
 
-export const STATION_TYPE_ORDER: ReadonlyArray<string> = ["pc", "mac"]
+/** Subset of legacy-course fields we may still encounter in a saved override. */
+type LegacyCourseShape = Partial<Course> & {
+  required_room_type?: string
+}
+
+/** Project a legacy room's room_type / station_type / station_count into
+ *  equipment_tags, preserving the matching semantics of the retired
+ *  ROOM_COMPATIBILITY table. Large game labs seed a `lecture_flex` tag so
+ *  lecture-flex courses still match them; ≥10-station rooms seed a `lab`
+ *  tag so any-lab courses still match. */
+function seedLegacyRoomTags(r: LegacyRoomShape): string[] {
+  const tags = new Set<string>()
+  if (r.station_type) tags.add(r.station_type)
+  if (r.room_type) tags.add(r.room_type)
+  if (r.room_type === "large_game_lab") tags.add("lecture_flex")
+  if ((r.station_count ?? 0) >= 10) tags.add("lab")
+  return Array.from(tags).sort()
+}
+
+/** Project a legacy course's required_room_type into required_equipment.
+ *  Pairs with seedLegacyRoomTags so the subset check (room tags ⊇ course
+ *  required) behaves the same on pre-migration saved data. */
+function seedLegacyCourseEquipment(c: LegacyCourseShape): string[] {
+  const rt = c.required_room_type
+  if (!rt) return []
+  if (rt === "any_lab") return ["lab"]
+  if (rt === "standard") return []
+  return [rt]
+}
+
+/** One-shot localStorage migration for a rooms map. Strips legacy
+ *  `room_type` / `station_type` fields and seeds `equipment_tags` from them
+ *  when absent. Idempotent — already-migrated rooms pass through. */
+export function migrateRoomsEquipment(
+  rooms: Record<string, LegacyRoomShape>,
+): Record<string, Room> {
+  const out: Record<string, Room> = {}
+  for (const [id, raw] of Object.entries(rooms)) {
+    const rest: Record<string, unknown> = { ...raw }
+    delete rest.room_type
+    delete rest.station_type
+    const tags = raw.equipment_tags ?? seedLegacyRoomTags(raw)
+    out[id] = { ...(rest as unknown as Room), equipment_tags: tags }
+  }
+  return out
+}
+
+/** One-shot localStorage migration for a catalog map. Strips the legacy
+ *  `required_room_type` field and seeds `required_equipment` from it when
+ *  absent. Idempotent. */
+export function migrateCatalogEquipment(
+  catalog: Record<string, LegacyCourseShape>,
+): Record<string, Course> {
+  const out: Record<string, Course> = {}
+  for (const [id, raw] of Object.entries(catalog)) {
+    const rest: Record<string, unknown> = { ...raw }
+    delete rest.required_room_type
+    const req = raw.required_equipment ?? seedLegacyCourseEquipment(raw)
+    out[id] = { ...(rest as unknown as Course), required_equipment: req }
+  }
+  return out
+}
 
 // ─── Actions (events-up) ──────────────────────────────────────────
 

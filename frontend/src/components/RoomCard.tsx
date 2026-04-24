@@ -3,21 +3,16 @@ import type { Room } from "../types"
 import {
   normalizeEquipmentTag,
   prettyEquipmentTag,
-  prettyRoomType,
-  ROOM_TYPE_LABELS,
-  ROOM_TYPE_ORDER,
-  STATION_TYPE_LABELS,
-  STATION_TYPE_ORDER,
 } from "../types"
 
 /**
  * The ROOM card — the room editor. Rendered in the detail panel when a
  * room row is clicked in the Roster's Rooms tab.
  *
- * Fully editable: name, building, room_type, station_type, station_count,
- * display_count, capacity, availability, notes. The id stays read-only —
- * it's the foreign key other code joins on. Name used to be identity but
- * now that users add rooms from scratch, renaming has to work.
+ * Fully editable: name, building, station_count, display_count, capacity,
+ * equipment_tags, availability, notes. The id stays read-only — it's the
+ * foreign key other code joins on. Name used to be identity but now that
+ * users add rooms from scratch, renaming has to work.
  *
  * Edits flow through `onUpdate` → App's `updateRoom` → full-list localStorage
  * override, then ride the Backup / Restore / Commit pipeline.
@@ -39,8 +34,6 @@ export interface RoomCardProps {
 export function RoomCard(props: RoomCardProps) {
   const { room: r } = props
   const isAvailable = r.available !== false
-  const stationLabel =
-    STATION_TYPE_LABELS[r.station_type] ?? r.station_type.toUpperCase()
   const tags = r.equipment_tags ?? []
   const [tagDraft, setTagDraft] = useState("")
   const tagListId = useId()
@@ -89,8 +82,7 @@ export function RoomCard(props: RoomCardProps) {
             <h3 className="prof-card__name">{r.name || "(untitled room)"}</h3>
             <span className="prof-card__role">
               {r.building ? `${r.building} · ` : ""}
-              {prettyRoomType(r.room_type).toUpperCase()} ·{" "}
-              {r.station_count}×{stationLabel.toUpperCase()}
+              {r.station_count} stations · cap {r.capacity}
             </span>
           </div>
         </section>
@@ -122,49 +114,6 @@ export function RoomCard(props: RoomCardProps) {
             SCAD runs campuses in Savannah, Atlanta, and Lacoste — name the
             building so colleagues know where to find the room.
           </p>
-        </section>
-
-        <section className="class__section">
-          <label className="class__label">Room Type</label>
-          <select
-            className="class__select"
-            value={r.room_type}
-            onChange={e => props.onUpdate(r.id, { room_type: e.target.value })}
-          >
-            {ROOM_TYPE_ORDER.map(key => (
-              <option key={key} value={key}>
-                {ROOM_TYPE_LABELS[key]}
-              </option>
-            ))}
-            {/* Fallback for unknown values already in data — keeps the
-                select from silently clearing legacy room_types. */}
-            {!ROOM_TYPE_ORDER.includes(r.room_type) && (
-              <option value={r.room_type}>{prettyRoomType(r.room_type)}</option>
-            )}
-          </select>
-          <p className="class__hint">
-            Courses with a matching <code>required_room_type</code> can be
-            scheduled here.
-          </p>
-        </section>
-
-        <section className="class__section">
-          <label className="class__label">Station Type</label>
-          <div className="class__segmented">
-            {STATION_TYPE_ORDER.map(key => (
-              <button
-                key={key}
-                type="button"
-                className={
-                  "class__seg" +
-                  (r.station_type === key ? " class__seg--active" : "")
-                }
-                onClick={() => props.onUpdate(r.id, { station_type: key })}
-              >
-                {STATION_TYPE_LABELS[key]}
-              </button>
-            ))}
-          </div>
         </section>
 
         <section className="class__section">

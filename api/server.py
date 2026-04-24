@@ -120,7 +120,6 @@ class OfferingModel(BaseModel):
     priority: str
     sections: int = 1
     override_enrollment_cap: int | None = None
-    override_room_type: str | None = None
     override_preferred_professors: list[str] | None = None
     notes: str | None = None
     assigned_prof_id: str | None = None

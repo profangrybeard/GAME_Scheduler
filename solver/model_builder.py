@@ -23,7 +23,7 @@ Key: (cs_key, prof_id, room_id, dg, ts)
 
 Structural filters applied at variable-creation time (no explicit constraints needed)
   HC5  — room capacity >= effective enrollment cap
-  HC6  — room type compatible with course required_room_type
+  HC6  — room.equipment_tags ⊇ course.required_equipment (tag-subset check)
   HC7  — professor teaches course's department
   HC8  — professor available this quarter
   HC9  — graduate courses require has_masters or masters_in_progress
@@ -38,9 +38,7 @@ from pathlib import Path
 
 from ortools.sat.python import cp_model
 
-from config import (
-    TIME_SLOTS, DAY_GROUPS, VALID_QUARTERS, ROOM_COMPATIBILITY,
-)
+from config import TIME_SLOTS, DAY_GROUPS, VALID_QUARTERS
 
 BASE = Path(__file__).resolve().parent.parent
 
@@ -86,20 +84,16 @@ def _eligible_professors(
 
 
 def _eligible_rooms(course: dict, rooms: list[dict]) -> list[str]:
-    """Return IDs of rooms compatible with course room type and enrollment cap.
+    """Return IDs of rooms compatible with course equipment tags and enrollment cap.
 
     Enforces:
       HC5  room.capacity >= enrollment_cap
-      HC6  room type must satisfy ROOM_COMPATIBILITY check
-      HC11 room.equipment_tags ⊇ course.required_equipment (when set)
+      HC6  room.equipment_tags ⊇ course.required_equipment (tag-subset check)
 
-    HC11 is a chair-authored tag-subset check: rooms advertise what they have
-    (`equipment_tags`), courses demand what they need (`required_equipment`).
-    Empty/missing required_equipment means "no equipment requirement beyond
-    room_type" — same eligibility as before the feature landed.
+    Rooms advertise what they have (`equipment_tags`), courses demand what they
+    need (`required_equipment`). Empty/missing required_equipment means "no
+    equipment requirement" — the course runs in any capacity-adequate room.
     """
-    required = course.get("required_room_type", "standard")
-    compat = ROOM_COMPATIBILITY.get(required, lambda r: True)
     cap = course.get("enrollment_cap", 1)
     required_equipment = set(course.get("required_equipment") or [])
 
@@ -111,7 +105,7 @@ def _eligible_rooms(course: dict, rooms: list[dict]) -> list[str]:
     return [
         r["id"]
         for r in rooms
-        if compat(r) and r["capacity"] >= cap and equipment_ok(r)
+        if r["capacity"] >= cap and equipment_ok(r)
     ]
 
 
@@ -274,18 +268,12 @@ def build_model(
             _profs_cache[cid] = _eligible_professors(course, professors, quarter)
         eligible_profs[cs_key] = _profs_cache[cid]
 
-        # Eligible rooms respect enrollment-cap and room-type overrides from the offering
-        override_key = (
-            cid,
-            offering.get("override_enrollment_cap"),
-            offering.get("override_room_type"),
-        )
+        # Eligible rooms respect the offering's enrollment-cap override.
+        override_key = (cid, offering.get("override_enrollment_cap"))
         if override_key not in _rooms_cache:
             effective = dict(course)
             if offering.get("override_enrollment_cap") is not None:
                 effective["enrollment_cap"] = offering["override_enrollment_cap"]
-            if offering.get("override_room_type") is not None:
-                effective["required_room_type"] = offering["override_room_type"]
             _rooms_cache[override_key] = _eligible_rooms(effective, rooms)
         eligible_rooms[cs_key] = _rooms_cache[override_key]
 

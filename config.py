@@ -77,31 +77,12 @@ TIME_PREF_MAP = {
     ("afternoon_evening", "5:00PM"):  "preferred",
 }
 
-# === Room compatibility matrix ===
-ROOM_COMPATIBILITY = {
-    "pc_lab":         lambda r: r.get("room_type") == "pc_lab",
-    "large_game_lab": lambda r: r.get("room_type") == "large_game_lab",
-    "mac_lab":        lambda r: r.get("room_type") == "mac_lab",
-    "flex_studio":    lambda r: r.get("room_type") == "flex_studio",
-    "lecture_flex":   lambda r: r.get("room_type") in ("lecture_flex", "large_game_lab"),
-    "any_lab":        lambda r: r.get("station_count", 0) >= 10,
-    "standard":       lambda r: True,
-}
-
-VALID_ROOM_TYPES = ["pc_lab", "large_game_lab", "mac_lab", "flex_studio", "lecture_flex", "any_lab", "standard"]
-
 # === Catalog inference ===
 PREFIX_TO_DEPT = {
     "GAME": "game",
     "ITGM": "game",
     "MOME": "motion_media",
     "AI":   "ai",
-}
-
-DEPT_DEFAULT_ROOM = {
-    "game": "pc_lab",
-    "motion_media": "mac_lab",
-    "ai": "pc_lab",
 }
 
 # === Valid specialization tags (controlled vocabulary) ===

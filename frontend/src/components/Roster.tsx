@@ -6,7 +6,6 @@ import {
   profContractCeiling,
   profContractFloor,
   profLoadedCount,
-  STATION_TYPE_LABELS,
 } from "../types"
 import { Catalogue } from "./Catalogue"
 import { DEPT_CHIPS, courseMatchesQuery, type DeptFilter } from "./courseFilter"
@@ -718,9 +717,7 @@ function RoomsList(props: RoomsListProps) {
               </span>
               <span className="roster-card__sub">
                 {r.building && <>{r.building}{" · "}</>}
-                {r.station_count}×
-                {(STATION_TYPE_LABELS[r.station_type] ?? r.station_type).toUpperCase()}
-                {" · cap "}{r.capacity}
+                {r.station_count} stations · cap {r.capacity}
               </span>
             </span>
             <span
