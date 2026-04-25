@@ -715,8 +715,12 @@ function RoomsList(props: RoomsListProps) {
               <span className="roster-card__name roster-card__name--primary">
                 {r.name || "(untitled room)"}
               </span>
+              {r.building && (
+                <span className="roster-card__sub roster-card__sub--building">
+                  {r.building}
+                </span>
+              )}
               <span className="roster-card__sub">
-                {r.building && <>{r.building}{" · "}</>}
                 {r.station_count} stations · cap {r.capacity}
               </span>
             </span>
