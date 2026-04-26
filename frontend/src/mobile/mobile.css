@@ -61,7 +61,7 @@
   margin-left: 2px;
 }
 
-:root[data-theme="dark"] .mobile-eyebrow-tag {
+:root[data-theme="outrun"] .mobile-eyebrow-tag {
   color: #fb923c;
 }
 
@@ -287,6 +287,16 @@
   font-weight: 700;
   line-height: 1;
   color: var(--accent);
+}
+
+/* Locked state — see desktop counterpart in App.css. */
+.mobile-theme-toggle--locked,
+.mobile-theme-toggle--locked:active {
+  cursor: not-allowed;
+  opacity: 0.45;
+  color: var(--text-faint);
+  border-style: dashed;
+  background: transparent;
 }
 
 /* ─── Schedule detail ──────────────────────────────────────────── */

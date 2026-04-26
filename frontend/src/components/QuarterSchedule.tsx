@@ -12,6 +12,7 @@ import type {
   SolveStatus,
   TimeSlot,
 } from "../types"
+import { useTheme } from "../hooks/useTheme"
 import { ProfAvatar } from "./ProfAvatar"
 import { ScheduleMenu } from "./ScheduleMenu"
 import { SolveProgress } from "./SolveProgress"
@@ -118,6 +119,7 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
   // re-plays its 1s perimeter trace. Cleared by the chaser's onAnimationEnd.
   const [chaseKey, setChaseKey] = useState(0)
 
+  const { ctaLabel } = useTheme()
   const isSolving = props.solveStatus === "running"
   const apiReady = props.apiAvailable === true
   const canGenerate = apiReady && props.offerings.length > 0 && !isSolving
@@ -337,7 +339,7 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
                   <path d="M13 2L4 14h7l-1 8 9-12h-7z" />
                 </svg>
               )}
-              {isSolving ? "Assembling…" : "ASSEMBLE"}
+              {isSolving ? ctaLabel.solving : ctaLabel.idle}
             </button>
             <ScheduleMenu
               onEmptyCalendar={props.onEmptyCalendar}
@@ -389,6 +391,11 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
       </div>
 
       <div className="panel__body schedule-body">
+        <div
+          className="schedule__laser"
+          data-active={isSolving ? "true" : "false"}
+          aria-hidden="true"
+        />
         <div
           className={
             "schedule-grid" + (props.placingId ? " schedule-grid--placing" : "")

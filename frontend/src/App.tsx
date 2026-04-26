@@ -31,7 +31,7 @@ import { SolverTuning } from "./components/SolverTuning"
 import { loadTunedMix, mixToSolverWeights, saveTunedMix, type Mix } from "./components/SolverMix"
 import { TopbarMenu } from "./components/TopbarMenu"
 import { loadInitialState } from "./data"
-import { useTheme } from "./hooks/useTheme"
+import { useTheme, themeKind } from "./hooks/useTheme"
 import { coalesceOfferingsForWire, collectBuildingsByCampus, collectEquipmentTags, expandOfferingsFromWire, migrateCatalogEquipment, migrateRoomsEquipment, mintOfferingId, profContractCeiling, profContractFloor } from "./types"
 import type { Assignment, Course, Offering, Professor, RosterCapacity, Room, SchedulerState, Slot, SolveMode, SolveModeProgress, SolveProgressState, WireOffering } from "./types"
 import "./App.css"
@@ -203,7 +203,7 @@ function App() {
       rooms,
     }
   })
-  const { theme, resolved, cycle: cycleTheme } = useTheme()
+  const { theme, resolved, isOverride, cycle: cycleTheme } = useTheme()
   const [selectedProfId, setSelectedProfId] = useState<string | null>(null)
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
   const [portraits, setPortraits] = useState<Record<string, string>>(loadPortraits)
@@ -1390,12 +1390,23 @@ function App() {
             </button>
             <button
               type="button"
-              className="theme-toggle"
+              className={
+                "theme-toggle" + (isOverride ? " theme-toggle--locked" : "")
+              }
               onClick={cycleTheme}
-              title={`Theme: ${theme} (${resolved})`}
-              aria-label={`Switch theme, currently ${theme}`}
+              disabled={isOverride}
+              title={
+                isOverride
+                  ? `Theme override active (${resolved}). Reset from the schedule … menu to use light/dark mode.`
+                  : `Theme: ${theme} (${resolved})`
+              }
+              aria-label={
+                isOverride
+                  ? `Light/dark toggle disabled — theme override "${resolved}" is active`
+                  : `Switch theme, currently ${theme}`
+              }
             >
-              {resolved === "dark" ? "\u263E" : "\u2600"}
+              {themeKind(resolved) === "dark" ? "\u263E" : "\u2600"}
               {theme === "system" && <span className="theme-toggle__auto">A</span>}
             </button>
             <DataIssuesPanel errors={reloadErrors} />
