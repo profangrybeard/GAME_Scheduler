@@ -70,14 +70,42 @@
 }
 
 /* Brand wordmark — dominant title in the topbar. The :Prototype tag stays
-   orange across themes as an "under construction" signal. */
+   orange across themes as an "under construction" signal. Syne gives it
+   the wide retro-future bones the synthwave brief calls out; the cyan/
+   magenta glow only fires in dark mode (light mode keeps SCAD-paper). */
 .brand-eyebrow {
-  font-size: 1.35rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--text);
   line-height: 1;
   white-space: nowrap;
+}
+
+:root:not([data-theme="executive-day"]):not([data-theme="marauder"]):not([data-theme="nightmare"]):not([data-theme="forest"]) .brand-eyebrow {
+  /* Layered tube-glow on the wordmark — tight inner highlight,
+     small mint bloom, larger soft halo. No magenta, no neon vomit. */
+  text-shadow:
+    0 0 1px rgba(255, 255, 255, 0.30),
+    0 0 6px color-mix(in srgb, var(--accent) 40%, transparent),
+    0 0 14px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+/* Non-synthwave themes fall away from Michroma to a clean Inter.
+   The palette carries each theme's muse — typography stays usable
+   across all of them so the tool reads as a tool, not a costume. */
+:root[data-theme="executive-day"] .brand-eyebrow,
+:root[data-theme="forest"] .brand-eyebrow,
+:root[data-theme="marauder"] .brand-eyebrow,
+:root[data-theme="nightmare"] .brand-eyebrow {
+  font-family: "Inter", sans-serif;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  font-style: normal;
 }
 
 .brand-eyebrow__tag {
@@ -85,7 +113,9 @@
   color: #c2410c;
 }
 
-:root[data-theme="dark"] .brand-eyebrow__tag {
+/* Outrun: warmer orange on dark bg. Rio overrides this in its own
+   block (hot magenta). Paper inherits the default warm orange. */
+:root:not([data-theme="executive-day"]):not([data-theme="marauder"]):not([data-theme="nightmare"]):not([data-theme="forest"]) .brand-eyebrow__tag {
   color: #fb923c;
 }
 
@@ -282,7 +312,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .topbar-about__contact {
@@ -300,7 +330,7 @@
 }
 
 .topbar-about__mailto:hover {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .topbar-about__action {
@@ -468,7 +498,7 @@
 
 .data-issues__chip--info {
   background: color-mix(in srgb, var(--accent) 18%, transparent);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .data-issues__loc {
@@ -535,7 +565,21 @@
   font-size: 0.5rem;
   font-weight: 700;
   line-height: 1;
-  color: var(--accent);
+  color: var(--accent-text);
+}
+
+/* Locked state — fires when an override theme is active. The button
+   stays visible (so the user can read the tooltip) but goes opaque-
+   greyed, non-interactive, and shows a tiny "lock" diagonal bar to
+   signal "you opted out of light/dark mode." User clears via the
+   schedule … menu. */
+.theme-toggle--locked,
+.theme-toggle--locked:hover {
+  cursor: not-allowed;
+  opacity: 0.45;
+  color: var(--text-faint);
+  border-color: var(--border);
+  border-style: dashed;
 }
 
 /* ─── Three-panel canvas ────────────────────────────────────────── */
@@ -631,6 +675,7 @@
    anything else in the toolbar. */
 .panel__actions button.btn-generate {
   position: relative;
+  overflow: hidden;
   background:
     linear-gradient(
       180deg,
@@ -640,9 +685,10 @@
     );
   border: 1px solid color-mix(in oklab, var(--accent) 78%, black 22%);
   color: var(--accent-on);
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-weight: 800;
   font-size: 0.95rem;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.16em;
   height: 48px;
   padding: 0 22px;
   border-radius: 10px;
@@ -1053,9 +1099,11 @@
 
 .catalogue-row__id {
   font-family: var(--font-mono);
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   color: var(--text-muted);
   font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .catalogue-row__name {
@@ -1093,7 +1141,7 @@
 }
 
 .class__state--offering { color: var(--text-muted); border-color: var(--border); }
-.class__state--kitted   { color: var(--accent);     border-color: var(--accent); }
+.class__state--kitted   { color: var(--accent-text);     border-color: var(--accent); }
 .class__state--placed   { color: var(--success);    border-color: color-mix(in srgb, var(--success) 50%, transparent); }
 
 .class__body {
@@ -1116,6 +1164,8 @@
 
 .class__id {
   font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .class__credits {
@@ -1191,7 +1241,7 @@
 
 .class__info-badge:hover,
 .class__info-badge:focus-visible {
-  color: var(--accent);
+  color: var(--accent-text);
   border-color: var(--accent);
   outline: none;
 }
@@ -1234,10 +1284,11 @@
 }
 
 .class__label {
-  font-size: 0.68rem;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.3em;
   color: var(--text-faint);
   display: flex;
   align-items: center;
@@ -1344,7 +1395,7 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: none;
-  color: var(--accent);
+  color: var(--accent-text);
   background: var(--accent-subtle, color-mix(in srgb, var(--accent) 14%, transparent));
   padding: 1px 6px;
   border-radius: 999px;
@@ -1536,7 +1587,7 @@
   position: relative;
   display: inline-flex;
   align-items: baseline;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 0.74rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -1592,13 +1643,16 @@
 
 /* Day headers (MW / TTH / F) — dominant labels. Bumped from 0.62rem muted
    to 0.95rem full text so they visually carry the calendar's structure
-   instead of whispering it. */
+   instead of whispering it. Syne with wider tracking gives them the
+   retro-display character the synthwave brief calls for. */
 .schedule-grid__day-header {
   justify-content: center;
   padding: var(--space-sm) var(--space-md);
-  font-size: 0.95rem;
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.18em;
 }
 
 .schedule-grid__time-header {
@@ -1611,7 +1665,15 @@
 }
 
 .schedule-grid__cell {
-  background: var(--bg);
+  background-color: rgba(11, 12, 16, 0.92);
+  background-image:
+    /* Scanline band + 40px grid — neutral white at ~3% so the canvas
+       reads as graph paper texture, not a colored overlay. */
+    linear-gradient(rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.020) 50%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.030) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.030) 1px, transparent 1px);
+  background-size: 100% 4px, 40px 40px, 40px 40px;
+  background-position: 0 0;
   min-height: 96px;
   padding: 6px;
   display: flex;
@@ -1683,20 +1745,75 @@
     "avatar room room";
   gap: 2px 8px;
   align-items: center;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  /* Matte hardware: dark glass with crisp 1px white inner border —
+     no halo by default. Glows are reserved for hover/selected. */
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-left-width: 3px;
   color: var(--text);
   font: inherit;
-  padding: 6px 8px;
-  border-radius: var(--radius-sm);
+  padding: 7px 9px 6px;
+  border-radius: var(--radius-md);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
   cursor: grab;
   text-align: left;
-  transition: border-color 0.12s ease, background 0.12s ease, opacity 0.15s ease;
+  transition:
+    transform 0.16s ease,
+    border-color 0.12s ease,
+    background 0.12s ease,
+    box-shadow 0.16s ease,
+    opacity 0.15s ease;
+}
+
+/* Power-LED light-bar — only fires on hover/selected. A 1px tube
+   running along the top edge with layered tight glow. Hidden on
+   default cards so the rail doesn't read as "every card is on." */
+.schedule-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 10px;
+  right: 10px;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    color-mix(in srgb, var(--accent) 85%, transparent) 50%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 1px rgba(255, 255, 255, 0.6),
+    0 0 4px color-mix(in srgb, var(--accent) 60%, transparent),
+    0 0 10px color-mix(in srgb, var(--accent) 35%, transparent);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
 }
 
 .schedule-card:active                          { cursor: grabbing; }
-.schedule-card:hover                           { background: var(--surface-hover); }
+.schedule-card:hover,
+.schedule-card--selected {
+  background: rgba(0, 0, 0, 0.55);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  transform: translateY(-1px);
+  /* Layered tube-glow: tight white pin, small cyan bloom, soft outer
+     halo, and the hardware drop-shadow underneath. Mimics an LED
+     embedded in matte plastic, not a blurry haze. */
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent),
+    0 0 4px color-mix(in srgb, var(--accent) 45%, transparent),
+    0 0 14px color-mix(in srgb, var(--accent) 22%, transparent),
+    0 6px 14px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.schedule-card:hover::before,
+.schedule-card--selected::before {
+  opacity: 1;
+}
 .schedule-card--dragging                       { opacity: 0.4; }
 
 /* Small red dot flagging a user-placed ("pinned") card. Matches the dot
@@ -1805,26 +1922,132 @@
   flex-shrink: 0;
 }
 
+/* Theme picker section inside the overflow menu — divider, label,
+   radio-style theme rows. Active row shows an accent dot on the right
+   so the user can A/B between presets without re-opening the menu. */
+
+.schedule-menu__divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 2px;
+}
+
+.schedule-menu__section-label {
+  padding: 6px 12px 2px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* Hint text under "Theme Override" — explains what picking does
+   without forcing the user to hover-and-wait for a tooltip. */
+.schedule-menu__section-hint {
+  padding: 0 12px 6px;
+  font-size: 0.66rem;
+  color: var(--text-faint);
+  line-height: 1.4;
+}
+
+/* Reset button — only renders when an override is active. Slightly
+   muted to read as "secondary action" vs. the override picks above. */
+.schedule-menu__item--reset {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.schedule-menu__item--reset:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.schedule-menu__item--theme {
+  font-size: 0.82rem;
+}
+
+.schedule-menu__item.is-active {
+  color: var(--accent-text);
+}
+
+.schedule-menu__check {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  color: var(--accent);
+}
+
+/* Chair-mode picker row — 7 dept-color swatches in one tight row.
+   Picking is one click; the active swatch lifts and shows a tight
+   ring in the swatch's own color. */
+
+.schedule-menu__chair-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  padding: 4px 8px 6px;
+}
+
+.schedule-menu__chair-swatch {
+  position: relative;
+  height: 28px;
+  border: 1px solid rgba(0, 0, 0, 0.30);
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    transform 0.10s ease,
+    box-shadow 0.12s ease;
+}
+
+.schedule-menu__chair-swatch:hover:not(.is-active) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.schedule-menu__chair-swatch.is-active {
+  /* Active swatch picks up a ring in the live --accent (which IS the
+     swatch's own color, since chair themes route accent → dept). */
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px -2px var(--accent);
+}
+
+.schedule-menu__chair-label {
+  pointer-events: none;
+}
+
 .schedule-card--selected {
   border-color: var(--accent);
   border-left-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent);
 }
 
-.schedule-card.dept--game         { border-left-color: #fcd34d; }
-.schedule-card.dept--motion_media { border-left-color: #f472b6; }
-.schedule-card.dept--ai           { border-left-color: #818cf8; }
-.schedule-card.dept--ixds         { border-left-color: #5eead4; }
-.schedule-card.dept--iact         { border-left-color: #fb923c; }
-.schedule-card.dept--digi         { border-left-color: #a3e635; }
-.schedule-card.dept--adbr         { border-left-color: #f87171; }
+.schedule-card.dept--game         { border-left-color: var(--dept-game);  --card-glow: rgba(255, 233,  74, 0.16); }
+.schedule-card.dept--motion_media { border-left-color: var(--dept-mome);  --card-glow: rgba(255,   0, 217, 0.16); }
+.schedule-card.dept--ai           { border-left-color: var(--dept-ai);    --card-glow: rgba(185, 103, 255, 0.16); }
+.schedule-card.dept--ixds         { border-left-color: var(--dept-ixds);  --card-glow: rgba(  0, 243, 255, 0.18); }
+.schedule-card.dept--iact         { border-left-color: var(--dept-iact);  --card-glow: rgba(255, 140,   0, 0.14); }
+.schedule-card.dept--digi         { border-left-color: var(--dept-digi);  --card-glow: rgba(  0, 255, 163, 0.14); }
+.schedule-card.dept--adbr         { border-left-color: var(--dept-adbr);  --card-glow: rgba(255,  61, 113, 0.16); }
 
 .schedule-card__avatar { grid-area: avatar; }
 .schedule-card__id {
   grid-area: id;
   font-family: var(--font-mono);
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   font-weight: 600;
+  letter-spacing: 0.05em;
   color: var(--text);
 }
 .schedule-card__prof {
@@ -1931,11 +2154,10 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 8px 4px;
+  padding: 8px 4px 10px;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  transition: color 0.12s ease, border-color 0.12s ease;
+  position: relative;
+  transition: color 0.12s ease;
 }
 
 .roster__tab:hover {
@@ -1943,8 +2165,21 @@
 }
 
 .roster__tab--active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
+  color: var(--accent-text);
+}
+
+/* Thick rounded gold underline — structural accent that signals "current"
+   without relying on color contrast. Rounded ends read as a designed
+   underline, not a table-row border. */
+.roster__tab--active::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 0;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--accent);
 }
 
 /* Count badge — same on all tabs. Muted on inactive tabs, accent-tinted on
@@ -1967,7 +2202,7 @@
 
 .roster__tab--active .roster__tab-count {
   background: color-mix(in srgb, var(--accent) 18%, transparent);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* Sub-tabs inside the Courses tab — switch between the quarter's unplaced
@@ -2009,7 +2244,7 @@
 .roster__subtab--active {
   background: color-mix(in srgb, var(--accent) 14%, transparent);
   border-color: color-mix(in srgb, var(--accent) 35%, transparent);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .roster__subtab-count {
@@ -2026,7 +2261,7 @@
 .roster__add-btn {
   background: transparent;
   border: 1px solid var(--border);
-  color: var(--accent);
+  color: var(--accent-text);
   font: inherit;
   font-size: 0.72rem;
   font-weight: 600;
@@ -2142,6 +2377,8 @@
 .roster-card__id {
   font-family: var(--font-mono);
   font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .roster-card__name {
@@ -2219,7 +2456,7 @@
 }
 
 .roster-card__add-section:hover {
-  color: var(--accent);
+  color: var(--accent-text);
   background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
@@ -2277,7 +2514,7 @@
 
 .roster-card--sectioned.roster-card--selected .roster-card__section-chip {
   background: color-mix(in srgb, var(--accent) 24%, transparent);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* ─── Roster person/room rows (Profs + Rooms tabs) ─────────────── */
@@ -2782,7 +3019,7 @@
 }
 
 .bottom-tab--active {
-  color: var(--accent);
+  color: var(--accent-text);
   border-top-color: var(--accent);
 }
 
@@ -2844,7 +3081,7 @@
 .placement-banner__cancel {
   background: transparent;
   border: 1px solid var(--accent);
-  color: var(--accent);
+  color: var(--accent-text);
   font: inherit;
   font-size: 0.78rem;
   font-weight: 600;
@@ -3359,7 +3596,7 @@
 .solve-progress__mode-chip--active {
   background: color-mix(in srgb, var(--accent) 18%, transparent);
   border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .solve-progress__mode-chip-count {
@@ -3522,7 +3759,7 @@
   appearance: none;
   background: color-mix(in srgb, var(--accent) 14%, var(--surface));
   border: 1.5px solid var(--accent);
-  color: var(--accent);
+  color: var(--accent-text);
   border-radius: 999px;
   width: 48px;
   height: 48px;
@@ -3552,7 +3789,7 @@
 
 .solve-progress__pill--running {
   background: color-mix(in srgb, var(--accent) 20%, transparent);
-  color: var(--accent);
+  color: var(--accent-text);
   border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
 }
 
@@ -3960,7 +4197,7 @@
 }
 
 .prof-meter--overload .prof-meter__ratio {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .prof-meter--maxed .prof-meter__ratio {
@@ -4013,7 +4250,7 @@
 
 .change-log--open .change-log__toggle {
   opacity: 1;
-  color: var(--accent);
+  color: var(--accent-text);
   background: var(--surface-hover);
 }
 
@@ -4108,10 +4345,10 @@
   text-overflow: ellipsis;
 }
 
-.change-log__badge--pin     { background: color-mix(in srgb, var(--accent)  18%, transparent); color: var(--accent); }
+.change-log__badge--pin     { background: color-mix(in srgb, var(--accent)  18%, transparent); color: var(--accent-text); }
 .change-log__badge--unpin   { background: color-mix(in srgb, var(--warn)    18%, transparent); color: var(--warn); }
 .change-log__badge--mode    { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success); }
-.change-log__badge--tune    { background: color-mix(in srgb, var(--accent)  18%, transparent); color: var(--accent); }
+.change-log__badge--tune    { background: color-mix(in srgb, var(--accent)  18%, transparent); color: var(--accent-text); }
 .change-log__badge--resume  { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success); }
 .change-log__badge--commit  { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success); }
 .change-log__badge--backup,
@@ -4134,4 +4371,661 @@
    a desktop-only affordance that would overlap the bottom tab bar anyway. */
 @media (max-width: 767px) {
   .change-log { display: none; }
+}
+
+/* ─── Synthwave: emissive mono-data glow ────────────────────────────
+   Course IDs render in JetBrains Mono everywhere. In dark/synthwave
+   mode they pick up a subtle cyan text-shadow so they read as
+   "emissive data" instead of inert text. Light mode opts out so the
+   editorial-paper look isn't muddied by a halo. */
+
+:root:not([data-theme="executive-day"]):not([data-theme="marauder"]):not([data-theme="nightmare"]):not([data-theme="forest"]) .schedule-card__id,
+:root:not([data-theme="executive-day"]):not([data-theme="marauder"]):not([data-theme="nightmare"]):not([data-theme="forest"]) .catalogue-row__id,
+:root:not([data-theme="executive-day"]):not([data-theme="marauder"]):not([data-theme="nightmare"]):not([data-theme="forest"]) .roster-card__id,
+:root:not([data-theme="executive-day"]):not([data-theme="marauder"]):not([data-theme="nightmare"]):not([data-theme="forest"]) .class__id {
+  /* Tight layered phosphor glow — tube-light, not stage-light. */
+  text-shadow:
+    0 0 1px rgba(255, 255, 255, 0.25),
+    0 0 4px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+/* ─── Synthwave: dark-glass HUD Assemble button ──────────────────────
+   The gold-gradient plunger style stays intact for light mode (the
+   SCAD-paper aesthetic). In synthwave/dark we replace the entire
+   look with a dark-glass synth-tech component:
+     - near-black backdrop-blurred body
+     - thin cyan border that brightens on hover
+     - vertical "scan" sweep ::before animating top→bottom
+     - pulse-glow keyframe (4s breathing cyan halo)
+     - decorative top-left + bottom-right HUD corner brackets
+   The ::before is the sweep; the existing .btn-chaser child element
+   handles the on-click arc. */
+
+:root:not([data-theme="executive-day"]):not([data-theme="marauder"]):not([data-theme="nightmare"]):not([data-theme="forest"]) .panel__actions button.btn-generate {
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.30em;
+  height: 48px;
+  padding: 0 28px;
+  border-radius: 6px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent),
+    0 0 4px color-mix(in srgb, var(--accent) 35%, transparent),
+    0 0 12px color-mix(in srgb, var(--accent) 18%, transparent);
+  animation: btn-generate-pulse 4.2s ease-in-out infinite;
+  filter: none;
+}
+
+:root:not([data-theme="executive-day"]):not([data-theme="marauder"]):not([data-theme="nightmare"]):not([data-theme="forest"]) .panel__actions button.btn-generate:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.65);
+  border-color: color-mix(in srgb, var(--accent) 65%, transparent);
+  color: var(--text);
+  filter: none;
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent),
+    0 0 6px color-mix(in srgb, var(--accent) 55%, transparent),
+    0 0 18px color-mix(in srgb, var(--accent) 30%, transparent);
+  animation: btn-generate-pulse 4.2s ease-in-out infinite;
+}
+
+:root:not([data-theme="executive-day"]):not([data-theme="marauder"]):not([data-theme="nightmare"]):not([data-theme="forest"]) .panel__actions button.btn-generate:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent),
+    0 0 4px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+/* Pulse-glow — layered LED-tube stack breathing in/out. Tight inner
+   highlight + small bloom + larger soft halo. No big blurry halos. */
+@keyframes btn-generate-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent),
+      0 0 4px color-mix(in srgb, var(--accent) 35%, transparent),
+      0 0 12px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent),
+      0 0 5px color-mix(in srgb, var(--accent) 50%, transparent),
+      0 0 18px color-mix(in srgb, var(--accent) 32%, transparent);
+  }
+}
+
+/* Vertical scan sweep — half-height soft-cyan gradient travels from
+   top to bottom and loops. The ::before is layered behind the button
+   content via z-index since the button is overflow:hidden. */
+:root:not([data-theme="executive-day"]):not([data-theme="marauder"]):not([data-theme="nightmare"]):not([data-theme="forest"]) .panel__actions button.btn-generate::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -60%;
+  height: 60%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--accent) 14%, transparent) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+  animation: btn-generate-sweep 3.4s linear infinite;
+}
+
+@keyframes btn-generate-sweep {
+  from { top: -60%; }
+  to   { top: 120%; }
+}
+
+/* HUD corner bracket — top-left only. Crisp 1px stroke at low
+   opacity reads as a "calibration mark" on tactical hardware. */
+:root:not([data-theme="executive-day"]):not([data-theme="marauder"]):not([data-theme="nightmare"]):not([data-theme="forest"]) .panel__actions button.btn-generate::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 6px;
+  height: 6px;
+  border-top: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-left: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Make sure button content sits above the sweep ::before. */
+:root:not([data-theme="executive-day"]):not([data-theme="marauder"]):not([data-theme="nightmare"]):not([data-theme="forest"]) .panel__actions button.btn-generate > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Lightning icon: emissive mint cyan with a tight layered glow.
+   Drop-shadows compose like box-shadows here — keep them small and
+   stacked to read as an LED instead of a smear. */
+:root:not([data-theme="executive-day"]):not([data-theme="marauder"]):not([data-theme="nightmare"]):not([data-theme="forest"]) .panel__actions button.btn-generate .btn-generate__icon {
+  color: var(--accent);
+  filter:
+    drop-shadow(0 0 1px rgba(255, 255, 255, 0.6))
+    drop-shadow(0 0 3px color-mix(in srgb, var(--accent) 70%, transparent));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-theme="executive-day"]):not([data-theme="marauder"]):not([data-theme="nightmare"]):not([data-theme="forest"]) .panel__actions button.btn-generate,
+  :root:not([data-theme="executive-day"]):not([data-theme="marauder"]):not([data-theme="nightmare"]):not([data-theme="forest"]) .panel__actions button.btn-generate::before {
+    animation: none;
+  }
+}
+
+/* ─── Synthwave: full-page CRT scanline overlay ──────────────────────
+   Very subtle horizontal stripe pattern across the entire viewport.
+   Sits above content via fixed positioning + high z-index, but the
+   1.6%-opacity stripes + overlay blend mode mean it never fights for
+   attention. Dark mode only. */
+
+:root:not([data-theme="executive-day"]):not([data-theme="marauder"]):not([data-theme="nightmare"]):not([data-theme="forest"]) body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.020) 0px,
+    rgba(255, 255, 255, 0.020) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: overlay;
+}
+
+/* ─── Synthwave: laser scan during solve ─────────────────────────────
+   Cyan laser line sweeps top→bottom of the schedule grid while the
+   solver runs. The wrapper needs position:relative to host the
+   absolutely-positioned bar. Light mode just hides it via the bar's
+   own dark-only display rule below. */
+
+.panel--schedule .schedule-body {
+  position: relative;
+}
+
+.schedule__laser {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    color-mix(in srgb, var(--accent) 85%, transparent) 20%,
+    var(--accent) 50%,
+    color-mix(in srgb, var(--accent) 85%, transparent) 80%,
+    transparent 100%
+  );
+  /* Layered tube-glow on the sweep, same recipe as the cards. */
+  box-shadow:
+    0 0 1px rgba(255, 255, 255, 0.5),
+    0 0 6px 1px color-mix(in srgb, var(--accent) 55%, transparent),
+    0 0 18px 4px color-mix(in srgb, var(--accent) 25%, transparent);
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.schedule__laser[data-active="true"] {
+  opacity: 1;
+  animation: schedule-laser 1.6s ease-in-out infinite;
+}
+
+@keyframes schedule-laser {
+  0%   { top: 0%;   opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+:root[data-theme="executive-day"] .schedule__laser,
+:root[data-theme="marauder"] .schedule__laser,
+:root[data-theme="nightmare"] .schedule__laser,
+:root[data-theme="forest"] .schedule__laser { display: none; }
+
+/* ─── Light theme: "Executive Day" — daylight Outrun ────────────────
+   Light counterpart to Executive Outrun. Same panel hierarchy, mono
+   labels, terminal-tracked headers — just inverted to off-white +
+   sky-teal. No glows, no glass, no halos. The schedule cells get a
+   subtle dot grid (sketchbook texture), cards are clean white blocks
+   with thin layered shadows, the SYNTHESIZE button is bordered teal
+   with a teal lightning bolt and a quiet press-lift on hover. */
+
+:root[data-theme="executive-day"] body {
+  background-color: var(--bg);
+  background-image: none;
+}
+
+:root[data-theme="executive-day"] .schedule-grid__cell {
+  background-color: var(--bg);
+  background-image: radial-gradient(
+    circle at center,
+    rgba(15, 23, 42, 0.07) 1px,
+    transparent 1.4px
+  );
+  background-size: 18px 18px;
+  background-position: 0 0;
+}
+
+:root[data-theme="executive-day"] .schedule-grid__cell:hover {
+  background-color: var(--surface);
+}
+
+:root[data-theme="executive-day"] .schedule-card {
+  background: #FFFFFF;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  border-left-width: 3px;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+:root[data-theme="executive-day"] .schedule-card::before {
+  display: none;
+}
+
+:root[data-theme="executive-day"] .schedule-card:hover,
+:root[data-theme="executive-day"] .schedule-card--selected {
+  background: #FFFFFF;
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  transform: translateY(-1px);
+  box-shadow:
+    0 2px 4px rgba(15, 23, 42, 0.06),
+    0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+:root[data-theme="executive-day"] .panel__actions button.btn-generate {
+  background: #FFFFFF;
+  border: 1.5px solid var(--accent);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.30em;
+  height: 48px;
+  padding: 0 28px;
+  border-radius: 6px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  filter: none;
+  animation: none;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.05),
+    0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+:root[data-theme="executive-day"] .panel__actions button.btn-generate::before,
+:root[data-theme="executive-day"] .panel__actions button.btn-generate::after {
+  display: none;
+}
+
+:root[data-theme="executive-day"] .panel__actions button.btn-generate:hover:not(:disabled) {
+  background: #FFFFFF;
+  color: var(--accent-text);
+  border-color: var(--accent-text);
+  filter: none;
+  transform: translateY(-1px);
+  box-shadow:
+    0 2px 4px rgba(15, 23, 42, 0.06),
+    0 8px 20px rgba(15, 23, 42, 0.12);
+}
+
+:root[data-theme="executive-day"] .panel__actions button.btn-generate:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+:root[data-theme="executive-day"] .panel__actions button.btn-generate .btn-generate__icon {
+  color: var(--accent);
+  filter: none;
+}
+
+:root[data-theme="executive-day"] .dept--game,
+:root[data-theme="executive-day"] .dept--motion_media,
+:root[data-theme="executive-day"] .dept--ai,
+:root[data-theme="executive-day"] .dept--ixds,
+:root[data-theme="executive-day"] .dept--iact,
+:root[data-theme="executive-day"] .dept--digi,
+:root[data-theme="executive-day"] .dept--adbr {
+  /* dept tokens already provide dark text on light bg-tint, no
+     override needed — but force border weight for the daylight
+     style. */
+  border-width: 1px;
+}
+
+/* ASSEMBLE: schedule grid cells go darker than the bg — the deepest
+   blue in the palette, like the recessed seams of Cap's stealth
+   suit. Cards float on a near-black navy floor, accenting the gold
+   light bars when they switch on. */
+:root[data-theme="assemble"] .schedule-grid__cell {
+  background-color: rgba(13, 18, 38, 0.94);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .schedule__laser[data-active="true"] { animation: none; opacity: 0.6; top: 50%; }
+}
+
+/* ─── Light theme: "Marauder" — Marauder's Map ──────────────────────
+   Aged parchment + sepia ink + a crimson wax accent. IM Fell English
+   on the brand wordmark and the MANAGE button — the parchment serif
+   IS the theme's signature. No glows, no glass, no synthwave layered
+   stacks: this is hand-drawn map energy. */
+
+:root[data-theme="marauder"] body {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse at 80% 20%, rgba(139, 69, 19, 0.08), transparent 55%),
+    radial-gradient(ellipse at 20% 80%, rgba(139, 0, 0, 0.05), transparent 55%);
+}
+
+:root[data-theme="marauder"] .schedule-grid__cell {
+  background-color: var(--bg);
+  background-image: radial-gradient(
+    circle at center,
+    rgba(60, 40, 20, 0.10) 1px,
+    transparent 1.4px
+  );
+  background-size: 16px 16px;
+  background-position: 0 0;
+}
+
+:root[data-theme="marauder"] .schedule-grid__cell:hover {
+  background-color: var(--surface);
+}
+
+:root[data-theme="marauder"] .schedule-card {
+  background: var(--surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid rgba(60, 40, 20, 0.20);
+  border-left-width: 3px;
+  box-shadow:
+    0 1px 1px rgba(60, 40, 20, 0.04),
+    0 4px 12px rgba(60, 40, 20, 0.07);
+}
+
+:root[data-theme="marauder"] .schedule-card::before {
+  display: none;
+}
+
+:root[data-theme="marauder"] .schedule-card:hover,
+:root[data-theme="marauder"] .schedule-card--selected {
+  background: var(--surface);
+  border-color: rgba(139, 0, 0, 0.40);
+  transform: translateY(-1px);
+  box-shadow:
+    0 2px 4px rgba(60, 40, 20, 0.06),
+    0 8px 18px rgba(60, 40, 20, 0.10);
+}
+
+:root[data-theme="marauder"] .panel__actions button.btn-generate {
+  background: var(--surface);
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.30em;
+  height: 48px;
+  padding: 0 28px;
+  border-radius: 4px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  filter: none;
+  animation: none;
+  box-shadow:
+    0 1px 2px rgba(60, 40, 20, 0.10),
+    0 4px 12px rgba(60, 40, 20, 0.10);
+}
+
+:root[data-theme="marauder"] .panel__actions button.btn-generate::before,
+:root[data-theme="marauder"] .panel__actions button.btn-generate::after {
+  display: none;
+}
+
+:root[data-theme="marauder"] .panel__actions button.btn-generate:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--surface);
+  border-color: var(--accent);
+  filter: none;
+  transform: translateY(-1px);
+  box-shadow:
+    0 2px 4px rgba(60, 40, 20, 0.10),
+    0 8px 18px rgba(139, 0, 0, 0.20);
+}
+
+:root[data-theme="marauder"] .panel__actions button.btn-generate:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(60, 40, 20, 0.10);
+}
+
+:root[data-theme="marauder"] .panel__actions button.btn-generate .btn-generate__icon {
+  color: currentColor;
+  filter: none;
+}
+
+:root[data-theme="marauder"] .brand-eyebrow__tag {
+  color: var(--accent);
+}
+
+/* ─── Dark theme: "Nightmare" — Burton / NBC monochrome ─────────────
+   Stark blacks + off-whites, exactly one pop of red. Special Elite
+   typewriter font on the brand wordmark + FINALIZE button. No glows,
+   no glass, sharp 1px borders. Subtle horizontal-stripe canvas as a
+   nod to Burton's stop-motion aesthetic. */
+
+:root[data-theme="nightmare"] body {
+  background-color: var(--bg);
+  background-image:
+    repeating-linear-gradient(
+      180deg,
+      transparent 0px,
+      transparent 3px,
+      rgba(255, 255, 255, 0.014) 3px,
+      rgba(255, 255, 255, 0.014) 4px
+    );
+}
+
+:root[data-theme="nightmare"] .schedule-grid__cell {
+  background-color: var(--bg);
+  background-image: none;
+}
+
+:root[data-theme="nightmare"] .schedule-grid__cell:hover {
+  background-color: var(--surface);
+}
+
+:root[data-theme="nightmare"] .schedule-card {
+  background: var(--surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-left-width: 3px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.50);
+}
+
+:root[data-theme="nightmare"] .schedule-card::before {
+  display: none;
+}
+
+:root[data-theme="nightmare"] .schedule-card:hover,
+:root[data-theme="nightmare"] .schedule-card--selected {
+  background: var(--surface-hover);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.60);
+}
+
+:root[data-theme="nightmare"] .panel__actions button.btn-generate {
+  background: var(--bg);
+  border: 1.5px solid var(--text);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.30em;
+  height: 48px;
+  padding: 0 28px;
+  border-radius: 0;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  filter: none;
+  animation: none;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.40),
+    0 4px 0 0 var(--accent);
+}
+
+:root[data-theme="nightmare"] .panel__actions button.btn-generate::before,
+:root[data-theme="nightmare"] .panel__actions button.btn-generate::after {
+  display: none;
+}
+
+:root[data-theme="nightmare"] .panel__actions button.btn-generate:hover:not(:disabled) {
+  background: var(--bg);
+  color: var(--accent);
+  border-color: var(--accent);
+  filter: none;
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.40),
+    0 6px 0 0 var(--accent);
+}
+
+:root[data-theme="nightmare"] .panel__actions button.btn-generate:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.40),
+    0 1px 0 0 var(--accent);
+}
+
+:root[data-theme="nightmare"] .panel__actions button.btn-generate .btn-generate__icon {
+  color: var(--accent);
+  filter: none;
+}
+
+:root[data-theme="nightmare"] .brand-eyebrow__tag {
+  color: var(--accent);
+}
+
+/* ─── Light theme: "Forest" — Studio Ghibli ─────────────────────────
+   Mossy cream canvas, sage forest accents, dusk lavender supporting
+   color. The CTA verb is CULTIVATE. Soft diffuse shadows like dappled
+   sunlight on Mei's house — no neon, no glass, no halos. */
+
+:root[data-theme="forest"] body {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse at 85% 15%, rgba(184, 134, 11, 0.08), transparent 55%),
+    radial-gradient(ellipse at 15% 90%, rgba(124, 143, 196, 0.06), transparent 55%);
+}
+
+:root[data-theme="forest"] .schedule-grid__cell {
+  background-color: var(--bg);
+  background-image: radial-gradient(
+    circle at center,
+    rgba(74, 96, 60, 0.10) 1px,
+    transparent 1.4px
+  );
+  background-size: 18px 18px;
+  background-position: 0 0;
+}
+
+:root[data-theme="forest"] .schedule-grid__cell:hover {
+  background-color: var(--surface);
+}
+
+:root[data-theme="forest"] .schedule-card {
+  background: var(--surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid rgba(74, 96, 60, 0.18);
+  border-left-width: 3px;
+  border-radius: 10px;
+  box-shadow:
+    0 1px 2px rgba(44, 61, 38, 0.05),
+    0 6px 16px rgba(44, 61, 38, 0.07);
+}
+
+:root[data-theme="forest"] .schedule-card::before {
+  display: none;
+}
+
+:root[data-theme="forest"] .schedule-card:hover,
+:root[data-theme="forest"] .schedule-card--selected {
+  background: var(--surface);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow:
+    0 3px 6px rgba(44, 61, 38, 0.08),
+    0 10px 24px rgba(44, 61, 38, 0.10);
+}
+
+:root[data-theme="forest"] .panel__actions button.btn-generate {
+  background: var(--surface);
+  border: 1.5px solid var(--accent);
+  color: var(--accent-text);
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.20em;
+  height: 48px;
+  padding: 0 26px;
+  border-radius: 999px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  filter: none;
+  animation: none;
+  text-transform: none;
+  box-shadow:
+    0 1px 2px rgba(44, 61, 38, 0.06),
+    0 4px 12px rgba(44, 61, 38, 0.08);
+}
+
+:root[data-theme="forest"] .panel__actions button.btn-generate::before,
+:root[data-theme="forest"] .panel__actions button.btn-generate::after {
+  display: none;
+}
+
+:root[data-theme="forest"] .panel__actions button.btn-generate:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--surface);
+  border-color: var(--accent);
+  filter: none;
+  transform: translateY(-1px);
+  box-shadow:
+    0 3px 6px rgba(44, 61, 38, 0.10),
+    0 10px 24px rgba(74, 124, 63, 0.30);
+}
+
+:root[data-theme="forest"] .panel__actions button.btn-generate:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(44, 61, 38, 0.06);
+}
+
+:root[data-theme="forest"] .panel__actions button.btn-generate .btn-generate__icon {
+  color: currentColor;
+  filter: none;
 }

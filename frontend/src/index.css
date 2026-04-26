@@ -1,55 +1,85 @@
 /* ─── Design tokens (CSS vars) ──────────────────────────────────── */
 
-:root {
-  /* ── Dark palette (default) ─────────────────────────────────── */
+/* The theme system is a registry: each theme is a complete palette
+   bound to a `data-theme` value on <html>. JS in useTheme.ts always
+   sets data-theme to a concrete id; the bare `:root` selector is
+   present alongside `[data-theme="outrun"]` only as the fallback
+   while JS is hydrating, so a missing attribute paints outrun. */
 
-  /* Surface */
-  --bg: #0f1012;
-  --surface: #1a1b1f;
-  --surface-hover: #22232a;
-  --border: #2a2b33;
+:root,
+:root[data-theme="outrun"],
+:root[data-theme^="chair-"] {
+  /* ── Theme: "Executive Outrun" (and Chair Mode base) ───────────
+     1980s tactical workstation. Deep matte charcoal bezel, muted
+     tube-cyan as the primary signal, analog amber for warnings.
+     Glows are LED-tube layered stacks, not blurred haze.
 
-  /* Ink */
-  --text: #e8e8ed;
-  --text-muted: #9ca3af;
-  --text-faint: #6b7280;
+     Chair Mode themes inherit the entire Outrun palette via the
+     `[data-theme^="chair-"]` attribute prefix selector, then each
+     individual chair-* block below overrides only `--accent` with
+     the department's color. Glows downstream consume `--accent`
+     via color-mix so the whole UI re-tints automatically. */
 
-  /* Accent — "Avengers blue." Bright enough to stay readable with dark
-     text on dark surfaces (preserves the light-accent/dark-ink pattern
-     the buttons are tuned for). */
-  --accent: #60A5FA;
-  --accent-on: #0f1012;   /* text on accent backgrounds */
+  /* Surface — "Executive Outrun." Deep matte charcoal, not flat black,
+     not indigo-tinted purple. Reads like the bezel of an 80s tactical
+     terminal: durable, hardware, not "themed website." 1px inner
+     borders at 5% white give the panels their tactile separation. */
+  --bg: #0B0C10;
+  --surface: #1A1A1D;
+  --surface-hover: #232328;
+  --border: rgba(255, 255, 255, 0.05);
+
+  /* Ink — neutral, slightly cool, not blue. Faint is gray so labels
+     recede behind the data instead of vibrating. */
+  --text: #E5E7EB;
+  --text-muted: #8A8A92;
+  --text-faint: #5A5A60;
+
+  /* Accent — muted "tube" cyan. Less hot than #00F3FF, reads as
+     deliberate signal-light rather than rainbow LED. */
+  --accent: #66FCF1;
+  --accent-text: #66FCF1;
+  --accent-on: #0B0C10;
+
+  /* Secondary tokens — analog amber for warnings/priorities,
+     muted teal for the "deep accent" pair. Magenta is intentionally
+     killed — it's the loudest neon-vomit signal in synthwave. */
+  --neon-amber: #FFB347;
+  --neon-teal: #45A29E;
 
   /* Status */
-  --success: #34d399;
-  --warn: #fbbf24;
-  --danger: #f87171;
+  --success: #5BE3A8;
+  --warn: #FFB347;
+  --danger: #FF6B89;
 
   /* Overlay */
-  --scrim: rgba(0, 0, 0, 0.5);
+  --scrim: rgba(2, 0, 12, 0.6);
 
-  /* Department badge colors */
-  --dept-game: #fcd34d;
-  --dept-game-border: #78641f;
-  --dept-game-bg: rgba(252, 211, 77, 0.08);
-  --dept-mome: #f472b6;
-  --dept-mome-border: #7a2d55;
-  --dept-mome-bg: rgba(244, 114, 182, 0.08);
-  --dept-ai: #818cf8;
-  --dept-ai-border: #3c3f80;
-  --dept-ai-bg: rgba(129, 140, 248, 0.08);
-  --dept-ixds: #5eead4;
-  --dept-ixds-border: #226660;
-  --dept-ixds-bg: rgba(94, 234, 212, 0.08);
-  --dept-iact: #fb923c;
-  --dept-iact-border: #77401a;
-  --dept-iact-bg: rgba(251, 146, 60, 0.08);
-  --dept-digi: #a3e635;
-  --dept-digi-border: #48661b;
-  --dept-digi-bg: rgba(163, 230, 53, 0.08);
-  --dept-adbr: #f87171;
-  --dept-adbr-border: #7a2c2c;
-  --dept-adbr-bg: rgba(248, 113, 113, 0.08);
+  /* Department colors — desaturated retro-terminal hues. Still
+     hue-distinguishable as functional dept indicators, but each one
+     is one notch back from "neon vomit" so the rail reads as a
+     ranked palette of LED indicators rather than a candy bowl. */
+  --dept-game: #FFD556;        /* warm signal yellow */
+  --dept-game-border: #75691A;
+  --dept-game-bg: rgba(255, 213, 86, 0.06);
+  --dept-mome: #C77DFF;        /* lavender — replaces hot magenta */
+  --dept-mome-border: #5C2A75;
+  --dept-mome-bg: rgba(199, 125, 255, 0.06);
+  --dept-ai: #9D7BFF;          /* desaturated periwinkle */
+  --dept-ai-border: #3F2D75;
+  --dept-ai-bg: rgba(157, 123, 255, 0.06);
+  --dept-ixds: #66FCF1;        /* tube-cyan, matches accent */
+  --dept-ixds-border: #2F6661;
+  --dept-ixds-bg: rgba(102, 252, 241, 0.06);
+  --dept-iact: #FFB347;        /* analog amber */
+  --dept-iact-border: #6B4922;
+  --dept-iact-bg: rgba(255, 179, 71, 0.06);
+  --dept-digi: #5BE3A8;        /* muted mint green */
+  --dept-digi-border: #2A6649;
+  --dept-digi-bg: rgba(91, 227, 168, 0.06);
+  --dept-adbr: #FF6B89;        /* dusty coral */
+  --dept-adbr-border: #6B2A3A;
+  --dept-adbr-bg: rgba(255, 107, 137, 0.06);
 
   /* Spacing */
   --space-xs: 4px;
@@ -58,18 +88,189 @@
   --space-lg: 24px;
   --space-xl: 40px;
 
-  /* Radii */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  /* Radii — generous squircles. SCAD-cool prefers 12-16px corners
+     over standard 4px to feel "designed" rather than "dashboard." */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
 
-  /* Typography */
+  /* Typography — Inter for prose/UI, JetBrains Mono for "data as design"
+     (course codes, technical metadata), Syne for synthwave headlines
+     ("ASSEMBLE", brand wordmark, day headers — wide editorial display
+     with retro-future bones). All three loaded via Google Fonts. */
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo,
+    Consolas, monospace;
+  --font-display: "Michroma", "Syne", "Inter", -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   /* Touch target minimum (bumps to 44px on mobile) */
   --hit-min: 36px;
+
+  color-scheme: dark;
+}
+
+/* ── Chair Mode: per-department accent overrides ──────────────────
+   Each chair-* theme inherits the full Outrun palette above (via the
+   `[data-theme^="chair-"]` prefix selector). All we override here is
+   --accent + --accent-text + --accent-on so every glow, button, focus
+   ring, and tab underline re-tints to the department's signature
+   color. Accent-on flips between dark indigo (for bright fills) and
+   white-ink based on the swatch's perceived luminance. */
+
+:root[data-theme="chair-game"] {
+  --accent: #FFD556;
+  --accent-text: #FFD556;
+  --accent-on: #1A1A1D;
+}
+:root[data-theme="chair-mome"] {
+  --accent: #C77DFF;
+  --accent-text: #C77DFF;
+  --accent-on: #1A1A1D;
+}
+:root[data-theme="chair-ai"] {
+  --accent: #9D7BFF;
+  --accent-text: #9D7BFF;
+  --accent-on: #1A1A1D;
+}
+:root[data-theme="chair-ixds"] {
+  --accent: #66FCF1;
+  --accent-text: #66FCF1;
+  --accent-on: #1A1A1D;
+}
+:root[data-theme="chair-iact"] {
+  --accent: #FFB347;
+  --accent-text: #FFB347;
+  --accent-on: #1A1A1D;
+}
+:root[data-theme="chair-digi"] {
+  --accent: #5BE3A8;
+  --accent-text: #5BE3A8;
+  --accent-on: #1A1A1D;
+}
+:root[data-theme="chair-adbr"] {
+  --accent: #FF6B89;
+  --accent-text: #FF6B89;
+  --accent-on: #1A1A1D;
+}
+
+/* ── Theme: "Assemble" — Avengers Endgame ───────────────────────────
+   Battle-worn gunmetal bezel + Avengers logo gold. Inherits the
+   Outrun synthwave structure (glass cards, layered LED glows,
+   scanline) — every halo re-tints to dusty gold via --accent. The
+   button label flips to "ASSEMBLE!" via the ctaLabel field on the
+   theme registry. */
+
+:root[data-theme="assemble"] {
+  /* Cap's Endgame stealth suit — dark navy with a touch of warmth.
+     Whole blue palette pulled 10% darker so the suit reads battle-
+     worn rather than dress-uniform. The schedule grid (see
+     App.css override) goes deeper still — the darkest blue in the
+     stack, like the suit's webbing seams in shadow. */
+  --bg: #19203A;
+  --surface: #262B48;
+  --surface-hover: #303756;
+  --border: rgba(224, 184, 99, 0.16);
+
+  --text: #E5E7EB;
+  --text-muted: #8E94A8;
+  --text-faint: #5A5E72;
+
+  --accent: #E0B863;
+  --accent-text: #E0B863;
+  --accent-on: #19203A;
+
+  --neon-amber: #E0B863;
+  --neon-teal: #4FC3F7;        /* arc reactor blue, supporting */
+
+  --success: #5BE3A8;
+  --warn: #C8102E;             /* Cap shield red */
+  --danger: #9B1B30;
+
+  --scrim: rgba(0, 0, 0, 0.6);
+
+  /* Department colors — hero-ranked. Iron Man gold / Cap red /
+     Stark blue / Vision lavender / Thor amber / Hulk green /
+     Widow coral. Distinguishable by hue, all battle-tonal. */
+  --dept-game: #E0B863;
+  --dept-game-border: #66501F;
+  --dept-game-bg: rgba(224, 184, 99, 0.08);
+  --dept-mome: #C8102E;
+  --dept-mome-border: #5C1018;
+  --dept-mome-bg: rgba(200, 16, 46, 0.08);
+  --dept-ai: #4FC3F7;
+  --dept-ai-border: #1F546B;
+  --dept-ai-bg: rgba(79, 195, 247, 0.08);
+  --dept-ixds: #B58CFF;
+  --dept-ixds-border: #4D3B73;
+  --dept-ixds-bg: rgba(181, 140, 255, 0.08);
+  --dept-iact: #FFB347;
+  --dept-iact-border: #6B4922;
+  --dept-iact-bg: rgba(255, 179, 71, 0.08);
+  --dept-digi: #5BE3A8;
+  --dept-digi-border: #2A6649;
+  --dept-digi-bg: rgba(91, 227, 168, 0.08);
+  --dept-adbr: #FF6B89;
+  --dept-adbr-border: #6B2A3A;
+  --dept-adbr-bg: rgba(255, 107, 137, 0.08);
+
+  color-scheme: dark;
+}
+
+/* ── Theme: "Vault" — Fallout terminal / Pip-Boy ────────────────────
+   Wasteland mainframe energy. Phosphor green-on-near-black, single-
+   hue, no chromatic depth. Tests whether the data still reads when
+   every pixel is one shade of green. The CTA verb is EXECUTE — the
+   most Pip-Boy-canonical verb for "commit this command." */
+
+:root[data-theme="vault"] {
+  --bg: #020806;
+  --surface: #061410;
+  --surface-hover: #0D2018;
+  --border: rgba(57, 255, 20, 0.16);
+
+  --text: #B8FFCD;
+  --text-muted: #5DAA72;
+  --text-faint: #2D6840;
+
+  --accent: #39FF14;
+  --accent-text: #39FF14;
+  --accent-on: #020806;
+
+  --neon-amber: #B8FFCD;
+  --neon-teal: #39FF14;
+
+  --success: #39FF14;
+  --warn: #B8FFCD;
+  --danger: #FF7A45;
+
+  --scrim: rgba(0, 0, 0, 0.7);
+
+  /* Department colors — desaturated phosphor shades. Hue still
+     distinguishable but everything reads as "monochrome with
+     slight tonal variation," not 7-color rainbow. */
+  --dept-game: #B8FFCD;
+  --dept-game-border: #2D6840;
+  --dept-game-bg: rgba(184, 255, 205, 0.06);
+  --dept-mome: #6BE3A0;
+  --dept-mome-border: #1F5034;
+  --dept-mome-bg: rgba(107, 227, 160, 0.06);
+  --dept-ai: #4DD68C;
+  --dept-ai-border: #1A4028;
+  --dept-ai-bg: rgba(77, 214, 140, 0.06);
+  --dept-ixds: #39FF14;
+  --dept-ixds-border: #1F5034;
+  --dept-ixds-bg: rgba(57, 255, 20, 0.07);
+  --dept-iact: #8FE07A;
+  --dept-iact-border: #2A4528;
+  --dept-iact-bg: rgba(143, 224, 122, 0.06);
+  --dept-digi: #5DAA72;
+  --dept-digi-border: #234028;
+  --dept-digi-bg: rgba(93, 170, 114, 0.06);
+  --dept-adbr: #2D6840;
+  --dept-adbr-border: #1A4028;
+  --dept-adbr-bg: rgba(45, 104, 64, 0.10);
 
   color-scheme: dark;
 }
@@ -82,48 +283,232 @@
   body { font-size: 16px; }
 }
 
-/* ── Light palette ──────────────────────────────────────────────── */
+/* ── Light palettes ─────────────────────────────────────────────── */
 
-:root[data-theme="light"] {
-  --bg: #f5f5f7;
-  --surface: #ffffff;
-  --surface-hover: #eeeef0;
-  --border: #d4d4d8;
+:root[data-theme="executive-day"] {
+  /* ── Theme: "Executive Day" ────────────────────────────────────
+     The light counterpart to Executive Outrun. Same hardware-tool
+     DNA — clean panel hierarchy, mono labels, terminal tracking —
+     just inverted to a cool off-white canvas with sky-teal accent
+     instead of obsidian + tube cyan. No glows, no glass, no halos:
+     the daytime version of the same instrument. */
 
-  --text: #1a1b1f;
-  --text-muted: #6b7280;
-  --text-faint: #9ca3af;
+  --bg: #F2F4F7;
+  --surface: #FFFFFF;
+  --surface-hover: #E8EBF1;
+  --border: rgba(15, 23, 42, 0.10);
 
-  --accent: #2563EB;
-  --accent-on: #ffffff;
+  --text: #0F1B2D;
+  --text-muted: #4B5563;
+  --text-faint: #9CA3AF;
 
-  --success: #059669;
-  --warn: #d97706;
-  --danger: #dc2626;
+  /* Accent — sky teal. Saturated enough to read as "the active
+     state" on white, dark enough to use as text. */
+  --accent: #0EA5E9;
+  --accent-text: #0369A1;
+  --accent-on: #FFFFFF;
 
-  --scrim: rgba(0, 0, 0, 0.3);
+  --neon-amber: #F59E0B;
+  --neon-teal: #0EA5E9;
 
-  --dept-game: #b45309;
-  --dept-game-border: #fcd34d;
-  --dept-game-bg: rgba(180, 83, 9, 0.08);
-  --dept-mome: #be185d;
-  --dept-mome-border: #f472b6;
+  --success: #10B981;
+  --warn: #F59E0B;
+  --danger: #EF4444;
+
+  --scrim: rgba(15, 23, 42, 0.30);
+
+  /* Department colors — desaturated industrial-design palette.
+     Each hue still distinguishable, all readable as dark text on
+     light bg-tints. */
+  --dept-game: #A16207;
+  --dept-game-border: #FCD34D;
+  --dept-game-bg: rgba(161, 98, 7, 0.08);
+  --dept-mome: #BE185D;
+  --dept-mome-border: #F472B6;
   --dept-mome-bg: rgba(190, 24, 93, 0.08);
-  --dept-ai: #4f46e5;
-  --dept-ai-border: #818cf8;
+  --dept-ai: #4F46E5;
+  --dept-ai-border: #818CF8;
   --dept-ai-bg: rgba(79, 70, 229, 0.08);
-  --dept-ixds: #0d9488;
-  --dept-ixds-border: #5eead4;
-  --dept-ixds-bg: rgba(13, 148, 136, 0.08);
-  --dept-iact: #c2410c;
-  --dept-iact-border: #fb923c;
+  --dept-ixds: #0F766E;
+  --dept-ixds-border: #5EEAD4;
+  --dept-ixds-bg: rgba(15, 118, 110, 0.08);
+  --dept-iact: #C2410C;
+  --dept-iact-border: #FB923C;
   --dept-iact-bg: rgba(194, 65, 12, 0.08);
-  --dept-digi: #4d7c0f;
-  --dept-digi-border: #a3e635;
+  --dept-digi: #4D7C0F;
+  --dept-digi-border: #A3E635;
   --dept-digi-bg: rgba(77, 124, 15, 0.08);
-  --dept-adbr: #dc2626;
-  --dept-adbr-border: #f87171;
-  --dept-adbr-bg: rgba(220, 38, 38, 0.08);
+  --dept-adbr: #BE123C;
+  --dept-adbr-border: #FB7185;
+  --dept-adbr-bg: rgba(190, 18, 60, 0.08);
+
+  color-scheme: light;
+}
+
+:root[data-theme="marauder"] {
+  /* ── Theme: "Marauder" — Marauder's Map ───────────────────────
+     Aged parchment + sepia ink + a dripping crimson wax accent.
+     Inter steps aside for IM Fell English on the brand wordmark
+     and the MANAGE button. The CTA verb is MANAGE — as in
+     mischief managed. No glow, no glass, no synthwave layered
+     stacks: this is hand-drawn map energy. */
+
+  --bg: #F0E5C9;
+  --surface: #FAF3D8;
+  --surface-hover: #E5D8B8;
+  --border: rgba(60, 40, 20, 0.18);
+
+  --text: #2C1810;
+  --text-muted: #5C4A2E;
+  --text-faint: #8C7355;
+
+  --accent: #8B0000;
+  --accent-text: #6B0000;
+  --accent-on: #FAF3D8;
+
+  --success: #4A6F1A;
+  --warn: #B8860B;
+  --danger: #8B0000;
+
+  --scrim: rgba(44, 24, 16, 0.40);
+
+  /* Hogwarts house-coded dept colors. Each dept gets a deep
+     legible ink color on a faint parchment-tint bg. */
+  --dept-game: #7F1D1D;       /* Gryffindor crimson */
+  --dept-game-border: #C8102E;
+  --dept-game-bg: rgba(127, 29, 29, 0.08);
+  --dept-mome: #064E3B;       /* Slytherin green */
+  --dept-mome-border: #047857;
+  --dept-mome-bg: rgba(6, 78, 59, 0.08);
+  --dept-ai: #1E3A8A;         /* Ravenclaw blue */
+  --dept-ai-border: #1D4ED8;
+  --dept-ai-bg: rgba(30, 58, 138, 0.08);
+  --dept-ixds: #92400E;       /* Hufflepuff yellow → bronze */
+  --dept-ixds-border: #B45309;
+  --dept-ixds-bg: rgba(146, 64, 14, 0.08);
+  --dept-iact: #6B4423;       /* aged ink brown */
+  --dept-iact-border: #8C7355;
+  --dept-iact-bg: rgba(107, 68, 35, 0.08);
+  --dept-digi: #3F6212;       /* moss-green ink */
+  --dept-digi-border: #65A30D;
+  --dept-digi-bg: rgba(63, 98, 18, 0.08);
+  --dept-adbr: #581C87;       /* dark plum */
+  --dept-adbr-border: #7C3AED;
+  --dept-adbr-bg: rgba(88, 28, 135, 0.08);
+
+  color-scheme: light;
+}
+
+:root[data-theme="nightmare"] {
+  /* ── Theme: "Nightmare" — Burton / Nightmare Before Christmas ─
+     Monochromatic gothic. Near-black canvas, off-white text,
+     subtle gray hierarchy, ONE pop of Sally-lipstick red as the
+     accent. Special Elite typewriter font on the brand wordmark
+     and FINALIZE button. No glows, no gradients, no halos. */
+
+  --bg: #0A0A0A;
+  --surface: #161616;
+  --surface-hover: #222222;
+  --border: rgba(255, 255, 255, 0.10);
+
+  --text: #F5F5F5;
+  --text-muted: #A0A0A0;
+  --text-faint: #606060;
+
+  --accent: #B91C1C;
+  --accent-text: #DC2626;
+  --accent-on: #F5F5F5;
+
+  --neon-amber: #888888;
+  --neon-teal: #B91C1C;
+
+  --success: #888888;
+  --warn: #B91C1C;
+  --danger: #B91C1C;
+
+  --scrim: rgba(0, 0, 0, 0.75);
+
+  /* Department colors — all grayscale except for tiny tonal
+     differences. Distinguishable by ink-density rather than hue,
+     keeping the monochrome reading. */
+  --dept-game: #E5E5E5;
+  --dept-game-border: #404040;
+  --dept-game-bg: rgba(229, 229, 229, 0.06);
+  --dept-mome: #C8C8C8;
+  --dept-mome-border: #383838;
+  --dept-mome-bg: rgba(200, 200, 200, 0.06);
+  --dept-ai: #A8A8A8;
+  --dept-ai-border: #303030;
+  --dept-ai-bg: rgba(168, 168, 168, 0.06);
+  --dept-ixds: #888888;
+  --dept-ixds-border: #282828;
+  --dept-ixds-bg: rgba(136, 136, 136, 0.06);
+  --dept-iact: #B91C1C;       /* the one chosen warning, stays red */
+  --dept-iact-border: #5C0E0E;
+  --dept-iact-bg: rgba(185, 28, 28, 0.08);
+  --dept-digi: #6E6E6E;
+  --dept-digi-border: #222222;
+  --dept-digi-bg: rgba(110, 110, 110, 0.06);
+  --dept-adbr: #555555;
+  --dept-adbr-border: #1C1C1C;
+  --dept-adbr-bg: rgba(85, 85, 85, 0.08);
+
+  color-scheme: dark;
+}
+
+:root[data-theme="forest"] {
+  /* ── Theme: "Forest" — Studio Ghibli ───────────────────────────
+     Mossy cream canvas, sage forest accents, dusk lavender
+     sub-accents. The CTA verb is CULTIVATE — a tending verb
+     instead of a commanding one. Soft diffuse shadows like
+     dappled sunlight on Mei's house, no neon, no glass. */
+
+  --bg: #F2EBD8;
+  --surface: #FBF6E5;
+  --surface-hover: #E8DEC2;
+  --border: rgba(74, 96, 60, 0.20);
+
+  --text: #2C3D26;
+  --text-muted: #5C6B47;
+  --text-faint: #8C9170;
+
+  --accent: #4A7C3F;
+  --accent-text: #2F5028;
+  --accent-on: #FBF6E5;
+
+  --neon-amber: #B8860B;
+  --neon-teal: #7C8FC4;       /* dusk lavender — supporting accent */
+
+  --success: #4A7C3F;
+  --warn: #B8860B;
+  --danger: #B85450;
+
+  --scrim: rgba(44, 61, 38, 0.35);
+
+  /* Department colors — natural-world palette. Each dept maps to a
+     forest element: moss, terracotta, dusk, slate, river, bark,
+     berry. All deep enough to read as text on the cream canvas. */
+  --dept-game: #B8860B;       /* afternoon honey */
+  --dept-game-border: #DAA520;
+  --dept-game-bg: rgba(184, 134, 11, 0.08);
+  --dept-mome: #A0522D;       /* terracotta */
+  --dept-mome-border: #CD853F;
+  --dept-mome-bg: rgba(160, 82, 45, 0.08);
+  --dept-ai: #5C6B8A;         /* slate-blue */
+  --dept-ai-border: #7C8FC4;
+  --dept-ai-bg: rgba(92, 107, 138, 0.08);
+  --dept-ixds: #2F5028;       /* moss-shadow */
+  --dept-ixds-border: #4A7C3F;
+  --dept-ixds-bg: rgba(47, 80, 40, 0.08);
+  --dept-iact: #C26B3C;       /* warm rust */
+  --dept-iact-border: #E8995A;
+  --dept-iact-bg: rgba(194, 107, 60, 0.08);
+  --dept-digi: #5A7A3A;       /* meadow-grass */
+  --dept-digi-border: #7DA858;
+  --dept-digi-bg: rgba(90, 122, 58, 0.08);
+  --dept-adbr: #8B3A3A;       /* berry-stain */
+  --dept-adbr-border: #B85450;
+  --dept-adbr-bg: rgba(139, 58, 58, 0.08);
 
   color-scheme: light;
 }
@@ -146,7 +531,15 @@ body,
 }
 
 body {
-  background: var(--bg);
+  /* Restrained "synth-floor" — drop the purple aurora, keep only the
+     subtle scanline + 40px grid at low opacity (~3% white). Reads as
+     a tactile gridded floor, not a glowing party background. */
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.018) 50%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 100% 4px, 40px 40px, 40px 40px;
   color: var(--text);
   font-family: var(--font-sans);
   font-size: 14px;

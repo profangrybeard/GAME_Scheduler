@@ -1,13 +1,21 @@
 import { useEffect, useRef, useState } from "react"
+import { useTheme, type ThemePref } from "../hooks/useTheme"
 
 /**
- * Overflow menu (⋯) on the schedule toolbar. Houses calendar-wide actions
- * that don't need to be chilling on the topbar all the time — today just
- * Empty Calendar; later things like Lock all / Export to PNG / etc.
+ * Overflow menu (⋯) on the schedule toolbar. Houses calendar-wide
+ * actions and the theme override picker.
  *
- * Two-stage Empty Calendar (keep / also-drop-pins) survives the move:
- * the menu stays open between stages so the armed click is a quick
- * confirm instead of a re-open.
+ *   - Empty Calendar (two-stage)
+ *   - Theme overrides — Phosphor, Rio, Assemble — pick one to opt
+ *     out of system light/dark mode. Disables the topbar toggle
+ *     until the user resets.
+ *   - Chair Mode swatch row — per-department palettes that all
+ *     count as overrides.
+ *   - Reset to default (only shown while an override is active).
+ *
+ * Two-stage Empty Calendar (keep / also-drop-pins) survives the
+ * move: the menu stays open between stages so the armed click is a
+ * quick confirm instead of a re-open.
  */
 
 export interface ScheduleMenuProps {
@@ -23,9 +31,15 @@ export interface ScheduleMenuProps {
 export function ScheduleMenu({ onEmptyCalendar, clearArmed, disabled }: ScheduleMenuProps) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
+  const {
+    theme,
+    isOverride,
+    setTheme,
+    clearOverride,
+    overrideThemes,
+    chairThemes,
+  } = useTheme()
 
-  // Close on outside click / Escape — same pattern as TopbarMenu. Only mount
-  // the listener while open so we don't keep a global handler around.
   useEffect(() => {
     if (!open) return
     function onDocClick(e: MouseEvent) {
@@ -45,10 +59,12 @@ export function ScheduleMenu({ onEmptyCalendar, clearArmed, disabled }: Schedule
 
   const handleEmpty = () => {
     onEmptyCalendar()
-    // Stay open after the first click so the armed state is visible +
-    // the confirming second click is one tap away. After the second click
-    // clearArmed flips back to false and the caller decides the flow.
     if (clearArmed) setOpen(false)
+  }
+
+  const pickTheme = (id: ThemePref) => {
+    setTheme(id)
+    // Don't close — let the user A/B between themes without re-opening.
   }
 
   return (
@@ -87,6 +103,78 @@ export function ScheduleMenu({ onEmptyCalendar, clearArmed, disabled }: Schedule
               <span className="schedule-menu__armed-dot" aria-hidden="true" />
             )}
           </button>
+
+          <div className="schedule-menu__divider" role="separator" />
+          <div className="schedule-menu__section-label" aria-hidden="true">
+            Theme Override
+          </div>
+          <div className="schedule-menu__section-hint">
+            Picks here disable light/dark mode.
+          </div>
+
+          {overrideThemes.map(t => (
+            <button
+              key={t.id}
+              type="button"
+              role="menuitemradio"
+              aria-checked={theme === t.id}
+              className={
+                "schedule-menu__item schedule-menu__item--theme" +
+                (theme === t.id ? " is-active" : "")
+              }
+              onClick={() => pickTheme(t.id)}
+              title={t.description}
+            >
+              <span>{t.name}</span>
+              {theme === t.id && (
+                <span className="schedule-menu__check" aria-hidden="true">●</span>
+              )}
+            </button>
+          ))}
+
+          <div className="schedule-menu__divider" role="separator" />
+          <div className="schedule-menu__section-label" aria-hidden="true">
+            Chair Override
+          </div>
+
+          <div className="schedule-menu__chair-row" role="group" aria-label="Chair palette">
+            {chairThemes.map(t => (
+              <button
+                key={t.id}
+                type="button"
+                role="menuitemradio"
+                aria-checked={theme === t.id}
+                className={
+                  "schedule-menu__chair-swatch" +
+                  (theme === t.id ? " is-active" : "")
+                }
+                onClick={() => pickTheme(t.id)}
+                style={{ background: t.swatch }}
+                title={`${t.description} — ${t.name}`}
+                aria-label={t.description}
+              >
+                <span className="schedule-menu__chair-label">{t.name}</span>
+              </button>
+            ))}
+          </div>
+
+          {isOverride && (
+            <>
+              <div className="schedule-menu__divider" role="separator" />
+              <button
+                type="button"
+                role="menuitem"
+                className="schedule-menu__item schedule-menu__item--reset"
+                onClick={() => {
+                  clearOverride()
+                  setOpen(false)
+                }}
+                title="Drop the override and re-enable the topbar light/dark toggle."
+              >
+                <span>Reset to Light / Dark mode</span>
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>
