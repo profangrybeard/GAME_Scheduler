@@ -82,11 +82,11 @@ export function SolveProgress(props: Props) {
     return () => clearInterval(id)
   }, [progress, progress?.endedAt])
 
-  // Expanded-by-default: the per-mode cards ARE the affordance — without
-  // them visible, the solver reads as a one-shot black box and chairs miss
-  // that they can flip between Cover/Balanced/Time-pref or open Tune. Users
-  // can collapse via the Hide button if they want a tighter status bar.
-  const [expanded, setExpanded] = useState(true)
+  // Collapsed-by-default for done states: the summary pill ("3/3 optimal")
+  // is enough at a glance. Expanding reveals the per-mode metrics grid.
+  // During a running solve we force-show the cards — mid-flight numbers
+  // are the whole point.
+  const [expanded, setExpanded] = useState(false)
 
   if (!progress && !isSolving) return null
   if (!progress) {
