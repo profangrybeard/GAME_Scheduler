@@ -1031,7 +1031,7 @@
 /* ─── Catalogue panel ───────────────────────────────────────────── */
 
 .catalogue__filters {
-  padding: var(--space-sm) var(--space-md) var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   border-bottom: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -1166,8 +1166,10 @@
 }
 
 .class__id {
-  font-family: var(--font-mono);
-  letter-spacing: 0.1em;
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
@@ -2047,10 +2049,11 @@
 .schedule-card__avatar { grid-area: avatar; }
 .schedule-card__id {
   grid-area: id;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 0.7rem;
   font-weight: 600;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
   color: var(--text);
 }
 .schedule-card__prof {
