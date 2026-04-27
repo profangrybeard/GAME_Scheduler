@@ -3682,14 +3682,14 @@
 }
 
 .solve-progress__mode {
-  padding: var(--space-sm) 10px;
+  padding: 6px 10px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 4px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  gap: 4px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease, background 0.12s ease;
 }
 
 .solve-progress__mode--running {
@@ -3702,18 +3702,28 @@
 }
 
 /* Selectable: post-solve, the card is now the way to flip the calendar
-   between modes (replaces the old chip row in the schedule toolbar). */
+   between modes (replaces the old chip row in the schedule toolbar).
+   The resting box-shadow + hover lift give the cards a button-like
+   affordance — chairs were missing that they could click between
+   Cover/Balanced/Time-pref. */
 .solve-progress__mode--selectable {
   cursor: pointer;
   font: inherit;
   color: inherit;
   text-align: left;
   width: 100%;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 7%, transparent);
 }
 
 .solve-progress__mode--selectable:hover {
   border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
   background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--accent) 22%, transparent);
+  transform: translateY(-1px);
+}
+
+.solve-progress__mode--selectable:active {
+  transform: translateY(0);
 }
 
 .solve-progress__mode--selectable:focus-visible {
