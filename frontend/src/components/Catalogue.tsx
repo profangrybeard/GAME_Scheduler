@@ -106,11 +106,6 @@ export function Catalogue(props: CatalogueProps) {
           >
             <span className="catalogue-row__id">{course.id}</span>
             <span className="catalogue-row__name">{course.name}</span>
-            <span
-              className={"catalogue-row__dept dept dept--" + course.department}
-            >
-              {course.department}
-            </span>
             {isOffered && (
               <span
                 className="catalogue-row__remove"
