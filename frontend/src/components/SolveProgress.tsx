@@ -252,6 +252,19 @@ export function SolveProgress(props: Props) {
             (isTuneCard ? " solve-progress__mode--tune" : "")
           const cardContent = (
             <>
+              {isSelectable && (
+                <span
+                  className={
+                    "solve-progress__selection-cue " +
+                    (isActive
+                      ? "solve-progress__selection-cue--reviewing"
+                      : "solve-progress__selection-cue--switch")
+                  }
+                  aria-hidden="true"
+                >
+                  {isActive ? "Reviewing" : "Switch ›"}
+                </span>
+              )}
               <div className="solve-progress__mode-row">
                 {isTuneCard && (
                   <button
