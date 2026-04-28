@@ -70,8 +70,8 @@
 }
 
 /* Brand wordmark — dominant title in the topbar. The :Prototype tag stays
-   orange across themes as an "under construction" signal. Syne gives it
-   the wide retro-future bones the synthwave brief calls out; the cyan/
+   orange across themes as an "under construction" signal. Michroma gives
+   it the wide retro-future bones the synthwave brief calls out; the cyan/
    magenta glow only fires in dark mode (light mode keeps SCAD-paper). */
 .brand-eyebrow {
   font-family: var(--font-display);
@@ -1098,11 +1098,11 @@
 }
 
 .catalogue-row__id {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 0.74rem;
   color: var(--text-muted);
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
@@ -1166,8 +1166,8 @@
 }
 
 .class__id {
-  font-family: var(--font-mono);
-  letter-spacing: 0.1em;
+  font-family: var(--font-sans);
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
@@ -1646,7 +1646,7 @@
 
 /* Day headers (MW / TTH / F) — dominant labels. Bumped from 0.62rem muted
    to 0.95rem full text so they visually carry the calendar's structure
-   instead of whispering it. Syne with wider tracking gives them the
+   instead of whispering it. Michroma with wider tracking gives them the
    retro-display character the synthwave brief calls for. */
 .schedule-grid__day-header {
   justify-content: center;
@@ -2047,10 +2047,10 @@
 .schedule-card__avatar { grid-area: avatar; }
 .schedule-card__id {
   grid-area: id;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 0.7rem;
   font-weight: 600;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.02em;
   color: var(--text);
 }
 .schedule-card__prof {
@@ -4388,11 +4388,11 @@
   .change-log { display: none; }
 }
 
-/* ─── Synthwave: emissive mono-data glow ────────────────────────────
-   Course IDs render in JetBrains Mono everywhere. In dark/synthwave
-   mode they pick up a subtle cyan text-shadow so they read as
-   "emissive data" instead of inert text. Light mode opts out so the
-   editorial-paper look isn't muddied by a halo. */
+/* ─── Synthwave: emissive course-ID glow ────────────────────────────
+   In dark/synthwave themes course IDs pick up a subtle cyan
+   text-shadow so they read as "emissive data" instead of inert text.
+   Light mode opts out so the editorial-paper look isn't muddied by a
+   halo. */
 
 :root:not([data-theme="executive-day"]):not([data-theme="marauder"]):not([data-theme="nightmare"]):not([data-theme="forest"]) .schedule-card__id,
 :root:not([data-theme="executive-day"]):not([data-theme="marauder"]):not([data-theme="nightmare"]):not([data-theme="forest"]) .catalogue-row__id,
