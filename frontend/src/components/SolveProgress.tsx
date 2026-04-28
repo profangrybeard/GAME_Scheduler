@@ -82,11 +82,11 @@ export function SolveProgress(props: Props) {
     return () => clearInterval(id)
   }, [progress, progress?.endedAt])
 
-  // Collapsed-by-default for done states: the summary pill ("3/3 optimal")
-  // is enough at a glance. Expanding reveals the per-mode metrics grid.
+  // Expanded-by-default after a solve: the per-mode cards are the whole
+  // point of generating, so chairs see them without a "Details" click.
   // During a running solve we force-show the cards — mid-flight numbers
   // are the whole point.
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
 
   if (!progress && !isSolving) return null
   if (!progress) {
