@@ -3676,9 +3676,13 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: var(--space-sm);
+  /* Folder-tab cues sit above each card via bottom: 100%; reserve room
+     so they don't collide with whatever rendered above the trio. */
+  margin-top: 22px;
 }
 
 .solve-progress__mode {
+  position: relative;
   padding: var(--space-sm) 10px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -3699,18 +3703,32 @@
 }
 
 /* Selectable: post-solve, the card is now the way to flip the calendar
-   between modes (replaces the old chip row in the schedule toolbar). */
+   between modes (replaces the old chip row in the schedule toolbar).
+   Inactive selectable cards dim slightly so the active "reviewing" card
+   wins the eye — the chooser-ness of the trio reads at a glance. */
 .solve-progress__mode--selectable {
   cursor: pointer;
   font: inherit;
   color: inherit;
   text-align: left;
   width: 100%;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease,
+    opacity 0.15s ease,
+    transform 0.12s ease;
 }
 
-.solve-progress__mode--selectable:hover {
+.solve-progress__mode--selectable:not(.solve-progress__mode--active) {
+  opacity: 0.78;
+}
+
+.solve-progress__mode--selectable:not(.solve-progress__mode--active):hover {
+  opacity: 1;
   border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
-  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  transform: translateY(-1px);
 }
 
 .solve-progress__mode--selectable:focus-visible {
@@ -3718,13 +3736,19 @@
   outline-offset: 1px;
 }
 
+/* Active card — filled accent tint + accent border + faint glow so
+   "this is the one currently shown on the board" reads from across the
+   room, not as another bordered info card. */
 .solve-progress__mode--active {
   border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 0 12px -4px color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 .solve-progress__mode--active.solve-progress__mode--selectable:hover {
-  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
 }
 
 .solve-progress__mode-row {
@@ -3752,6 +3776,48 @@
   white-space: nowrap;
 }
 
+/* Selection cue — folder-tab pill that sits above its card, left-justified.
+   "Reviewing" tab fills with the accent (this is the one currently shown
+   on the board); "Switch ›" tabs are outlined and muted (clickable
+   alternatives). Bottom edge merges into the card via flush border. */
+.solve-progress__selection-cue {
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  /* Sit so the tab's bottom edge lines up with the card's top stroke,
+     not below it — gives the "tab attached to folder" read. */
+  margin-bottom: 1px;
+  padding: 3px 10px 4px;
+  border-radius: 5px 5px 0 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  border-bottom: none;
+  pointer-events: none;
+}
+
+.solve-progress__selection-cue--reviewing {
+  background: var(--accent);
+  color: var(--accent-on, #fff);
+  border-color: var(--accent);
+}
+
+.solve-progress__selection-cue--switch {
+  background: var(--surface);
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+
+.solve-progress__mode--selectable:hover
+  .solve-progress__selection-cue--switch {
+  color: var(--accent-text);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+}
+
 /* Tune card affordance — the gear sits centered on the top edge of the card,
    horizontally aligned with the Penalty metric (the middle column of the
    3-column metrics grid). Half above / half inside, so it reads as a crown
@@ -3768,33 +3834,33 @@
 
 .solve-progress__tune-btn {
   position: absolute;
-  left: 50%;
+  right: 0;
   top: 0;
-  transform: translate(-50%, -50%);
+  transform: translate(50%, -50%);
   appearance: none;
   background: color-mix(in srgb, var(--accent) 14%, var(--surface));
-  border: 1.5px solid var(--accent);
+  border: 1px solid var(--accent);
   color: var(--accent-text);
   border-radius: 999px;
-  width: 48px;
-  height: 48px;
+  width: 24px;
+  height: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 1.6rem;
+  font-size: 0.8rem;
   line-height: 1;
   padding: 0;
   z-index: 2;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 28%, transparent);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--accent) 28%, transparent);
   transition: transform 0.35s cubic-bezier(0.34, 1.3, 0.5, 1),
               background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .solve-progress__tune-btn:hover {
   background: color-mix(in srgb, var(--accent) 24%, var(--surface));
-  transform: translate(-50%, -50%) rotate(60deg) scale(1.06);
-  box-shadow: 0 3px 12px color-mix(in srgb, var(--accent) 38%, transparent);
+  transform: translate(50%, -50%) rotate(60deg) scale(1.06);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--accent) 38%, transparent);
 }
 
 .solve-progress__tune-btn:focus-visible {
