@@ -151,6 +151,17 @@ class TunedWeightsModel(BaseModel):
     overload:  int
 
 
+class RoomBlackoutModel(BaseModel):
+    """One chair-authored hold on (room × slot). Mirrors RoomBlackout in
+    frontend/src/types.ts. The `id` is runtime-only on the React side and
+    not load-bearing for the solver — accept and discard rather than reject
+    if missing, so server-side fixtures don't have to mint ids."""
+    id: str | None = None
+    room_id: str
+    slot: SlotModel
+    note: str = ""
+
+
 class SolveRequest(BaseModel):
     quarter: str
     year: int
@@ -161,6 +172,10 @@ class SolveRequest(BaseModel):
     # merging onto disk. Each chair's deck IS the truth.
     professors: list[dict] = Field(default_factory=list)
     rooms: list[dict] = Field(default_factory=list)
+    # External holds on (room × slot) cells. Each entry forces the solver to
+    # leave that cell empty (HC13). Per-quarter; lives on the React state and
+    # round-trips via the embedded _data_blackouts sheet.
+    roomBlackouts: list[RoomBlackoutModel] = Field(default_factory=list)
     # When provided, replaces MODE_WEIGHTS["balanced"] for this run only.
     # The other two modes (cover_first, time_pref_first) stay canonical.
     tunedWeights: TunedWeightsModel | None = None
@@ -174,6 +189,7 @@ class ExportRequest(BaseModel):
     offerings: list[OfferingModel]
     professors: list[dict] = Field(default_factory=list)
     rooms: list[dict] = Field(default_factory=list)
+    roomBlackouts: list[RoomBlackoutModel] = Field(default_factory=list)
     tunedWeights: TunedWeightsModel | None = None
 
 
@@ -264,6 +280,7 @@ async def solve_stream(req: SolveRequest) -> StreamingResponse:
     from solver.scheduler import run_schedule
 
     react_offerings = [o.model_dump() for o in req.offerings]
+    react_blackouts = [b.model_dump() for b in req.roomBlackouts]
 
     # queue.Queue is thread-safe and unbounded: solver pushes from its
     # worker thread, async generator drains from the event loop.
@@ -285,6 +302,7 @@ async def solve_stream(req: SolveRequest) -> StreamingResponse:
                 ),
                 professors=req.professors,
                 rooms=req.rooms,
+                room_blackouts=react_blackouts,
                 tuned_weights=(req.tunedWeights.model_dump()
                                if req.tunedWeights else None),
                 progress_callback=progress_cb,
@@ -374,6 +392,7 @@ def export(req: ExportRequest) -> Response:
     from export.excel_writer import write_excel
 
     react_offerings = [o.model_dump() for o in req.offerings]
+    react_blackouts = [b.model_dump() for b in req.roomBlackouts]
 
     try:
         results = run_schedule(
@@ -384,6 +403,7 @@ def export(req: ExportRequest) -> Response:
             ),
             professors=req.professors,
             rooms=req.rooms,
+            room_blackouts=react_blackouts,
             tuned_weights=(req.tunedWeights.model_dump()
                            if req.tunedWeights else None),
         )
@@ -405,6 +425,7 @@ def export(req: ExportRequest) -> Response:
         "offerings":          react_offerings,
         "professors":         req.professors,
         "rooms":              req.rooms,
+        "room_blackouts":     react_blackouts,
         "tunedWeights":       (req.tunedWeights.model_dump()
                                if req.tunedWeights else None),
         "solver_results":     _embedded_solver_results(results),
@@ -454,6 +475,7 @@ async def export_stream(req: ExportRequest) -> StreamingResponse:
     import base64 as _b64
 
     react_offerings = [o.model_dump() for o in req.offerings]
+    react_blackouts = [b.model_dump() for b in req.roomBlackouts]
     event_queue: queue.Queue = queue.Queue()
 
     def progress_cb(event: dict) -> None:
@@ -469,6 +491,7 @@ async def export_stream(req: ExportRequest) -> StreamingResponse:
                 ),
                 professors=req.professors,
                 rooms=req.rooms,
+                room_blackouts=react_blackouts,
                 tuned_weights=(req.tunedWeights.model_dump()
                                if req.tunedWeights else None),
                 progress_callback=progress_cb,
@@ -492,6 +515,7 @@ async def export_stream(req: ExportRequest) -> StreamingResponse:
                 "offerings":          react_offerings,
                 "professors":         req.professors,
                 "rooms":              req.rooms,
+                "room_blackouts":     react_blackouts,
                 "tunedWeights":       (req.tunedWeights.model_dump()
                                        if req.tunedWeights else None),
                 "solver_results":     _embedded_solver_results(results),

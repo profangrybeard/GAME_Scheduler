@@ -32,8 +32,8 @@ import { loadTunedMix, mixToSolverWeights, saveTunedMix, type Mix } from "./comp
 import { TopbarMenu } from "./components/TopbarMenu"
 import { loadInitialState } from "./data"
 import { useTheme, themeKind } from "./hooks/useTheme"
-import { coalesceOfferingsForWire, collectBuildingsByCampus, collectEquipmentTags, expandOfferingsFromWire, migrateCatalogEquipment, migrateRoomsEquipment, mintOfferingId, profContractCeiling, profContractFloor } from "./types"
-import type { Assignment, Course, Offering, Professor, RosterCapacity, Room, SchedulerState, Slot, SolveMode, SolveModeProgress, SolveProgressState, WireOffering } from "./types"
+import { coalesceOfferingsForWire, collectBuildingsByCampus, collectEquipmentTags, expandOfferingsFromWire, migrateCatalogEquipment, migrateRoomsEquipment, mintBlackoutId, mintOfferingId, profContractCeiling, profContractFloor } from "./types"
+import type { Assignment, Course, Offering, Professor, RoomBlackout, RosterCapacity, Room, SchedulerState, Slot, SolveMode, SolveModeProgress, SolveProgressState, WireOffering } from "./types"
 import "./App.css"
 
 /**
@@ -362,6 +362,41 @@ function App() {
     }))
   }, [])
 
+  /** Add a room blackout — an external hold on (room × slot) the solver will
+   *  treat as occupied. Silently no-ops if a blackout for the same (room, slot)
+   *  already exists; the popover filters those rooms out, so this guard is a
+   *  belt-and-suspenders against double-submits. */
+  const addBlackout = useCallback(
+    (room_id: string, slot: Slot, note: string) => {
+      setState(s => {
+        const trimmed = note.trim().slice(0, 140)
+        const dup = s.roomBlackouts.some(
+          b =>
+            b.room_id === room_id &&
+            b.slot.day_group === slot.day_group &&
+            b.slot.time_slot === slot.time_slot,
+        )
+        if (dup) return s
+        const fresh: RoomBlackout = {
+          id: mintBlackoutId(s.roomBlackouts),
+          room_id,
+          slot,
+          note: trimmed,
+        }
+        return { ...s, roomBlackouts: [...s.roomBlackouts, fresh] }
+      })
+      logChange("blackout", `${state.rooms[room_id]?.name ?? room_id} blocked`)
+    },
+    [logChange, state.rooms],
+  )
+
+  const removeBlackout = useCallback((id: string) => {
+    setState(s => ({
+      ...s,
+      roomBlackouts: s.roomBlackouts.filter(b => b.id !== id),
+    }))
+  }, [])
+
   /** Add another sibling (section) for `catalog_id`. Unlike `addOffering`
    *  (which de-dupes to one offering per catalog), this always mints a fresh
    *  offering_id so the Roster's + button grows the roster card-by-card. The
@@ -649,14 +684,15 @@ function App() {
    *  The type cast is safe: `WireOffering` is `Offering` minus two runtime
    *  fields the backend's Pydantic `OfferingModel` already ignores. */
   const buildSolveRequest = useCallback((overrideMix?: Mix): SolveRequestBody => ({
-    quarter:      state.quarter,
-    year:         state.year,
-    solveMode:    state.solveMode,
-    offerings:    coalesceOfferingsForWire(state.offerings) as unknown as Offering[],
-    professors:   Object.values(state.professors),
-    rooms:        Object.values(state.rooms),
-    tunedWeights: mixToSolverWeights(overrideMix ?? tunedMix),
-  }), [state.quarter, state.year, state.solveMode, state.offerings, state.professors, state.rooms, tunedMix])
+    quarter:       state.quarter,
+    year:          state.year,
+    solveMode:     state.solveMode,
+    offerings:     coalesceOfferingsForWire(state.offerings) as unknown as Offering[],
+    professors:    Object.values(state.professors),
+    rooms:         Object.values(state.rooms),
+    roomBlackouts: state.roomBlackouts,
+    tunedWeights:  mixToSolverWeights(overrideMix ?? tunedMix),
+  }), [state.quarter, state.year, state.solveMode, state.offerings, state.professors, state.rooms, state.roomBlackouts, tunedMix])
 
   /** Reduce one SSE event into the SolveProgressState. Pure, so we can run
    *  it inside setSolveProgress's callback without stale-closure bugs. */
@@ -964,6 +1000,18 @@ function App() {
       ? Object.fromEntries(draft.rooms.map(r => [r.id, r]))
       : null
 
+    // Blackouts: re-mint ids on load so a hand-edited XLSX (or a draft from
+    // a build that didn't persist them) ends up with consistent `blk#N`
+    // identifiers. Default to [] when the field is absent.
+    const restoredBlackouts: RoomBlackout[] = (draft.room_blackouts ?? []).map(
+      (b, i) => ({
+        id: `blk#${i + 1}`,
+        room_id: b.room_id,
+        slot: b.slot,
+        note: b.note ?? "",
+      }),
+    )
+
     setState(s => ({
       ...s,
       selectedOfferingId: null,
@@ -975,6 +1023,7 @@ function App() {
       // claim a fresh solve is needed.
       solveStatus: synthesizedProgress ? "done" : "idle",
       offerings: expanded,
+      roomBlackouts: restoredBlackouts,
       professors: nextProfessors ?? s.professors,
       rooms:      nextRooms      ?? s.rooms,
     }))
@@ -1163,6 +1212,7 @@ function App() {
       catalog={state.catalog}
       professors={state.professors}
       rooms={state.rooms}
+      roomBlackouts={state.roomBlackouts}
       quarter={state.quarter}
       onSetQuarter={setQuarter}
       solveStatus={state.solveStatus}
@@ -1175,6 +1225,8 @@ function App() {
       onSelectProfessor={selectProfessor}
       onAdd={addOffering}
       onPinToSlot={pinToSlot}
+      onAddBlackout={addBlackout}
+      onRemoveBlackout={removeBlackout}
       onSetSolveMode={setSolveMode}
       onSolve={() => { void requestSolve() }}
       onEmptyCalendar={emptyCalendar}

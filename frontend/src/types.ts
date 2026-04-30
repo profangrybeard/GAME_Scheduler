@@ -280,12 +280,28 @@ export interface Offering {
 
 // ─── The single state object ──────────────────────────────────────
 
+/** A chair-authored hold on a single (room × day_group × time_slot) cell.
+ *  Represents an external constraint — typically another department reserving
+ *  a shared room — that the solver must work around. The note is free-form
+ *  context ("Virtual Film Club") shown on the muted card in that cell.
+ *  Multiple blackouts can share a cell; one row per blocked room. */
+export interface RoomBlackout {
+  /** Stable runtime identity for React keys + remove. Format: `blk#${n}`. */
+  id: string
+  room_id: string
+  slot: Slot
+  note: string
+}
+
 export interface SchedulerState {
   // Selection
   selectedOfferingId: string | null
 
   // Working data
   offerings: Offering[]
+  /** External holds on (room × slot) cells — see RoomBlackout. Per-quarter,
+   *  belongs to the quarter document, not preserved across quarter switches. */
+  roomBlackouts: RoomBlackout[]
 
   // Reference lookups
   catalog: Record<string, Course>
@@ -302,6 +318,22 @@ export interface SchedulerState {
 }
 
 // ─── Offering identity helpers ────────────────────────────────────
+
+/** Mint a fresh blackout id unique among `existing`. Format: `blk#${n}` with
+ *  n starting at 1 — same monotonic scheme as offerings, scoped to blackouts
+ *  so the two namespaces never collide. */
+export function mintBlackoutId(
+  existing: ReadonlyArray<{ id: string }>,
+): string {
+  const prefix = "blk#"
+  let max = 0
+  for (const b of existing) {
+    if (!b.id.startsWith(prefix)) continue
+    const n = parseInt(b.id.slice(prefix.length), 10)
+    if (Number.isFinite(n) && n > max) max = n
+  }
+  return `${prefix}${max + 1}`
+}
 
 /** Mint a fresh offering_id unique among `existing`. Format: `${cid}#${n}`
  *  with n starting at 1 and incrementing past any sibling already present.

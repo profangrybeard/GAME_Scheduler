@@ -9,7 +9,7 @@
  * the workspace.
  */
 
-import type { Assignment, Offering, Professor, Room, SolveMode } from "./types"
+import type { Assignment, Offering, Professor, Room, RoomBlackout, SolveMode } from "./types"
 
 export interface SolveModeResult {
   mode: SolveMode | string
@@ -43,6 +43,10 @@ export interface SolveRequestBody {
   professors: Professor[]
   /** Full rooms list — replaces server baseline entirely (Path B). */
   rooms: Room[]
+  /** External holds on (room × slot) cells — chair-authored, per-quarter.
+   *  Solver treats each entry as a hard constraint forcing that room to be
+   *  empty in that slot (HC13). */
+  roomBlackouts: RoomBlackout[]
   /** User-tuned weights for the "balanced" mode. When present, the server
    *  uses these in place of MODE_WEIGHTS["balanced"]. Field names mirror the
    *  Python config keys so the body passes through verbatim. */
@@ -361,6 +365,9 @@ export interface DraftState {
    *  may carry `room_overrides` instead. */
   rooms?: Room[]
   room_overrides?: Record<string, Partial<Room>>
+  /** Per-quarter blackouts (room × slot holds with notes). Optional in the
+   *  schema — older drafts omit the sheet entirely; reload defaults to []. */
+  room_blackouts?: RoomBlackout[]
   /** Tuned weights (percent-of-100 from the Tune gear). Written by the
    *  server in solver-shape (time_pref, not the Mix's `time`); callers
    *  translating to Mix must remap `time_pref` → `time`. */

@@ -62,6 +62,7 @@ DATA_SHEET_ROOMS          = "_data_rooms"
 DATA_SHEET_TUNED_WEIGHTS  = "_data_tuned_weights"
 DATA_SHEET_SOLVER_RESULTS = "_data_solver_results"
 DATA_SHEET_LOCKED         = "_data_locked_assignments"
+DATA_SHEET_BLACKOUTS      = "_data_blackouts"
 
 # draft_state top-level keys that map to row-per-entity flat-table sheets.
 _DATA_LIST_SHEETS: dict[str, str] = {
@@ -498,6 +499,22 @@ def _write_data_sheets(wb, draft_state: dict) -> None:
     tw = draft_state.get("tunedWeights")
     if tw is not None:
         _write_kv_sheet(wb.create_sheet(), DATA_SHEET_TUNED_WEIGHTS, tw)
+
+    # Room blackouts (optional list, persisted flattened so the spreadsheet
+    # stays human-readable: nested `slot: {day_group, time_slot}` becomes
+    # plain columns. The reader re-nests on load.)
+    blackouts = draft_state.get("room_blackouts")
+    if blackouts is not None:
+        flat = [
+            {
+                "room_id":    b.get("room_id"),
+                "day_group":  (b.get("slot") or {}).get("day_group"),
+                "time_slot":  (b.get("slot") or {}).get("time_slot"),
+                "note":       b.get("note", ""),
+            }
+            for b in blackouts
+        ]
+        _write_flat_table_sheet(wb.create_sheet(), DATA_SHEET_BLACKOUTS, flat)
 
     # Solver results (optional, nested, chunked)
     sr = draft_state.get("solver_results")

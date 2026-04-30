@@ -629,8 +629,25 @@ def save_template(name, offerings, prof_overrides=None, intended_quarter=None):
         json.dump(data, f, indent=2)
 
 def save_offerings(quarter, year, offerings_list):
-    data = {"quarter": quarter, "year": year, "offerings": offerings_list}
-    with open(PROJECT_ROOT / "data" / "quarterly_offerings.json", "w") as f:
+    # Preserve room_blackouts when present on disk — the legacy Streamlit edit
+    # flow doesn't surface blackouts (chair authors them in the React workspace),
+    # so a Streamlit-side save would otherwise clobber the field. Read once,
+    # carry forward.
+    path = PROJECT_ROOT / "data" / "quarterly_offerings.json"
+    existing_blackouts = []
+    try:
+        with open(path) as f:
+            prior = json.load(f)
+        existing_blackouts = prior.get("room_blackouts", []) or []
+    except (FileNotFoundError, json.JSONDecodeError):
+        pass
+    data = {
+        "quarter": quarter,
+        "year": year,
+        "offerings": offerings_list,
+        "room_blackouts": existing_blackouts,
+    }
+    with open(path, "w") as f:
         json.dump(data, f, indent=2)
     return data
 

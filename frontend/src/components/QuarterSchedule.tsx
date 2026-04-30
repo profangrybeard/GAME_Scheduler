@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState, type ReactNode } from "react"
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { QUARTER_OPTIONS } from "../types"
 import type {
   Course,
@@ -6,6 +6,7 @@ import type {
   Offering,
   Professor,
   Room,
+  RoomBlackout,
   Slot,
   SolveMode,
   SolveProgressState,
@@ -72,6 +73,9 @@ export interface QuarterScheduleProps {
   catalog: Record<string, Course>
   professors: Record<string, Professor>
   rooms: Record<string, Room>
+  /** External holds on (room × slot) cells. Render as muted striped cards
+   *  alongside class cards in the cell where their slot lives. */
+  roomBlackouts: RoomBlackout[]
   /** Current quarter label (e.g. "Fall"). Rendered as an inline <select>
    *  in the grid's top-left corner so the context sits on the calendar
    *  itself instead of floating in the topbar. */
@@ -93,6 +97,11 @@ export interface QuarterScheduleProps {
    *  so the DnD drop handler can chain onPinToSlot without a re-render wait. */
   onAdd: (catalog_id: string) => string | null
   onPinToSlot: (offering_id: string, slot: Slot | null) => void
+  /** Add a room blackout for (room, slot) with a free-form note. App.tsx
+   *  trims and caps the note; this just hands the form values up. */
+  onAddBlackout: (room_id: string, slot: Slot, note: string) => void
+  /** Remove a blackout by id (the muted card's hover-X dispatches this). */
+  onRemoveBlackout: (id: string) => void
   onSetSolveMode: (mode: SolveMode) => void
   onSolve: () => void
   onEmptyCalendar: () => void
@@ -118,6 +127,9 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
   // Ticks on each Assemble click so the gold chaser element re-mounts and
   // re-plays its 1s perimeter trace. Cleared by the chaser's onAnimationEnd.
   const [chaseKey, setChaseKey] = useState(0)
+  // The cell that's showing the "block this slot" inline popover, or null.
+  // Cell-key form (`${dg}|${ts}`) — only one popover open at a time.
+  const [blackoutOpenKey, setBlackoutOpenKey] = useState<string | null>(null)
 
   const { ctaLabel } = useTheme()
   const isSolving = props.solveStatus === "running"
@@ -146,6 +158,19 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
     }
     return placed
   }, [props.offerings])
+
+  // Same shape as placedByCell, keyed identically. Cells render blackouts
+  // alongside class cards under the same density-grid auto-layout.
+  const blackoutsByCell = useMemo(() => {
+    const m = new Map<string, RoomBlackout[]>()
+    for (const b of props.roomBlackouts) {
+      const key = `${b.slot.day_group}|${b.slot.time_slot}`
+      const bucket = m.get(key) ?? []
+      bucket.push(b)
+      m.set(key, bucket)
+    }
+    return m
+  }, [props.roomBlackouts])
 
   const handleDrop = (e: React.DragEvent, slot: Slot) => {
     e.preventDefault()
@@ -274,6 +299,41 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
           />
         )}
       </button>
+    )
+  }
+
+  const renderBlackoutCard = (b: RoomBlackout) => {
+    const room = props.rooms[b.room_id]
+    const roomLabel = room
+      ? room.name.split("–")[0].trim().replace("Room ", "")
+      : b.room_id
+    const fullLabel = room ? room.name : b.room_id
+    const tooltip = b.note
+      ? `${fullLabel} — ${b.note}`
+      : `${fullLabel} (no note)`
+    return (
+      <div
+        key={b.id}
+        className="schedule-blackout"
+        title={tooltip}
+        role="note"
+        aria-label={`Blackout: ${tooltip}`}
+      >
+        <span className="schedule-blackout__room">{roomLabel}</span>
+        <span className="schedule-blackout__note">{b.note || "blocked"}</span>
+        <button
+          type="button"
+          className="schedule-blackout__remove"
+          aria-label={`Remove blackout for ${fullLabel}`}
+          title="Remove this blackout"
+          onClick={e => {
+            e.stopPropagation()
+            props.onRemoveBlackout(b.id)
+          }}
+        >
+          ×
+        </button>
+      </div>
     )
   }
 
@@ -429,6 +489,8 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
               {g.label}
             </div>
           ))}
+          {/* TIME_SLOTS rows below — each cell knows about blackouts via
+              blackoutsByCell + the BlackoutPopover defined at file bottom. */}
           {TIME_SLOTS.map(ts => (
             <Fragment key={ts}>
               <div className="schedule-grid__time-header" role="rowheader">
@@ -437,19 +499,23 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
               {DAY_GROUPS.map(g => {
                 const cellKey = `${g.key}|${ts}`
                 const cards = placedByCell.get(cellKey) ?? []
+                const blackouts = blackoutsByCell.get(cellKey) ?? []
                 const slot: Slot = { day_group: g.key, time_slot: ts }
                 const isDropTarget = dragOverKey === cellKey
                 const canPinClick =
                   props.selectedOfferingId !== null &&
                   !cards.some(c => c.offering_id === props.selectedOfferingId)
                 const isHidden = g.key !== visibleDayGroup // only hidden on portrait via CSS
-                // Density: 1-2 → column; 3-4 → 2-col grid; 5+ → 2-col + compact cards.
+                // Blackouts share the cell's density grid with class cards.
+                const totalTiles = cards.length + blackouts.length
                 const densityClass =
-                  cards.length >= 5
+                  totalTiles >= 5
                     ? " schedule-grid__cell--grid schedule-grid__cell--dense"
-                    : cards.length >= 3
+                    : totalTiles >= 3
                       ? " schedule-grid__cell--grid"
                       : ""
+                const popoverOpen = blackoutOpenKey === cellKey
+                const blockedRoomIds = new Set(blackouts.map(b => b.room_id))
                 return (
                   <div
                     key={`c-${g.key}-${ts}`}
@@ -457,13 +523,16 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
                       "schedule-grid__cell" +
                       densityClass +
                       (isDropTarget ? " schedule-grid__cell--over" : "") +
-                      (isHidden ? " schedule-grid__cell--hidden" : "")
+                      (isHidden ? " schedule-grid__cell--hidden" : "") +
+                      (popoverOpen ? " schedule-grid__cell--popover-open" : "")
                     }
                     role="gridcell"
                     data-day-group={g.key}
                     data-time-slot={ts}
-                    data-count={cards.length}
+                    data-count={totalTiles}
                     onClick={() => {
+                      // Don't claim clicks meant for the popover or for placement.
+                      if (popoverOpen) return
                       if (props.placingId) {
                         props.onPinToSlot(props.placingId, slot)
                       } else if (canPinClick && props.selectedOfferingId) {
@@ -481,6 +550,30 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
                     onDrop={e => handleDrop(e, slot)}
                   >
                     {cards.map(renderCard)}
+                    {blackouts.map(renderBlackoutCard)}
+                    <button
+                      type="button"
+                      className="schedule-grid__block-btn"
+                      aria-label="Block this slot"
+                      title="Block this slot for another department"
+                      onClick={e => {
+                        e.stopPropagation()
+                        setBlackoutOpenKey(popoverOpen ? null : cellKey)
+                      }}
+                    >
+                      <span aria-hidden="true">⊘</span>
+                    </button>
+                    {popoverOpen && (
+                      <BlackoutPopover
+                        rooms={props.rooms}
+                        excludeRoomIds={blockedRoomIds}
+                        onCancel={() => setBlackoutOpenKey(null)}
+                        onSubmit={(room_id, note) => {
+                          props.onAddBlackout(room_id, slot, note)
+                          setBlackoutOpenKey(null)
+                        }}
+                      />
+                    )}
                   </div>
                 )
               })}
@@ -489,5 +582,114 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
         </div>
       </div>
     </section>
+  )
+}
+
+// ─── Blackout popover ───────────────────────────────────────────────
+//
+// Tiny inline form anchored to a schedule cell. Two fields: room (dropdown,
+// excluding rooms already blacked out in this slot) and note (free text,
+// 140-char cap enforced upstream in App.tsx::addBlackout). Submit → bubble
+// up via onSubmit; Esc / Cancel → onCancel. Click-outside closes via the
+// overlay sibling rendered below the panel.
+
+interface BlackoutPopoverProps {
+  rooms: Record<string, Room>
+  excludeRoomIds: Set<string>
+  onSubmit: (room_id: string, note: string) => void
+  onCancel: () => void
+}
+
+function BlackoutPopover(props: BlackoutPopoverProps) {
+  const available = useMemo(() => {
+    return Object.values(props.rooms)
+      .filter(r => r.available !== false && !props.excludeRoomIds.has(r.id))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }, [props.rooms, props.excludeRoomIds])
+  const [roomId, setRoomId] = useState<string>(available[0]?.id ?? "")
+  const [note, setNote] = useState<string>("")
+  const noteRef = useRef<HTMLInputElement | null>(null)
+
+  // Auto-focus the note input on open — room defaults to first option, the
+  // chair almost always wants to type the note first ("for X").
+  useEffect(() => {
+    noteRef.current?.focus()
+  }, [])
+
+  // Esc anywhere closes; Enter inside the form submits if a room is chosen.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") props.onCancel()
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [props])
+
+  const canSubmit = roomId !== ""
+
+  return (
+    <>
+      <div
+        className="schedule-blackout-popover__overlay"
+        onClick={props.onCancel}
+        aria-hidden="true"
+      />
+      <form
+        className="schedule-blackout-popover"
+        role="dialog"
+        aria-label="Block this slot for another department"
+        onClick={e => e.stopPropagation()}
+        onSubmit={e => {
+          e.preventDefault()
+          if (canSubmit) props.onSubmit(roomId, note)
+        }}
+      >
+        <label className="schedule-blackout-popover__field">
+          <span className="schedule-blackout-popover__label">Room</span>
+          <select
+            className="schedule-blackout-popover__select"
+            value={roomId}
+            onChange={e => setRoomId(e.target.value)}
+          >
+            {available.length === 0 && (
+              <option value="">No rooms available — all blocked here</option>
+            )}
+            {available.map(r => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="schedule-blackout-popover__field">
+          <span className="schedule-blackout-popover__label">Reason</span>
+          <input
+            ref={noteRef}
+            type="text"
+            className="schedule-blackout-popover__input"
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            maxLength={140}
+            placeholder="e.g. Virtual Film Club"
+          />
+        </label>
+        <div className="schedule-blackout-popover__actions">
+          <button
+            type="button"
+            className="schedule-blackout-popover__btn schedule-blackout-popover__btn--ghost"
+            onClick={props.onCancel}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="schedule-blackout-popover__btn schedule-blackout-popover__btn--primary"
+            disabled={!canSubmit}
+          >
+            Block
+          </button>
+        </div>
+      </form>
+    </>
   )
 }

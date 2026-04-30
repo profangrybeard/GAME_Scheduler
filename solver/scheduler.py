@@ -216,6 +216,7 @@ def run_schedule(
     professors: list[dict] | None = None,
     rooms_override: dict[str, dict] | None = None,
     rooms: list[dict] | None = None,
+    room_blackouts: list[dict] | None = None,
     tuned_weights: dict | None = None,
     progress_callback: ProgressCallback | None = None,
 ) -> dict:
@@ -282,6 +283,7 @@ def run_schedule(
             professors=professors,
             rooms_override=rooms_override,
             rooms=rooms,
+            room_blackouts=room_blackouts,
         )
 
         print(f"[{mode}] Applying constraints ...")
