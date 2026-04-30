@@ -21,6 +21,8 @@ Explicit CP-SAT constraints added here:
   HC4   Professor total load <= max_classes (CHAIR_MAX / STANDARD_MAX / OVERLOAD_MAX)
   HC10  must_have course-sections must be assigned (sum == 1)
   HC11  Multi-section courses must use different (dg, ts) slots
+  HC13  Room blackouts: a (room, dg, ts) cell that another department holds
+        must be empty (chair-authored holds with a free-form note)
 """
 
 from ortools.sat.python import cp_model
@@ -41,6 +43,8 @@ def apply_hard_constraints(model: cp_model.CpModel, data: dict) -> None:
     vars_by_cs_dg_ts     = data["vars_by_cs_dg_ts"]
     sections_by_catalog_id = data["sections_by_catalog_id"]
     day_group_keys       = data["day_group_keys"]
+    # Optional in older callers / fixtures — default to [] keeps the loop a no-op.
+    room_blackouts       = data.get("room_blackouts", [])
 
     # ------------------------------------------------------------------
     # HC1 + HC10: Assignment cardinality per course-section
@@ -110,3 +114,19 @@ def apply_hard_constraints(model: cp_model.CpModel, data: dict) -> None:
                     cross_section_vars.extend(vars_by_cs_dg_ts.get((cs_key, dg, ts), []))
                 if len(cross_section_vars) > 1:
                     model.Add(sum(cross_section_vars) <= 1)
+
+    # ------------------------------------------------------------------
+    # HC13: Room blackouts — chair-authored "another department holds this
+    # (room, dg, ts) cell." Forces every assignment variable that would put
+    # any class in that cell to 0. Same index HC3 already builds, so no new
+    # variable bookkeeping is needed. A blackout for an unknown (room, slot)
+    # combo (e.g. a deleted room id, an unsupported time string) silently
+    # no-ops — the chair sees it stick around in the UI but it never blocks
+    # anything, which is the right failure mode for stale data.
+    # ------------------------------------------------------------------
+    for blk in room_blackouts:
+        slot = blk.get("slot") or {}
+        key = (blk.get("room_id"), slot.get("day_group"), slot.get("time_slot"))
+        vs = vars_by_room_dg_ts.get(key, [])
+        if vs:
+            model.Add(sum(vs) == 0)

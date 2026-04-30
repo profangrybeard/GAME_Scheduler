@@ -129,6 +129,7 @@ def build_model(
     professors: list[dict] | None = None,
     rooms_override: dict[str, dict] | None = None,
     rooms: list[dict] | None = None,
+    room_blackouts: list[dict] | None = None,
 ) -> tuple:
     """Load quarterly offerings and catalog, expand sections, build CP-SAT model.
 
@@ -165,6 +166,12 @@ def build_model(
         Full-list override (Path B). When supplied, replaces the disk-loaded
         rooms entirely — the user's dept deck IS the list. Rooms with
         `available: false` are still filtered before eligibility.
+    room_blackouts : list[dict] | None
+        External holds on (room × slot) cells, each shaped
+        `{room_id, slot: {day_group, time_slot}, note}`. Per-quarter; consumed
+        by HC13 in constraints.py to force the room to be empty in that slot.
+        The `note` field is chair-authored context for the UI; the solver
+        ignores it.
 
     Returns
     -------
@@ -395,6 +402,10 @@ def build_model(
         "vars_by_cs_dg_ts":       vars_by_cs_dg_ts,
         "sections_by_catalog_id": sections_by_catalog_id,
         "locked_keys":            locked_keys,
+        # External (room × slot) holds — see HC13 in constraints.py. Default
+        # to empty list so callers that don't pass this through behave
+        # identically to before.
+        "room_blackouts":         list(room_blackouts) if room_blackouts else [],
     }
 
     return model, data

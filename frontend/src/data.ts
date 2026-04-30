@@ -23,6 +23,7 @@ import {
   type Offering,
   type Professor,
   type Room,
+  type RoomBlackout,
   type SchedulerState,
   type Slot,
   type WireOffering,
@@ -50,6 +51,10 @@ const rawOfferingsDoc = offeringsJson as unknown as {
       locked?: Slot | null // legacy — folded into `pinned` on load (see below)
     }
   >
+  /** Optional in legacy seeds — defaults to [] when missing so older fixtures
+   *  load cleanly. The chair builds blackouts in-session; the seed file just
+   *  gives the field a place to land on a fresh install. */
+  room_blackouts?: Array<{ room_id: string; slot: Slot; note: string }>
 }
 
 // ─── Professor portraits (eagerly imported via Vite glob) ───────────
@@ -124,9 +129,19 @@ export function loadInitialState(): SchedulerState {
   }))
   const offerings: Offering[] = expandOfferingsFromWire(wireOfferings)
 
+  const roomBlackouts: RoomBlackout[] = (rawOfferingsDoc.room_blackouts ?? []).map(
+    (b, i) => ({
+      id: `blk#${i + 1}`,
+      room_id: b.room_id,
+      slot: b.slot,
+      note: b.note,
+    }),
+  )
+
   return {
     selectedOfferingId: offerings[0]?.offering_id ?? null,
     offerings,
+    roomBlackouts,
     catalog,
     professors,
     rooms,

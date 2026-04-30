@@ -33,6 +33,7 @@ import openpyxl
 from export.excel_writer import (
     DATA_MARKER,
     DATA_SCHEMA_VERSION,
+    DATA_SHEET_BLACKOUTS,
     DATA_SHEET_LOCKED,
     DATA_SHEET_META,
     DATA_SHEET_OFFERINGS,
@@ -213,6 +214,24 @@ def read_draft_state(file: Union[str, Path, BinaryIO, bytes]) -> dict:
     # Optional scalar sheet
     if DATA_SHEET_TUNED_WEIGHTS in wb.sheetnames:
         state["tunedWeights"] = _read_kv_sheet(wb[DATA_SHEET_TUNED_WEIGHTS])
+
+    # Room blackouts: writer flattened `slot.{day_group, time_slot}` into
+    # plain columns for human readability — re-nest on load so the React
+    # shape (`{room_id, slot:{...}, note}`) is what callers see.
+    if DATA_SHEET_BLACKOUTS in wb.sheetnames:
+        flat = _read_flat_table_sheet(wb[DATA_SHEET_BLACKOUTS])
+        state["room_blackouts"] = [
+            {
+                "room_id": row.get("room_id"),
+                "slot": {
+                    "day_group": row.get("day_group"),
+                    "time_slot": row.get("time_slot"),
+                },
+                "note": row.get("note", "") or "",
+            }
+            for row in flat
+            if row.get("room_id") and row.get("day_group") is not None and row.get("time_slot")
+        ]
 
     # Optional JSON-chunked cache
     if DATA_SHEET_SOLVER_RESULTS in wb.sheetnames:
