@@ -3899,13 +3899,20 @@
 .solve-progress__modes {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: var(--space-sm);
+  /* Doubled from --space-sm so each tab reads as its own object and the
+     middle card's gear (12px overhang) clears the Time-Pref card. */
+  gap: var(--space-md);
   /* Folder-tab cues sit above each card via bottom: 100%; reserve room
      so they don't collide with whatever rendered above the trio. */
   margin-top: 22px;
 }
 
 .solve-progress__mode {
+  /* Half-strength echo of the Solve button's neutral drop shadow so the
+     trio reads as floating tabs without competing with the CTA. */
+  --mode-float-shadow:
+    0 6px 12px -5px rgba(0, 0, 0, 0.18),
+    0 1px 3px rgba(0, 0, 0, 0.08);
   position: relative;
   padding: var(--space-sm) 10px;
   background: var(--surface);
@@ -3914,12 +3921,15 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  box-shadow: var(--mode-float-shadow);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .solve-progress__mode--running {
   border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
+  box-shadow:
+    var(--mode-float-shadow),
+    0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
 .solve-progress__mode--done {
@@ -3967,6 +3977,7 @@
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 14%, var(--surface));
   box-shadow:
+    var(--mode-float-shadow),
     0 0 0 1px var(--accent),
     0 0 12px -4px color-mix(in srgb, var(--accent) 50%, transparent);
 }
