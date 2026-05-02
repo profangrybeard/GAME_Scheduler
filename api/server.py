@@ -728,10 +728,26 @@ if FRONTEND_DIST.is_dir() and (FRONTEND_DIST / "index.html").is_file():
     # SPA fallback. Any unmatched GET returns index.html so client-side
     # routing can take over. /api/* routes are already registered above and
     # take precedence; this catch-all never hijacks them.
+    #
+    # Top-level static files dropped into frontend/public/ (roadmap.html,
+    # example-schedule.xlsx, …) get copied next to index.html during the
+    # Vite build. Serve them when they exist before falling through to the
+    # SPA index — otherwise the catch-all would return the React app for
+    # /roadmap.html and friends. Vite's dev server handles this natively, so
+    # the bug only shows up in the hosted Fly build.
+    _DIST_RESOLVED = FRONTEND_DIST.resolve()
+
     @app.get("/{full_path:path}", include_in_schema=False)
     def _spa_fallback(full_path: str) -> FileResponse:
         if full_path.startswith("api/"):
             raise HTTPException(status_code=404, detail="not found")
+        if full_path:
+            candidate = (FRONTEND_DIST / full_path).resolve()
+            if (
+                candidate.is_file()
+                and candidate.is_relative_to(_DIST_RESOLVED)
+            ):
+                return FileResponse(candidate)
         return FileResponse(FRONTEND_DIST / "index.html")
 
 

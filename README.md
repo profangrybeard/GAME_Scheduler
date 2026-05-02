@@ -5,8 +5,9 @@ SCAD's Game department. Drag courses onto a weekly grid, hit **Generate**,
 and an OR-Tools CP-SAT solver returns three optimized draft schedules —
 exportable to Excel.
 
-**Hosted for faculty:** `https://scad-class-scheduler.fly.dev` (gated by
-Cloudflare Access once DNS is wired — see [DEPLOY.md](DEPLOY.md)).
+**Hosted for SCAD faculty:** `https://scheduler.autocoursescheduler.com` —
+gated by Cloudflare Access (`@scad.edu` only; login is a one-time emailed
+PIN). See [DEPLOY.md](DEPLOY.md) for the runbook.
 
 ---
 
@@ -29,12 +30,12 @@ what faculty use via the hosted URL.
 Served as a static React bundle by the FastAPI container. API lives at
 `/api/*`, UI at `/`, same origin.
 
-### 2. Streamlit UI (legacy, parallel)
+### 2. Streamlit UI (parallel)
 
-The original Streamlit app at [`app.py`](app.py) still works. It uses the
-same solver and templates; kept alive for Tim's own day-to-day scheduling
-until the React workspace reaches feature parity on the admin side
-(templates, paste-import, etc.).
+The original Streamlit app at [`app.py`](app.py) still works and is what
+Tim uses for daily scheduling. Streamlit owns the welcome screen, sidebar
+tools, template management, and file I/O; the React workspace owns the
+three-panel canvas. Both talk to the same solver.
 
 Run locally with `./launch.sh` (Mac) or `run.bat` (Windows).
 
@@ -89,7 +90,7 @@ mode. Canonical JSON on disk is never mutated by solves.
 
 ## Rooms & Faculty
 
-Seven real SCAD rooms in Ivy Hall:
+Seven real SCAD rooms in FORTY5 (Atlanta):
 
 | Room | Type | Stations | Displays | Capacity | Notes |
 |------|------|----------|----------|----------|-------|
@@ -183,8 +184,9 @@ See [DEPLOY.md](DEPLOY.md). TL;DR:
   [`.github/workflows/fly.yml`](.github/workflows/fly.yml), which runs
   `flyctl deploy --remote-only`
 - ~60–90 s later the new version is live at
-  `https://scad-class-scheduler.fly.dev`
-- The version badge in the top-right shows the deployed commit's SHA
+  `https://scheduler.autocoursescheduler.com` (Fly origin:
+  `scad-class-scheduler.fly.dev`, fronted by Cloudflare Access)
+- The **(i) About popover** in the topbar shows the deployed commit's short SHA
 
 ---
 
@@ -194,6 +196,17 @@ See [DEPLOY.md](DEPLOY.md). TL;DR:
 - **[docs/state-flow.md](docs/state-flow.md)** — React state ownership, panel mapping, offering lifecycle
 - **[CLAUDE.md](CLAUDE.md)** — project rules (responsive breakpoints, frontend/backend boundary)
 - **[MILESTONES.md](MILESTONES.md)** — historical milestone log
+
+---
+
+## Roadmap
+
+What's shipped, what's next, and how the tool could scale beyond GAME:
+
+- **Live (Access-gated):** [`scheduler.autocoursescheduler.com/roadmap.html`](https://scheduler.autocoursescheduler.com/roadmap.html)
+- **In the repo:** [`frontend/public/roadmap.html`](frontend/public/roadmap.html)
+
+The page is also linked from the **(i) About popover** in the app's topbar.
 
 ---
 
