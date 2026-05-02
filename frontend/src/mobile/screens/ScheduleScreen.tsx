@@ -113,6 +113,49 @@ export function ScheduleScreen() {
   // suppress "unused" lint while dayPlacedCount is parked
   void dayPlacedCount
 
+  /** Offering IDs that share a slot with another offering on the same
+   *  prof or the same room. AUTO assignments don't conflict with each
+   *  other — the solver sorts those out — so we only flag explicit
+   *  chair-set duplicates. */
+  const conflictedIds = useMemo(() => {
+    const conflicted = new Set<string>()
+    const bySlot = new Map<string, Offering[]>()
+    for (const o of state.offerings) {
+      const slot = effectiveSlot(o)
+      if (!slot) continue
+      const key = `${slot.day_group}-${slot.time_slot}`
+      const list = bySlot.get(key)
+      if (list) list.push(o)
+      else bySlot.set(key, [o])
+    }
+    for (const group of bySlot.values()) {
+      if (group.length < 2) continue
+      const profMap = new Map<string, string[]>()
+      const roomMap = new Map<string, string[]>()
+      for (const o of group) {
+        const profId = effectiveProfId(o)
+        const roomId = effectiveRoomId(o)
+        if (profId) {
+          const ids = profMap.get(profId) ?? []
+          ids.push(o.offering_id)
+          profMap.set(profId, ids)
+        }
+        if (roomId) {
+          const ids = roomMap.get(roomId) ?? []
+          ids.push(o.offering_id)
+          roomMap.set(roomId, ids)
+        }
+      }
+      for (const ids of profMap.values()) {
+        if (ids.length > 1) ids.forEach(id => conflicted.add(id))
+      }
+      for (const ids of roomMap.values()) {
+        if (ids.length > 1) ids.forEach(id => conflicted.add(id))
+      }
+    }
+    return conflicted
+  }, [state.offerings])
+
   /** Shared gesture core. Both pointer-event and touch-event handlers
    *  call into these so we get the same behaviour from whichever event
    *  family the device actually fires. The first start to land claims
@@ -348,9 +391,18 @@ export function ScheduleScreen() {
         </label>
         <span
           className="m-schedule__count"
-          aria-label={`${totalPlaced} of ${totalOfferings} offerings placed`}
+          aria-label={
+            conflictedIds.size > 0
+              ? `${totalPlaced} of ${totalOfferings} placed, ${conflictedIds.size} in conflict`
+              : `${totalPlaced} of ${totalOfferings} offerings placed`
+          }
         >
           {totalPlaced} / {totalOfferings}
+          {conflictedIds.size > 0 && (
+            <span className="m-schedule__count-warn" aria-hidden="true">
+              ⚠ {conflictedIds.size}
+            </span>
+          )}
         </span>
       </header>
 
@@ -398,6 +450,7 @@ export function ScheduleScreen() {
               buckets={slotsByDay.get(day.group)!}
               professors={state.professors}
               rooms={state.rooms}
+              conflictedIds={conflictedIds}
               onOpenSlot={handleOpenSlot}
               onOpenDetail={handleOpenDetail}
             />
@@ -437,6 +490,7 @@ function DayPage(props: {
   buckets: Map<TimeSlot, Offering[]>
   professors: Record<string, { name: string }>
   rooms: Record<string, { id: string }>
+  conflictedIds: Set<string>
   onOpenSlot: (day_group: DayGroup, time_slot: TimeSlot) => void
   onOpenDetail: (offering_id: string) => void
 }) {
@@ -469,13 +523,22 @@ function DayPage(props: {
                   const roomId = effectiveRoomId(o)
                   const profName = profId ? props.professors[profId]?.name ?? profId : "AUTO"
                   const roomLabel = roomId ? props.rooms[roomId]?.id ?? roomId : "AUTO"
+                  const isConflict = props.conflictedIds.has(o.offering_id)
                   return (
                     <li key={o.offering_id}>
                       <button
                         type="button"
-                        className="m-card"
+                        className={"m-card" + (isConflict ? " m-card--conflict" : "")}
                         onClick={() => props.onOpenDetail(o.offering_id)}
                       >
+                        {isConflict && (
+                          <span
+                            className="m-card__flag"
+                            aria-label="Conflict: shared prof or room with another course in this slot"
+                          >
+                            ⚠
+                          </span>
+                        )}
                         <div className="m-card__id">{o.catalog_id}</div>
                         <div className="m-card__meta">
                           <span className="m-card__prof">{profName}</span>

@@ -504,6 +504,32 @@
   border-color: var(--accent);
 }
 
+/* Conflict styling: shared prof or shared room with another card in the
+ * same slot. Border + corner flag together signal "this needs your
+ * attention" without burying the rest of the card content. */
+.m-card--conflict {
+  border-color: color-mix(in srgb, #c0392b 60%, var(--border));
+  position: relative;
+}
+
+.m-card__flag {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 0.85rem;
+  color: #c0392b;
+  pointer-events: none;
+}
+
+/* Conflict count next to the placed-progress chip. Inline with the
+ * fraction so the eye picks up "{placed} / {total} ⚠ {n}" as one unit. */
+.m-schedule__count-warn {
+  margin-left: 6px;
+  padding-left: 8px;
+  border-left: 1px solid var(--border);
+  color: #c0392b;
+}
+
 .m-card__id {
   font-size: 0.95rem;
   font-weight: 700;
