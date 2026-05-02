@@ -45,6 +45,12 @@ const AXIS_LOCK_PX = 10
 const VERTICAL_LOCK_RATIO = 1.5
 /** Edge rubber-band coefficient. <1 means "drag past edge feels heavier." */
 const EDGE_DAMPING = 0.3
+/** How long a finger must rest on a placed card before it lifts into
+ *  drag mode. Long enough that a tap-to-open-detail still feels
+ *  responsive, short enough that intentional press-and-hold doesn't
+ *  feel laggy. iOS / Android system long-press is ~500ms; we run a
+ *  bit shorter because chairs already know they're holding to drag. */
+const LONG_PRESS_MS = 350
 
 function effectiveSlot(o: Offering) {
   return o.pinned ?? o.assignment?.slot ?? null
@@ -65,6 +71,13 @@ export function ScheduleScreen() {
   const [isDragging, setIsDragging] = useState(false)
   const [pendingSlot, setPendingSlot] = useState<Slot | null>(null)
   const [detailOfferingId, setDetailOfferingId] = useState<string | null>(null)
+  /** Set when long-press fires on a placed card. While set, that card
+   *  follows the finger and slot drop targets light up. Drop on a
+   *  different slot reslots the offering; drop on the same slot or
+   *  outside any slot is a no-op. */
+  const [dragOfferingId, setDragOfferingId] = useState<string | null>(null)
+  const [dragDelta, setDragDelta] = useState({ x: 0, y: 0 })
+  const [dropTargetSlot, setDropTargetSlot] = useState<Slot | null>(null)
 
   const startRef = useRef<{ x: number; y: number; t: number } | null>(null)
   const axisRef = useRef<"h" | "v" | null>(null)
@@ -73,6 +86,19 @@ export function ScheduleScreen() {
    *  touch events keep streaming — so cancels from a non-owning family
    *  are ignored. */
   const sourceRef = useRef<"pointer" | "touch" | null>(null)
+  /** Long-press timer + the offering it's waiting on. Cleared by
+   *  significant movement (the user is swiping, not pressing) or by
+   *  touchend (a tap) before the timer fires. */
+  const longPressTimerRef = useRef<number | null>(null)
+  const dragStartRef = useRef<{ offeringId: string; x: number; y: number } | null>(null)
+  /** Mirrors dragOfferingId for synchronous handler logic — state is
+   *  async, but touchmove/end need to know "are we dragging right now"
+   *  without waiting for re-render. */
+  const isDraggingNowRef = useRef(false)
+  /** When true, the next click on this card was synthesized by the
+   *  drag-end touch sequence and should be suppressed (otherwise the
+   *  detail sheet pops up immediately after dropping). */
+  const suppressNextClickRef = useRef(false)
 
   /** Bucket every placed offering by (day_group, time_slot) once per state
    *  change. All 3 day pages read from the same map, so swiping doesn't
@@ -226,6 +252,95 @@ export function ScheduleScreen() {
     setDragX(0)
   }
 
+  const cancelLongPress = useCallback(() => {
+    if (longPressTimerRef.current !== null) {
+      window.clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+    dragStartRef.current = null
+  }, [])
+
+  /** If the user touched a placed card, arm the long-press timer. The
+   *  pager's swipe path runs in parallel — significant movement before
+   *  the timer fires cancels it (user is swiping, not dragging). */
+  const armLongPressIfCard = (
+    target: EventTarget,
+    clientX: number,
+    clientY: number,
+  ) => {
+    if (!(target instanceof Element)) return
+    const cardEl = target.closest("[data-offering-id]")
+    if (!(cardEl instanceof HTMLElement)) return
+    const offeringId = cardEl.dataset.offeringId
+    if (!offeringId) return
+    dragStartRef.current = { offeringId, x: clientX, y: clientY }
+    longPressTimerRef.current = window.setTimeout(() => {
+      longPressTimerRef.current = null
+      if (!dragStartRef.current) return
+      isDraggingNowRef.current = true
+      setDragOfferingId(dragStartRef.current.offeringId)
+      // Cancel the pager's gesture: this finger now belongs to drag.
+      startRef.current = null
+      axisRef.current = null
+      setIsDragging(false)
+      setDragX(0)
+      if ("vibrate" in navigator) {
+        try { navigator.vibrate(15) } catch { /* not supported */ }
+      }
+    }, LONG_PRESS_MS)
+  }
+
+  /** Update the dragged card's offset and find which slot the finger is
+   *  hovering. elementsFromPoint at viewport coords returns whichever
+   *  slot is at the finger; we walk the closest ancestor with the
+   *  data-day-slot attribute. */
+  const updateDrag = (clientX: number, clientY: number) => {
+    const start = dragStartRef.current
+    if (!start) return
+    setDragDelta({ x: clientX - start.x, y: clientY - start.y })
+    const elems = document.elementsFromPoint(clientX, clientY)
+    let target: Slot | null = null
+    for (const el of elems) {
+      if (!(el instanceof HTMLElement)) continue
+      const slotAttr = el.closest("[data-day-slot]")
+      if (slotAttr instanceof HTMLElement && slotAttr.dataset.daySlot) {
+        const [dg, ts] = slotAttr.dataset.daySlot.split("|")
+        target = {
+          day_group: parseInt(dg, 10) as DayGroup,
+          time_slot: ts as TimeSlot,
+        }
+        break
+      }
+    }
+    setDropTargetSlot(target)
+  }
+
+  const finishDrag = useCallback(() => {
+    const start = dragStartRef.current
+    const target = dropTargetSlot
+    isDraggingNowRef.current = false
+    setDragOfferingId(null)
+    setDragDelta({ x: 0, y: 0 })
+    setDropTargetSlot(null)
+    dragStartRef.current = null
+    if (!start || !target) return
+    // Compare against current slot to avoid no-op state churn.
+    const offering = state.offerings.find(o => o.offering_id === start.offeringId)
+    const currentSlot = offering ? effectiveSlot(offering) : null
+    const sameSlot =
+      currentSlot &&
+      currentSlot.day_group === target.day_group &&
+      currentSlot.time_slot === target.time_slot
+    if (sameSlot) return
+    setState(s => ({
+      ...s,
+      offerings: s.offerings.map(o =>
+        o.offering_id === start.offeringId ? { ...o, pinned: target } : o,
+      ),
+    }))
+    suppressNextClickRef.current = true
+  }, [dropTargetSlot, state.offerings, setState])
+
   // Pointer-event path. Touch-typed pointer events are handed off to the
   // dedicated touch path because Android Chrome fires pointercancel mid-
   // gesture (it speculatively decides "this is a scroll") even when touch
@@ -265,17 +380,36 @@ export function ScheduleScreen() {
   const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     if (e.touches.length !== 1) {
       cancelGesture("touch")
+      cancelLongPress()
       return
     }
     const t0 = e.touches[0]
+    armLongPressIfCard(e.target, t0.clientX, t0.clientY)
     startGesture(t0.clientX, t0.clientY, e.timeStamp, "touch")
   }
   const onTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
     if (e.touches.length !== 1) return
     const t = e.touches[0]
+    // Already dragging: bypass pager logic, just track finger.
+    if (isDraggingNowRef.current) {
+      updateDrag(t.clientX, t.clientY)
+      return
+    }
+    // Long-press pending: cancel if finger has moved significantly
+    // (the user is swiping or scrolling, not pressing).
+    if (longPressTimerRef.current !== null && dragStartRef.current) {
+      const dx = t.clientX - dragStartRef.current.x
+      const dy = t.clientY - dragStartRef.current.y
+      if (Math.hypot(dx, dy) > AXIS_LOCK_PX) cancelLongPress()
+    }
     moveGesture(t.clientX, t.clientY)
   }
   const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (isDraggingNowRef.current) {
+      finishDrag()
+      return
+    }
+    cancelLongPress()
     const t = e.changedTouches[0]
     if (!t) {
       cancelGesture("touch")
@@ -284,6 +418,11 @@ export function ScheduleScreen() {
     endGesture(t.clientX, e.timeStamp, "touch")
   }
   const onTouchCancel = () => {
+    if (isDraggingNowRef.current) {
+      finishDrag()
+      return
+    }
+    cancelLongPress()
     cancelGesture("touch")
   }
 
@@ -340,6 +479,11 @@ export function ScheduleScreen() {
   const handleDismissSheet = useCallback(() => setPendingSlot(null), [])
 
   const handleOpenDetail = useCallback((offering_id: string) => {
+    // Suppress the click that fires after a drag-drop touch sequence.
+    if (suppressNextClickRef.current) {
+      suppressNextClickRef.current = false
+      return
+    }
     setDetailOfferingId(offering_id)
   }, [])
 
@@ -453,6 +597,7 @@ export function ScheduleScreen() {
 
       <div
         className="m-schedule__pager"
+        style={dragOfferingId ? { touchAction: "none" } : undefined}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -480,6 +625,9 @@ export function ScheduleScreen() {
               professors={state.professors}
               rooms={state.rooms}
               conflictedIds={conflictedIds}
+              dragOfferingId={dragOfferingId}
+              dragDelta={dragDelta}
+              dropTargetSlot={dropTargetSlot}
               onOpenSlot={handleOpenSlot}
               onOpenDetail={handleOpenDetail}
             />
@@ -521,6 +669,9 @@ function DayPage(props: {
   professors: Record<string, { name: string }>
   rooms: Record<string, { id: string }>
   conflictedIds: Set<string>
+  dragOfferingId: string | null
+  dragDelta: { x: number; y: number }
+  dropTargetSlot: Slot | null
   onOpenSlot: (day_group: DayGroup, time_slot: TimeSlot) => void
   onOpenDetail: (offering_id: string) => void
 }) {
@@ -531,8 +682,15 @@ function DayPage(props: {
     >
       {TIME_SLOTS.map(slot => {
         const offerings = props.buckets.get(slot.value) ?? []
+        const isDropTarget =
+          props.dropTargetSlot?.day_group === props.dayGroup &&
+          props.dropTargetSlot?.time_slot === slot.value
         return (
-          <div key={slot.value} className="m-slot">
+          <div
+            key={slot.value}
+            className={"m-slot" + (isDropTarget ? " m-slot--drop-target" : "")}
+            data-day-slot={`${props.dayGroup}|${slot.value}`}
+          >
             <div className="m-slot__header">
               <span className="m-slot__time">{slot.label}</span>
               <span className="m-slot__count">{offerings.length || "—"}</span>
@@ -554,11 +712,23 @@ function DayPage(props: {
                   const profName = profId ? props.professors[profId]?.name ?? profId : "AUTO"
                   const roomLabel = roomId ? props.rooms[roomId]?.id ?? roomId : "AUTO"
                   const isConflict = props.conflictedIds.has(o.offering_id)
+                  const isDragging = props.dragOfferingId === o.offering_id
+                  const cardClass =
+                    "m-card" +
+                    (isConflict ? " m-card--conflict" : "") +
+                    (isDragging ? " m-card--dragging" : "")
+                  const cardStyle: React.CSSProperties | undefined = isDragging
+                    ? {
+                        transform: `translate(${props.dragDelta.x}px, ${props.dragDelta.y}px)`,
+                      }
+                    : undefined
                   return (
                     <li key={o.offering_id}>
                       <button
                         type="button"
-                        className={"m-card" + (isConflict ? " m-card--conflict" : "")}
+                        className={cardClass}
+                        style={cardStyle}
+                        data-offering-id={o.offering_id}
                         onClick={() => props.onOpenDetail(o.offering_id)}
                       >
                         {isConflict && (

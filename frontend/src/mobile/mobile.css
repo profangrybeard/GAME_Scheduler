@@ -545,6 +545,24 @@
   border-color: var(--accent);
 }
 
+/* Drag-to-reslot: card lifts on long-press, follows the finger 1:1
+ * via inline transform, and casts a heavier shadow so the chair feels
+ * the gesture commit. Disable transition during drag so the finger
+ * tracks without lag. */
+.m-card--dragging {
+  z-index: 50;
+  transition: none;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  background: var(--bg-elev, var(--bg));
+}
+
+/* Drop target highlight: the slot the finger is currently over during
+ * a drag. Subtle accent tint so the chair sees where they'll land. */
+.m-slot--drop-target {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-radius: 12px;
+}
+
 /* Conflict styling: shared prof or shared room with another card in the
  * same slot. Border + corner flag together signal "this needs your
  * attention" without burying the rest of the card content. */
