@@ -320,16 +320,32 @@ export function ScheduleScreen() {
     ? state.offerings.find(o => o.offering_id === detailOfferingId) ?? null
     : null
 
-  // Canonical quarter is lowercase ("fall"); capitalize for display.
-  const quarterLabel = state.quarter.charAt(0).toUpperCase() + state.quarter.slice(1)
+  const handleQuarterChange = useCallback(
+    (q: string) => {
+      setState(s => ({ ...s, quarter: q }))
+    },
+    [setState],
+  )
+
   const baseOffsetPct = -(activeGroup - 1) * 100
 
   return (
     <main className="m-schedule">
       <header className="m-schedule__appbar">
-        <button type="button" className="m-schedule__quarter">
-          {quarterLabel} <span className="m-schedule__quarter-caret" aria-hidden="true">▾</span>
-        </button>
+        <label className="m-schedule__quarter-wrap">
+          <span className="visually-hidden">Quarter</span>
+          <select
+            className="m-schedule__quarter-select"
+            value={state.quarter}
+            onChange={e => handleQuarterChange(e.target.value)}
+          >
+            <option value="fall">Fall</option>
+            <option value="winter">Winter</option>
+            <option value="spring">Spring</option>
+            <option value="summer">Summer</option>
+          </select>
+          <span className="m-schedule__quarter-caret" aria-hidden="true">▾</span>
+        </label>
         <span
           className="m-schedule__count"
           aria-label={`${totalPlaced} of ${totalOfferings} offerings placed`}

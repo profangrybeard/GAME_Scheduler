@@ -44,26 +44,60 @@
   flex: none;
 }
 
-.m-schedule__quarter {
+/* Quarter switcher: native <select> styled like a bold display label.
+ * Browser owns the option-picker UI (iOS wheel, Android centered modal)
+ * — feels right next to the other native form controls in this app
+ * (per prefer_native_controls memory). The caret is a sibling span so
+ * we control its appearance independently of the OS arrow. */
+.m-schedule__quarter-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  position: relative;
+  min-height: var(--hit-min);
+  cursor: pointer;
+}
+
+.m-schedule__quarter-select {
   appearance: none;
+  -webkit-appearance: none;
   background: transparent;
   border: none;
   padding: 0;
+  margin: 0;
   font: inherit;
   font-size: 1.4rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--text);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3em;
   cursor: pointer;
   min-height: var(--hit-min);
+  /* Width to fit the longest option ("Winter"); prevents reflow on change. */
+  min-width: 4.5em;
+}
+
+.m-schedule__quarter-select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .m-schedule__quarter-caret {
   font-size: 0.7em;
   color: var(--text-muted);
+  pointer-events: none;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ─── Day pager (segmented control) ─────────────────────────────────── */
