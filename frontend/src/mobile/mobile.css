@@ -1,0 +1,119 @@
+/* ======================================================================
+ * mobile.css — Path C mobile-native experience.
+ *
+ * Independent from App.css. The desktop tree (App.tsx + App.css) and the
+ * mobile tree (MobileApp.tsx + this file) share state via lifted hooks
+ * but render fully separate UIs. The "m-" prefix on every class keeps
+ * the namespace clean and avoids collisions with desktop selectors.
+ *
+ * Tokens come from index.css (theme colours, spacing, typography). We
+ * deliberately don't redefine them here — branding stays consistent
+ * across surfaces even when the layouts diverge.
+ * ====================================================================== */
+
+.m-app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100vw;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body, system-ui, sans-serif);
+}
+
+/* ─── Schedule screen ───────────────────────────────────────────────── */
+
+.m-schedule {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.m-schedule__appbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: env(safe-area-inset-top) var(--space-md) 0;
+  padding-block-start: max(env(safe-area-inset-top), var(--space-md));
+  padding-block-end: var(--space-md);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  flex: none;
+}
+
+.m-schedule__quarter {
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  cursor: pointer;
+  min-height: var(--hit-min);
+}
+
+.m-schedule__quarter-caret {
+  font-size: 0.7em;
+  color: var(--text-muted);
+}
+
+/* ─── Day pager (segmented control) ─────────────────────────────────── */
+
+.m-schedule__days {
+  display: flex;
+  gap: var(--space-xs);
+  padding: var(--space-md);
+  flex: none;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.m-schedule__day {
+  flex: 1;
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 10px 0;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  cursor: pointer;
+  min-height: var(--hit-min);
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.m-schedule__day--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-on);
+}
+
+/* ─── Content area ──────────────────────────────────────────────────── */
+
+.m-schedule__content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-lg) var(--space-md);
+  padding-bottom: max(var(--space-lg), env(safe-area-inset-bottom));
+}
+
+.m-schedule__empty {
+  margin: 0;
+  padding: var(--space-xl) 0;
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 0.95rem;
+  font-style: italic;
+}

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react"
 
-/** Matches the portrait breakpoint defined in CLAUDE.md (< 768px). The mobile
- *  experience is a read-only published-schedule viewer, an entirely separate
- *  tree from the desktop workspace — so this hook gates at the App root, not
- *  inside individual components. */
+/** Matches the portrait breakpoint defined in CLAUDE.md (< 768px). Path C of
+ *  the mobile rebuild: phones get a separate, purpose-built tree (MobileApp)
+ *  designed for chairs on the run — full feature parity with desktop, but
+ *  mobile-native interaction patterns. main.tsx mounts one tree or the other
+ *  based on this hook so neither tree carries baggage from the other. */
 const MOBILE_QUERY = "(max-width: 767px)"
 
 export function useIsMobile(): boolean {
