@@ -48,7 +48,6 @@ run_workspace.bat
 
 # Streamlit UI (deployed separately if at all — see DEPLOY.md)
 app.py
-app_v2.2_legacy.py
 main.py
 ingest/
 schemas/
