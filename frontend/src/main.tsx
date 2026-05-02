@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.tsx'
 import { MobileApp } from './mobile/MobileApp.tsx'
 import { useIsMobile } from './hooks/useIsMobile.ts'
+import { SchedulerStateProvider } from './state/SchedulerStateContext.tsx'
 
 function Root() {
   const isMobile = useIsMobile()
@@ -12,6 +13,8 @@ function Root() {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Root />
+    <SchedulerStateProvider>
+      <Root />
+    </SchedulerStateProvider>
   </StrictMode>,
 )
