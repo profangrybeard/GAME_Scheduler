@@ -60,10 +60,6 @@ export function ScheduleScreen() {
   const [activeGroup, setActiveGroup] = useState<DayGroup>(1)
   const [dragX, setDragX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
-  // TEMPORARY: live event HUD for diagnosing why swipe doesn't fire on
-  // certain Android devices. Pull this once we've confirmed which event
-  // family lands on the user's hardware.
-  const [debugEvent, setDebugEvent] = useState<string>("(no events yet)")
 
   const startRef = useRef<{ x: number; y: number; t: number } | null>(null)
   const axisRef = useRef<"h" | "v" | null>(null)
@@ -114,30 +110,19 @@ export function ScheduleScreen() {
     startRef.current = { x, y, t }
     axisRef.current = null
     sourceRef.current = source
-    moveCountRef.current = 0
   }
-
-  const moveCountRef = useRef(0)
 
   const moveGesture = (x: number, y: number) => {
     const start = startRef.current
-    if (!start) {
-      setDebugEvent(`move-no-start x=${Math.round(x)} y=${Math.round(y)}`)
-      return
-    }
-    moveCountRef.current += 1
-    const dx = Math.round(x - start.x)
-    const dy = Math.round(y - start.y)
+    if (!start) return
+    const dx = x - start.x
+    const dy = y - start.y
     if (!axisRef.current) {
-      if (Math.abs(dx) <= AXIS_LOCK_PX && Math.abs(dy) <= AXIS_LOCK_PX) {
-        setDebugEvent(`move#${moveCountRef.current} dx=${dx} dy=${dy} (deadzone)`)
-        return
-      }
+      if (Math.abs(dx) <= AXIS_LOCK_PX && Math.abs(dy) <= AXIS_LOCK_PX) return
       axisRef.current =
         Math.abs(dy) > Math.abs(dx) * VERTICAL_LOCK_RATIO ? "v" : "h"
       if (axisRef.current === "h") setIsDragging(true)
     }
-    setDebugEvent(`move#${moveCountRef.current} dx=${dx} dy=${dy} axis=${axisRef.current}`)
     if (axisRef.current !== "h") return
     const atStart = activeGroup === 1 && dx > 0
     const atEnd = activeGroup === 3 && dx < 0
@@ -187,7 +172,6 @@ export function ScheduleScreen() {
   // arriving into nothing. So: pointer for mouse/pen, touch for touch.
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.pointerType === "touch") return
-    setDebugEvent(`P-down ${e.pointerType} ${Math.round(e.clientX)},${Math.round(e.clientY)}`)
     if (e.pointerType === "mouse" && e.button !== 0) return
     e.currentTarget.setPointerCapture(e.pointerId)
     startGesture(e.clientX, e.clientY, e.timeStamp, "pointer")
@@ -198,7 +182,6 @@ export function ScheduleScreen() {
   }
   const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.pointerType === "touch") return
-    setDebugEvent(`P-up ${Math.round(e.clientX)},${Math.round(e.clientY)} axis=${axisRef.current ?? "?"}`)
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId)
     }
@@ -206,7 +189,6 @@ export function ScheduleScreen() {
   }
   const onPointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.pointerType === "touch") return
-    setDebugEvent(`P-cancel src=${sourceRef.current ?? "none"} (${e.pointerType})`)
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId)
     }
@@ -219,12 +201,11 @@ export function ScheduleScreen() {
   // fire. Listening to both ensures the swipe lands no matter which
   // family the device actually produces.
   const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    const t0 = e.touches[0]
-    setDebugEvent(`T-start n=${e.touches.length} ${t0 ? `${Math.round(t0.clientX)},${Math.round(t0.clientY)}` : "??"}`)
     if (e.touches.length !== 1) {
       cancelGesture("touch")
       return
     }
+    const t0 = e.touches[0]
     startGesture(t0.clientX, t0.clientY, e.timeStamp, "touch")
   }
   const onTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
@@ -234,7 +215,6 @@ export function ScheduleScreen() {
   }
   const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
     const t = e.changedTouches[0]
-    setDebugEvent(`T-end ${t ? `${Math.round(t.clientX)},${Math.round(t.clientY)}` : "??"} axis=${axisRef.current ?? "?"}`)
     if (!t) {
       cancelGesture("touch")
       return
@@ -242,7 +222,6 @@ export function ScheduleScreen() {
     endGesture(t.clientX, e.timeStamp, "touch")
   }
   const onTouchCancel = () => {
-    setDebugEvent(`T-cancel src=${sourceRef.current ?? "none"}`)
     cancelGesture("touch")
   }
 
@@ -252,7 +231,6 @@ export function ScheduleScreen() {
 
   return (
     <main className="m-schedule">
-      <div className="m-debug-hud" aria-hidden="true">{debugEvent}</div>
       <header className="m-schedule__appbar">
         <button type="button" className="m-schedule__quarter">
           {quarterLabel} <span className="m-schedule__quarter-caret" aria-hidden="true">▾</span>
