@@ -4,22 +4,12 @@
  * Framed as INVENTORY MANAGEMENT, not calendar (see memory:
  * feedback_mobile_is_inventory.md). Each day group (MW / TTh / F) is one
  * inventory of time × room × prof allocations. Chairs swipe between
- * inventories to see what's filled and what's open.
- *
- * v1: render the placed-offerings list per day, grouped by time slot.
- * Day nav is buttons today; swipe gesture lands in a follow-up.
+ * inventories — content tracks the finger 1:1, snaps on release, and
+ * rubber-bands at the edges so the boundary is felt rather than learned.
  */
 import { useMemo, useRef, useState } from "react"
 import { useSchedulerState } from "../../state/SchedulerStateContext"
 import type { DayGroup, Offering, TimeSlot } from "../../types"
-
-/** Min horizontal travel before a swipe commits to changing days. Smaller
- *  feels twitchy; larger fights short thumb-strokes. 50px is the iOS
- *  Mail / Photos default and translates well to a 375px viewport. */
-const SWIPE_COMMIT_PX = 50
-/** Below this, we haven't locked an axis yet — taps and tiny jitters are
- *  ignored. Above it, the dominant axis wins for the rest of the gesture. */
-const SWIPE_LOCK_PX = 8
 
 const DAYS: ReadonlyArray<{ label: string; group: DayGroup }> = [
   { label: "MW",  group: 1 },
@@ -34,8 +24,18 @@ const TIME_SLOTS: ReadonlyArray<{ value: TimeSlot; label: string }> = [
   { value: "5:00PM",  label: "5 PM" },
 ]
 
-/** Effective slot for an offering: chair pin wins, then solver assignment.
- *  null means not placed. */
+/** Min horizontal travel before a slow swipe commits. iOS Mail / Photos
+ *  default; smaller is twitchy on a 375px viewport. */
+const SWIPE_DISTANCE_PX = 50
+/** Above this px/ms a flick commits regardless of distance — matches
+ *  the native "you barely moved but you flicked" feel. */
+const SWIPE_VELOCITY_PX_PER_MS = 0.4
+/** Below this, axis stays unlocked — taps and tiny jitters don't trigger
+ *  a horizontal drag. */
+const AXIS_LOCK_PX = 8
+/** Edge rubber-band coefficient. <1 means "drag past edge feels heavier." */
+const EDGE_DAMPING = 0.3
+
 function effectiveSlot(o: Offering) {
   return o.pinned ?? o.assignment?.slot ?? null
 }
@@ -51,70 +51,95 @@ function effectiveRoomId(o: Offering): string | null {
 export function ScheduleScreen() {
   const [state] = useSchedulerState()
   const [activeGroup, setActiveGroup] = useState<DayGroup>(1)
+  const [dragX, setDragX] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
 
-  /** Pointer-based horizontal swipe between days. Vertical pan is left to
-   *  the browser via touch-action: pan-y on the content section, so this
-   *  only ever sees horizontal intent — no manual scroll fighting. */
-  const swipeStart = useRef<{ x: number; y: number } | null>(null)
-  const swipeAxis = useRef<"h" | "v" | null>(null)
+  const startRef = useRef<{ x: number; y: number; t: number } | null>(null)
+  const axisRef = useRef<"h" | "v" | null>(null)
+
+  /** Bucket every placed offering by (day_group, time_slot) once per state
+   *  change. All 3 day pages read from the same map, so swiping doesn't
+   *  re-filter on every render. */
+  const slotsByDay = useMemo(() => {
+    const all = new Map<DayGroup, Map<TimeSlot, Offering[]>>()
+    for (const day of DAYS) {
+      const buckets = new Map<TimeSlot, Offering[]>()
+      for (const ts of TIME_SLOTS) buckets.set(ts.value, [])
+      all.set(day.group, buckets)
+    }
+    for (const offering of state.offerings) {
+      const slot = effectiveSlot(offering)
+      if (!slot) continue
+      all.get(slot.day_group)?.get(slot.time_slot)?.push(offering)
+    }
+    return all
+  }, [state.offerings])
+
+  const placedCount = useMemo(() => {
+    let n = 0
+    const buckets = slotsByDay.get(activeGroup)
+    if (!buckets) return 0
+    for (const list of buckets.values()) n += list.length
+    return n
+  }, [slotsByDay, activeGroup])
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.pointerType === "mouse" && e.button !== 0) return
-    swipeStart.current = { x: e.clientX, y: e.clientY }
-    swipeAxis.current = null
+    startRef.current = { x: e.clientX, y: e.clientY, t: e.timeStamp }
+    axisRef.current = null
   }
 
   const onPointerMove = (e: React.PointerEvent) => {
-    if (!swipeStart.current || swipeAxis.current) return
-    const dx = e.clientX - swipeStart.current.x
-    const dy = e.clientY - swipeStart.current.y
-    if (Math.abs(dx) > SWIPE_LOCK_PX || Math.abs(dy) > SWIPE_LOCK_PX) {
-      swipeAxis.current = Math.abs(dx) > Math.abs(dy) ? "h" : "v"
+    const start = startRef.current
+    if (!start) return
+    const dx = e.clientX - start.x
+    const dy = e.clientY - start.y
+    if (!axisRef.current) {
+      if (Math.abs(dx) <= AXIS_LOCK_PX && Math.abs(dy) <= AXIS_LOCK_PX) return
+      axisRef.current = Math.abs(dx) > Math.abs(dy) ? "h" : "v"
+      if (axisRef.current === "h") setIsDragging(true)
     }
+    if (axisRef.current !== "h") return
+    // Rubber-band when dragging past the first or last day.
+    const atStart = activeGroup === 1 && dx > 0
+    const atEnd = activeGroup === 3 && dx < 0
+    setDragX(atStart || atEnd ? dx * EDGE_DAMPING : dx)
   }
 
   const onPointerUp = (e: React.PointerEvent) => {
-    const start = swipeStart.current
-    swipeStart.current = null
-    const axis = swipeAxis.current
-    swipeAxis.current = null
-    if (!start || axis !== "h") return
+    const start = startRef.current
+    const axis = axisRef.current
+    startRef.current = null
+    axisRef.current = null
+    setIsDragging(false)
+    if (!start || axis !== "h") {
+      setDragX(0)
+      return
+    }
     const dx = e.clientX - start.x
-    if (Math.abs(dx) < SWIPE_COMMIT_PX) return
-    setActiveGroup(g => {
-      const next = dx < 0 ? g + 1 : g - 1
-      if (next < 1 || next > 3) return g
-      return next as DayGroup
-    })
+    const dt = Math.max(1, e.timeStamp - start.t)
+    const velocity = dx / dt
+    const distanceCommit = Math.abs(dx) >= SWIPE_DISTANCE_PX
+    const velocityCommit = Math.abs(velocity) >= SWIPE_VELOCITY_PX_PER_MS
+    let next: DayGroup = activeGroup
+    if (distanceCommit || velocityCommit) {
+      if (dx < 0 && activeGroup < 3) next = (activeGroup + 1) as DayGroup
+      else if (dx > 0 && activeGroup > 1) next = (activeGroup - 1) as DayGroup
+    }
+    setActiveGroup(next)
+    setDragX(0)
   }
 
   const onPointerCancel = () => {
-    swipeStart.current = null
-    swipeAxis.current = null
+    startRef.current = null
+    axisRef.current = null
+    setIsDragging(false)
+    setDragX(0)
   }
-
-  /** All placed offerings for the active day, grouped by time slot. */
-  const slotsForDay = useMemo(() => {
-    const buckets = new Map<TimeSlot, Offering[]>()
-    for (const slot of TIME_SLOTS) buckets.set(slot.value, [])
-    for (const offering of state.offerings) {
-      const slot = effectiveSlot(offering)
-      if (!slot || slot.day_group !== activeGroup) continue
-      buckets.get(slot.time_slot)?.push(offering)
-    }
-    return buckets
-  }, [state.offerings, activeGroup])
-
-  const placedCount = useMemo(
-    () => state.offerings.filter(o => {
-      const slot = effectiveSlot(o)
-      return slot != null && slot.day_group === activeGroup
-    }).length,
-    [state.offerings, activeGroup],
-  )
 
   // Canonical quarter is lowercase ("fall"); capitalize for display.
   const quarterLabel = state.quarter.charAt(0).toUpperCase() + state.quarter.slice(1)
+  const baseOffsetPct = -(activeGroup - 1) * 100
 
   return (
     <main className="m-schedule">
@@ -143,48 +168,81 @@ export function ScheduleScreen() {
         ))}
       </nav>
 
-      <section
-        className="m-schedule__content"
-        aria-label={`${DAYS.find(d => d.group === activeGroup)?.label} schedule`}
+      <div
+        className="m-schedule__pager"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerCancel}
       >
-        {TIME_SLOTS.map(slot => {
-          const offerings = slotsForDay.get(slot.value) ?? []
-          return (
-            <div key={slot.value} className="m-slot">
-              <div className="m-slot__header">
-                <span className="m-slot__time">{slot.label}</span>
-                <span className="m-slot__count">{offerings.length || "—"}</span>
-              </div>
-              {offerings.length === 0 ? (
-                <div className="m-slot__empty">Open</div>
-              ) : (
-                <ul className="m-slot__list">
-                  {offerings.map(o => {
-                    const profId = effectiveProfId(o)
-                    const roomId = effectiveRoomId(o)
-                    const profName = profId ? state.professors[profId]?.name ?? profId : "AUTO"
-                    const roomLabel = roomId ? state.rooms[roomId]?.id ?? roomId : "AUTO"
-                    return (
-                      <li key={o.offering_id} className="m-card">
-                        <div className="m-card__id">{o.catalog_id}</div>
-                        <div className="m-card__meta">
-                          <span className="m-card__prof">{profName}</span>
-                          <span className="m-card__sep" aria-hidden="true">·</span>
-                          <span className="m-card__room">{roomLabel}</span>
-                        </div>
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
-            </div>
-          )
-        })}
-      </section>
+        <div
+          className="m-schedule__track"
+          style={{
+            transform: `translateX(calc(${baseOffsetPct}% + ${dragX}px))`,
+            transition: isDragging
+              ? "none"
+              : "transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1)",
+          }}
+        >
+          {DAYS.map(day => (
+            <DayPage
+              key={day.group}
+              dayLabel={day.label}
+              buckets={slotsByDay.get(day.group)!}
+              professors={state.professors}
+              rooms={state.rooms}
+            />
+          ))}
+        </div>
+      </div>
     </main>
+  )
+}
+
+function DayPage(props: {
+  dayLabel: string
+  buckets: Map<TimeSlot, Offering[]>
+  professors: Record<string, { name: string }>
+  rooms: Record<string, { id: string }>
+}) {
+  return (
+    <section
+      className="m-schedule__page"
+      aria-label={`${props.dayLabel} schedule`}
+    >
+      {TIME_SLOTS.map(slot => {
+        const offerings = props.buckets.get(slot.value) ?? []
+        return (
+          <div key={slot.value} className="m-slot">
+            <div className="m-slot__header">
+              <span className="m-slot__time">{slot.label}</span>
+              <span className="m-slot__count">{offerings.length || "—"}</span>
+            </div>
+            {offerings.length === 0 ? (
+              <div className="m-slot__empty">Open</div>
+            ) : (
+              <ul className="m-slot__list">
+                {offerings.map(o => {
+                  const profId = effectiveProfId(o)
+                  const roomId = effectiveRoomId(o)
+                  const profName = profId ? props.professors[profId]?.name ?? profId : "AUTO"
+                  const roomLabel = roomId ? props.rooms[roomId]?.id ?? roomId : "AUTO"
+                  return (
+                    <li key={o.offering_id} className="m-card">
+                      <div className="m-card__id">{o.catalog_id}</div>
+                      <div className="m-card__meta">
+                        <span className="m-card__prof">{profName}</span>
+                        <span className="m-card__sep" aria-hidden="true">·</span>
+                        <span className="m-card__room">{roomLabel}</span>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+        )
+      })}
+    </section>
   )
 }

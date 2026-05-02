@@ -101,14 +101,28 @@
 
 /* ─── Content area ──────────────────────────────────────────────────── */
 
-.m-schedule__content {
+/* ─── Pager (3 day inventories on a horizontal track) ─────────────── */
+
+.m-schedule__pager {
   flex: 1;
   min-height: 0;
+  overflow: hidden;
+  /* Browser owns vertical scroll; horizontal pan is the swipe handler. */
+  touch-action: pan-y;
+}
+
+.m-schedule__track {
+  display: flex;
+  height: 100%;
+  will-change: transform;
+}
+
+.m-schedule__page {
+  flex: 0 0 100%;
+  min-width: 0;
   overflow-y: auto;
   padding: var(--space-lg) var(--space-md);
   padding-bottom: max(var(--space-lg), env(safe-area-inset-bottom));
-  /* Browser owns vertical scroll; horizontal pan is the swipe handler. */
-  touch-action: pan-y;
 }
 
 .m-schedule__empty {
