@@ -362,6 +362,81 @@
   font-style: italic;
 }
 
+/* ─── Detail sheet additions (subtitle, form fields, danger button) ── */
+
+.m-sheet__subtitle {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.m-sheet__body {
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.m-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.m-field__label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.m-field__select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--surface, transparent);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px var(--space-md);
+  padding-right: 36px;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--text);
+  min-height: var(--hit-min);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%23888' d='M6 8 0 0h12z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+
+.m-field__select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.m-sheet__danger {
+  appearance: none;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, #c0392b 50%, var(--border));
+  color: #c0392b;
+  border-radius: 10px;
+  padding: 12px var(--space-md);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  min-height: var(--hit-min);
+  cursor: pointer;
+  margin-top: var(--space-sm);
+  transition: background 0.12s ease;
+}
+
+.m-sheet__danger:active {
+  background: color-mix(in srgb, #c0392b 12%, transparent);
+}
+
 .m-slot__list {
   list-style: none;
   padding: 0;
@@ -371,9 +446,11 @@
   gap: var(--space-xs);
 }
 
-/* ─── Course inventory card ───────────────────────────────────────── */
+/* ─── Course inventory card (tappable to open detail sheet) ────────── */
 
 .m-card {
+  appearance: none;
+  width: 100%;
   background: var(--bg-elev, var(--bg));
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -382,6 +459,15 @@
   flex-direction: column;
   gap: 4px;
   min-height: var(--hit-min);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.m-card:active {
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-elev, var(--bg)));
+  border-color: var(--accent);
 }
 
 .m-card__id {

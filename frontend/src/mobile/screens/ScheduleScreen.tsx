@@ -10,6 +10,7 @@
 import { useCallback, useMemo, useRef, useState } from "react"
 import { useSchedulerState } from "../../state/SchedulerStateContext"
 import type { DayGroup, Offering, Slot, TimeSlot } from "../../types"
+import { CourseDetailSheet } from "./CourseDetailSheet"
 import { PlacementSheet } from "./PlacementSheet"
 
 const DAYS: ReadonlyArray<{ label: string; group: DayGroup }> = [
@@ -62,6 +63,7 @@ export function ScheduleScreen() {
   const [dragX, setDragX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [pendingSlot, setPendingSlot] = useState<Slot | null>(null)
+  const [detailOfferingId, setDetailOfferingId] = useState<string | null>(null)
 
   const startRef = useRef<{ x: number; y: number; t: number } | null>(null)
   const axisRef = useRef<"h" | "v" | null>(null)
@@ -251,6 +253,59 @@ export function ScheduleScreen() {
 
   const handleDismissSheet = useCallback(() => setPendingSlot(null), [])
 
+  const handleOpenDetail = useCallback((offering_id: string) => {
+    setDetailOfferingId(offering_id)
+  }, [])
+
+  const handleDismissDetail = useCallback(() => setDetailOfferingId(null), [])
+
+  const handleSetProf = useCallback(
+    (offering_id: string, prof_id: string | null) => {
+      setState(s => ({
+        ...s,
+        offerings: s.offerings.map(o =>
+          o.offering_id === offering_id
+            ? { ...o, assigned_prof_id: prof_id, chair_pinned_prof: prof_id !== null }
+            : o,
+        ),
+      }))
+    },
+    [setState],
+  )
+
+  const handleSetRoom = useCallback(
+    (offering_id: string, room_id: string | null) => {
+      setState(s => ({
+        ...s,
+        offerings: s.offerings.map(o =>
+          o.offering_id === offering_id
+            ? { ...o, assigned_room_id: room_id, chair_pinned_room: room_id !== null }
+            : o,
+        ),
+      }))
+    },
+    [setState],
+  )
+
+  const handleRemovePlacement = useCallback(
+    (offering_id: string) => {
+      setState(s => ({
+        ...s,
+        offerings: s.offerings.map(o =>
+          o.offering_id === offering_id
+            ? { ...o, pinned: null, assignment: null }
+            : o,
+        ),
+      }))
+      setDetailOfferingId(null)
+    },
+    [setState],
+  )
+
+  const detailOffering = detailOfferingId
+    ? state.offerings.find(o => o.offering_id === detailOfferingId) ?? null
+    : null
+
   // Canonical quarter is lowercase ("fall"); capitalize for display.
   const quarterLabel = state.quarter.charAt(0).toUpperCase() + state.quarter.slice(1)
   const baseOffsetPct = -(activeGroup - 1) * 100
@@ -311,6 +366,7 @@ export function ScheduleScreen() {
               professors={state.professors}
               rooms={state.rooms}
               onOpenSlot={handleOpenSlot}
+              onOpenDetail={handleOpenDetail}
             />
           ))}
         </div>
@@ -325,6 +381,19 @@ export function ScheduleScreen() {
           onPlace={handlePlace}
         />
       )}
+
+      {detailOffering && (
+        <CourseDetailSheet
+          offering={detailOffering}
+          catalog={state.catalog}
+          professors={state.professors}
+          rooms={state.rooms}
+          onSetProf={handleSetProf}
+          onSetRoom={handleSetRoom}
+          onRemove={handleRemovePlacement}
+          onDismiss={handleDismissDetail}
+        />
+      )}
     </main>
   )
 }
@@ -336,6 +405,7 @@ function DayPage(props: {
   professors: Record<string, { name: string }>
   rooms: Record<string, { id: string }>
   onOpenSlot: (day_group: DayGroup, time_slot: TimeSlot) => void
+  onOpenDetail: (offering_id: string) => void
 }) {
   return (
     <section
@@ -367,13 +437,19 @@ function DayPage(props: {
                   const profName = profId ? props.professors[profId]?.name ?? profId : "AUTO"
                   const roomLabel = roomId ? props.rooms[roomId]?.id ?? roomId : "AUTO"
                   return (
-                    <li key={o.offering_id} className="m-card">
-                      <div className="m-card__id">{o.catalog_id}</div>
-                      <div className="m-card__meta">
-                        <span className="m-card__prof">{profName}</span>
-                        <span className="m-card__sep" aria-hidden="true">·</span>
-                        <span className="m-card__room">{roomLabel}</span>
-                      </div>
+                    <li key={o.offering_id}>
+                      <button
+                        type="button"
+                        className="m-card"
+                        onClick={() => props.onOpenDetail(o.offering_id)}
+                      >
+                        <div className="m-card__id">{o.catalog_id}</div>
+                        <div className="m-card__meta">
+                          <span className="m-card__prof">{profName}</span>
+                          <span className="m-card__sep" aria-hidden="true">·</span>
+                          <span className="m-card__room">{roomLabel}</span>
+                        </div>
+                      </button>
                     </li>
                   )
                 })}
