@@ -107,6 +107,8 @@
   overflow-y: auto;
   padding: var(--space-lg) var(--space-md);
   padding-bottom: max(var(--space-lg), env(safe-area-inset-bottom));
+  /* Browser owns vertical scroll; horizontal pan is the swipe handler. */
+  touch-action: pan-y;
 }
 
 .m-schedule__empty {

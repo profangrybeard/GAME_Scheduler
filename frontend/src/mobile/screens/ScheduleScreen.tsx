@@ -9,9 +9,17 @@
  * v1: render the placed-offerings list per day, grouped by time slot.
  * Day nav is buttons today; swipe gesture lands in a follow-up.
  */
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import { useSchedulerState } from "../../state/SchedulerStateContext"
 import type { DayGroup, Offering, TimeSlot } from "../../types"
+
+/** Min horizontal travel before a swipe commits to changing days. Smaller
+ *  feels twitchy; larger fights short thumb-strokes. 50px is the iOS
+ *  Mail / Photos default and translates well to a 375px viewport. */
+const SWIPE_COMMIT_PX = 50
+/** Below this, we haven't locked an axis yet — taps and tiny jitters are
+ *  ignored. Above it, the dominant axis wins for the rest of the gesture. */
+const SWIPE_LOCK_PX = 8
 
 const DAYS: ReadonlyArray<{ label: string; group: DayGroup }> = [
   { label: "MW",  group: 1 },
@@ -43,6 +51,47 @@ function effectiveRoomId(o: Offering): string | null {
 export function ScheduleScreen() {
   const [state] = useSchedulerState()
   const [activeGroup, setActiveGroup] = useState<DayGroup>(1)
+
+  /** Pointer-based horizontal swipe between days. Vertical pan is left to
+   *  the browser via touch-action: pan-y on the content section, so this
+   *  only ever sees horizontal intent — no manual scroll fighting. */
+  const swipeStart = useRef<{ x: number; y: number } | null>(null)
+  const swipeAxis = useRef<"h" | "v" | null>(null)
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return
+    swipeStart.current = { x: e.clientX, y: e.clientY }
+    swipeAxis.current = null
+  }
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!swipeStart.current || swipeAxis.current) return
+    const dx = e.clientX - swipeStart.current.x
+    const dy = e.clientY - swipeStart.current.y
+    if (Math.abs(dx) > SWIPE_LOCK_PX || Math.abs(dy) > SWIPE_LOCK_PX) {
+      swipeAxis.current = Math.abs(dx) > Math.abs(dy) ? "h" : "v"
+    }
+  }
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    const start = swipeStart.current
+    swipeStart.current = null
+    const axis = swipeAxis.current
+    swipeAxis.current = null
+    if (!start || axis !== "h") return
+    const dx = e.clientX - start.x
+    if (Math.abs(dx) < SWIPE_COMMIT_PX) return
+    setActiveGroup(g => {
+      const next = dx < 0 ? g + 1 : g - 1
+      if (next < 1 || next > 3) return g
+      return next as DayGroup
+    })
+  }
+
+  const onPointerCancel = () => {
+    swipeStart.current = null
+    swipeAxis.current = null
+  }
 
   /** All placed offerings for the active day, grouped by time slot. */
   const slotsForDay = useMemo(() => {
@@ -94,7 +143,14 @@ export function ScheduleScreen() {
         ))}
       </nav>
 
-      <section className="m-schedule__content" aria-label={`${DAYS.find(d => d.group === activeGroup)?.label} schedule`}>
+      <section
+        className="m-schedule__content"
+        aria-label={`${DAYS.find(d => d.group === activeGroup)?.label} schedule`}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
+      >
         {TIME_SLOTS.map(slot => {
           const offerings = slotsForDay.get(slot.value) ?? []
           return (
