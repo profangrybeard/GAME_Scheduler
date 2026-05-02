@@ -301,12 +301,15 @@ function App() {
     }
   }, [])
 
-  /** Set the active quarter label. The current catalog/offerings stay put —
-   *  switching quarters is a label change the user is making in-place, not a
-   *  data swap. The field still flows into exports + resume round-trips, so a
-   *  re-saved XLSX carries the chosen quarter forward. */
+  /** Set the active quarter. State stays lowercase to match the solver's
+   *  canonical form (`fall`/`winter`/…) and the default offerings JSON; the
+   *  dropdown capitalizes for display. The current catalog/offerings stay
+   *  put — switching quarters is a label change the user is making in-place,
+   *  not a data swap. The field still flows into exports + resume round-trips,
+   *  so a re-saved XLSX carries the chosen quarter forward. */
   const setQuarter = useCallback((quarter: string) => {
-    setState(s => (s.quarter === quarter ? s : { ...s, quarter }))
+    const normalized = quarter.toLowerCase()
+    setState(s => (s.quarter === normalized ? s : { ...s, quarter: normalized }))
   }, [])
 
   /** Add an offering for `catalog_id` or select the first existing sibling.
@@ -1015,7 +1018,9 @@ function App() {
     setState(s => ({
       ...s,
       selectedOfferingId: null,
-      quarter:    draft.quarter,
+      // Pre-fix exports (≤2026-05-02) carry capitalized quarter labels;
+      // normalize so reload doesn't reintroduce the case-mismatch bug.
+      quarter:    draft.quarter.toLowerCase(),
       year:       draft.year,
       solveMode:  draft.solver_mode,
       // With cached modes, the schedule is semantically already solved —

@@ -76,9 +76,10 @@ export interface QuarterScheduleProps {
   /** External holds on (room × slot) cells. Render as muted striped cards
    *  alongside class cards in the cell where their slot lives. */
   roomBlackouts: RoomBlackout[]
-  /** Current quarter label (e.g. "Fall"). Rendered as an inline <select>
-   *  in the grid's top-left corner so the context sits on the calendar
-   *  itself instead of floating in the topbar. */
+  /** Current quarter (canonical lowercase, e.g. "fall"). Rendered as an
+   *  inline <select> in the grid's top-left corner so the context sits on
+   *  the calendar itself instead of floating in the topbar. Display labels
+   *  capitalize at render — see `quarterLabel` below. */
   quarter: string
   /** Setter for the quarter label. Fires from the corner-cell select. */
   onSetQuarter: (quarter: string) => void
@@ -337,10 +338,15 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
     )
   }
 
-  const quarterValue = QUARTER_OPTIONS.includes(props.quarter) ? props.quarter : "Fall"
+  // Normalize legacy capitalized values that may still live in localStorage
+  // or in pre-fix exported XLSX files. State written after 2026-05-02 is
+  // already lowercase.
+  const normalized = props.quarter.toLowerCase()
+  const quarterValue = QUARTER_OPTIONS.includes(normalized) ? normalized : "fall"
+  const quarterLabel = quarterValue.charAt(0).toUpperCase() + quarterValue.slice(1)
 
   return (
-    <section className="panel panel--schedule" aria-label={`${quarterValue} Schedule`}>
+    <section className="panel panel--schedule" aria-label={`${quarterLabel} Schedule`}>
       <header className="panel__header">
         {props.inputSlot}
         <div className="schedule__toolbar">
@@ -471,7 +477,9 @@ export function QuarterSchedule(props: QuarterScheduleProps) {
                 aria-label="Quarter"
               >
                 {QUARTER_OPTIONS.map(q => (
-                  <option key={q} value={q}>{q}</option>
+                  <option key={q} value={q}>
+                    {q.charAt(0).toUpperCase() + q.slice(1)}
+                  </option>
                 ))}
               </select>
               <span className="schedule-grid__quarter-caret" aria-hidden="true">▾</span>
