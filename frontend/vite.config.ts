@@ -41,6 +41,9 @@ export default defineConfig({
   server: {
     port: 5174,
     strictPort: true,
+    // Bind to all interfaces so devices on the LAN (phone over WiFi) can hit
+    // the dev server. Vite prints both Local and Network URLs on startup.
+    host: true,
     // Allow importing JSON from the repo root's data/ directory (one level up).
     fs: { allow: ['..'] },
     // Proxy /api/* to the local FastAPI server (see api/server.py, port 8765).
