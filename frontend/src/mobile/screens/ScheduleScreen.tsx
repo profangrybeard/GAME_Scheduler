@@ -31,8 +31,15 @@ const SWIPE_DISTANCE_PX = 50
  *  the native "you barely moved but you flicked" feel. */
 const SWIPE_VELOCITY_PX_PER_MS = 0.4
 /** Below this, axis stays unlocked — taps and tiny jitters don't trigger
- *  a horizontal drag. */
-const AXIS_LOCK_PX = 8
+ *  a horizontal drag. Bumped from 8 to give Android Chrome more room to
+ *  surface horizontal intent before its own gesture detection fires. */
+const AXIS_LOCK_PX = 10
+/** Multiplier for vertical-axis preference. Without this, a 45° diagonal
+ *  swipe locks to vertical (since |dy| edges out |dx| by a hair) and the
+ *  pager never sees horizontal intent — common on Android where natural
+ *  thumb-arcs aren't perfectly horizontal. 1.5 means dy must dominate dx
+ *  by at least 1.5× to lock vertical; otherwise we treat it as horizontal. */
+const VERTICAL_LOCK_RATIO = 1.5
 /** Edge rubber-band coefficient. <1 means "drag past edge feels heavier." */
 const EDGE_DAMPING = 0.3
 
@@ -53,9 +60,18 @@ export function ScheduleScreen() {
   const [activeGroup, setActiveGroup] = useState<DayGroup>(1)
   const [dragX, setDragX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  // TEMPORARY: live event HUD for diagnosing why swipe doesn't fire on
+  // certain Android devices. Pull this once we've confirmed which event
+  // family lands on the user's hardware.
+  const [debugEvent, setDebugEvent] = useState<string>("(no events yet)")
 
   const startRef = useRef<{ x: number; y: number; t: number } | null>(null)
   const axisRef = useRef<"h" | "v" | null>(null)
+  /** Which event family claimed this gesture. Pointer-cancel events from
+   *  Chrome's scroll-detection will fire mid-drag on Android even while
+   *  touch events keep streaming — so cancels from a non-owning family
+   *  are ignored. */
+  const sourceRef = useRef<"pointer" | "touch" | null>(null)
 
   /** Bucket every placed offering by (day_group, time_slot) once per state
    *  change. All 3 day pages read from the same map, so swiping doesn't
@@ -83,41 +99,65 @@ export function ScheduleScreen() {
     return n
   }, [slotsByDay, activeGroup])
 
-  const onPointerDown = (e: React.PointerEvent) => {
-    if (e.pointerType === "mouse" && e.button !== 0) return
-    startRef.current = { x: e.clientX, y: e.clientY, t: e.timeStamp }
+  /** Shared gesture core. Both pointer-event and touch-event handlers
+   *  call into these so we get the same behaviour from whichever event
+   *  family the device actually fires. The first start to land claims
+   *  the gesture; later starts (e.g. touchstart firing right after
+   *  pointerdown on the same finger) become no-ops. */
+  const startGesture = (
+    x: number,
+    y: number,
+    t: number,
+    source: "pointer" | "touch",
+  ) => {
+    if (startRef.current) return
+    startRef.current = { x, y, t }
     axisRef.current = null
+    sourceRef.current = source
+    moveCountRef.current = 0
   }
 
-  const onPointerMove = (e: React.PointerEvent) => {
+  const moveCountRef = useRef(0)
+
+  const moveGesture = (x: number, y: number) => {
     const start = startRef.current
-    if (!start) return
-    const dx = e.clientX - start.x
-    const dy = e.clientY - start.y
+    if (!start) {
+      setDebugEvent(`move-no-start x=${Math.round(x)} y=${Math.round(y)}`)
+      return
+    }
+    moveCountRef.current += 1
+    const dx = Math.round(x - start.x)
+    const dy = Math.round(y - start.y)
     if (!axisRef.current) {
-      if (Math.abs(dx) <= AXIS_LOCK_PX && Math.abs(dy) <= AXIS_LOCK_PX) return
-      axisRef.current = Math.abs(dx) > Math.abs(dy) ? "h" : "v"
+      if (Math.abs(dx) <= AXIS_LOCK_PX && Math.abs(dy) <= AXIS_LOCK_PX) {
+        setDebugEvent(`move#${moveCountRef.current} dx=${dx} dy=${dy} (deadzone)`)
+        return
+      }
+      axisRef.current =
+        Math.abs(dy) > Math.abs(dx) * VERTICAL_LOCK_RATIO ? "v" : "h"
       if (axisRef.current === "h") setIsDragging(true)
     }
+    setDebugEvent(`move#${moveCountRef.current} dx=${dx} dy=${dy} axis=${axisRef.current}`)
     if (axisRef.current !== "h") return
-    // Rubber-band when dragging past the first or last day.
     const atStart = activeGroup === 1 && dx > 0
     const atEnd = activeGroup === 3 && dx < 0
     setDragX(atStart || atEnd ? dx * EDGE_DAMPING : dx)
   }
 
-  const onPointerUp = (e: React.PointerEvent) => {
+  const endGesture = (x: number, t: number, source: "pointer" | "touch") => {
+    if (sourceRef.current !== source) return
     const start = startRef.current
     const axis = axisRef.current
     startRef.current = null
     axisRef.current = null
+    sourceRef.current = null
     setIsDragging(false)
     if (!start || axis !== "h") {
       setDragX(0)
       return
     }
-    const dx = e.clientX - start.x
-    const dt = Math.max(1, e.timeStamp - start.t)
+    const dx = x - start.x
+    const dt = Math.max(1, t - start.t)
     const velocity = dx / dt
     const distanceCommit = Math.abs(dx) >= SWIPE_DISTANCE_PX
     const velocityCommit = Math.abs(velocity) >= SWIPE_VELOCITY_PX_PER_MS
@@ -130,11 +170,80 @@ export function ScheduleScreen() {
     setDragX(0)
   }
 
-  const onPointerCancel = () => {
+  const cancelGesture = (source: "pointer" | "touch") => {
+    if (sourceRef.current !== source) return
     startRef.current = null
     axisRef.current = null
+    sourceRef.current = null
     setIsDragging(false)
     setDragX(0)
+  }
+
+  // Pointer-event path. Touch-typed pointer events are handed off to the
+  // dedicated touch path because Android Chrome fires pointercancel mid-
+  // gesture (it speculatively decides "this is a scroll") even when touch
+  // events keep streaming. Letting pointer handlers claim a touch gesture
+  // means a stray pointercancel kills our state while touchmoves keep
+  // arriving into nothing. So: pointer for mouse/pen, touch for touch.
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === "touch") return
+    setDebugEvent(`P-down ${e.pointerType} ${Math.round(e.clientX)},${Math.round(e.clientY)}`)
+    if (e.pointerType === "mouse" && e.button !== 0) return
+    e.currentTarget.setPointerCapture(e.pointerId)
+    startGesture(e.clientX, e.clientY, e.timeStamp, "pointer")
+  }
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === "touch") return
+    moveGesture(e.clientX, e.clientY)
+  }
+  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === "touch") return
+    setDebugEvent(`P-up ${Math.round(e.clientX)},${Math.round(e.clientY)} axis=${axisRef.current ?? "?"}`)
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    }
+    endGesture(e.clientX, e.timeStamp, "pointer")
+  }
+  const onPointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === "touch") return
+    setDebugEvent(`P-cancel src=${sourceRef.current ?? "none"} (${e.pointerType})`)
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    }
+    cancelGesture("pointer")
+  }
+
+  // Touch-event fallback. On some Android browsers (notably Samsung
+  // Internet, certain Chrome versions inside the Samsung shell) pointer
+  // events get swallowed by gesture detection while touch events still
+  // fire. Listening to both ensures the swipe lands no matter which
+  // family the device actually produces.
+  const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    const t0 = e.touches[0]
+    setDebugEvent(`T-start n=${e.touches.length} ${t0 ? `${Math.round(t0.clientX)},${Math.round(t0.clientY)}` : "??"}`)
+    if (e.touches.length !== 1) {
+      cancelGesture("touch")
+      return
+    }
+    startGesture(t0.clientX, t0.clientY, e.timeStamp, "touch")
+  }
+  const onTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length !== 1) return
+    const t = e.touches[0]
+    moveGesture(t.clientX, t.clientY)
+  }
+  const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    const t = e.changedTouches[0]
+    setDebugEvent(`T-end ${t ? `${Math.round(t.clientX)},${Math.round(t.clientY)}` : "??"} axis=${axisRef.current ?? "?"}`)
+    if (!t) {
+      cancelGesture("touch")
+      return
+    }
+    endGesture(t.clientX, e.timeStamp, "touch")
+  }
+  const onTouchCancel = () => {
+    setDebugEvent(`T-cancel src=${sourceRef.current ?? "none"}`)
+    cancelGesture("touch")
   }
 
   // Canonical quarter is lowercase ("fall"); capitalize for display.
@@ -143,6 +252,7 @@ export function ScheduleScreen() {
 
   return (
     <main className="m-schedule">
+      <div className="m-debug-hud" aria-hidden="true">{debugEvent}</div>
       <header className="m-schedule__appbar">
         <button type="button" className="m-schedule__quarter">
           {quarterLabel} <span className="m-schedule__quarter-caret" aria-hidden="true">▾</span>
@@ -174,6 +284,10 @@ export function ScheduleScreen() {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerCancel}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchCancel}
       >
         <div
           className="m-schedule__track"

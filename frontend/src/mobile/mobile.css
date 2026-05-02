@@ -22,6 +22,24 @@
   font-family: var(--font-body, system-ui, sans-serif);
 }
 
+/* TEMPORARY debug HUD — pinned to top so any pointer/touch event from
+ * the pager updates this in real time. Pull once we've diagnosed the
+ * Android event-firing issue. */
+.m-debug-hud {
+  position: fixed;
+  top: env(safe-area-inset-top);
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: #fee;
+  color: #900;
+  font: 11px/1.3 ui-monospace, monospace;
+  padding: 4px 8px;
+  text-align: center;
+  border-bottom: 1px solid #fbb;
+  pointer-events: none;
+}
+
 /* ─── Schedule screen ───────────────────────────────────────────────── */
 
 .m-schedule {

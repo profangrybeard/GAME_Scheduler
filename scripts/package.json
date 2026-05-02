@@ -1,0 +1,8 @@
+{
+  "name": "scheduler-scripts",
+  "private": true,
+  "description": "Tooling scripts for GAME Scheduler dev. JS scripts here have their own deps. Python scripts (alongside) just use the project venv.",
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
