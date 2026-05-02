@@ -91,13 +91,27 @@ export function ScheduleScreen() {
     return all
   }, [state.offerings])
 
-  const placedCount = useMemo(() => {
+  /** Active-day placed count: feeds the day pill badge if we add one
+   *  later. Currently unused in the appbar (which shows global progress)
+   *  but cheap to compute and useful for the per-day breakdown. */
+  const dayPlacedCount = useMemo(() => {
     let n = 0
     const buckets = slotsByDay.get(activeGroup)
     if (!buckets) return 0
     for (const list of buckets.values()) n += list.length
     return n
   }, [slotsByDay, activeGroup])
+
+  /** Global progress: how close is the chair to a fully-placed schedule.
+   *  Chairs on the run care about completion, not just "what's on MW
+   *  right now." */
+  const totalPlaced = useMemo(
+    () => state.offerings.filter(o => effectiveSlot(o) !== null).length,
+    [state.offerings],
+  )
+  const totalOfferings = state.offerings.length
+  // suppress "unused" lint while dayPlacedCount is parked
+  void dayPlacedCount
 
   /** Shared gesture core. Both pointer-event and touch-event handlers
    *  call into these so we get the same behaviour from whichever event
@@ -316,8 +330,11 @@ export function ScheduleScreen() {
         <button type="button" className="m-schedule__quarter">
           {quarterLabel} <span className="m-schedule__quarter-caret" aria-hidden="true">▾</span>
         </button>
-        <span className="m-schedule__count" aria-label={`${placedCount} courses on this day`}>
-          {placedCount} placed
+        <span
+          className="m-schedule__count"
+          aria-label={`${totalPlaced} of ${totalOfferings} offerings placed`}
+        >
+          {totalPlaced} / {totalOfferings}
         </span>
       </header>
 
