@@ -117,3 +117,94 @@
   font-size: 0.95rem;
   font-style: italic;
 }
+
+/* ─── Inventory count chip in appbar ──────────────────────────────── */
+
+.m-schedule__count {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--surface, transparent);
+  border: 1px solid var(--border);
+}
+
+/* ─── Time-slot inventory section ─────────────────────────────────── */
+
+.m-slot {
+  margin-bottom: var(--space-lg);
+}
+
+.m-slot__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: var(--space-xs);
+  margin-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border);
+}
+
+.m-slot__time {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+.m-slot__count {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.m-slot__empty {
+  padding: var(--space-sm) 0;
+  font-size: 0.85rem;
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+.m-slot__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+/* ─── Course inventory card ───────────────────────────────────────── */
+
+.m-card {
+  background: var(--bg-elev, var(--bg));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: var(--hit-min);
+}
+
+.m-card__id {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+.m-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.m-card__sep {
+  color: var(--text-faint);
+}
