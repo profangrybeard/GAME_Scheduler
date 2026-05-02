@@ -1,12 +1,15 @@
 /**
- * Bottom-sheet course picker invoked by tapping an Open slot. Lists the
- * unplaced offerings (those without a chair pin or solver assignment),
- * searchable, alphabetical. Tap one to place it at the slot the chair
- * was looking at when they opened the sheet.
+ * Bottom-sheet course picker invoked by tapping an Open slot.
  *
- * v1 scope: existing unplaced offerings only. Adding NEW offerings from
- * the catalogue is a separate flow that lands in a later pass — chairs
- * on the run are usually placing courses already added on desktop.
+ * Two source modes via the tab toggle at top:
+ *   - Roster: unplaced offerings already added to the quarter (the
+ *     fast path; chairs usually placed everything on desktop and just
+ *     need to slot it on mobile).
+ *   - Catalog: any course in the catalog. Picking from here mints a
+ *     fresh Offering and places it at the slot — same default fields
+ *     desktop uses (priority "should_have", AUTO prof/room).
+ *
+ * Search filter applies to whichever tab is active.
  */
 import { useMemo, useState } from "react"
 import type { Course, Offering, Slot, TimeSlot } from "../../types"
@@ -20,32 +23,69 @@ const TIME_SLOT_LABEL: Record<TimeSlot, string> = {
 
 const DAY_LABEL: Record<number, string> = { 1: "MW", 2: "TTh", 3: "F" }
 
+type Mode = "roster" | "catalog"
+
 interface Props {
   slot: Slot
   offerings: Offering[]
   catalog: Record<string, Course>
   onDismiss: () => void
-  onPlace: (offering_id: string) => void
+  onPlaceFromRoster: (offering_id: string) => void
+  onPlaceFromCatalog: (catalog_id: string) => void
 }
 
 export function PlacementSheet(props: Props) {
-  const { slot, offerings, catalog, onDismiss, onPlace } = props
+  const { slot, offerings, catalog, onDismiss } = props
+  const [mode, setMode] = useState<Mode>("roster")
   const [query, setQuery] = useState("")
 
-  const candidates = useMemo(() => {
+  const rosterCandidates = useMemo(
+    () => offerings.filter(o => o.pinned === null && o.assignment === null),
+    [offerings],
+  )
+
+  const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return offerings
-      .filter(o => o.pinned === null && o.assignment === null)
-      .filter(o => {
-        if (!q) return true
-        if (o.catalog_id.toLowerCase().includes(q)) return true
-        const title = catalog[o.catalog_id]?.title.toLowerCase() ?? ""
-        return title.includes(q)
-      })
-      .sort((a, b) => a.catalog_id.localeCompare(b.catalog_id))
-  }, [offerings, catalog, query])
+    const matches = (catalog_id: string, title?: string) => {
+      if (!q) return true
+      if (catalog_id.toLowerCase().includes(q)) return true
+      if (title && title.toLowerCase().includes(q)) return true
+      return false
+    }
+    if (mode === "roster") {
+      return rosterCandidates
+        .filter(o => matches(o.catalog_id, catalog[o.catalog_id]?.name))
+        .sort((a, b) => a.catalog_id.localeCompare(b.catalog_id))
+        .map(o => ({
+          key: o.offering_id,
+          catalog_id: o.catalog_id,
+          title: catalog[o.catalog_id]?.name ?? "",
+          onPick: () => props.onPlaceFromRoster(o.offering_id),
+        }))
+    }
+    return Object.values(catalog)
+      .filter(c => matches(c.id, c.name))
+      .sort((a, b) => a.id.localeCompare(b.id))
+      .map(c => ({
+        key: c.id,
+        catalog_id: c.id,
+        title: c.name,
+        onPick: () => props.onPlaceFromCatalog(c.id),
+      }))
+  }, [mode, query, rosterCandidates, catalog, props])
 
   const slotLabel = `${DAY_LABEL[slot.day_group]} · ${TIME_SLOT_LABEL[slot.time_slot]}`
+  const rosterCount = rosterCandidates.length
+  const catalogCount = Object.keys(catalog).length
+
+  const emptyText = (() => {
+    if (filtered.length > 0) return null
+    if (query) return "No matches."
+    if (mode === "roster") {
+      return "All offerings are placed. Switch to Catalog to add a new section."
+    }
+    return "Catalog is empty."
+  })()
 
   return (
     <>
@@ -54,7 +94,11 @@ export function PlacementSheet(props: Props) {
         onClick={onDismiss}
         aria-hidden="true"
       />
-      <aside className="m-sheet" role="dialog" aria-label={`Place a course at ${slotLabel}`}>
+      <aside
+        className="m-sheet"
+        role="dialog"
+        aria-label={`Place a course at ${slotLabel}`}
+      >
         <header className="m-sheet__header">
           <div>
             <div className="m-sheet__eyebrow">Place at</div>
@@ -69,41 +113,71 @@ export function PlacementSheet(props: Props) {
             ×
           </button>
         </header>
+
+        <nav
+          className="m-sheet__tabs"
+          aria-label="Course source"
+          role="tablist"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "roster"}
+            className={
+              "m-sheet__tab" +
+              (mode === "roster" ? " m-sheet__tab--active" : "")
+            }
+            onClick={() => setMode("roster")}
+          >
+            Roster <span className="m-sheet__tab-count">{rosterCount}</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "catalog"}
+            className={
+              "m-sheet__tab" +
+              (mode === "catalog" ? " m-sheet__tab--active" : "")
+            }
+            onClick={() => setMode("catalog")}
+          >
+            Catalog <span className="m-sheet__tab-count">{catalogCount}</span>
+          </button>
+        </nav>
+
         <div className="m-sheet__search-wrap">
           <input
             type="search"
             className="m-sheet__search"
-            placeholder="Search course ID or name…"
+            placeholder={
+              mode === "roster"
+                ? "Search unplaced offerings…"
+                : "Search the full catalog…"
+            }
             value={query}
             onChange={e => setQuery(e.target.value)}
             autoFocus
           />
         </div>
-        {candidates.length === 0 ? (
-          <div className="m-sheet__empty">
-            {query
-              ? "No matching unplaced offerings."
-              : "All offerings are placed. Add more from the desktop catalogue."}
-          </div>
+
+        {emptyText ? (
+          <div className="m-sheet__empty">{emptyText}</div>
         ) : (
           <ul className="m-sheet__list">
-            {candidates.map(o => {
-              const title = catalog[o.catalog_id]?.title ?? ""
-              return (
-                <li key={o.offering_id}>
-                  <button
-                    type="button"
-                    className="m-sheet__item"
-                    onClick={() => onPlace(o.offering_id)}
-                  >
-                    <span className="m-sheet__item-id">{o.catalog_id}</span>
-                    {title && (
-                      <span className="m-sheet__item-title">{title}</span>
-                    )}
-                  </button>
-                </li>
-              )
-            })}
+            {filtered.map(item => (
+              <li key={item.key}>
+                <button
+                  type="button"
+                  className="m-sheet__item"
+                  onClick={item.onPick}
+                >
+                  <span className="m-sheet__item-id">{item.catalog_id}</span>
+                  {item.title && (
+                    <span className="m-sheet__item-title">{item.title}</span>
+                  )}
+                </button>
+              </li>
+            ))}
           </ul>
         )}
       </aside>

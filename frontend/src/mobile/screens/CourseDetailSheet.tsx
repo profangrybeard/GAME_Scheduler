@@ -53,7 +53,7 @@ export function CourseDetailSheet(props: Props) {
     ? `${DAY_LABEL[slot.day_group]} · ${TIME_SLOT_LABEL[slot.time_slot]}`
     : "Unplaced"
 
-  const course = catalog[offering.catalog_id]
+  const courseName = catalog[offering.catalog_id]?.name
   const profOptions = Object.values(professors).sort((a, b) =>
     a.name.localeCompare(b.name),
   )
@@ -80,8 +80,8 @@ export function CourseDetailSheet(props: Props) {
           <div>
             <div className="m-sheet__eyebrow">{slotLabel}</div>
             <h2 className="m-sheet__title">{offering.catalog_id}</h2>
-            {course?.title && (
-              <div className="m-sheet__subtitle">{course.title}</div>
+            {courseName && (
+              <div className="m-sheet__subtitle">{courseName}</div>
             )}
           </div>
           <button

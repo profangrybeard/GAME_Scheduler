@@ -9,6 +9,7 @@
  */
 import { useCallback, useMemo, useRef, useState } from "react"
 import { useSchedulerState } from "../../state/SchedulerStateContext"
+import { mintOfferingId } from "../../types"
 import type { DayGroup, Offering, Slot, TimeSlot } from "../../types"
 import { CourseDetailSheet } from "./CourseDetailSheet"
 import { PlacementSheet } from "./PlacementSheet"
@@ -293,7 +294,7 @@ export function ScheduleScreen() {
     [],
   )
 
-  const handlePlace = useCallback(
+  const handlePlaceFromRoster = useCallback(
     (offering_id: string) => {
       if (!pendingSlot) return
       const slot = pendingSlot
@@ -303,6 +304,34 @@ export function ScheduleScreen() {
           o.offering_id === offering_id ? { ...o, pinned: slot } : o,
         ),
       }))
+      setPendingSlot(null)
+    },
+    [pendingSlot, setState],
+  )
+
+  const handlePlaceFromCatalog = useCallback(
+    (catalog_id: string) => {
+      if (!pendingSlot) return
+      const slot = pendingSlot
+      setState(s => {
+        if (!s.catalog[catalog_id]) return s
+        const fresh: Offering = {
+          offering_id: mintOfferingId(catalog_id, s.offerings),
+          catalog_id,
+          priority: "should_have",
+          sections: 1,
+          override_enrollment_cap: null,
+          override_preferred_professors: null,
+          notes: null,
+          assigned_prof_id: null,
+          assigned_room_id: null,
+          chair_pinned_prof: false,
+          chair_pinned_room: false,
+          pinned: slot,
+          assignment: null,
+        }
+        return { ...s, offerings: [...s.offerings, fresh] }
+      })
       setPendingSlot(null)
     },
     [pendingSlot, setState],
@@ -464,7 +493,8 @@ export function ScheduleScreen() {
           offerings={state.offerings}
           catalog={state.catalog}
           onDismiss={handleDismissSheet}
-          onPlace={handlePlace}
+          onPlaceFromRoster={handlePlaceFromRoster}
+          onPlaceFromCatalog={handlePlaceFromCatalog}
         />
       )}
 

@@ -326,6 +326,47 @@
   cursor: pointer;
 }
 
+/* Tab toggle inside the placement sheet — Roster vs Catalog. */
+
+.m-sheet__tabs {
+  display: flex;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md) 0;
+}
+
+.m-sheet__tab {
+  flex: 1;
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px var(--space-md);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--hit-min);
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.m-sheet__tab--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-on);
+}
+
+.m-sheet__tab-count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  opacity: 0.75;
+  font-size: 0.78rem;
+}
+
 .m-sheet__search-wrap {
   padding: var(--space-sm) var(--space-md);
 }
