@@ -3610,6 +3610,14 @@
     flex-wrap: wrap;
   }
 
+  /* "SCAD:Prototype" + "Course Scheduler" don't fit side-by-side on a
+     375px viewport once the h1 is bumped to 0.95rem — stack vertically. */
+  .scheduler__title-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
   .scheduler__topbar-center {
     justify-self: auto;
     order: -1;
