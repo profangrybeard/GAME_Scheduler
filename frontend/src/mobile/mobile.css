@@ -178,10 +178,187 @@
   font-variant-numeric: tabular-nums;
 }
 
-.m-slot__empty {
-  padding: var(--space-sm) 0;
-  font-size: 0.85rem;
+/* "Open" inventory position: full-width tappable button that opens the
+ * placement sheet for this slot. Distinct from a placed card visually
+ * (no surface, dashed border, muted text) so the chair can read at a
+ * glance which positions are available. */
+.m-slot__open {
+  appearance: none;
+  width: 100%;
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 12px var(--space-md);
+  font: inherit;
   color: var(--text-faint);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--hit-min);
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.m-slot__open:active {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.m-slot__open-label {
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.m-slot__open-cta {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-text, var(--text-muted));
+}
+
+/* ─── Placement sheet (bottom sheet course picker) ─────────────────── */
+
+.m-sheet__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.4);
+  animation: m-sheet-fade 0.18s ease-out;
+}
+
+.m-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  max-height: 85dvh;
+  background: var(--bg);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.12);
+  padding-bottom: env(safe-area-inset-bottom);
+  animation: m-sheet-slide 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes m-sheet-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes m-sheet-slide {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.m-sheet__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--border);
+}
+
+.m-sheet__eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.m-sheet__title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.m-sheet__close {
+  appearance: none;
+  background: transparent;
+  border: none;
+  width: var(--hit-min);
+  height: var(--hit-min);
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.m-sheet__search-wrap {
+  padding: var(--space-sm) var(--space-md);
+}
+
+.m-sheet__search {
+  width: 100%;
+  appearance: none;
+  background: var(--surface, transparent);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 1rem;
+  min-height: var(--hit-min);
+}
+
+.m-sheet__search:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.m-sheet__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.m-sheet__item {
+  appearance: none;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 12px var(--space-md);
+  font: inherit;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: var(--hit-min);
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.m-sheet__item:active {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.m-sheet__item-id {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.m-sheet__item-title {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.m-sheet__empty {
+  padding: var(--space-xl) var(--space-md);
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 0.9rem;
   font-style: italic;
 }
 

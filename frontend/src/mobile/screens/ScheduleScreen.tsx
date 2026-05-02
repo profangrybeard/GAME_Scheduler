@@ -7,9 +7,10 @@
  * inventories — content tracks the finger 1:1, snaps on release, and
  * rubber-bands at the edges so the boundary is felt rather than learned.
  */
-import { useMemo, useRef, useState } from "react"
+import { useCallback, useMemo, useRef, useState } from "react"
 import { useSchedulerState } from "../../state/SchedulerStateContext"
-import type { DayGroup, Offering, TimeSlot } from "../../types"
+import type { DayGroup, Offering, Slot, TimeSlot } from "../../types"
+import { PlacementSheet } from "./PlacementSheet"
 
 const DAYS: ReadonlyArray<{ label: string; group: DayGroup }> = [
   { label: "MW",  group: 1 },
@@ -56,10 +57,11 @@ function effectiveRoomId(o: Offering): string | null {
 }
 
 export function ScheduleScreen() {
-  const [state] = useSchedulerState()
+  const [state, setState] = useSchedulerState()
   const [activeGroup, setActiveGroup] = useState<DayGroup>(1)
   const [dragX, setDragX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  const [pendingSlot, setPendingSlot] = useState<Slot | null>(null)
 
   const startRef = useRef<{ x: number; y: number; t: number } | null>(null)
   const axisRef = useRef<"h" | "v" | null>(null)
@@ -225,6 +227,30 @@ export function ScheduleScreen() {
     cancelGesture("touch")
   }
 
+  const handleOpenSlot = useCallback(
+    (day_group: DayGroup, time_slot: TimeSlot) => {
+      setPendingSlot({ day_group, time_slot })
+    },
+    [],
+  )
+
+  const handlePlace = useCallback(
+    (offering_id: string) => {
+      if (!pendingSlot) return
+      const slot = pendingSlot
+      setState(s => ({
+        ...s,
+        offerings: s.offerings.map(o =>
+          o.offering_id === offering_id ? { ...o, pinned: slot } : o,
+        ),
+      }))
+      setPendingSlot(null)
+    },
+    [pendingSlot, setState],
+  )
+
+  const handleDismissSheet = useCallback(() => setPendingSlot(null), [])
+
   // Canonical quarter is lowercase ("fall"); capitalize for display.
   const quarterLabel = state.quarter.charAt(0).toUpperCase() + state.quarter.slice(1)
   const baseOffsetPct = -(activeGroup - 1) * 100
@@ -279,23 +305,37 @@ export function ScheduleScreen() {
           {DAYS.map(day => (
             <DayPage
               key={day.group}
+              dayGroup={day.group}
               dayLabel={day.label}
               buckets={slotsByDay.get(day.group)!}
               professors={state.professors}
               rooms={state.rooms}
+              onOpenSlot={handleOpenSlot}
             />
           ))}
         </div>
       </div>
+
+      {pendingSlot && (
+        <PlacementSheet
+          slot={pendingSlot}
+          offerings={state.offerings}
+          catalog={state.catalog}
+          onDismiss={handleDismissSheet}
+          onPlace={handlePlace}
+        />
+      )}
     </main>
   )
 }
 
 function DayPage(props: {
+  dayGroup: DayGroup
   dayLabel: string
   buckets: Map<TimeSlot, Offering[]>
   professors: Record<string, { name: string }>
   rooms: Record<string, { id: string }>
+  onOpenSlot: (day_group: DayGroup, time_slot: TimeSlot) => void
 }) {
   return (
     <section
@@ -311,7 +351,14 @@ function DayPage(props: {
               <span className="m-slot__count">{offerings.length || "—"}</span>
             </div>
             {offerings.length === 0 ? (
-              <div className="m-slot__empty">Open</div>
+              <button
+                type="button"
+                className="m-slot__open"
+                onClick={() => props.onOpenSlot(props.dayGroup, slot.value)}
+              >
+                <span className="m-slot__open-label">Open</span>
+                <span className="m-slot__open-cta" aria-hidden="true">+ add</span>
+              </button>
             ) : (
               <ul className="m-slot__list">
                 {offerings.map(o => {
